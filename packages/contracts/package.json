@@ -1,0 +1,43 @@
+{
+  "name": "@product-repos/contracts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js"
+    },
+    "./brands": {
+      "types": "./src/brands.ts",
+      "import": "./dist/brands.js"
+    },
+    "./unit-types": {
+      "types": "./src/unit-types.ts",
+      "import": "./dist/unit-types.js"
+    },
+    "./products": {
+      "types": "./src/products.ts",
+      "import": "./dist/products.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@product-repos/db-schema": "workspace:*",
+    "drizzle-orm": "^0.38.3",
+    "drizzle-zod": "^0.8.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
