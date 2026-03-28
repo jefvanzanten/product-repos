@@ -32,3 +32,15 @@ export const products = sqliteTable("products", {
     .notNull()
     .references(() => units.id),
 });
+
+export const consumptionLogs = sqliteTable("consumption_logs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  productId: integer("product_id")
+    .notNull()
+    .references(() => products.id),
+  timestamp: text("timestamp").notNull(),
+  amount: integer("amount"),
+  unitsId: integer("units_id")
+    .notNull()
+    .references(() => units.id),
+});

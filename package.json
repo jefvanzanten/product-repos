@@ -16,7 +16,8 @@
     "db:generate": "turbo run db:generate --filter=@product-repos/backend",
     "db:migrate": "turbo run db:migrate --filter=@product-repos/backend",
     "db:push": "turbo run db:push --filter=@product-repos/backend",
-    "db:studio": "turbo run db:studio --filter=@product-repos/backend"
+    "db:studio": "turbo run db:studio --filter=@product-repos/backend",
+    "db:seed": "turbo run db:seed --filter=@product-repos/backend"
   },
   "keywords": [],
   "author": "",

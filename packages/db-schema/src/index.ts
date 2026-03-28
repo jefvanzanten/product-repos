@@ -1,1 +1,7 @@
-export { brands, products, unitType } from './schema.js';
+export {
+  brands,
+  products,
+  units as unitType,
+  consumptions,
+  consumptionLogs,
+} from "./schema.js";

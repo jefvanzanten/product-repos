@@ -11,4 +11,12 @@ export const consumptionsData = [
     id: 2,
     name: "L-Theanine",
   },
+  {
+    id: 3,
+    name: "Visolie",
+  },
+  {
+    id: 4,
+    name: "Vitamine B Complex",
+  },
 ];

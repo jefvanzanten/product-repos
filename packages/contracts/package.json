@@ -18,6 +18,10 @@
       "types": "./src/unit-types.ts",
       "import": "./dist/unit-types.js"
     },
+    "./consumptions": {
+      "types": "./src/consumptions.ts",
+      "import": "./dist/consumptions.js"
+    },
     "./products": {
       "types": "./src/products.ts",
       "import": "./dist/products.js"

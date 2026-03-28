@@ -17,6 +17,17 @@ export type {
 } from './unit-types.js';
 
 export {
+  consumptionInsertSchema,
+  consumptionSelectSchema,
+  consumptionUpdateSchema,
+} from './consumptions.js';
+export type {
+  Consumption,
+  CreateConsumptionInput,
+  UpdateConsumptionInput,
+} from './consumptions.js';
+
+export {
   productInsertSchema,
   productSelectSchema,
   productUpdateSchema,

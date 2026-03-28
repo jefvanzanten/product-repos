@@ -1,15 +1,23 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { brandRoutes } from './routes/brands';
+import { consumptionRoutes } from './routes/consumptions';
 import { healthRoutes } from './routes/health';
+import { productRoutes } from './routes/products';
+import { unitRoutes } from './routes/units';
 
 export function createApp() {
   const app = new Hono();
 
   app.use('*', logger());
 
+  const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:3001')
+    .split(',')
+    .map((o) => o.trim());
+
   app.use('*', cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: (origin) => (allowedOrigins.includes(origin) ? origin : null),
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
   }));
@@ -23,6 +31,10 @@ export function createApp() {
   });
 
   app.route('/', healthRoutes());
+  app.route('/', brandRoutes());
+  app.route('/', consumptionRoutes());
+  app.route('/', unitRoutes());
+  app.route('/', productRoutes());
 
   app.notFound((c) => {
     return c.json({
