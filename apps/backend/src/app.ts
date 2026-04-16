@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { brandRoutes } from './routes/brands';
+import { consumptionLogRoutes } from './routes/consumptionLogs';
 import { consumptionRoutes } from './routes/consumptions';
 import { healthRoutes } from './routes/health';
 import { productRoutes } from './routes/products';
@@ -35,6 +36,7 @@ export function createApp() {
   app.route('/', consumptionRoutes());
   app.route('/', unitRoutes());
   app.route('/', productRoutes());
+  app.route('/', consumptionLogRoutes());
 
   app.notFound((c) => {
     return c.json({

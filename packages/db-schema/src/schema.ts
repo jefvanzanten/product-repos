@@ -33,6 +33,12 @@ export const products = sqliteTable("products", {
     .references(() => units.id),
 });
 
+export const mix = sqliteTable("mix", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  productId: integer("product_id").references(() => products.id),
+  consumptionId: integer("consumption_id").references(() => consumptions.id),
+});
+
 export const consumptionLogs = sqliteTable("consumption_logs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   productId: integer("product_id")

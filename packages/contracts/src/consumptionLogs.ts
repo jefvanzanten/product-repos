@@ -5,7 +5,8 @@ import {
   createUpdateSchema,
 } from "drizzle-zod";
 import { z } from "zod/v4";
-import { productSelectSchema } from "./products.js";
+import { brandSelectSchema } from "./brands.js";
+import { consumptionSelectSchema } from "./consumptions.js";
 import { unitTypeSelectSchema } from "./unit-types.js";
 
 export const consumptionLogSelectSchema = createSelectSchema(consumptionLogs);
@@ -14,8 +15,9 @@ export const consumptionLogUpdateSchema = createUpdateSchema(consumptionLogs);
 
 export const consumptionLogsWithRelationsSchema =
   consumptionLogSelectSchema.extend({
-    product: productSelectSchema,
-    servingUnit: unitTypeSelectSchema,
+    brand: brandSelectSchema.nullable(),
+    consumption: consumptionSelectSchema.nullable(),
+    unit: unitTypeSelectSchema.nullable(),
   });
 
 export type ConsumptionLog = z.infer<typeof consumptionLogSelectSchema>;

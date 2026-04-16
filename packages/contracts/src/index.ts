@@ -39,3 +39,16 @@ export type {
   ProductWithRelations,
   UpdateProductInput,
 } from './products.js';
+
+export {
+  consumptionLogInsertSchema,
+  consumptionLogSelectSchema,
+  consumptionLogUpdateSchema,
+  consumptionLogsWithRelationsSchema,
+} from './consumptionLogs.js';
+export type {
+  ConsumptionLog,
+  ConsumptionLogWithRelations,
+  CreateConsumptionLogInput,
+  UpdateConsumptionLogInput,
+} from './consumptionLogs.js';
