@@ -4,26 +4,35 @@
   "private": true,
   "description": "",
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev --parallel",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
-    "backend:build": "turbo run build --filter=@product-repos/backend...",
-    "backend:dev": "turbo run dev --filter=@product-repos/backend...",
+    "build": "pnpm -r --if-present run build",
+    "dev": "pnpm --filter \"./apps/*\" --parallel run dev",
+    "lint": "pnpm -r --if-present run lint",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "test": "pnpm -r --if-present run test",
+    "backend:build": "pnpm --filter @product-repos/backend build",
+    "backend:dev": "pnpm --filter @product-repos/backend dev",
     "backend:start": "pnpm --filter @product-repos/backend start",
-    "backend:typecheck": "turbo run typecheck --filter=@product-repos/backend...",
-    "db:generate": "turbo run db:generate --filter=@product-repos/backend",
-    "db:migrate": "turbo run db:migrate --filter=@product-repos/backend",
-    "db:push": "turbo run db:push --filter=@product-repos/backend",
-    "db:studio": "turbo run db:studio --filter=@product-repos/backend",
-    "db:seed": "turbo run db:seed --filter=@product-repos/backend"
+    "backend:typecheck": "pnpm --filter @product-repos/backend typecheck",
+    "db:generate": "pnpm --filter @product-repos/backend db:generate",
+    "db:migrate": "pnpm --filter @product-repos/backend db:migrate",
+    "db:push": "pnpm --filter @product-repos/backend db:push",
+    "db:studio": "pnpm --filter @product-repos/backend db:studio",
+    "db:seed": "pnpm --filter @product-repos/backend db:seed",
+    "inventory:build": "pnpm --filter inventory build",
+    "inventory:dev": "pnpm --filter inventory dev",
+    "inventory:start": "pnpm --filter inventory start",
+    "inventory:typecheck": "pnpm --filter inventory typecheck"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.28.2",
+  "dependencies": {
+    "drizzle-orm": "^0.38.3",
+    "drizzle-zod": "^0.8.3",
+    "zod": "^4.3.6"
+  },
   "devDependencies": {
-    "turbo": "^2.8.20"
+    "typescript": "^5.7.2"
   }
 }

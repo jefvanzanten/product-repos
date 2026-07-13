@@ -2,53 +2,29 @@ export {
   brandInsertSchema,
   brandSelectSchema,
   brandUpdateSchema,
-} from './brands.js';
-export type { Brand, CreateBrandInput, UpdateBrandInput } from './brands.js';
+} from './brands.ts';
+export type { Brand, CreateBrandInput, UpdateBrandInput } from './brands.ts';
 
 export {
   unitTypeInsertSchema,
   unitTypeSelectSchema,
   unitTypeUpdateSchema,
-} from './unit-types.js';
+} from './unit-types.ts';
 export type {
   CreateUnitTypeInput,
   UnitType,
   UpdateUnitTypeInput,
-} from './unit-types.js';
-
-export {
-  consumptionInsertSchema,
-  consumptionSelectSchema,
-  consumptionUpdateSchema,
-} from './consumptions.js';
-export type {
-  Consumption,
-  CreateConsumptionInput,
-  UpdateConsumptionInput,
-} from './consumptions.js';
+} from './unit-types.ts';
 
 export {
   productInsertSchema,
   productSelectSchema,
   productUpdateSchema,
   productWithRelationsSchema,
-} from './products.js';
+} from './products.ts';
 export type {
   CreateProductInput,
   Product,
   ProductWithRelations,
   UpdateProductInput,
-} from './products.js';
-
-export {
-  consumptionLogInsertSchema,
-  consumptionLogSelectSchema,
-  consumptionLogUpdateSchema,
-  consumptionLogsWithRelationsSchema,
-} from './consumptionLogs.js';
-export type {
-  ConsumptionLog,
-  ConsumptionLogWithRelations,
-  CreateConsumptionLogInput,
-  UpdateConsumptionLogInput,
-} from './consumptionLogs.js';
+} from './products.ts';

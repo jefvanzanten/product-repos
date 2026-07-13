@@ -1,0 +1,23 @@
+.bottom-tabbar {
+  margin: 0;
+  padding: 1em 1em;
+  display: flex;
+  flex-direction: row;
+  gap: 2em;
+}
+
+.bottom-tab {
+  color: rgb(85, 85, 85);
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 16px;
+  gap: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.bottom-tab--active {
+  text-decoration: underline;
+}
