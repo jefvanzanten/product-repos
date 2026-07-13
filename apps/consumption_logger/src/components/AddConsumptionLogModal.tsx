@@ -38,7 +38,7 @@ export function AddConsumptionLogModal({ onClose, products, onSuccess }: Props) 
 
   const productOptions = products.map((p) => ({
     id: p.id,
-    label: `${p.consumption?.name ?? '—'} – ${p.brand?.name ?? '—'} (${p.servingContent} ${p.servingUnit?.type ?? ''})`,
+    label: `Product #${p.id} – ${p.brand?.name ?? '—'} (${p.servingContent} ${p.servingUnit?.type ?? ''})`,
   }));
 
   const filteredOptions = productInput.length === 0

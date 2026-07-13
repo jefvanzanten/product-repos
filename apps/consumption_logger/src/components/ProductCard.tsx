@@ -17,7 +17,7 @@ export function ProductCard({ product }: ProductCardProps) {
       gap: '8px',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <h3 style={{ margin: 0, fontSize: '1rem' }}>{product.consumption?.name ?? '—'}</h3>
+        <h3 style={{ margin: 0, fontSize: '1rem' }}>Product #{product.id}</h3>
         <BrandBadge name={product.brand?.name ?? '—'} />
       </div>
       <div style={{ fontSize: '0.875rem', color: '#555' }}>

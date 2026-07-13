@@ -1,4 +1,5 @@
-import type { Brand, Consumption } from '@product-repos/contracts';
+import type { Brand } from '@product-repos/contracts';
+import type { Consumption } from '../api/client';
 
 interface ConsumptionFilterProps {
   consumptions: Consumption[];

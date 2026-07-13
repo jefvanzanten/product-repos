@@ -1,4 +1,25 @@
-import type { Brand, Consumption, ConsumptionLog, ConsumptionLogWithRelations, CreateConsumptionLogInput, ProductWithRelations, UnitType } from '@product-repos/contracts';
+import type { Brand, ProductWithRelations, UnitType } from '@product-repos/contracts';
+
+export interface Consumption {
+  id: number;
+  name: string;
+}
+
+export interface ConsumptionLog {
+  id: number;
+  productId: number;
+  timestamp: string;
+  amount: number | null;
+  unitsId: number;
+}
+
+export interface ConsumptionLogWithRelations extends ConsumptionLog {
+  brand: Brand | null;
+  consumption: Consumption | null;
+  unit: UnitType | null;
+}
+
+export type CreateConsumptionLogInput = Omit<ConsumptionLog, 'id'>;
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 

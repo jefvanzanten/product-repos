@@ -29,7 +29,6 @@ const mockProducts: ProductWithRelations[] = [
     content: 330,
     contentunitId: 1,
     brand: { id: 1, name: 'TestMerk' },
-    consumption: { id: 1, name: 'Koffie' },
     servingUnit: { id: 1, type: 'ml' },
     contentUnit: { id: 1, type: 'ml' },
   },
@@ -82,10 +81,10 @@ describe('AddConsumptionLogModal', () => {
     const user = userEvent.setup();
     renderModal();
     const input = screen.getByPlaceholderText('Zoek op productnaam...');
-    await user.type(input, 'Kof');
-    const suggestion = await screen.findByText(/Koffie/);
+    await user.type(input, 'Test');
+    const suggestion = await screen.findByText(/TestMerk/);
     await user.click(suggestion);
-    expect((input as HTMLInputElement).value).toContain('Koffie');
+    expect((input as HTMLInputElement).value).toContain('TestMerk');
   });
 
   it('roept onSuccess aan na succesvolle submit', async () => {
@@ -102,8 +101,8 @@ describe('AddConsumptionLogModal', () => {
     const { onSuccess } = renderModal();
 
     // Selecteer product
-    await user.type(screen.getByPlaceholderText('Zoek op productnaam...'), 'Kof');
-    await user.click(await screen.findByText(/Koffie/));
+    await user.type(screen.getByPlaceholderText('Zoek op productnaam...'), 'Test');
+    await user.click(await screen.findByText(/TestMerk/));
 
     // Vul hoeveelheid in
     await user.type(screen.getByPlaceholderText('bijv. 250'), '250');
