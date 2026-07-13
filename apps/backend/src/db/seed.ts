@@ -1,15 +1,17 @@
 import { db } from "./index";
-import { brands, unitType, consumptions, products } from "@product-repos/db-schema";
+import { brands, productTypes, products, unitContents, unitType } from "./schema";
 import { brandsData } from "../../data/brandData";
 import { unitsData } from "../../data/unitsData";
-import { consumptionsData } from "../../data/consumptionsData";
 import { productData } from "../../data/productData";
+import { productTypesData } from "../../data/productTypesData";
+import { unitContentsData } from "../../data/unitContentsData";
 
 async function seed() {
   try {
     await db.insert(brands).values(brandsData);
     await db.insert(unitType).values(unitsData);
-    await db.insert(consumptions).values(consumptionsData);
+    await db.insert(productTypes).values(productTypesData);
+    await db.insert(unitContents).values(unitContentsData);
 
     await db.insert(products).values(productData);
 

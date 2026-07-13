@@ -11,7 +11,7 @@ export function getAllProducts() {
   return findAllProducts();
 }
 
-export function getProductById(id: number) {
+export function getProductById(id: string) {
   return findProductById(id);
 }
 
@@ -19,10 +19,10 @@ export function createNewProduct(input: CreateProductInput) {
   return createProduct(input);
 }
 
-export function updateExistingProduct(id: number, input: UpdateProductInput) {
+export function updateExistingProduct(id: string, input: UpdateProductInput) {
   return updateProduct(id, input);
 }
 
-export function removeProduct(id: number) {
+export function removeProduct(id: string) {
   return deleteProduct(id);
 }

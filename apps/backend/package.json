@@ -24,7 +24,6 @@
   "license": "ISC",
   "dependencies": {
     "@product-repos/contracts": "workspace:*",
-    "@product-repos/db-schema": "workspace:*",
     "drizzle-orm": "^0.38.3",
     "hono": "^4.7.0"
   },

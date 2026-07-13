@@ -16,7 +16,7 @@ export function productRoutes() {
   });
 
   router.get('/products/:id', (c) => {
-    const id = Number(c.req.param('id'));
+    const id = c.req.param('id');
     const product = getProductById(id);
     if (!product) return c.json({ error: { message: 'Product not found', statusCode: 404 } }, 404);
     return c.json(product);
@@ -29,7 +29,7 @@ export function productRoutes() {
   });
 
   router.put('/products/:id', async (c) => {
-    const id = Number(c.req.param('id'));
+    const id = c.req.param('id');
     const body = await c.req.json();
     const product = updateExistingProduct(id, body);
     if (!product) return c.json({ error: { message: 'Product not found', statusCode: 404 } }, 404);
@@ -37,7 +37,7 @@ export function productRoutes() {
   });
 
   router.delete('/products/:id', (c) => {
-    const id = Number(c.req.param('id'));
+    const id = c.req.param('id');
     const product = removeProduct(id);
     if (!product) return c.json({ error: { message: 'Product not found', statusCode: 404 } }, 404);
     return c.json(product);

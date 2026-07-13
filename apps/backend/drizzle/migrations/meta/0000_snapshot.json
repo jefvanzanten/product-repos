@@ -1,18 +1,18 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "efc0b868-5cbf-4111-96f3-6fb66bf08f30",
+  "id": "821d6219-247e-4bd6-958e-09f2101530d6",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
-    "brands": {
-      "name": "brands",
+    "brand": {
+      "name": "brand",
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": true
+          "autoincrement": false
         },
         "name": {
           "name": "name",
@@ -23,8 +23,8 @@
         }
       },
       "indexes": {
-        "brands_name_unique": {
-          "name": "brands_name_unique",
+        "brand_name_unique": {
+          "name": "brand_name_unique",
           "columns": [
             "name"
           ],
@@ -36,8 +36,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "consumptions": {
-      "name": "consumptions",
+    "location": {
+      "name": "location",
       "columns": {
         "id": {
           "name": "id",
@@ -45,6 +45,13 @@
           "primaryKey": true,
           "notNull": true,
           "autoincrement": true
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "name": {
           "name": "name",
@@ -55,80 +62,116 @@
         }
       },
       "indexes": {
-        "consumptions_name_unique": {
-          "name": "consumptions_name_unique",
+        "location_parent_id_name_unique": {
+          "name": "location_parent_id_name_unique",
           "columns": [
+            "parent_id",
             "name"
           ],
           "isUnique": true
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "location_parent_id_location_id_fk": {
+          "name": "location_parent_id_location_id_fk",
+          "tableFrom": "location",
+          "tableTo": "location",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "products": {
-      "name": "products",
+    "macro_nutrients": {
+      "name": "macro_nutrients",
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": true
+          "autoincrement": false
         },
-        "consumption_id": {
-          "name": "consumption_id",
+        "product_id": {
+          "name": "product_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "unit_content_id": {
+          "name": "unit_content_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "brand_id": {
-          "name": "brand_id",
-          "type": "integer",
+        "total_fat": {
+          "name": "total_fat",
+          "type": "real",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
-        "serving_content": {
-          "name": "serving_content",
-          "type": "integer",
+        "unsaturated_fat": {
+          "name": "unsaturated_fat",
+          "type": "real",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
-        "serving_content_id": {
-          "name": "serving_content_id",
-          "type": "integer",
+        "saturated_fat": {
+          "name": "saturated_fat",
+          "type": "real",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
-        "content": {
-          "name": "content",
-          "type": "integer",
+        "total_carbs": {
+          "name": "total_carbs",
+          "type": "real",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
-        "unit_type_id": {
-          "name": "unit_type_id",
-          "type": "integer",
+        "sugars": {
+          "name": "sugars",
+          "type": "real",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fibre": {
+          "name": "fibre",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "protein": {
+          "name": "protein",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "products_consumption_id_consumptions_id_fk": {
-          "name": "products_consumption_id_consumptions_id_fk",
-          "tableFrom": "products",
-          "tableTo": "consumptions",
+        "macro_nutrients_product_id_product_id_fk": {
+          "name": "macro_nutrients_product_id_product_id_fk",
+          "tableFrom": "macro_nutrients",
+          "tableTo": "product",
           "columnsFrom": [
-            "consumption_id"
+            "product_id"
           ],
           "columnsTo": [
             "id"
@@ -136,10 +179,228 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "products_brand_id_brands_id_fk": {
-          "name": "products_brand_id_brands_id_fk",
-          "tableFrom": "products",
-          "tableTo": "brands",
+        "macro_nutrients_unit_content_id_unit_content_id_fk": {
+          "name": "macro_nutrients_unit_content_id_unit_content_id_fk",
+          "tableFrom": "macro_nutrients",
+          "tableTo": "unit_content",
+          "columnsFrom": [
+            "unit_content_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "product_type": {
+      "name": "product_type",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "product_type_name_unique": {
+          "name": "product_type_name_unique",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "product_variant_table": {
+      "name": "product_variant_table",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "product_variant_id": {
+          "name": "product_variant_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "product_variant_table_product_id_variant_id_unique": {
+          "name": "product_variant_table_product_id_variant_id_unique",
+          "columns": [
+            "product_id",
+            "product_variant_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "product_variant_table_product_id_product_id_fk": {
+          "name": "product_variant_table_product_id_product_id_fk",
+          "tableFrom": "product_variant_table",
+          "tableTo": "product",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "product_variant_table_product_variant_id_product_variant_id_fk": {
+          "name": "product_variant_table_product_variant_id_product_variant_id_fk",
+          "tableFrom": "product_variant_table",
+          "tableTo": "product_variant",
+          "columnsFrom": [
+            "product_variant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "product_variant": {
+      "name": "product_variant",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "product_variant_name_unique": {
+          "name": "product_variant_name_unique",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "product": {
+      "name": "product",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "product_type_id": {
+          "name": "product_type_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "brand_id": {
+          "name": "brand_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "unit_content_id": {
+          "name": "unit_content_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "barcode": {
+          "name": "barcode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "product_barcode_unique": {
+          "name": "product_barcode_unique",
+          "columns": [
+            "barcode"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "product_product_type_id_product_type_id_fk": {
+          "name": "product_product_type_id_product_type_id_fk",
+          "tableFrom": "product",
+          "tableTo": "product_type",
+          "columnsFrom": [
+            "product_type_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "product_brand_id_brand_id_fk": {
+          "name": "product_brand_id_brand_id_fk",
+          "tableFrom": "product",
+          "tableTo": "brand",
           "columnsFrom": [
             "brand_id"
           ],
@@ -149,12 +410,71 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "products_serving_content_id_contentType_id_fk": {
-          "name": "products_serving_content_id_contentType_id_fk",
-          "tableFrom": "products",
-          "tableTo": "contentType",
+        "product_unit_content_id_unit_content_id_fk": {
+          "name": "product_unit_content_id_unit_content_id_fk",
+          "tableFrom": "product",
+          "tableTo": "unit_content",
           "columnsFrom": [
-            "serving_content_id"
+            "unit_content_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "storage_record": {
+      "name": "storage_record",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "location_id": {
+          "name": "location_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "remaining_amount": {
+          "name": "remaining_amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expiration_date": {
+          "name": "expiration_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "storage_record_product_id_product_id_fk": {
+          "name": "storage_record_product_id_product_id_fk",
+          "tableFrom": "storage_record",
+          "tableTo": "product",
+          "columnsFrom": [
+            "product_id"
           ],
           "columnsTo": [
             "id"
@@ -162,10 +482,64 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "products_unit_type_id_contentType_id_fk": {
-          "name": "products_unit_type_id_contentType_id_fk",
-          "tableFrom": "products",
-          "tableTo": "contentType",
+        "storage_record_location_id_location_id_fk": {
+          "name": "storage_record_location_id_location_id_fk",
+          "tableFrom": "storage_record",
+          "tableTo": "location",
+          "columnsFrom": [
+            "location_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "unit_content": {
+      "name": "unit_content",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "unit_type_id": {
+          "name": "unit_type_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "unit_content_unit_type_id_amount_unique": {
+          "name": "unit_content_unit_type_id_amount_unique",
+          "columns": [
+            "unit_type_id",
+            "amount"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "unit_content_unit_type_id_unit_type_id_fk": {
+          "name": "unit_content_unit_type_id_unit_type_id_fk",
+          "tableFrom": "unit_content",
+          "tableTo": "unit_type",
           "columnsFrom": [
             "unit_type_id"
           ],
@@ -180,8 +554,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "contentType": {
-      "name": "contentType",
+    "unit_type": {
+      "name": "unit_type",
       "columns": {
         "id": {
           "name": "id",
@@ -190,8 +564,8 @@
           "notNull": true,
           "autoincrement": true
         },
-        "type": {
-          "name": "type",
+        "name": {
+          "name": "name",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -199,10 +573,10 @@
         }
       },
       "indexes": {
-        "contentType_type_unique": {
-          "name": "contentType_type_unique",
+        "unit_type_name_unique": {
+          "name": "unit_type_name_unique",
           "columns": [
-            "type"
+            "name"
           ],
           "isUnique": true
         }

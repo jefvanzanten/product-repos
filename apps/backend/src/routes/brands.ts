@@ -16,7 +16,7 @@ export function brandRoutes() {
   });
 
   router.get('/brands/:id', (c) => {
-    const id = Number(c.req.param('id'));
+    const id = c.req.param('id');
     const brand = getBrandById(id);
     if (!brand) return c.json({ error: { message: 'Brand not found', statusCode: 404 } }, 404);
     return c.json(brand);
@@ -29,7 +29,7 @@ export function brandRoutes() {
   });
 
   router.put('/brands/:id', async (c) => {
-    const id = Number(c.req.param('id'));
+    const id = c.req.param('id');
     const body = await c.req.json();
     const brand = updateExistingBrand(id, body);
     if (!brand) return c.json({ error: { message: 'Brand not found', statusCode: 404 } }, 404);
@@ -37,7 +37,7 @@ export function brandRoutes() {
   });
 
   router.delete('/brands/:id', (c) => {
-    const id = Number(c.req.param('id'));
+    const id = c.req.param('id');
     const brand = removeBrand(id);
     if (!brand) return c.json({ error: { message: 'Brand not found', statusCode: 404 } }, 404);
     return c.json(brand);

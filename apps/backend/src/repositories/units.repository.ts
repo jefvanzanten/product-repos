@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
-import { unitType } from '@product-repos/db-schema';
 import type { CreateUnitTypeInput, UpdateUnitTypeInput } from '@product-repos/contracts';
 import { db } from '../db/index';
+import { unitType } from '../db/schema';
 
 export function findAllUnits() {
   return db.select().from(unitType).all();
