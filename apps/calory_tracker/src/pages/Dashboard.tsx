@@ -27,7 +27,7 @@ export function Dashboard() {
 
   return (
     <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "24px 16px" }}>
-      <h1 style={{ marginBottom: "24px" }}>Consumption Logger</h1>
+      <h1 style={{ marginBottom: "24px" }}>Calory Tracker</h1>
 
       {errorProducts && <p style={{ color: "red" }}>Fout: {errorProducts}</p>}
 
