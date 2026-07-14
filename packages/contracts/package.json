@@ -21,6 +21,10 @@
     "./products": {
       "types": "./src/products.ts",
       "import": "./src/products.ts"
+    },
+    "./product-search": {
+      "types": "./src/product-search.ts",
+      "import": "./src/product-search.ts"
     }
   },
   "files": [

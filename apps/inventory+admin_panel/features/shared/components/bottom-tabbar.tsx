@@ -22,7 +22,7 @@ export default function BottomTabbar(): React.ReactNode {
         <span>Inventarisatie</span>
       </NavLink>
       <NavLink
-        to="/admin/products"
+        to="/admin/product-management"
         className={
           isAdminActive
             ? `${styles["bottom-tab"]} ${styles["bottom-tab--active"]}`

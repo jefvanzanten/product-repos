@@ -28,3 +28,11 @@ export type {
   ProductWithRelations,
   UpdateProductInput,
 } from './products.ts';
+
+export type {
+  ProductSearchBrandProduct,
+  ProductSearchContent,
+  ProductSearchProductType,
+  ProductSearchResponse,
+  ProductSearchVariant,
+} from './product-search.ts';

@@ -1,1 +1,1 @@
-- Maak gebruik van seperation van concerns
+Zie AGENTS.md

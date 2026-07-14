@@ -14,7 +14,7 @@ export default [
 
     layout("../features/admin/shared/layout.tsx", [
       route("admin", "routes/admin/index.tsx", [
-        route("products", "routes/admin/products.tsx"),
+        route("product-management", "routes/admin/product-management.tsx"),
         route("locations", "routes/admin/locations.tsx"),
       ]),
     ]),
