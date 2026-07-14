@@ -1,7 +1,7 @@
 # Plan: Admin Panel (Next.js)
 
 ## Context
-De gebruiker wil een admin panel in een nieuwe app `apps/admin_panel` (naast `consumption_logger` en `backend`) waarmee brands, units, consumpties en producten beheerd kunnen worden via een webinterface op `{url}:3001/admin`.
+De gebruiker wil een admin panel in een nieuwe app `apps/admin_panel` (naast `calory_tracker` en `backend`) waarmee brands, units, consumpties en producten beheerd kunnen worden via een webinterface op `{url}:3001/admin`.
 
 De backend heeft al services + repositories voor alle vier entiteiten, maar mist nog POST/PUT/DELETE routes voor consumptions, units en products.
 

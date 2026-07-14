@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { brandRoutes } from './routes/brands';
 import { healthRoutes } from './routes/health';
+import { productSearchRoutes } from './routes/product-search';
 import { productRoutes } from './routes/products';
 import { unitRoutes } from './routes/units';
 
@@ -33,6 +34,7 @@ export function createApp() {
   app.route('/', brandRoutes());
   app.route('/', unitRoutes());
   app.route('/', productRoutes());
+  app.route('/', productSearchRoutes());
 
   app.notFound((c) => {
     return c.json({

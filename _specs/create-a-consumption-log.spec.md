@@ -53,7 +53,7 @@
 
 Strategie: DB gemockt via `mock.module`, app getest via `app.request()`.
 
-### Frontend (Vitest + Testing Library) — `apps/consumption_logger/src/components/AddConsumptionLogModal.test.tsx`
+### Frontend (Vitest + Testing Library) — `apps/calory_tracker/src/components/AddConsumptionLogModal.test.tsx`
 
 | # | Scenario | Verwacht |
 |---|----------|----------|

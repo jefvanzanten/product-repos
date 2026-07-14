@@ -1,10 +1,7 @@
 import { eq } from 'drizzle-orm';
-import { alias } from 'drizzle-orm/sqlite-core';
 import type { CreateProductInput, UpdateProductInput } from '@product-repos/contracts';
 import { db } from '../db/index';
-import { brands, products, productTypes, unitContents, unitType } from '../db/schema';
-
-const contentUnitTypeAlias = alias(unitType, 'contentUnitType');
+import { brands, products, productTypes } from '../db/schema';
 
 function withRelationsQuery() {
   return db
@@ -13,18 +10,12 @@ function withRelationsQuery() {
       name: products.name,
       productTypeId: products.productTypeId,
       brandId: products.brandId,
-      unitContentId: products.unitContentId,
-      barcode: products.barcode,
       brand: brands,
       productType: productTypes,
-      unitContent: unitContents,
-      unitType: contentUnitTypeAlias,
     })
     .from(products)
     .leftJoin(brands, eq(products.brandId, brands.id))
-    .leftJoin(productTypes, eq(products.productTypeId, productTypes.id))
-    .leftJoin(unitContents, eq(products.unitContentId, unitContents.id))
-    .leftJoin(contentUnitTypeAlias, eq(unitContents.unitTypeId, contentUnitTypeAlias.id));
+    .leftJoin(productTypes, eq(products.productTypeId, productTypes.id));
 }
 
 export function findAllProducts() {

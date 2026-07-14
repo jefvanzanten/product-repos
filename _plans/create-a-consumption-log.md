@@ -1,7 +1,7 @@
 # Plan: Implementatie Create Consumption Log
 
 ## Context
-De spec `_specs/create-a-consumption-log.spec.md` beschrijft een feature waarmee eindgebruikers een consumptie-log kunnen toevoegen vanuit de `consumption_logger` app (Vite + React SPA). De gebruiker klikt op een FAB-knop rechtsonder, waarna een modal verschijnt met product-autocomplete, hoeveelheid + eenheid, datum/tijd, validatie en een toast bij succes.
+De spec `_specs/create-a-consumption-log.spec.md` beschrijft een feature waarmee eindgebruikers een consumptie-log kunnen toevoegen vanuit de `calory_tracker` app (Vite + React SPA). De gebruiker klikt op een FAB-knop rechtsonder, waarna een modal verschijnt met product-autocomplete, hoeveelheid + eenheid, datum/tijd, validatie en een toast bij succes.
 
 De database-tabel (`consumption_logs`) en Zod-schemas (`consumptionLogs.ts`) bestaan al, maar de API-laag ontbreekt volledig en de frontend heeft nog geen UI voor logs.
 
@@ -39,28 +39,28 @@ Na het toevoegen moet het overzicht van consumption logs op het hoofdscherm auto
 **Bestand:** `apps/backend/src/app.ts`
 - Importeer en registreer `consumptionLogRoutes()` via `app.route('/', consumptionLogRoutes())`
 
-### 6. Consumption Logger – TanStack Query instellen
-- Installeer `@tanstack/react-query` in `apps/consumption_logger`
-- **Bestand:** `apps/consumption_logger/src/main.tsx` – wrap `<App>` in `<QueryClientProvider client={queryClient}>`
+### 6. Calory Tracker – TanStack Query instellen
+- Installeer `@tanstack/react-query` in `apps/calory_tracker`
+- **Bestand:** `apps/calory_tracker/src/main.tsx` – wrap `<App>` in `<QueryClientProvider client={queryClient}>`
 
-### 7. Consumption Logger – API Client
-**Bestand:** `apps/consumption_logger/src/api/client.ts`
+### 7. Calory Tracker – API Client
+**Bestand:** `apps/calory_tracker/src/api/client.ts`
 - Voeg een `post<T>()` helper toe (analoog aan bestaande `get<T>()`)
 - Voeg `consumptionLogs.getAll()` toe → `GET /consumption-logs`
 - Voeg `consumptionLogs.create(input)` toe → `POST /consumption-logs`
 - Importeer `CreateConsumptionLogInput`, `ConsumptionLog`, `ConsumptionLogWithRelations` uit `@product-repos/contracts`
 
-### 8. Consumption Logger – TanStack Query hooks
-**Nieuw bestand:** `apps/consumption_logger/src/hooks/useConsumptionLogs.ts`
+### 8. Calory Tracker – TanStack Query hooks
+**Nieuw bestand:** `apps/calory_tracker/src/hooks/useConsumptionLogs.ts`
 - `useQuery({ queryKey: ['consumption-logs'], queryFn: api.consumptionLogs.getAll })`
 - Exporteert `{ logs, isLoading, error }`
 
-**Nieuw bestand:** `apps/consumption_logger/src/hooks/useUnits.ts`
+**Nieuw bestand:** `apps/calory_tracker/src/hooks/useUnits.ts`
 - Zelfde patroon: `useQuery({ queryKey: ['units'], queryFn: api.units.getAll })`
 - Exporteert `{ units, isLoading }`
 
-### 9. Consumption Logger – AddConsumptionLogModal component
-**Nieuw bestand:** `apps/consumption_logger/src/components/AddConsumptionLogModal.tsx`
+### 9. Calory Tracker – AddConsumptionLogModal component
+**Nieuw bestand:** `apps/calory_tracker/src/components/AddConsumptionLogModal.tsx`
 
 Bevat:
 - **ProductAutocomplete** (inline): tekstveld met realtime filtering op `products`, dropdown met suggesties, toetsenbordnavigatie (pijlen/Enter/Escape)
@@ -72,8 +72,8 @@ Bevat:
   - `onSuccess`: `queryClient.invalidateQueries({ queryKey: ['consumption-logs'] })` + `onSuccess()` callback + modal sluiten
 - **Props:** `{ isOpen, onClose, products, onSuccess }`
 
-### 10. Consumption Logger – Consumption Log lijst op Dashboard
-**Bestand:** `apps/consumption_logger/src/pages/Dashboard.tsx`
+### 10. Calory Tracker – Consumption Log lijst op Dashboard
+**Bestand:** `apps/calory_tracker/src/pages/Dashboard.tsx`
 - Gebruik `useConsumptionLogs()` hook om de lijst op te halen
 - Toon een `ConsumptionLogList` sectie onder de productlijst (of als aparte sectie op het hoofdscherm)
 - FAB-knop: `position: fixed; bottom: 24px; right: 24px` met `+` label
@@ -98,13 +98,13 @@ Bevat:
 Strategie: `mock.module('../src/db/index', ...)` om de echte DB te mocken, exact zoals `example.test.ts`. App via `createApp()` aanroepen en `app.request()` gebruiken.
 
 ### Frontend tests (Vitest + Testing Library)
-**Setup vereist in `consumption_logger`:**
+**Setup vereist in `calory_tracker`:**
 - Installeer `vitest`, `jsdom`, `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`
 - Voeg `vitest.config.ts` toe met `environment: 'jsdom'`
 - Voeg `test` script toe in `package.json`: `"test": "vitest"`
 - Wrap test renders in `QueryClientProvider` (fresh `QueryClient` per test)
 
-**Nieuw bestand:** `apps/consumption_logger/src/components/AddConsumptionLogModal.test.tsx`
+**Nieuw bestand:** `apps/calory_tracker/src/components/AddConsumptionLogModal.test.tsx`
 
 | Test | Beschrijving |
 |------|--------------|
@@ -118,13 +118,13 @@ Strategie: `mock.module('../src/db/index', ...)` om de echte DB te mocken, exact
 
 ## Linting
 - Backend: `pnpm --filter @product-repos/backend lint`
-- Consumption Logger: `pnpm --filter consumption_logger lint`
+- Calory Tracker: `pnpm --filter calory_tracker lint`
 
 ---
 
 ## Verificatie (end-to-end)
 1. Start de backend: `pnpm --filter @product-repos/backend dev`
-2. Start de consumption_logger: `pnpm --filter consumption_logger dev`
+2. Start de calory_tracker: `pnpm --filter calory_tracker dev`
 3. Ga naar `http://localhost:5173`
 4. Klik op de FAB-knop rechtsonder → modal opent
 5. Typ een productnaam → autocomplete toont suggesties → selecteer een product
@@ -144,13 +144,13 @@ Strategie: `mock.module('../src/db/index', ...)` om de echte DB te mocken, exact
 | `apps/backend/src/services/consumptionLogs.service.ts` | Nieuw |
 | `apps/backend/src/routes/consumptionLogs.ts` | Nieuw |
 | `apps/backend/src/app.ts` | Wijzigen – route registreren |
-| `apps/consumption_logger/src/main.tsx` | Wijzigen – QueryClientProvider toevoegen |
-| `apps/consumption_logger/src/api/client.ts` | Wijzigen – post helper + consumptionLogs API |
-| `apps/consumption_logger/src/hooks/useConsumptionLogs.ts` | Nieuw – TanStack Query useQuery |
-| `apps/consumption_logger/src/hooks/useUnits.ts` | Nieuw – TanStack Query useQuery |
-| `apps/consumption_logger/src/components/AddConsumptionLogModal.tsx` | Nieuw – useMutation + invalidateQueries |
-| `apps/consumption_logger/src/pages/Dashboard.tsx` | Wijzigen – FAB + modal + toast + log lijst |
+| `apps/calory_tracker/src/main.tsx` | Wijzigen – QueryClientProvider toevoegen |
+| `apps/calory_tracker/src/api/client.ts` | Wijzigen – post helper + consumptionLogs API |
+| `apps/calory_tracker/src/hooks/useConsumptionLogs.ts` | Nieuw – TanStack Query useQuery |
+| `apps/calory_tracker/src/hooks/useUnits.ts` | Nieuw – TanStack Query useQuery |
+| `apps/calory_tracker/src/components/AddConsumptionLogModal.tsx` | Nieuw – useMutation + invalidateQueries |
+| `apps/calory_tracker/src/pages/Dashboard.tsx` | Wijzigen – FAB + modal + toast + log lijst |
 | `apps/backend/tests/consumptionLogs.test.ts` | Nieuw |
-| `apps/consumption_logger/vitest.config.ts` | Nieuw |
-| `apps/consumption_logger/src/components/AddConsumptionLogModal.test.tsx` | Nieuw |
+| `apps/calory_tracker/vitest.config.ts` | Nieuw |
+| `apps/calory_tracker/src/components/AddConsumptionLogModal.test.tsx` | Nieuw |
 | `_specs/create-a-consumption-log.spec.md` | Wijzigen – test plan toevoegen |
