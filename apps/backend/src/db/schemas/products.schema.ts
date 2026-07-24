@@ -1,33 +1,37 @@
 import {
+  AnySQLiteColumn,
   integer,
   real,
   sqliteTable,
+  text,
+  unique,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
-import { textColumn, uuid } from "../helper.ts";
+import { uuid } from "./helper.ts";
 
-export const brands = sqliteTable("brand", {
+export const brand = sqliteTable("brand", {
   id: uuid("id"),
-  name: textColumn("name").notNull().unique(),
+  name: text("name").notNull().unique(),
 });
 
-export const productTypes = sqliteTable("product_type", {
+export const category = sqliteTable("category", {
   id: uuid("id"),
-  name: textColumn("name").notNull().unique(),
+  parentId: integer("parent_id").references((): AnySQLiteColumn => category.id),
+  name: text("name").notNull().unique(),
 });
 
-export const unitTypes = sqliteTable("unit_type", {
+export const unitType = sqliteTable("unit_type", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  name: textColumn("name").notNull().unique(),
+  name: text("name").notNull().unique(),
 });
 
-export const unitContents = sqliteTable(
+export const unitContent = sqliteTable(
   "unit_content",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     unitTypeId: integer("unit_type_id")
       .notNull()
-      .references(() => unitTypes.id),
+      .references(() => unitType.id),
     amount: real("amount").notNull(),
   },
   (table) => ({
@@ -38,49 +42,34 @@ export const unitContents = sqliteTable(
   }),
 );
 
-export const products = sqliteTable("product", {
-  id: uuid("id"),
-  name: textColumn("name").notNull(),
-  productTypeId: textColumn("product_type_id")
-    .notNull()
-    .references(() => productTypes.id),
-  brandId: textColumn("brand_id").references(() => brands.id),
+export const packagingType = sqliteTable("packaging_type", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull().unique(),
 });
 
-export const productVariants = sqliteTable(
-  "product_variant",
+export const productPackage = sqliteTable(
+  "product_package",
   {
-    id: uuid("id"),
-    productId: textColumn("product_id")
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    unitContentId: integer("unit_content_id")
       .notNull()
-      .references(() => products.id),
-    name: textColumn("name").notNull(),
+      .references(() => unitContent.id),
+    packagingTypeId: integer("packaging_type_id")
+      .notNull()
+      .references(() => packagingType.id),
+    unitsPerPackage: integer("units_per_package").notNull().default(1),
   },
-  (table) => ({
-    productVariantUnique: uniqueIndex(
-      "product_variant_product_id_name_unique",
-    ).on(table.productId, table.name),
-  }),
+  (table) => [
+    unique("product_package_unit_content_id_packaging_type_id_unique").on(
+      table.unitContentId,
+      table.packagingTypeId,
+    ),
+  ],
 );
 
-export const packagingTypes = sqliteTable("packaging_type", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  name: textColumn("name").notNull().unique(),
-});
-
-export const productSkus = sqliteTable("product_sku", {
+export const product = sqliteTable("product", {
   id: uuid("id"),
-  productVariantId: textColumn("product_variant_id")
-    .notNull()
-    .references(() => productVariants.id),
-  unitContentId: integer("unit_content_id")
-    .notNull()
-    .references(() => unitContents.id),
-  packagingTypeId: integer("packaging_type_id")
-    .notNull()
-    .references(() => packagingTypes.id),
-  unitsPerPackage: integer("units_per_package").notNull().default(1),
-  barcode: textColumn("barcode").unique(),
+  name: text("name"),
+  categoryId: text("category_id").references(() => category.id),
+  brandId: text("brand_id").references(() => brand.id),
 });
-
-export const unitType = unitTypes;

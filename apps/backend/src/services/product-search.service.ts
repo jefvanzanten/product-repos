@@ -3,6 +3,7 @@ import type {
   ProductSearchResponse,
   ProductSearchVariant,
 } from '@product-repos/contracts/product-search';
+import { normalizeProductTypeName } from '@product-repos/contracts/text';
 import {
   searchBrandProducts,
   searchProductTypes,
@@ -20,24 +21,35 @@ function buildVariants(rows: ProductVariantSearchRow[]): ProductSearchVariant[] 
   const variants = new Map<string, {
     id: string;
     name: string;
-    contents: Map<number, ProductSearchContent>;
+    brandName: string | null;
+    productTypeName: string;
+    contents: Map<string, ProductSearchContent>;
   }>();
 
   for (const row of rows) {
     const variant = variants.get(row.id) ?? {
       id: row.id,
       name: `${row.productName} — ${row.variantName}`,
-      contents: new Map<number, ProductSearchContent>(),
+      brandName: row.brandName,
+      productTypeName: normalizeProductTypeName(row.productTypeName),
+      contents: new Map<string, ProductSearchContent>(),
     };
 
     if (
-      row.unitContentId !== null
+      row.productSkuId !== null
+      && row.unitContentId !== null
       && row.amount !== null
+      && row.packagingTypeName !== null
       && row.unit !== null
+      && row.unitsPerPackage !== null
     ) {
-      variant.contents.set(row.unitContentId, {
+      variant.contents.set(row.productSkuId, {
+        id: row.productSkuId,
         amount: row.amount,
+        barcode: row.barcode,
+        packagingTypeName: row.packagingTypeName,
         unit: row.unit,
+        unitsPerPackage: row.unitsPerPackage,
       });
     }
 
@@ -47,6 +59,8 @@ function buildVariants(rows: ProductVariantSearchRow[]): ProductSearchVariant[] 
   return [...variants.values()].map((variant) => ({
     id: variant.id,
     name: variant.name,
+    brandName: variant.brandName,
+    productTypeName: variant.productTypeName,
     contents: [...variant.contents.values()],
   }));
 }
@@ -57,6 +71,7 @@ export function getProductSearchResults(query: string | undefined): ProductSearc
 
   const productTypes = searchProductTypes(normalizedQuery).map((productType) => ({
     ...productType,
+    name: normalizeProductTypeName(productType.name),
     brandProductCount: Number(productType.brandProductCount),
   }));
   const brandProducts = searchBrandProducts(normalizedQuery).flatMap((brandProduct) => {
@@ -64,7 +79,9 @@ export function getProductSearchResults(query: string | undefined): ProductSearc
 
     return [{
       brandId: brandProduct.brandId,
+      productId: brandProduct.productId,
       productTypeId: brandProduct.productTypeId,
+      productTypeName: normalizeProductTypeName(brandProduct.productTypeName),
       name: brandProduct.name,
       variantCount: Number(brandProduct.variantCount),
     }];

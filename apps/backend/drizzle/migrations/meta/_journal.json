@@ -8,6 +8,13 @@
       "when": 1783953569578,
       "tag": "0000_long_puppet_master",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1784189778957,
+      "tag": "0001_spooky_nebula",
+      "breakpoints": true
     }
   ]
 }

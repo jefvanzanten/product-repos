@@ -13,6 +13,8 @@
     "db:studio": "drizzle-kit studio",
     "db:push": "bunx drizzle-kit push",
     "db:seed": "bun run src/db/seed.ts",
+    "db:seed:common-units": "bun run src/db/seeds/seed-common-unit-types.ts",
+    "db:seed:common-packaging": "bun run src/db/seeds/seed-common-packaging-types.ts",
     "test": "bun test",
     "test:watch": "bun test --watch",
     "lint": "eslint src tests --ext .ts",

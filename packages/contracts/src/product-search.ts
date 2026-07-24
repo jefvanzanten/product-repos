@@ -1,6 +1,10 @@
 export type ProductSearchContent = {
+  id: string;
   amount: number;
+  barcode: string | null;
+  packagingTypeName: string;
   unit: string;
+  unitsPerPackage: number;
 };
 
 export type ProductSearchProductType = {
@@ -11,7 +15,9 @@ export type ProductSearchProductType = {
 
 export type ProductSearchBrandProduct = {
   brandId: string;
+  productId: string;
   productTypeId: string;
+  productTypeName: string;
   name: string;
   variantCount: number;
 };
@@ -19,6 +25,8 @@ export type ProductSearchBrandProduct = {
 export type ProductSearchVariant = {
   id: string;
   name: string;
+  brandName: string | null;
+  productTypeName: string;
   contents: ProductSearchContent[];
 };
 

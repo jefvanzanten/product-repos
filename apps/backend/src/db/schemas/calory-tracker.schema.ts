@@ -1,6 +1,6 @@
 import { integer, real, sqliteTable } from "drizzle-orm/sqlite-core";
 import { productVariants, unitContents } from "./products.schema.ts";
-import { textColumn, uuid } from "../helper.ts";
+import { textColumn, uuid } from "./helper.ts";
 
 export const macroNutrients = sqliteTable("macro_nutrients", {
   id: uuid("id"),

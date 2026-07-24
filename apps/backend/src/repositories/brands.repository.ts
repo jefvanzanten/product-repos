@@ -1,24 +1,27 @@
-import { eq } from 'drizzle-orm';
-import type { CreateBrandInput, UpdateBrandInput } from '@product-repos/contracts';
-import { db } from '../db/index';
-import { brands } from '../db/schema';
+import { eq } from "drizzle-orm";
+import type {
+  CreateBrandInput,
+  UpdateBrandInput,
+} from "@product-repos/contracts";
+import { db } from "../db/index";
+import { brand } from "../db/schema";
 
 export function findAllBrands() {
-  return db.select().from(brands).all();
+  return db.select().from(brand).all();
 }
 
 export function findBrandById(id: string) {
-  return db.select().from(brands).where(eq(brands.id, id)).get();
+  return db.select().from(brand).where(eq(brand.id, id)).get();
 }
 
 export function createBrand(input: CreateBrandInput) {
-  return db.insert(brands).values(input).returning().get();
+  return db.insert(brand).values(input).returning().get();
 }
 
 export function updateBrand(id: string, input: UpdateBrandInput) {
-  return db.update(brands).set(input).where(eq(brands.id, id)).returning().get();
+  return db.update(brand).set(input).where(eq(brand.id, id)).returning().get();
 }
 
 export function deleteBrand(id: string) {
-  return db.delete(brands).where(eq(brands.id, id)).returning().get();
+  return db.delete(brand).where(eq(brand.id, id)).returning().get();
 }

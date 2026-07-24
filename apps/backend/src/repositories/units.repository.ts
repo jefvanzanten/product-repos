@@ -1,7 +1,10 @@
-import { eq } from 'drizzle-orm';
-import type { CreateUnitTypeInput, UpdateUnitTypeInput } from '@product-repos/contracts';
-import { db } from '../db/index';
-import { unitType } from '../db/schema';
+import { eq } from "drizzle-orm";
+import type {
+  CreateUnitTypeInput,
+  UpdateUnitTypeInput,
+} from "@product-repos/contracts";
+import { db } from "../db/index";
+import { unitType } from "../db/schema";
 
 export function findAllUnits() {
   return db.select().from(unitType).all();
@@ -16,9 +19,20 @@ export function createUnit(input: CreateUnitTypeInput) {
 }
 
 export function updateUnit(id: number, input: UpdateUnitTypeInput) {
-  return db.update(unitType).set(input).where(eq(unitType.id, id)).returning().get();
+  return db
+    .update(unitType)
+    .set(input)
+    .where(eq(unitType.id, id))
+    .returning()
+    .get();
 }
 
 export function deleteUnit(id: number) {
   return db.delete(unitType).where(eq(unitType.id, id)).returning().get();
 }
+
+// // Unit Types
+// createUnitType: (name: string) => Promise<void>;
+
+// // Unit Contents
+// createUnitContent: (unitTypeId: number, amount: number) => Promise<void>;

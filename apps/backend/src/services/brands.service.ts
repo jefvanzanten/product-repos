@@ -6,6 +6,7 @@ import {
   findBrandById,
   updateBrand,
 } from '../repositories/brands.repository';
+import { findOrCreateBrandProduct } from '../repositories/products.repository';
 
 export function getAllBrands() {
   return findAllBrands();
@@ -17,6 +18,14 @@ export function getBrandById(id: string) {
 
 export function createNewBrand(input: CreateBrandInput) {
   return createBrand(input);
+}
+
+export function createBrandForProductType(
+  productTypeId: string,
+  input: CreateBrandInput,
+) {
+  const name = input.name.trim();
+  return findOrCreateBrandProduct(productTypeId, name).brand;
 }
 
 export function updateExistingBrand(id: string, input: UpdateBrandInput) {

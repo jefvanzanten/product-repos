@@ -29,6 +29,17 @@ export type {
   UpdateProductInput,
 } from './products.ts';
 
+export {
+  productTypeInsertSchema,
+  productTypeSelectSchema,
+  productTypeUpdateSchema,
+} from './product-types.ts';
+export type {
+  CreateProductTypeInput,
+  ProductType,
+  UpdateProductTypeInput,
+} from './product-types.ts';
+
 export type {
   ProductSearchBrandProduct,
   ProductSearchContent,
@@ -36,3 +47,5 @@ export type {
   ProductSearchResponse,
   ProductSearchVariant,
 } from './product-search.ts';
+
+export { normalizeProductTypeName } from './text.ts';

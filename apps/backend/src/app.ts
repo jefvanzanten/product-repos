@@ -1,60 +1,74 @@
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-import { logger } from 'hono/logger';
-import { brandRoutes } from './routes/brands';
-import { healthRoutes } from './routes/health';
-import { productSearchRoutes } from './routes/product-search';
-import { productRoutes } from './routes/products';
-import { unitRoutes } from './routes/units';
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { logger } from "hono/logger";
+import { brandRoutes } from "./routes/brands";
+import { healthRoutes } from "./routes/health";
+import { productSearchRoutes } from "./routes/product-search";
+import { productTypeRoutes } from "./routes/product-types";
+import { productRoutes } from "./routes/product.route";
+import { unitRoutes } from "./routes/units";
+import { productPackageRoutes } from "./routes/product-package.route";
 
 export function createApp() {
   const app = new Hono();
 
-  app.use('*', logger());
+  app.use("*", logger());
 
-  const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:3001')
-    .split(',')
+  const allowedOrigins = (
+    process.env.CORS_ORIGIN || "http://localhost:5173,http://localhost:3001"
+  )
+    .split(",")
     .map((o) => o.trim());
 
-  app.use('*', cors({
-    origin: (origin) => (allowedOrigins.includes(origin) ? origin : null),
-    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    credentials: true,
-  }));
+  app.use(
+    "*",
+    cors({
+      origin: (origin) => (allowedOrigins.includes(origin) ? origin : null),
+      allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      credentials: true,
+    }),
+  );
 
-  app.get('/', (c) => {
+  app.get("/", (c) => {
     return c.json({
-      message: 'Backend API is running',
-      version: '1.0.0',
+      message: "Backend API is running",
+      version: "1.0.0",
       timestamp: new Date().toISOString(),
     });
   });
 
-  app.route('/', healthRoutes());
-  app.route('/', brandRoutes());
-  app.route('/', unitRoutes());
-  app.route('/', productRoutes());
-  app.route('/', productSearchRoutes());
+  app.route("/", healthRoutes());
+  app.route("/", brandRoutes());
+  app.route("/", unitRoutes());
+  app.route("/", productPackageRoutes());
+  app.route("/", productRoutes());
+  app.route("/", productSearchRoutes());
 
   app.notFound((c) => {
-    return c.json({
-      error: {
-        message: 'Route not found',
-        statusCode: 404,
-        path: new URL(c.req.url).pathname,
+    return c.json(
+      {
+        error: {
+          message: "Route not found",
+          statusCode: 404,
+          path: new URL(c.req.url).pathname,
+        },
       },
-    }, 404);
+      404,
+    );
   });
 
   app.onError((err, c) => {
     console.error(err);
     const statusCode = (err as { status?: number }).status ?? 500;
-    return c.json({
-      error: {
-        message: err.message || 'Internal Server Error',
-        statusCode,
+    return c.json(
+      {
+        error: {
+          message: err.message || "Internal Server Error",
+          statusCode,
+        },
       },
-    }, statusCode as 500);
+      statusCode as 500,
+    );
   });
 
   return app;

@@ -1,3 +1,12 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# Keep dependency layout deterministic on Windows and never repair it as a
+# side effect of running a script.
+storeDir: .pnpm-store
+packageImportMethod: copy
+verifyDepsBeforeRun: error
+
+# pnpm 11+ must stop when it does not match packageManager in package.json.
+pmOnFail: error

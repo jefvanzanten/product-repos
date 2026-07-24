@@ -1,0 +1,70 @@
+  import { eq } from "drizzle-orm";
+import type { Brand, Product, UnitType } from "@product-repos/contracts";
+import { db } from "../db/index";
+import {
+  brand,
+  category,
+  packagingType,
+  product,
+  unitContent,
+  unitType,
+} from "../db/schema";
+
+interface CategoryData {
+  id: string;
+  name: string;
+  parentId?: number | null;
+}
+
+interface PackagingType {
+  id: number;
+  name: string;
+}
+
+interface ProductPackage {
+  id: number;
+  unitTypeId: number;
+  packagingTypeId: number;
+  contentAmount: number;
+  unitsPerPackage: number;
+}
+  
+  async createCategory(name: string, parentId?: string): Promise<void> {
+    await db.insert(category).values({ name, parentId });
+  }
+
+  async createUnitType(name: string): Promise<void> {
+    await db.insert(unitType).values({ name });
+  }
+
+  async createUnitContent(unitTypeId: number, amount: number): Promise<void> {
+    await db.insert(unitContent).values({ unitTypeId, amount });
+  }
+
+  async getPackagingTypes(): Promise<PackagingType[]> {
+    const packagingTypes = await db.select().from(packagingType);
+    return packagingTypes.map((pt) => ({ id: pt.id, name: pt.name }));
+  }
+
+  async createPackagingType(name: string): Promise<void> {
+    await db.insert(packagingType).values({ name });
+  }
+
+  async getProductPackages(): Promise<ProductPackage[]> {
+    const productPackages = await db
+      .select()
+      .from(productPackage)
+      .innerJoin(unitContent, eq(productPackage.unitContentId, unitContent.id))
+      .innerJoin(
+        packagingType,
+        eq(productPackage.packagingTypeId, packagingType.id),
+      );
+
+    return productPackages.map((pp) => ({
+      id: pp.productPackage.id,
+      unitTypeId: pp.unitContent.unitTypeId,
+      packagingTypeId: pp.productPackage.packagingTypeId,
+      contentAmount: pp.unitContent.amount,
+      unitsPerPackage: pp.productPackage.unitsPerPackage,
+    }));
+  }

@@ -4,35 +4,43 @@
   "private": true,
   "description": "",
   "scripts": {
-    "build": "pnpm -r --if-present run build",
-    "dev": "pnpm --filter \"./apps/*\" --parallel run dev",
-    "lint": "pnpm -r --if-present run lint",
-    "typecheck": "pnpm -r --if-present run typecheck",
-    "test": "pnpm -r --if-present run test",
-    "backend:build": "pnpm --filter @product-repos/backend build",
-    "backend:dev": "pnpm --filter @product-repos/backend dev",
-    "backend:start": "pnpm --filter @product-repos/backend start",
-    "backend:typecheck": "pnpm --filter @product-repos/backend typecheck",
-    "db:generate": "pnpm --filter @product-repos/backend db:generate",
-    "db:migrate": "pnpm --filter @product-repos/backend db:migrate",
-    "db:push": "pnpm --filter @product-repos/backend db:push",
-    "db:studio": "pnpm --filter @product-repos/backend db:studio",
-    "db:seed": "pnpm --filter @product-repos/backend db:seed",
-    "inventory:build": "pnpm --filter inventory build",
-    "inventory:dev": "pnpm --filter inventory dev",
-    "inventory:start": "pnpm --filter inventory start",
-    "inventory:typecheck": "pnpm --filter inventory typecheck"
+    "build": "corepack pnpm -r --if-present run build",
+    "dev": "corepack pnpm --filter \"./apps/*\" --parallel run dev",
+    "lint": "corepack pnpm -r --if-present run lint",
+    "typecheck": "corepack pnpm -r --if-present run typecheck",
+    "test": "corepack pnpm -r --if-present run test",
+    "backend:build": "corepack pnpm --filter @product-repos/backend build",
+    "backend:dev": "corepack pnpm --filter @product-repos/backend dev",
+    "backend:start": "corepack pnpm --filter @product-repos/backend start",
+    "backend:typecheck": "corepack pnpm --filter @product-repos/backend typecheck",
+    "db:generate": "corepack pnpm --filter @product-repos/backend db:generate",
+    "db:migrate": "corepack pnpm --filter @product-repos/backend db:migrate",
+    "db:push": "corepack pnpm --filter @product-repos/backend db:push",
+    "db:studio": "corepack pnpm --filter @product-repos/backend db:studio",
+    "db:seed": "corepack pnpm --filter @product-repos/backend db:seed",
+    "db:seed:common-units": "corepack pnpm --filter @product-repos/backend db:seed:common-units",
+    "db:seed:common-packaging": "corepack pnpm --filter @product-repos/backend db:seed:common-packaging",
+    "db:seed:unit-types": "corepack pnpm --filter @product-repos/backend db:seed:unit-types",
+    "db:seed:packaging-types": "corepack pnpm --filter @product-repos/backend db:seed:packaging-types",
+    "inventory:build": "corepack pnpm --filter inventory build",
+    "inventory:dev": "corepack pnpm --filter inventory dev",
+    "inventory:start": "corepack pnpm --filter inventory start",
+    "inventory:typecheck": "corepack pnpm --filter inventory typecheck"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.28.2",
+  "engines": {
+    "pnpm": "10.28.2"
+  },
   "dependencies": {
     "drizzle-orm": "^0.38.3",
     "drizzle-zod": "^0.8.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "typescript": "^5.7.2"
   }
 }

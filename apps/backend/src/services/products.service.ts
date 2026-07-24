@@ -1,28 +1,46 @@
-import type { CreateProductInput, UpdateProductInput } from '@product-repos/contracts';
-import {
-  createProduct,
-  deleteProduct,
-  findAllProducts,
-  findProductById,
-  updateProduct,
-} from '../repositories/products.repository';
+import type {
+  CreateProductInput,
+  Product,
+  UpdateProductInput,
+} from "@product-repos/contracts";
+import { ProductRepository } from "../repositories/products.repository";
 
-export function getAllProducts() {
-  return findAllProducts();
+interface iProductsService {
+  getAllProducts: () => Promise<Product[]>;
+  createNewProduct: (input: CreateProductInput) => Promise<void>;
+  updateExistingProduct: (
+    id: string,
+    input: UpdateProductInput,
+  ) => Promise<void>;
+  deleteProduct: (id: string) => Promise<void>;
 }
 
-export function getProductById(id: string) {
-  return findProductById(id);
+class ProductsService implements iProductsService {
+  private productRepository: ProductRepository;
+
+  constructor(productRepository: ProductRepository) {
+    this.productRepository = new ProductRepository();
+  }
+
+  async getAllProducts(): Promise<Product[]> {
+    // Implementation for fetching all products
+  }
+
+  async createNewProduct(input: CreateProductInput): Promise<void> {
+    // Implementation for creating a new product
+  }
+
+  async updateExistingProduct(
+    id: string,
+    input: UpdateProductInput,
+  ): Promise<void> {
+    // Implementation for updating an existing product
+  }
+
+  async deleteProduct(id: string): Promise<void> {
+    // Implementation for deleting a product
+  }
 }
 
-export function createNewProduct(input: CreateProductInput) {
-  return createProduct(input);
-}
-
-export function updateExistingProduct(id: string, input: UpdateProductInput) {
-  return updateProduct(id, input);
-}
-
-export function removeProduct(id: string) {
-  return deleteProduct(id);
-}
+// getAllBrands: () => Promise<Brand[]>;
+// getAllPackagingTypes: () => Promise<{ id: number; name: string }[]>;

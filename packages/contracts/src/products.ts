@@ -5,7 +5,7 @@ import { brandSelectSchema } from './brands.ts';
 
 const productTextColumns = {
   id: z.string(),
-  name: z.string(),
+  name: z.string().nullable(),
   productTypeId: z.string(),
   brandId: z.string().nullable(),
 };
@@ -14,10 +14,11 @@ export const productSelectSchema = createSelectSchema(products, productTextColum
 export const productInsertSchema = createInsertSchema(products, {
   ...productTextColumns,
   id: z.string().optional(),
+  name: z.string().nullable().optional(),
 });
 export const productUpdateSchema = createUpdateSchema(products, {
   id: z.string().optional(),
-  name: z.string().optional(),
+  name: z.string().nullable().optional(),
   productTypeId: z.string().optional(),
   brandId: z.string().nullable().optional(),
 });

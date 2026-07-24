@@ -1,20 +1,21 @@
 import {
-  AnySQLiteColumn,
   integer,
   sqliteTable,
+  text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
-import { textColumn, uuid } from "../helper.ts";
-import { productSkus } from "./products.schema.ts";
+import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
+import { uuid } from "./helper.ts";
+import { product } from "./products.schema.ts";
 
-export const locations = sqliteTable(
+export const location = sqliteTable(
   "location",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     parentId: integer("parent_id").references(
-      (): AnySQLiteColumn => locations.id,
+      (): AnySQLiteColumn => location.id,
     ),
-    name: textColumn("name").notNull(),
+    name: text("name").notNull(),
   },
   (table) => ({
     parentNameUnique: uniqueIndex("location_parent_id_name_unique").on(
@@ -26,12 +27,12 @@ export const locations = sqliteTable(
 
 export const storageRecords = sqliteTable("storage_record", {
   id: uuid("id"),
-  productSkuId: textColumn("product_sku_id")
+  productId: uuid("product_id")
     .notNull()
-    .references(() => productSkus.id),
+    .references(() => product.id),
   locationId: integer("location_id")
     .notNull()
-    .references(() => locations.id),
+    .references(() => location.id),
   quantity: integer("quantity").notNull(),
-  expirationDate: textColumn("expiration_date"),
+  expirationDate: text("expiration_date"),
 });
