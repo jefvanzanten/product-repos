@@ -2,6 +2,7 @@ import { asc, eq, sql } from "drizzle-orm";
 import { db } from "../db/index";
 import { category, product } from "../db/schema";
 import { err, ok, type Result } from "../domain";
+import { isSqliteUniqueConstraintViolation } from "./sqlite-errors";
 
 export function findAllCategories() {
   return db.select().from(category).orderBy(asc(category.parentId), asc(sql`lower(${category.name})`)).all();
@@ -18,7 +19,12 @@ export function createCategory(input: { readonly name: string; readonly parentId
     ? db.select().from(category).where(sql`${category.parentId} IS NULL AND lower(trim(${category.name})) = ${normalizedName}`).get()
     : db.select().from(category).where(sql`${category.parentId} = ${input.parentId} AND lower(trim(${category.name})) = ${normalizedName}`).get();
   if (duplicate) return err({ code: "CATEGORY_ALREADY_EXISTS", message: "Category already exists" });
-  return ok(db.insert(category).values(input).returning().get());
+  try {
+    return ok(db.insert(category).values(input).returning().get());
+  } catch (error) {
+    if (isSqliteUniqueConstraintViolation(error)) return err({ code: "CATEGORY_ALREADY_EXISTS", message: "Category already exists" });
+    throw error;
+  }
 }
 
 export function deleteCategory(id: number): Result<{ readonly id: number }> {

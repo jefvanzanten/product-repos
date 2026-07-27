@@ -27,7 +27,7 @@ export const location = sqliteTable(
 
 export const storageRecords = sqliteTable("storage_record", {
   id: uuid("id"),
-  productId: uuid("product_id")
+  productId: text("product_id")
     .notNull()
     .references(() => product.id),
   locationId: integer("location_id")

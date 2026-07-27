@@ -26,6 +26,7 @@ const appModule = await import("../src/app");
 const dbModule = await import("../src/db/index");
 
 export const app = appModule.createApp();
+export const sqliteConnection = dbModule.sqliteConnection;
 
 export const testCatalog = {
   categoryId,

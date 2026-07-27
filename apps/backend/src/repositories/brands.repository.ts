@@ -1,6 +1,7 @@
 import { asc, eq, like, sql } from "drizzle-orm";
 import { db } from "../db/index";
 import { brand } from "../db/schema";
+import { isSqliteUniqueConstraintViolation } from "./sqlite-errors";
 
 export function searchBrands(query: string) {
   const trimmed = query.trim();
@@ -19,6 +20,13 @@ export function findBrandByNormalizedName(name: string) {
 export function findOrCreateBrand(name: string) {
   const existing = findBrandByNormalizedName(name);
   if (existing) return { brand: existing, created: false };
-  const created = db.insert(brand).values({ name }).returning().get();
-  return { brand: created, created: true };
+  try {
+    const created = db.insert(brand).values({ name }).returning().get();
+    return { brand: created, created: true };
+  } catch (error) {
+    if (!isSqliteUniqueConstraintViolation(error)) throw error;
+    const concurrentExisting = findBrandByNormalizedName(name);
+    if (concurrentExisting) return { brand: concurrentExisting, created: false };
+    throw error;
+  }
 }
