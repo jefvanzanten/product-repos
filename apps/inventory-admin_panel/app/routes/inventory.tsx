@@ -1,5 +1,5 @@
 import type { Route } from "./+types/inventory";
-import InventoryPage from "../../features/inventory/components/InventoryPage";
+import InventoryPage from "../../features/inventory/components/InventoryPage/InventoryPage";
 
 export function meta({}: Route.MetaArgs) {
   return [

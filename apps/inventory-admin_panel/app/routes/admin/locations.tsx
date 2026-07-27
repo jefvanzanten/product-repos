@@ -1,5 +1,5 @@
 import type { Route } from "../../+types/root";
-import StorageManagementPage from "../../../features/admin/storage-management/components/StorageManagementPage";
+import StorageManagementPage from "../../../features/admin/storage-management/components/StorageManagementPage/StorageManagementPage";
 
 export function meta({}: Route.MetaArgs) {
   return [
