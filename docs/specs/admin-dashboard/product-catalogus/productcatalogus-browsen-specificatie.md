@@ -4,7 +4,7 @@
 
 - Onderdeel: admin dashboard > productcatalogus
 - Route: `/admin/product-catalogus/producten`
-- Status: gepland / nog niet geimplementeerd
+- Status: geimplementeerd
 - Gerelateerde specs:
   - [product-zoeken-specificatie.md](./product-zoeken-specificatie.md)
   - [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md)
@@ -73,7 +73,8 @@ De hoofdpagina toont geen platte lijst met alle producten. Browsen verloopt via 
 
 Wanneer de beheerder een categorie opent, toont de pagina:
 
-- breadcrumb of categoriepad;
+- een generieke paginacontext, geen volledige breadcrumb als paginatitel;
+- een klikbare breadcrumb als aparte navigatie;
 - directe subcategorieën;
 - directe producten in deze categorie;
 - primaire actie voor de huidige categorie.
@@ -82,9 +83,9 @@ Voorbeeld:
 
 ```text
 Productcatalogus
-Voeding > Dranken > Frisdrank
+Producten
 
-[ Zoek product, merk of categorie ]
+Alle categorieën > Voeding > Dranken > Frisdrank
 
 Subcategorieën
 - Cola
@@ -95,16 +96,22 @@ Producten in Frisdrank
 - Spa Rood
 - Fanta Orange
 
-[ Product aanmaken in Frisdrank ]
+[ Product aanmaken ]
 ```
 
 Regels:
 
+- De volledige categoriecontext wordt niet als paginatitel herhaald; de sectietitel `Producten in <categorie>` en de breadcrumb geven samen voldoende context.
+- De zoekbalk wordt niet getoond in categorie-browse, omdat de beheerder al binnen een expliciete categoriecontext navigeert.
+- De breadcrumb begint altijd met `Alle categorieën` en toont daarna het categoriepad van root naar huidige categorie.
+- `Alle categorieën` linkt naar `/admin/product-catalogus/producten` zonder queryparameters.
+- Elke ancestorcategorie in de breadcrumb is afzonderlijk klikbaar en opent `/admin/product-catalogus/producten?categoryId=<categoryId>`.
+- De huidige categorie mag als laatste, niet-klikbaar breadcrumbsegment worden getoond.
 - Producten uit subcategorieën worden niet automatisch getoond op de parentcategorie.
 - Om producten in een subcategorie te zien, navigeert de beheerder naar die subcategorie.
 - Producten die direct aan een parentcategorie hangen, worden wel op die parentcategorie getoond.
-- De contextuele knop gebruikt alleen de laatste categorienaam, niet het volledige pad.
-- De volledige categoriecontext is zichtbaar via breadcrumb of categoriepad.
+- De contextuele aanmaakactie gebruikt de korte knoptekst `Product aanmaken`, ook wanneer er een categoriecontext is.
+- De categoriecontext voor aanmaken blijft de huidige categorie en wordt via `categoryId` meegegeven.
 - Er is maar één primaire knop; er staan geen plusknoppen bij elke subcategorie.
 
 ## Lege categorieën in browse
@@ -117,8 +124,10 @@ Wanneer een geopende categorie geen directe producten en geen subcategorieën he
 
 ```text
 Nog geen producten in deze categorie.
-[ Product aanmaken in <categorie> ]
+[ Product aanmaken ]
 ```
+
+Ook in deze lege categorietoestand gebruikt de aanmaakactie de huidige `categoryId` als prefillcontext.
 
 ## Productrij of productkaart
 
@@ -269,9 +278,9 @@ Voorbeeld URL:
 Bij selectie van een categorieresultaat:
 
 - wordt `q` verwijderd uit de URL;
-- wordt de zoekbalk leeg;
-- toont de pagina de gekozen categorie met directe subcategorieën en directe producten;
-- de primaire actie wordt `Product aanmaken in <categorie>`.
+- wordt de zoekbalk verborgen zolang de gekozen categoriecontext actief is;
+- toont de pagina de gekozen categorie met klikbare breadcrumb, directe subcategorieën en directe producten;
+- de primaire actie blijft `Product aanmaken` en neemt de gekozen `categoryId` als context mee.
 
 ## Product aanmaken vanuit browse en resultaten
 
@@ -281,7 +290,7 @@ Er is altijd één primaire actie.
 | --- | --- | --- |
 | Hoofdpagina/root | `Product aanmaken` | Geen context |
 | Lege catalogus | `Eerste product aanmaken` | Geen context |
-| Categorie-browse | `Product aanmaken in <categorie>` | `categoryId` |
+| Categorie-browse | `Product aanmaken` | `categoryId` |
 | Brand-result state | `Product aanmaken voor <merk>` | `brandId` |
 | Alleen typed zoekterm | `Product aanmaken` | Geen context |
 
@@ -289,13 +298,14 @@ Regels:
 
 - Alleen expliciet gekozen context wordt meegenomen.
 - Een typed zoekterm wordt niet gebruikt als productnaam, merk of categorie.
-- Categorieknop gebruikt alleen de laatste categorienaam.
-- Volledige context staat zichtbaar via breadcrumb of paginastate.
+- In categorie-browse blijft de knoptekst kort: `Product aanmaken`.
+- De volledige categoriecontext staat zichtbaar via de klikbare breadcrumb.
+- Brand-result state mag de merknaam in de knoptekst tonen, omdat de context geen breadcrumb heeft.
 
 Voorbeelden:
 
 ```text
-Product aanmaken in Cola
+Product aanmaken
 ```
 
 ```text
@@ -370,7 +380,9 @@ En geen platte lijst met alle producten.
 Gegeven dat een categorie bestaat  
 Wanneer de beheerder de categorie opent  
 Dan ziet de beheerder directe subcategorieën en directe producten in die categorie  
-En een primaire actie `Product aanmaken in <categorie>`.
+En ziet de beheerder een klikbare breadcrumb met `Alle categorieën` en het categoriepad  
+En ziet de beheerder geen zoekbalk in deze categoriecontext  
+En een primaire actie `Product aanmaken` met de huidige categorie als prefillcontext.
 
 ### AC-03 - Product openen
 
@@ -388,8 +400,9 @@ En toont de UI geen merkchip of inline uitgeklapte zoekresultaten.
 ### AC-05 - Contextueel product aanmaken
 
 Gegeven dat de beheerder in een categorie-browse of brand-result state zit  
-Wanneer de beheerder `Product aanmaken` kiest  
-Dan opent het productformulier met de expliciete categorie- of merkcontext vooraf geselecteerd.
+Wanneer de beheerder de primaire aanmaakactie kiest  
+Dan opent het productformulier met de expliciete categorie- of merkcontext vooraf geselecteerd  
+En gebruikt categorie-browse de korte knoptekst `Product aanmaken`.
 
 ### AC-06 - Geen prefill vanuit zoekterm
 
@@ -409,3 +422,11 @@ En kan de beheerder het eerste product aanmaken.
 Gegeven dat de browsbare catalogus wordt gebouwd  
 Dan gebruikt de UI alleen categorie, merk, product en verpakking  
 En wordt er geen oude trapsgewijze productmanagement-flow teruggebracht.
+
+### AC-09 - Breadcrumb navigatie
+
+Gegeven dat de beheerder in een geneste categorie zit  
+Wanneer de beheerder `Alle categorieën` in de breadcrumb kiest  
+Dan opent de rootcatalogus zonder `categoryId`  
+En wanneer de beheerder een ancestorcategorie in de breadcrumb kiest  
+Dan opent de catalogus die categorie met `categoryId=<ancestorCategoryId>`.

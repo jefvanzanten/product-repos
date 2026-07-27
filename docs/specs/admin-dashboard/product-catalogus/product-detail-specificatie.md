@@ -3,7 +3,7 @@
 ## Status
 
 - Onderdeel: admin dashboard > productcatalogus
-- Status: gepland / nog niet geimplementeerd
+- Status: geimplementeerd
 - Hoort bij:
   - [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md)
   - [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md)

@@ -13,7 +13,7 @@ location
 
 inventory_item
     id: uuid PK
-    product_package_id: int FK NOT NULL
+    product_package_id: uuid FK NOT NULL
     location_id: int FK NULL
     quantity: decimal NOT NULL
     created_at: datetime NOT NULL

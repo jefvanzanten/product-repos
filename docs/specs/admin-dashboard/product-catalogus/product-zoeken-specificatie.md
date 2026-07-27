@@ -7,9 +7,9 @@
   - `/admin/product-catalogus/producten`
   - `/admin/product-catalogus/producten/nieuw`
 - Status:
-  - cataloguszoekveld: huidig, alleen UI-state;
-  - merk zoeken in productformulier: huidig;
-  - echte cataloguszoekresultaten: gespecificeerd, nog niet geimplementeerd.
+  - cataloguszoekveld: geimplementeerd;
+  - merk zoeken in productformulier: geimplementeerd voor product aanmaken en product bewerken;
+  - echte cataloguszoekresultaten: geimplementeerd.
 - Gerelateerde spec: [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md)
 
 ## Doel
@@ -22,10 +22,10 @@ Deze spec beschrijft de algemene zoekregels. De concrete UI-resultaten en klikge
 
 | Zoekvorm | Waar | Status |
 | --- | --- | --- |
-| Productcatalogus zoeken | `/admin/product-catalogus/producten?q=...` | Query wordt nu bewaard; resultatenweergave is gespecificeerd in browse-spec |
-| Merk zoeken | merkveld in product-aanmaakformulier | Werkt via `GET /brands?query=...` |
-| Productresultaten zoeken | productcataloguspagina | Gespecificeerd, nog niet geimplementeerd |
-| Categorie zoeken | productcataloguspagina | Gespecificeerd als zoekresultaat, nog niet geimplementeerd |
+| Productcatalogus zoeken | `/admin/product-catalogus/producten?q=...` | Werkt met gegroepeerde resultaten volgens browse-spec |
+| Merk zoeken | merkveld in product-aanmaakformulier en product-bewerkformulier | Werkt via `GET /brands?query=...` |
+| Productresultaten zoeken | productcataloguspagina | Geimplementeerd |
+| Categorie zoeken | productcataloguspagina | Geimplementeerd |
 
 ## Cataloguszoekveld
 
@@ -51,7 +51,7 @@ Producten
 
 ### Zoekgedrag
 
-Wanneer productzoeken wordt geimplementeerd, zoekt de cataloguszoeker vanaf minimaal twee tekens.
+De cataloguszoeker zoekt vanaf minimaal twee tekens.
 
 De zoekterm wordt gematcht op:
 
