@@ -1,34 +1,21 @@
-# Admin dashboard endpoints — product creation MVP
+# Admin dashboard endpoints — product aanmaken vertical slice
 
-This document defines the runtime API needed for the vertical slice **create a new product**.
+Dit document is het HTTP-contract voor de huidige product-aanmaak vertical slice. Functionele UI- en productregels staan in:
 
-## Scope
+- `docs/specs/admin-dashboard/product-catalogus/product-aanmaken-specificatie.md`
+- `docs/specs/admin-dashboard/product-catalogus/product-zoeken-specificatie.md`
 
-A product is considered created only when both are created successfully:
+## Algemene endpointregels
 
-1. the `product`
-2. exactly one initial `product_package`
+- Endpoint paths gebruiken Engelse plural resource names.
+- Request bodies zijn strict: onbekende velden of verkeerde shapes geven `400 VALIDATION_ERROR`.
+- Text fields worden getrimd vóór validatie/opslag.
+- Duplicaatchecks gebruiken `lower(trim(value))`-semantiek.
+- Interne whitespace, punctuation en hyphens worden niet genormaliseerd in deze slice.
+- Decimal amounts worden verzonden als string met `.` als separator, bijvoorbeeld `"1.5"`.
+- De backend canonicaliseert decimal amounts vóór lookup/opslag, bijvoorbeeld `"1.50"` naar `"1.5"`.
 
-Out of scope for this MVP slice:
-
-- nutrition endpoints
-- storage/inventory endpoints
-- product details endpoint
-- editing products
-- adding extra packages after product creation
-- authentication/authorization details
-
-## Conventions
-
-- Endpoint paths use English plural resource names.
-- Request bodies are strict: unknown fields or wrong shapes return `400 VALIDATION_ERROR`.
-- Text fields are trimmed before validation/storage.
-- Text duplicate checks are case-insensitive with `lower(trim(value))` semantics.
-- No fuzzy text matching in this MVP. For example, `Cola Zero` and `Cola_Zero` are different.
-- Decimal amounts are sent as decimal strings using `.` as decimal separator. UI input `1,5` must be converted by the client to `"1.5"`.
-- Decimal values are canonicalized by the backend before lookup/storage. For example, `"1.50"` is returned and reused as `"1.5"`.
-
-Common error shape, intentionally lightweight:
+## Error shape
 
 ```json
 {
@@ -40,18 +27,14 @@ Common error shape, intentionally lightweight:
 }
 ```
 
-Implementation may model errors with typed/OOP domain errors. This document only defines the HTTP mapping.
+Mogelijke error codes in deze slice:
 
-## Seeded reference data
-
-`unit_type` and `package_type` are managed through database seed/migration data, not through runtime create endpoints.
-
-The product-create UI can only read them through:
-
-- `GET /unit-types`
-- `GET /package-types`
-
-Seed values are Dutch/domain values such as `liter`, `gram`, `fles`, `blik`.
+- `VALIDATION_ERROR`
+- `REFERENCE_NOT_FOUND`
+- `CATEGORY_ALREADY_EXISTS`
+- `CATEGORY_HAS_CHILDREN`
+- `CATEGORY_HAS_PRODUCTS`
+- `PRODUCT_ALREADY_EXISTS`
 
 ## DTOs
 
@@ -79,7 +62,7 @@ type PackageTypeDto = {
 
 type UnitContentDto = {
   id: number
-  amount: string // canonical decimal string, e.g. "1.5"
+  amount: string
   unitType: UnitTypeDto
 }
 
@@ -99,35 +82,28 @@ type ProductCreatedDto = {
 }
 ```
 
-No `displayName` or package preview string is returned. The frontend builds display strings from canonical response data.
+## `GET /categories`
 
-## Categories
-
-### `GET /categories`
-
-Returns the complete category list as a flat tree source. The client builds the tree and breadcrumbs from `id` and `parentId`.
+Returns all categories as a flat tree source.
 
 Response `200 OK`:
 
 ```json
 [
-  { "id": 1, "name": "Voeding & drinken", "parentId": null },
-  { "id": 2, "name": "Dranken", "parentId": 1 },
-  { "id": 3, "name": "Frisdrank", "parentId": 2 },
-  { "id": 4, "name": "Cola", "parentId": 3 }
+  { "id": 1, "name": "Voeding", "parentId": null },
+  { "id": 2, "name": "Drinken", "parentId": 1 }
 ]
 ```
 
 Rules:
 
 - Empty list is allowed: `200 OK []`.
-- Items are sorted alphabetically by `name`, case-insensitive, within each sibling group. Root categories are sorted the same way.
 - `parentId` is always present and is `null` for root categories.
 - No `path` field is returned.
 
-### `POST /categories`
+## `POST /categories`
 
-Creates one category node. Used from the category tree/picker, not inline inside `POST /products`.
+Creates one category node.
 
 Request:
 
@@ -146,17 +122,30 @@ Response `201 Created`:
 { "id": 4, "name": "Cola", "parentId": 3 }
 ```
 
-Validation/errors:
+Errors:
 
-- `400 VALIDATION_ERROR` when `name` is missing or empty after trim.
+- `400 VALIDATION_ERROR` when request shape is invalid or `name` is empty after trim.
 - `400 REFERENCE_NOT_FOUND` when `parentId` is provided and does not exist.
-- `409 CATEGORY_ALREADY_EXISTS` when a sibling with the same name already exists case-insensitively after trim. This also applies to root categories.
+- `409 CATEGORY_ALREADY_EXISTS` when a sibling with the same name already exists case-insensitively after trim.
 
-Create-category only creates a new node, so category cycles are not relevant in this endpoint.
+## `DELETE /categories/:id`
 
-## Brands
+Deletes one category when it is safe to delete.
 
-### `GET /brands?query=...`
+Response `200 OK`:
+
+```json
+{ "id": 4 }
+```
+
+Errors:
+
+- `400 VALIDATION_ERROR` when `id` is invalid.
+- `400 REFERENCE_NOT_FOUND` when the category does not exist.
+- `409 CATEGORY_HAS_CHILDREN` when the category has subcategories.
+- `409 CATEGORY_HAS_PRODUCTS` when products are linked to the category.
+
+## `GET /brands?query=...`
 
 Autocomplete search for brands.
 
@@ -167,13 +156,7 @@ Rules:
 - Missing, empty, or one-character query returns `200 OK []`.
 - Search is case-insensitive contains search.
 - Maximum 10 results.
-- Results are sorted alphabetically by name, case-insensitive. Relevance ranking can be added later.
-
-Example:
-
-```http
-GET /brands?query=co
-```
+- Results are sorted alphabetically by name, case-insensitive.
 
 Response `200 OK`:
 
@@ -183,9 +166,9 @@ Response `200 OK`:
 ]
 ```
 
-### `POST /brands`
+## `POST /brands`
 
-Find-or-create brand. Used when the brand autocomplete offers `+ Merk aanmaken`.
+Find-or-create brand.
 
 Request:
 
@@ -202,19 +185,11 @@ Responses:
 { "id": "7b8c4d5e-0000-0000-0000-000000000001", "name": "Coca-Cola" }
 ```
 
-Rules:
+Errors:
 
-- `name` is trimmed before validation/storage.
-- Empty name after trim returns `400 VALIDATION_ERROR`.
-- Duplicate detection is case-insensitive after trim.
-- Existing brand display name is preserved. Creating `coca-cola` returns existing `Coca-Cola` without renaming it.
-- No punctuation, hyphen, or internal whitespace normalization in MVP.
-- Response shape matches `BrandDto`.
-- No extra `created` boolean; status code indicates whether it was created or reused.
+- `400 VALIDATION_ERROR` when request shape is invalid or `name` is empty after trim.
 
-## Unit types
-
-### `GET /unit-types`
+## `GET /unit-types`
 
 Returns seeded unit types for the content amount selector.
 
@@ -231,11 +206,8 @@ Rules:
 
 - Empty list is allowed: `200 OK []`.
 - Sorted alphabetically by `name`, case-insensitive.
-- Shape is `{ id, name }`.
 
-## Package types
-
-### `GET /package-types`
+## `GET /package-types`
 
 Returns seeded package types for the package type selector.
 
@@ -252,11 +224,8 @@ Rules:
 
 - Empty list is allowed: `200 OK []`.
 - Sorted alphabetically by `name`, case-insensitive.
-- Shape is `{ id, name }`.
 
-## Products
-
-### `POST /products`
+## `POST /products`
 
 Creates a product with exactly one initial package.
 
@@ -277,17 +246,6 @@ Request:
 ```
 
 `brandId` may be omitted or explicitly set to `null`.
-
-Request rules:
-
-- `name` is required, trimmed, and must not be empty after trim.
-- `categoryId` is required and must reference an existing category.
-- `brandId`, when provided and non-null, must reference an existing brand.
-- `package` is required and must be an object, not an array.
-- `package.packageTypeId` is required and must reference an existing package type.
-- `package.unitTypeId` is required and must reference an existing unit type.
-- `package.amount` is required and must be a positive decimal string using `.`, e.g. `"1.5"`. `"0"` and negative values are invalid. Numeric-equivalent values such as `"1.50"` are canonicalized before `unit_content` lookup/storage.
-- `package.unitsPerPackage` is required and must be an integer `>= 1`.
 
 Response `201 Created`:
 
@@ -312,21 +270,11 @@ Response `201 Created`:
 
 For products without brand, the `brand` field is present as `null`.
 
-Transaction behavior:
+Errors:
 
-- `POST /products` is atomic.
-- The backend find-or-creates `unit_content` for `(unitTypeId, amount)`.
-- The backend then creates `product` and the initial `product_package` using the resulting `unit_content.id`.
-- These database operations run in one transaction.
-- If any step fails, no new `product`, `product_package`, or request-created `unit_content` remains.
-- Existing matching `unit_content` is reused and never causes a conflict.
-- Concurrent attempts to create the same `unit_content` must rely on the database unique constraint and reuse the existing row.
-
-Duplicate product behavior:
-
-- Duplicate products are rejected with `409 PRODUCT_ALREADY_EXISTS`.
-- No product or package is created on duplicate.
-- Existing product ID should be included when cheaply available.
+- `400 VALIDATION_ERROR` for missing/invalid fields, unknown fields, or wrong shapes.
+- `400 REFERENCE_NOT_FOUND` for non-existing `categoryId`, `brandId`, `packageTypeId`, or `unitTypeId`.
+- `409 PRODUCT_ALREADY_EXISTS` for duplicate product.
 
 Example conflict:
 
@@ -338,15 +286,4 @@ Example conflict:
 }
 ```
 
-Duplicate rule:
-
-- With brand: unique by `(brandId, categoryId, lower(trim(name)))`.
-- Without brand: unique by `(categoryId, lower(trim(name)))` where `brandId IS NULL`.
-
-Errors:
-
-- `400 VALIDATION_ERROR` for missing/invalid fields, unknown fields, or wrong shapes.
-- `400 REFERENCE_NOT_FOUND` for non-existing `categoryId`, `brandId`, `packageTypeId`, or `unitTypeId`.
-- `409 PRODUCT_ALREADY_EXISTS` for duplicate product.
-
-No `Location` header is required for this MVP, because product details are outside this endpoint slice.
+No `Location` header is required for this slice.

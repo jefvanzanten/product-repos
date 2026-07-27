@@ -1,13 +1,12 @@
-```yaml
-macro_nutrients
-    id: uuid PK
-    product_variant_id: uuid FK NOT NULL
-    unit_content_id: int FK NOT NULL
-    total_fat: float
-    unsaturated_fat: float
-    saturated_fat: float
-    total_carbs: float
-    sugars: float
-    fibre: float
-    protein: float
-```
+# Calorie / nutrition ERD — niet actueel
+
+> Status: niet onderdeel van de huidige productcatalogus- of inventory-slice.
+
+Er is nu geen leidend nutrition-datamodel. Werk dit pas opnieuw uit wanneer voeding/nutrition weer een actieve feature wordt.
+
+Minimale vragen voor een nieuwe spec:
+
+- hoort voedingswaarde bij een product of bij een verpakking?
+- worden waarden per 100 gram/ml, per stuk of per verpakking opgeslagen?
+- welke macro- en micronutriënten zijn nodig?
+- gebruikt de inventory client deze data direct, of alleen een aparte calorie-tracker?
