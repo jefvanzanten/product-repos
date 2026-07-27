@@ -1,38 +1,19 @@
-import { eq } from "drizzle-orm";
-import type {
-  CreateUnitTypeInput,
-  UpdateUnitTypeInput,
-} from "@product-repos/contracts";
+import { asc, eq, sql } from "drizzle-orm";
 import { db } from "../db/index";
-import { unitType } from "../db/schema";
+import { packageType, unitType } from "../db/schema";
 
-export function findAllUnits() {
-  return db.select().from(unitType).all();
+export function findAllUnitTypes() {
+  return db.select().from(unitType).orderBy(asc(sql`lower(${unitType.name})`)).all();
 }
 
-export function findUnitById(id: number) {
+export function findUnitTypeById(id: number) {
   return db.select().from(unitType).where(eq(unitType.id, id)).get();
 }
 
-export function createUnit(input: CreateUnitTypeInput) {
-  return db.insert(unitType).values(input).returning().get();
+export function findAllPackageTypes() {
+  return db.select().from(packageType).orderBy(asc(sql`lower(${packageType.name})`)).all();
 }
 
-export function updateUnit(id: number, input: UpdateUnitTypeInput) {
-  return db
-    .update(unitType)
-    .set(input)
-    .where(eq(unitType.id, id))
-    .returning()
-    .get();
+export function findPackageTypeById(id: number) {
+  return db.select().from(packageType).where(eq(packageType.id, id)).get();
 }
-
-export function deleteUnit(id: number) {
-  return db.delete(unitType).where(eq(unitType.id, id)).returning().get();
-}
-
-// // Unit Types
-// createUnitType: (name: string) => Promise<void>;
-
-// // Unit Contents
-// createUnitContent: (unitTypeId: number, amount: number) => Promise<void>;

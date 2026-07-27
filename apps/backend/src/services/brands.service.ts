@@ -1,37 +1,8 @@
-import type { CreateBrandInput, UpdateBrandInput } from '@product-repos/contracts';
-import {
-  createBrand,
-  deleteBrand,
-  findAllBrands,
-  findBrandById,
-  updateBrand,
-} from '../repositories/brands.repository';
-import { findOrCreateBrandProduct } from '../repositories/products.repository';
+import type { CreateBrandInput, UpdateBrandInput } from "@product-repos/contracts";
+import { findBrandById, findOrCreateBrand, searchBrands } from "../repositories/brands.repository";
 
-export function getAllBrands() {
-  return findAllBrands();
-}
-
-export function getBrandById(id: string) {
-  return findBrandById(id);
-}
-
-export function createNewBrand(input: CreateBrandInput) {
-  return createBrand(input);
-}
-
-export function createBrandForProductType(
-  productTypeId: string,
-  input: CreateBrandInput,
-) {
-  const name = input.name.trim();
-  return findOrCreateBrandProduct(productTypeId, name).brand;
-}
-
-export function updateExistingBrand(id: string, input: UpdateBrandInput) {
-  return updateBrand(id, input);
-}
-
-export function removeBrand(id: string) {
-  return deleteBrand(id);
-}
+export function getAllBrands() { return searchBrands(""); }
+export { findBrandById as getBrandById };
+export function createNewBrand(input: CreateBrandInput) { return findOrCreateBrand(input.name).brand; }
+export function updateExistingBrand(_id: string, _input: UpdateBrandInput) { return undefined; }
+export function removeBrand(_id: string) { return undefined; }

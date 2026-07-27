@@ -1,20 +1,22 @@
-import { unitType } from '../../../apps/backend/src/db/schema.ts';
-import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-zod';
-import { z } from 'zod/v4';
+import { z } from "zod/v4";
 
-export const unitTypeSelectSchema = createSelectSchema(unitType, {
-  id: z.number(),
+export const unitTypeDtoSchema = z.object({
+  id: z.number().int(),
   name: z.string(),
 });
-export const unitTypeInsertSchema = createInsertSchema(unitType, {
-  id: z.number().optional(),
-  name: z.string(),
-});
-export const unitTypeUpdateSchema = createUpdateSchema(unitType, {
-  id: z.number().optional(),
-  name: z.string().optional(),
+
+export const unitContentDtoSchema = z.object({
+  id: z.number().int(),
+  amount: z.string(),
+  unitType: unitTypeDtoSchema,
 });
 
-export type UnitType = z.infer<typeof unitTypeSelectSchema>;
+export type UnitTypeDto = z.infer<typeof unitTypeDtoSchema>;
+export type UnitContentDto = z.infer<typeof unitContentDtoSchema>;
+
+export const unitTypeSelectSchema = unitTypeDtoSchema;
+export const unitTypeInsertSchema = z.object({ id: z.number().int().optional(), name: z.string() }).strict();
+export const unitTypeUpdateSchema = z.object({ id: z.number().int().optional(), name: z.string().optional() }).strict();
+export type UnitType = UnitTypeDto;
 export type CreateUnitTypeInput = z.infer<typeof unitTypeInsertSchema>;
 export type UpdateUnitTypeInput = z.infer<typeof unitTypeUpdateSchema>;

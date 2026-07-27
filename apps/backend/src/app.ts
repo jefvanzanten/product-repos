@@ -3,11 +3,9 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { brandRoutes } from "./routes/brands";
 import { healthRoutes } from "./routes/health";
-import { productSearchRoutes } from "./routes/product-search";
-import { productTypeRoutes } from "./routes/product-types";
+import { categoryRoutes } from "./routes/categories";
 import { productRoutes } from "./routes/product.route";
 import { unitRoutes } from "./routes/units";
-import { productPackageRoutes } from "./routes/product-package.route";
 
 export function createApp() {
   const app = new Hono();
@@ -39,10 +37,9 @@ export function createApp() {
 
   app.route("/", healthRoutes());
   app.route("/", brandRoutes());
+  app.route("/", categoryRoutes());
   app.route("/", unitRoutes());
-  app.route("/", productPackageRoutes());
   app.route("/", productRoutes());
-  app.route("/", productSearchRoutes());
 
   app.notFound((c) => {
     return c.json(

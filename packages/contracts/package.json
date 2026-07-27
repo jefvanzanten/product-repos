@@ -21,25 +21,20 @@
       "import": "./src/unit-types.ts",
       "default": "./src/unit-types.ts"
     },
+    "./categories": {
+      "types": "./src/categories.ts",
+      "import": "./src/categories.ts",
+      "default": "./src/categories.ts"
+    },
+    "./package-types": {
+      "types": "./src/package-types.ts",
+      "import": "./src/package-types.ts",
+      "default": "./src/package-types.ts"
+    },
     "./products": {
       "types": "./src/products.ts",
       "import": "./src/products.ts",
       "default": "./src/products.ts"
-    },
-    "./product-types": {
-      "types": "./src/product-types.ts",
-      "import": "./src/product-types.ts",
-      "default": "./src/product-types.ts"
-    },
-    "./product-search": {
-      "types": "./src/product-search.ts",
-      "import": "./src/product-search.ts",
-      "default": "./src/product-search.ts"
-    },
-    "./text": {
-      "types": "./src/text.ts",
-      "import": "./src/text.ts",
-      "default": "./src/text.ts"
     }
   },
   "files": [
