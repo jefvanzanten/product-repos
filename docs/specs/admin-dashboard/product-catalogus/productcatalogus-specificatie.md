@@ -1,4 +1,4 @@
-# Spec-index — admin productcatalogus
+# Spec-index - admin productcatalogus
 
 Dit bestand is alleen een index. Gedrag staat per feature in losse specs, zodat oude flows niet door elkaar blijven lopen.
 
@@ -8,7 +8,8 @@ Dit bestand is alleen een index. Gedrag staat per feature in losse specs, zodat 
 | --- | --- | --- |
 | Product aanmaken | [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md) | Huidige vertical slice |
 | Product zoeken | [product-zoeken-specificatie.md](./product-zoeken-specificatie.md) | Deels aanwezig: zoekveld en merk-suggesties |
-| Browsbare productcatalogus | [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md) | Gepland / nog niet geïmplementeerd |
+| Browsbare productcatalogus | [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md) | Gepland / nog niet geimplementeerd |
+| Productdetail en verpakkingen | [product-detail-specificatie.md](./product-detail-specificatie.md) | Gepland / nog niet geimplementeerd |
 
 ## Onderliggende backenddocumenten
 
@@ -21,6 +22,9 @@ Dit bestand is alleen een index. Gedrag staat per feature in losse specs, zodat 
 | --- | --- | --- |
 | `/admin/product-catalogus/producten` | zoeken + browsen + toegang tot product aanmaken | huidige pagina is nog minimaal |
 | `/admin/product-catalogus/producten/nieuw` | product aanmaken | huidige vertical slice |
+| `/admin/product-catalogus/producten/:productId` | productdetail | gepland |
+| `/admin/product-catalogus/producten/:productId/verpakkingen/nieuw` | verpakking toevoegen | gepland |
+| `/admin/product-catalogus/producten/:productId/verpakkingen/:packageId` | verpakkingdetail | gepland |
 
 ## Leidende termen
 
