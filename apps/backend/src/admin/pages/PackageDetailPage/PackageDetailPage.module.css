@@ -1,0 +1,62 @@
+.backLink {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.contentCard {
+  overflow: hidden;
+  padding: 1rem;
+  color: #151515;
+  text-align: left;
+  background: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 5%);
+}
+
+.definitionList {
+  display: grid;
+  grid-template-columns: minmax(7rem, max-content) minmax(0, 1fr);
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.definitionList dt {
+  color: #4d4d4d;
+  font-weight: 700;
+}
+
+.definitionList dd {
+  margin: 0;
+  color: #151515;
+}
+
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  color: #202124;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid #d9dce8;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 5%);
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.secondaryButton:hover {
+  color: #151515;
+  background: #f5f7fb;
+}
+
+@media (min-width: 640px) {
+  .secondaryButton {
+    width: max-content;
+  }
+}

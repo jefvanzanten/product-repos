@@ -26,6 +26,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   return {
     brands: preselectedBrand ? [preselectedBrand] : [],
     categories,
+    categoryContextId: categoryContext.categoryId,
     contextErrors,
     defaultValues,
     packageTypes: await getPackageTypes(),
@@ -85,6 +86,8 @@ export default function NewProduct({ actionData, loaderData }: Route.ComponentPr
   const formErrors = { ...loaderData.contextErrors, ...actionData?.errors };
   const brandDefaultQuery = values.brandQuery;
   const categoryOptions = useMemo(() => buildCategoryTreeOptions(loaderData.categories), [loaderData.categories]);
+  const resetInitialCategoryTreeExpansion = !actionData?.values;
+  const initialCategoryTreeContextId = resetInitialCategoryTreeExpansion ? loaderData.categoryContextId : undefined;
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -95,7 +98,7 @@ export default function NewProduct({ actionData, loaderData }: Route.ComponentPr
       {formErrors.form ? <p className={styles.formError}>{formErrors.form}</p> : null}
       <Form className={styles.form} method="post" preventScrollReset>
         <Fieldset title="Categorie">
-          <CategoryTreePicker defaultValue={values.categoryId} errors={formErrors} options={categoryOptions} />
+          <CategoryTreePicker defaultValue={values.categoryId} errors={formErrors} initialExpandedPathCategoryId={initialCategoryTreeContextId} options={categoryOptions} resetInitialExpandedCategories={resetInitialCategoryTreeExpansion} />
         </Fieldset>
         <Fieldset title="Merk (optioneel)">
           <BrandCombobox defaultBrandId={values.brandId} defaultBrandName={values.brandName} defaultQuery={brandDefaultQuery} error={formErrors.brandName} initialBrands={loaderData.brands} />
@@ -240,10 +243,10 @@ type VisibleCategoryTreeOption = {
   readonly originalIndex: number;
 };
 
-function CategoryTreePicker({ defaultValue, errors, options }: { defaultValue?: string; errors?: FormErrors; options: ReadonlyArray<CategoryTreeOption> }) {
+function CategoryTreePicker({ defaultValue, errors, initialExpandedPathCategoryId, options, resetInitialExpandedCategories }: { defaultValue?: string; errors?: FormErrors; initialExpandedPathCategoryId?: string; options: ReadonlyArray<CategoryTreeOption>; resetInitialExpandedCategories: boolean }) {
   const fetcher = useFetcher<ActionResult>();
   const [selectedCategoryId, setSelectedCategoryId] = useState(defaultValue ?? "");
-  const [expandedCategoryIds, setExpandedCategoryIds] = useState<ReadonlySet<string>>(() => collectCategoryIds(options));
+  const [expandedCategoryIds, setExpandedCategoryIds] = useState<ReadonlySet<string>>(() => resetInitialExpandedCategories ? collectInitialExpandedCategoryIds(options, initialExpandedPathCategoryId) : collectCategoryIds(options));
   const [inlineParentId, setInlineParentId] = useState<string | null>();
   const [inlineName, setInlineName] = useState("");
   const [deletedCategoryIds, setDeletedCategoryIds] = useState<ReadonlySet<string>>(() => new Set());
@@ -259,6 +262,10 @@ function CategoryTreePicker({ defaultValue, errors, options }: { defaultValue?: 
     if (!defaultValue) return;
     setExpandedCategoryIds((current) => mergeCategoryIds(current, collectAncestorCategoryIds(options, defaultValue)));
   }, [defaultValue, options]);
+  useEffect(() => {
+    if (!resetInitialExpandedCategories) return;
+    setExpandedCategoryIds(collectInitialExpandedCategoryIds(options, initialExpandedPathCategoryId));
+  }, [initialExpandedPathCategoryId, options, resetInitialExpandedCategories]);
   useEffect(() => {
     if (!createdCategory) return;
     setSelectedCategoryId(String(createdCategory.id));
@@ -395,6 +402,11 @@ function collectCategoryIds(options: ReadonlyArray<CategoryTreeOption>): Readonl
   const categoryIds = new Set<string>();
   for (const option of options) categoryIds.add(String(option.category.id));
   return categoryIds;
+}
+
+function collectInitialExpandedCategoryIds(options: ReadonlyArray<CategoryTreeOption>, pathCategoryId: string | undefined): ReadonlySet<string> {
+  if (!pathCategoryId) return collectCategoryIds(options);
+  return collectAncestorCategoryIds(options, pathCategoryId);
 }
 
 function collectAncestorCategoryIds(options: ReadonlyArray<CategoryTreeOption>, categoryId: string | undefined): ReadonlySet<string> {

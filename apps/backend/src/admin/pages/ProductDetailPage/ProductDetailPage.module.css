@@ -1,0 +1,108 @@
+.backLink {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.breadcrumbLink {
+  color: #a7f3d0;
+  text-decoration: underline;
+  text-underline-offset: 0.125rem;
+}
+
+.breadcrumbLink:hover {
+  color: #ffffff;
+}
+
+.contentCard {
+  overflow: hidden;
+  padding: 1rem;
+  color: #151515;
+  text-align: left;
+  background: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 5%);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.resultList {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.definitionList {
+  display: grid;
+  grid-template-columns: minmax(7rem, max-content) minmax(0, 1fr);
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.definitionList dt {
+  color: #4d4d4d;
+  font-weight: 700;
+}
+
+.definitionList dd {
+  margin: 0;
+  color: #151515;
+}
+
+.button,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  text-align: center;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 5%);
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.button {
+  color: #ffffff;
+  background: #209b7e;
+  border: 0;
+}
+
+.button:hover {
+  background: #1b876e;
+}
+
+.secondaryButton {
+  color: #202124;
+  background: #ffffff;
+  border: 1px solid #d9dce8;
+}
+
+.secondaryButton:hover {
+  color: #151515;
+  background: #f5f7fb;
+}
+
+@media (min-width: 640px) {
+  .button,
+  .secondaryButton {
+    width: max-content;
+  }
+}

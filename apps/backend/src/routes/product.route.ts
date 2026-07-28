@@ -1,7 +1,9 @@
 import { createProductPackageRequestSchema, createProductRequestSchema, updateProductPackageRequestSchema, updateProductRequestSchema } from "@product-repos/contracts";
 import { Hono } from "hono";
 import { canonicalDecimal, positiveInt, trimRequired } from "../domain";
-import { browseCatalog, createProduct, createProductPackage, findProductDetailById, findProductPackageDetailById, searchCatalog, updateProduct, updateProductPackage } from "../repositories/products.repository";
+import { browseCatalog, searchCatalog } from "../repositories/catalog.repository";
+import { createProductPackage, findProductPackageDetailById, updateProductPackage } from "../repositories/product-packages.repository";
+import { createProduct, findProductDetailById, updateProduct } from "../repositories/products.repository";
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const status = { VALIDATION_ERROR: 400, REFERENCE_NOT_FOUND: 400, CATEGORY_ALREADY_EXISTS: 409, CATEGORY_HAS_CHILDREN: 409, CATEGORY_HAS_PRODUCTS: 409, PRODUCT_ALREADY_EXISTS: 409, PRODUCT_NOT_FOUND: 404, PRODUCT_PACKAGE_ALREADY_EXISTS: 409, PRODUCT_PACKAGE_NOT_FOUND: 404 } as const;

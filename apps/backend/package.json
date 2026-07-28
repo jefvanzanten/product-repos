@@ -19,13 +19,20 @@
     "lint:fix": "eslint src tests --ext .ts --fix",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["hono", "bun", "drizzle", "sqlite", "typescript"],
+  "keywords": [
+    "hono",
+    "bun",
+    "drizzle",
+    "sqlite",
+    "typescript"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@product-repos/contracts": "workspace:*",
     "drizzle-orm": "^0.38.3",
-    "hono": "^4.7.0"
+    "hono": "^4.7.0",
+    "htmx.org": "^2.0.10"
   },
   "devDependencies": {
     "@types/bun": "latest",

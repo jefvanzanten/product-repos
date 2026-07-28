@@ -4,6 +4,8 @@
     "module": "ESNext",
     "lib": ["ES2022"],
     "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "allowJs": true,

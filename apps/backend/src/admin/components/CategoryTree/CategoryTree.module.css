@@ -1,0 +1,171 @@
+.linkList,
+.accordionList,
+.childrenList,
+.resultList {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item,
+.accordionHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.depth1 {
+  margin-left: 1rem;
+}
+
+.depth2 {
+  margin-left: 2rem;
+}
+
+.depth3 {
+  margin-left: 3rem;
+}
+
+.accordionItem {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.link,
+.toggleButton {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem;
+  color: #151515;
+  background: #ffffff;
+  border: 1px solid #edf0f6;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 4%);
+}
+
+.toggleButton {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.toggleIcon {
+  width: 0;
+  height: 0;
+  border-top: 0.33rem solid transparent;
+  border-bottom: 0.33rem solid transparent;
+  border-left: 0.46rem solid #209b7e;
+  transition: transform 150ms ease;
+}
+
+.toggleButton[aria-expanded="true"] .toggleIcon {
+  transform: rotate(90deg);
+}
+
+.toggleLabel {
+  min-width: 0;
+}
+
+.panel {
+  display: grid;
+  gap: 1rem;
+  padding: 0.85rem;
+  background: #fbfcfe;
+  border: 1px solid #edf0f6;
+  border-radius: 0.5rem;
+}
+
+.panelSection,
+.emptyState {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.panelActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.button,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+  text-align: center;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 5%);
+}
+
+.button {
+  color: #ffffff;
+  background: #209b7e;
+  border: 0;
+}
+
+.button:hover {
+  background: #1b876e;
+}
+
+.secondaryButton {
+  color: #202124;
+  background: #ffffff;
+  border: 1px solid #d9dce8;
+}
+
+.secondaryButton:hover {
+  color: #151515;
+  background: #f5f7fb;
+}
+
+.editLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  color: #202124;
+  background: #ffffff;
+  border: 1px solid #edf0f6;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 4%);
+}
+
+.editIcon {
+  width: 1.05rem;
+  height: 1.05rem;
+  stroke-width: 2.1;
+}
+
+.link:hover,
+.toggleButton:hover,
+.editLink:hover {
+  border-color: #209b7e;
+}
+
+.muted {
+  color: #4d4d4d;
+}
+
+@media (min-width: 640px) {
+  .button,
+  .secondaryButton {
+    width: max-content;
+  }
+}

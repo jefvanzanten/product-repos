@@ -22,11 +22,15 @@ try {
 
 const shutdown = (signal: string) => {
   console.log(`Received ${signal}, shutting down gracefully...`);
-  server.stop();
+  void server.stop();
   closeDatabase();
   console.log('Server closed successfully');
   process.exit(0);
 };
 
-process.on('SIGINT', () => shutdown('SIGINT'));
-process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => {
+  shutdown('SIGINT');
+});
+process.on('SIGTERM', () => {
+  shutdown('SIGTERM');
+});

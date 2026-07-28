@@ -32,6 +32,43 @@
   line-height: 1.25rem;
 }
 
+.breadcrumb {
+  margin-top: 0.25rem;
+  color: rgb(255 255 255 / 70%);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.breadcrumbList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.breadcrumbItem {
+  display: inline-flex;
+  gap: 0.375rem;
+  align-items: center;
+}
+
+.breadcrumbItem:not(:last-child)::after {
+  color: rgb(255 255 255 / 55%);
+  content: ">";
+}
+
+.breadcrumbLink {
+  color: #a7f3d0;
+  text-decoration: underline;
+  text-underline-offset: 0.125rem;
+}
+
+.breadcrumbLink:hover {
+  color: #ffffff;
+}
+
 .card {
   display: flex;
   flex-direction: column;

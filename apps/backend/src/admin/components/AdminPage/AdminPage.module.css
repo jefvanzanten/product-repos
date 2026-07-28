@@ -1,0 +1,19 @@
+.pageTitle {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+}
+
+.pageTitle h1 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.75rem;
+}
+
+.subtitle {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+}

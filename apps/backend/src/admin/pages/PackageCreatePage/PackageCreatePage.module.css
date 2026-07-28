@@ -1,0 +1,15 @@
+.backLink {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.contentCard {
+  overflow: hidden;
+  padding: 1rem;
+  color: #151515;
+  text-align: left;
+  background: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 5%);
+}

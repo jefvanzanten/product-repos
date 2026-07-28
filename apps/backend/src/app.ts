@@ -6,6 +6,7 @@ import { healthRoutes } from "./routes/health";
 import { categoryRoutes } from "./routes/categories";
 import { productRoutes } from "./routes/product.route";
 import { unitRoutes } from "./routes/units";
+import { adminRoutes } from "./admin/admin.routes";
 
 export function createApp() {
   const app = new Hono();
@@ -40,6 +41,7 @@ export function createApp() {
   app.route("/", categoryRoutes());
   app.route("/", unitRoutes());
   app.route("/", productRoutes());
+  app.route("/admin", adminRoutes());
 
   app.notFound((c) => {
     return c.json(

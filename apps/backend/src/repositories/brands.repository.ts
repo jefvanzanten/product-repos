@@ -1,7 +1,7 @@
 import { asc, eq, like, sql } from "drizzle-orm";
 import { db } from "../db/index";
 import { brand } from "../db/schema";
-import { isSqliteUniqueConstraintViolation } from "./sqlite-errors";
+import { isSqliteUniqueConstraintViolation } from "../helpers/sqlite-errors";
 
 export function searchBrands(query: string) {
   const trimmed = query.trim();

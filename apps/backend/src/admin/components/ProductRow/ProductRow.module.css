@@ -1,0 +1,24 @@
+.row a {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem;
+  color: #151515;
+  background: #ffffff;
+  border: 1px solid #edf0f6;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 4%);
+}
+
+.row a:hover {
+  border-color: #209b7e;
+}
+
+.row strong {
+  color: #151515;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.row span {
+  color: #4d4d4d;
+}

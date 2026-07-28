@@ -80,7 +80,7 @@ export default function ProductDetail({ actionData, loaderData }: Route.Componen
         <Link className={styles.backLink} to="/admin/product-catalogus/producten">← Terug naar productcatalogus</Link>
         <div>
           <h1 className={styles.title}>{product.displayName}</h1>
-          <p className={styles.subtitle}>{categoryPath}</p>
+          <CategoryBreadcrumb categoryPath={product.categoryPath} />
         </div>
       </header>
 
@@ -123,6 +123,23 @@ function ProductEditForm({ actionData, brands, brandQuery, categories, product }
         <Link className={styles.secondaryButton} to={`/admin/product-catalogus/producten/${product.id}`}>Annuleren</Link>
       </div>
     </Form>
+  );
+}
+
+function CategoryBreadcrumb({ categoryPath }: { readonly categoryPath: ProductDetailDto["categoryPath"] }): React.ReactNode {
+  return (
+    <nav aria-label="Categoriepad" className={styles.breadcrumb}>
+      <ol className={styles.breadcrumbList}>
+        <li className={styles.breadcrumbItem}>
+          <Link className={styles.breadcrumbLink} to="/admin/product-catalogus/producten">Alle categorieën</Link>
+        </li>
+        {categoryPath.map((category) => (
+          <li className={styles.breadcrumbItem} key={category.id}>
+            <Link className={styles.breadcrumbLink} to={`/admin/product-catalogus/producten?categoryId=${category.id}`}>{category.name}</Link>
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }
 

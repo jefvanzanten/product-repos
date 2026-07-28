@@ -68,6 +68,7 @@ describe("product catalog browse and search", () => {
     const suffix = crypto.randomUUID();
     const parent = await createCategory(`Parent Browse ${suffix}`, null);
     const child = await createCategory(`Child Browse ${suffix}`, parent.id);
+    const emptyChild = await createCategory(`Empty Child Browse ${suffix}`, parent.id);
     const directProduct = await createProduct({ name: `Direct Product ${suffix}`, categoryId: parent.id, brandId: null });
     const childProduct = await createProduct({ name: `Child Product ${suffix}`, categoryId: child.id, brandId: null });
 
@@ -75,6 +76,7 @@ describe("product catalog browse and search", () => {
     expect(response.state).toBe("category");
     if (response.state !== "category") throw new Error("Expected category browse response");
     expect(response.subcategories.map((item) => item.id)).toContain(child.id);
+    expect(response.subcategories.map((item) => item.id)).toContain(emptyChild.id);
     expect(response.products.items.map((product) => product.id)).toContain(directProduct.id);
     expect(response.products.items.map((product) => product.id)).not.toContain(childProduct.id);
   });

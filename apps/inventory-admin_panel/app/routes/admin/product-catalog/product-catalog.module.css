@@ -168,13 +168,144 @@
   border-radius: 0.75rem;
 }
 
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid rgb(255 255 255 / 25%);
+  border-radius: 0.75rem;
+  cursor: pointer;
+}
+
+.secondaryButton:hover {
+  background: rgb(255 255 255 / 10%);
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(2 6 23 / 70%);
+}
+
+.modal {
+  width: min(100%, 28rem);
+  color: #020617;
+  background: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 25%);
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.modalTitle {
+  margin: 0;
+  color: #020617;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.75rem;
+}
+
+.modalLabel {
+  color: #334155;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+
+.modalInput {
+  width: 100%;
+  height: 2.75rem;
+  padding: 0 0.875rem;
+  color: #020617;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.modalInput:focus {
+  border-color: #209b7e;
+  box-shadow: 0 0 0 2px #a7f3d0;
+}
+
+.errorText {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.modalActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.modalSubmitButton,
+.modalCancelButton {
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  font: inherit;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  cursor: pointer;
+}
+
+.modalSubmitButton {
+  color: #ffffff;
+  background: #209b7e;
+  border: 1px solid #209b7e;
+}
+
+.modalSubmitButton:disabled,
+.modalCancelButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.modalCancelButton {
+  color: #020617;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+}
+
 .footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   width: 100%;
   margin-top: auto;
 }
 
+.footer > .secondaryButton {
+  width: 100%;
+}
+
 .createLink {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   height: 3rem;
   padding: 0.75rem 1rem;
@@ -190,5 +321,12 @@
 
   &:hover {
     background: #1b876e;
+  }
+}
+
+@media (min-width: 640px) {
+  .footer > .secondaryButton,
+  .createLink {
+    width: max-content;
   }
 }

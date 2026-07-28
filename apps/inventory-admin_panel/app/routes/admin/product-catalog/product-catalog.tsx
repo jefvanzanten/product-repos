@@ -1,14 +1,18 @@
 import type { Route } from "./+types/product-catalog";
-import { useEffect, useRef } from "react";
-import { Form, Link, useSubmit } from "react-router";
+import { useEffect, useRef, useState } from "react";
+import { Form, Link, useFetcher, useSubmit } from "react-router";
 import {
   browseCatalog,
+  createCategory,
+  mapApiError,
   searchCatalog,
 } from "../../../../features/admin/product-catalog/services/productCatalogService.server";
 import type {
   CatalogBrowseResponse,
   CatalogProductRow,
   CatalogSearchResponse,
+  CategoryDto,
+  FormErrors,
 } from "../../../../features/admin/product-catalog/services/productCatalogService.server";
 import styles from "./product-catalog.module.css";
 
@@ -65,16 +69,41 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { mode: "browse" as const, query, browse: await browseCatalog() };
 }
 
+type ActionResult = {
+  readonly createdCategory?: CategoryDto;
+  readonly errors?: FormErrors;
+  readonly values?: { readonly categoryName?: string };
+};
+
+export async function action({ request }: Route.ActionArgs): Promise<ActionResult> {
+  const form = await request.formData();
+  const intent = String(form.get("_action") ?? "");
+  if (intent !== "createSubcategory") return { errors: { form: "Onbekende actie." } };
+
+  const categoryId = parsePositiveInt(String(form.get("categoryId") ?? ""));
+  if (categoryId === null) return { errors: { form: "Huidige categorie is ongeldig." } };
+
+  const categoryName = String(form.get("categoryName") ?? "").trim();
+  const values = { categoryName };
+  if (!categoryName) return { errors: { categoryName: "Vul een subcategorienaam in." }, values };
+
+  try {
+    return { createdCategory: await createCategory({ name: categoryName, parentId: categoryId }) };
+  } catch (error) {
+    return { errors: mapCreateSubcategoryErrors(error), values };
+  }
+}
+
 export default function ProductCatalog({
   loaderData,
 }: Route.ComponentProps): React.ReactNode {
   const createAction = getCreateAction(loaderData);
-  const showSearchForm = shouldShowSearchForm(loaderData);
+  const categoryBrowse = loaderData.mode === "browse" && loaderData.browse.state === "category" ? loaderData.browse : null;
+  const categoryBreadcrumb = categoryBrowse ? <CategoryBreadcrumb categoryPath={categoryBrowse.categoryPath} /> : null;
   return (
     <main className={styles.page}>
-      {showSearchForm ? (
-        <CatalogSearchForm defaultQuery={loaderData.query} />
-      ) : null}
+      <CatalogSearchForm defaultQuery={loaderData.query} />
+      {categoryBreadcrumb}
 
       {loaderData.mode === "search" ? (
         <SearchResults
@@ -87,6 +116,7 @@ export default function ProductCatalog({
       )}
 
       <div className={styles.footer}>
+        {categoryBrowse ? <CreateSubcategoryAction parentCategory={categoryBrowse.category} /> : null}
         <Link className={styles.createLink} to={createAction.href}>
           {createAction.label}
         </Link>
@@ -246,12 +276,14 @@ function BrowseResults({
     const categoryName = browse.category.name;
     return (
       <div className={styles.results}>
-        <CategoryBreadcrumb categoryPath={browse.categoryPath} />
+        <header className={styles.header}>
+          <h1 className={styles.title}>{categoryName}</h1>
+        </header>
         {browse.subcategories.length > 0 ? (
           <CategorySection
             categories={browse.subcategories}
             showFullPath={false}
-            title="Subcategorieën"
+            title={categoryName}
           />
         ) : null}
         {browse.products.items.length > 0 ? (
@@ -260,12 +292,6 @@ function BrowseResults({
             showCategoryMeta={false}
             title={`Producten in ${categoryName}`}
           />
-        ) : null}
-        {browse.subcategories.length === 0 &&
-        browse.products.items.length === 0 ? (
-          <section className={styles.emptyState}>
-            <h2>Nog geen producten in deze categorie.</h2>
-          </section>
         ) : null}
         {browse.products.hasMore && browse.products.cursor ? (
           <Link
@@ -413,6 +439,107 @@ function CategorySection({
   );
 }
 
+function CreateSubcategoryAction({
+  parentCategory,
+}: {
+  readonly parentCategory: Extract<CatalogBrowseResponse, { readonly state: "category" }>["category"];
+}): React.ReactNode {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  return (
+    <>
+      <button
+        className={styles.secondaryButton}
+        type="button"
+        onClick={() => setIsModalOpen(true)}
+      >
+        Nieuwe subcategorie aanmaken
+      </button>
+      {isModalOpen ? (
+        <CreateSubcategoryModal
+          parentCategory={parentCategory}
+          onClose={() => setIsModalOpen(false)}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function CreateSubcategoryModal({
+  onClose,
+  parentCategory,
+}: {
+  readonly onClose: () => void;
+  readonly parentCategory: Extract<CatalogBrowseResponse, { readonly state: "category" }>["category"];
+}): React.ReactNode {
+  const fetcher = useFetcher<ActionResult>();
+  const [categoryName, setCategoryName] = useState(fetcher.data?.values?.categoryName ?? "");
+  const busy = fetcher.state !== "idle";
+  const createdCategoryId = fetcher.data?.createdCategory?.id;
+  const errors = fetcher.data?.errors;
+
+  useEffect(() => {
+    if (createdCategoryId === undefined) return;
+    onClose();
+  }, [createdCategoryId, onClose]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className={styles.modalOverlay}
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        aria-labelledby="create-subcategory-title"
+        aria-modal="true"
+        className={styles.modal}
+        role="dialog"
+      >
+        <fetcher.Form className={styles.modalForm} method="post" preventScrollReset>
+          <input name="_action" type="hidden" value="createSubcategory" />
+          <input name="categoryId" type="hidden" value={parentCategory.id} />
+          <h2 className={styles.modalTitle} id="create-subcategory-title">
+            Nieuwe subcategorie maken in {parentCategory.name}
+          </h2>
+          <label className={styles.modalLabel} htmlFor="subcategory-name">
+            Naam subcategorie
+          </label>
+          <input
+            autoFocus
+            className={styles.modalInput}
+            id="subcategory-name"
+            name="categoryName"
+            type="text"
+            value={categoryName}
+            onChange={(event) => setCategoryName(event.currentTarget.value)}
+          />
+          {errors?.categoryName ? (
+            <p className={styles.errorText}>{errors.categoryName}</p>
+          ) : null}
+          {errors?.form ? <p className={styles.errorText}>{errors.form}</p> : null}
+          <div className={styles.modalActions}>
+            <button className={styles.modalSubmitButton} disabled={busy} type="submit">
+              {busy ? "Toevoegen..." : "Toevoegen"}
+            </button>
+            <button className={styles.modalCancelButton} disabled={busy} type="button" onClick={onClose}>
+              Annuleren
+            </button>
+          </div>
+        </fetcher.Form>
+      </section>
+    </div>
+  );
+}
+
 function CategoryBreadcrumb({
   categoryPath,
 }: {
@@ -451,14 +578,6 @@ function CategoryBreadcrumb({
   );
 }
 
-function shouldShowSearchForm(
-  loaderData: Awaited<ReturnType<typeof loader>>,
-): boolean {
-  return !(
-    loaderData.mode === "browse" && loaderData.browse.state === "category"
-  );
-}
-
 function getCreateAction(loaderData: Awaited<ReturnType<typeof loader>>): {
   readonly href: string;
   readonly label: string;
@@ -479,6 +598,20 @@ function getCreateAction(loaderData: Awaited<ReturnType<typeof loader>>): {
   if (loaderData.browse.state === "root" && loaderData.browse.isEmpty)
     return { href: baseHref, label: "Eerste product aanmaken" };
   return { href: baseHref, label: "Product aanmaken" };
+}
+
+function mapCreateSubcategoryErrors(error: unknown): FormErrors {
+  const mappedErrors = mapApiError(error);
+  const categoryNameError = mappedErrors.categoryName ?? mappedErrors.productName;
+  if (categoryNameError) {
+    const remainingErrors: FormErrors = {};
+    for (const [field, message] of Object.entries(mappedErrors)) {
+      if (field !== "productName") remainingErrors[field] = message;
+    }
+    return { ...remainingErrors, categoryName: categoryNameError };
+  }
+  if (mappedErrors.form === "Controleer de ingevulde velden.") return { categoryName: "Vul een subcategorienaam in." };
+  return mappedErrors;
 }
 
 function makeSearchMoreHref(

@@ -134,12 +134,22 @@ test.describe.serial("admin productcatalogus specs", () => {
       const suffix = uniqueSuffix();
       const brand = await createBrand(request, `Context Merk ${suffix}`);
       const category = await createCategory(request, `Context Categorie ${suffix}`, null);
+      const selectedParent = await createCategory(request, `Context Parent ${suffix}`, null);
+      const selectedChild = await createCategory(request, `Context Child ${suffix}`, selectedParent.id);
+      const unrelatedParent = await createCategory(request, `Context Andere Parent ${suffix}`, null);
+      const unrelatedChild = await createCategory(request, `Context Andere Child ${suffix}`, unrelatedParent.id);
 
       await page.goto(`/admin/product-catalogus/producten/nieuw?brandId=${brand.id}`);
       await expect(page.getByText(`Geselecteerd merk: ${brand.name}`)).toBeVisible();
 
       await page.goto(`/admin/product-catalogus/producten/nieuw?categoryId=${category.id}`);
       await expect(page.getByRole("radio", { name: category.name })).toBeChecked();
+
+      await page.goto(`/admin/product-catalogus/producten/nieuw?categoryId=${selectedChild.id}`);
+      await expect(page.getByRole("radio", { name: selectedChild.name })).toBeChecked();
+      await expect(page.getByRole("button", { name: `Categorie inklappen: ${selectedParent.name}` })).toBeVisible();
+      await expect(page.getByRole("button", { name: `Categorie uitklappen: ${unrelatedParent.name}` })).toBeVisible();
+      await expect(page.getByRole("radio", { name: unrelatedChild.name })).toHaveCount(0);
     });
   });
 
@@ -243,12 +253,14 @@ test.describe.serial("admin productcatalogus specs", () => {
 
       await page.goto(`/admin/product-catalogus/producten?categoryId=${parent.id}`);
 
-      await expect(page.getByText(parent.name).first()).toBeVisible();
-      await expect(page.getByRole("heading", { name: "Subcategorieën" })).toBeVisible();
-      await expect(page.getByRole("link", { name: new RegExp(child.name) })).toBeVisible();
+      await expect(page.getByRole("heading", { level: 1, name: parent.name })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Subcategorieën" })).toHaveCount(0);
+      await expect(page.getByRole("heading", { name: parent.name })).toHaveCount(2);
+      await expect(page.getByRole("link", { name: child.name, exact: true })).toBeVisible();
       await expect(page.getByText(directProduct.name)).toBeVisible();
       await expect(page.getByText(childProduct.name)).toHaveCount(0);
-      await expect(page.getByRole("link", { name: `Product aanmaken in ${parent.name}` })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Nieuwe subcategorie aanmaken" })).toBeVisible();
+      await expect(page.getByRole("link", { name: "Product aanmaken" })).toBeVisible();
     });
 
     test("AC-03 - productrij opent productdetail", async ({ page, request }) => {
@@ -288,7 +300,7 @@ test.describe.serial("admin productcatalogus specs", () => {
       await createProduct(request, refs, { name: `Context Browse Product ${suffix}`, brandId: brand.id, categoryId: category.id });
 
       await page.goto(`/admin/product-catalogus/producten?categoryId=${category.id}`);
-      await page.getByRole("link", { name: `Product aanmaken in ${category.name}` }).click();
+      await page.getByRole("link", { name: "Product aanmaken" }).click();
       await expect(page.getByRole("radio", { name: category.name })).toBeChecked();
 
       await page.goto(`/admin/product-catalogus/producten?brandId=${brand.id}`);
@@ -303,6 +315,25 @@ test.describe.serial("admin productcatalogus specs", () => {
       await expect(page.getByLabel("Productnaam")).toHaveValue("");
       await expect(page.getByPlaceholder("Typ om merken te zoeken, bijv. Coca-Cola")).toHaveValue("");
       await expect(page.locator('input[name="categoryId"]:checked')).toHaveCount(0);
+    });
+
+    test("AC-10 - subcategorie aanmaken vanuit categorie-browse", async ({ page, request }) => {
+      const suffix = uniqueSuffix();
+      const parent = await createCategory(request, `Subcat Parent ${suffix}`, null);
+      const subcategoryName = `Nieuwe Subcat ${suffix}`;
+
+      await page.goto(`/admin/product-catalogus/producten?categoryId=${parent.id}`);
+      await expect(page.getByRole("heading", { name: `Producten in ${parent.name}` })).toHaveCount(0);
+      await expect(page.getByText("Nog geen producten in deze categorie.")).toHaveCount(0);
+      await page.getByRole("button", { name: "Nieuwe subcategorie aanmaken" }).click();
+
+      await expect(page.getByRole("dialog", { name: `Nieuwe subcategorie maken in ${parent.name}` })).toBeVisible();
+      await page.getByLabel("Naam subcategorie").fill(subcategoryName);
+      await page.getByRole("button", { name: "Toevoegen" }).click();
+
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+      await expect(page).toHaveURL(new RegExp(`/admin/product-catalogus/producten\\?categoryId=${parent.id}$`));
+      await expect(page.getByRole("link", { name: new RegExp(subcategoryName) })).toBeVisible();
     });
 
     test("AC-08 - oude trapsgewijze productmanagement-flow komt niet terug", async ({ page }) => {
