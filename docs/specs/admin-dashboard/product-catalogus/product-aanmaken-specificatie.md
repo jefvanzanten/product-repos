@@ -3,7 +3,7 @@
 ## Status
 
 - Onderdeel: admin dashboard > productcatalogus
-- Route: `/admin/product-catalogus/producten/nieuw`
+- Route: `/admin/product-catalogus/nieuw`
 - Status: huidige vertical slice
 - Backendcontract: `docs/backend/Endpoints/ADMIN_DASHBOARD_ENDPOINTS.md`
 - Datamodel: `docs/backend/ERD/PRODUCT_ERD.md`
@@ -22,14 +22,14 @@ Opslaan maakt transactioneel één `product` en één eerste `product_package` a
 
 ## Binnen scope
 
-- Productformulier openen vanaf `/admin/product-catalogus/producten`.
+- Productformulier openen vanuit een expliciete categorie- of merkcontext.
 - Productformulier openen met expliciete context via queryparameters:
   - `brandId` voor vooraf geselecteerd merk;
   - `categoryId` voor vooraf geselecteerde categorie.
 - Categorie kiezen uit een categorieboom.
 - Eén categorie inline aanmaken als hoofdcategorie of onder een bestaande categorie.
 - Categorie verwijderen vanuit het formulier wanneer de backend dit toestaat.
-- Merk optioneel zoeken, kiezen of inline aanmaken.
+- Merk optioneel zoeken, kiezen of vanuit het merkveld aanmaken.
 - Productnaam invullen.
 - Eerste verpakking invullen.
 - Product opslaan via `POST /products`.
@@ -43,7 +43,7 @@ Opslaan maakt transactioneel één `product` en één eerste `product_package` a
 - Extra verpakkingen toevoegen of bewerken.
 - Echte productresultaten op de cataloguspagina.
 - Barcode/EAN, productfoto's, status/publicatie/archief.
-- Apart merken- of categoriebeheer buiten de inline acties in dit formulier.
+- Apart merken- of categoriebeheer buiten de acties in dit formulier.
 - Een apart veld `eenheidsoort`.
 
 ## Scherminhoud
@@ -62,7 +62,7 @@ Categorie
 Merk, optioneel
 - typ om merken te zoeken
 - bestaand merk kiezen
-- nieuw merk bevestigen
+- nieuw merk aanmaken
 
 Product
 - productnaam
@@ -90,7 +90,7 @@ Merken worden gezocht wanneer de gebruiker in het merkveld typt:
 
 - `GET /brands?query=<zoekterm>`
 
-Als de route wordt geopend met `brandId` of `categoryId`, worden deze alleen gebruikt als expliciete context die vooraf geselecteerd mag worden. Een queryparameter `q` wordt nooit gebruikt als productnaam, merknaam of categorienaam.
+Als de route wordt geopend met `brandId` of `categoryId`, worden deze alleen gebruikt als expliciete context die vooraf geselecteerd mag worden. Bij een meegegeven `categoryId` mag de categorieboom initieel alleen het pad naar de geselecteerde categorie openklappen en mogen andere, niet-bijbehorende categorieën ingeklapt blijven. Een queryparameter `q` wordt nooit gebruikt als productnaam, merknaam of categorienaam.
 
 ### Categorie kiezen en aanmaken
 
@@ -118,6 +118,7 @@ Als de route wordt geopend met `brandId` of `categoryId`, worden deze alleen geb
 - Merk is optioneel.
 - Suggesties verschijnen vanaf minimaal twee tekens.
 - De gebruiker kiest expliciet een bestaand merk of bevestigt een nieuw merk.
+- De actie voor een nieuw merk wordt getoond als `Merk “<naam>” aanmaken`; de UI-tekst gebruikt niet het woord `inline`.
 - Nieuw merk gebruikt `POST /brands`.
 - `POST /brands` retourneert `201` voor nieuw en `200` voor bestaand/hergebruikt merk.
 - Als er tekst in het merkveld staat zonder gekozen of bevestigd merk, blokkeert de UI opslaan met een veldfout.
@@ -165,18 +166,18 @@ Geblokkeerd:
 
 Na succesvol product aanmaken:
 
-- navigeert de UI naar `/admin/product-catalogus/producten/:productId`;
+- navigeert de UI naar `/admin/product-catalogus/:productId`;
 - blijft de gebruiker niet op het aanmaakformulier;
 - wordt het formulier niet alleen gereset als eindstate;
 - kan de beheerder op productdetail de aangemaakte gegevens controleren en extra verpakkingen toevoegen.
 
 ## Acceptatiecriteria
 
-### AC-01 - Formulier direct openen
+### AC-01 - Formulier vanuit context openen
 
-Gegeven dat de beheerder op de productcatalogus staat  
+Gegeven dat de beheerder in categorie-browse of brand-result state staat  
 Wanneer de beheerder `Product aanmaken` kiest  
-Dan opent `/admin/product-catalogus/producten/nieuw` zonder verplichte zoekstap.
+Dan opent `/admin/product-catalogus/nieuw` met de expliciete context als queryparameter zonder verplichte zoekstap.
 
 ### AC-02 - Product met bestaand merk aanmaken
 
@@ -193,7 +194,7 @@ Dan wordt het product aangemaakt
 En is `brand` in de response `null`  
 En navigeert de UI naar productdetail van het aangemaakte product.
 
-### AC-04 - Nieuw merk inline gebruiken
+### AC-04 - Nieuw merk gebruiken
 
 Gegeven dat het gewenste merk nog niet bestaat  
 Wanneer de beheerder het merk bevestigt als nieuw merk  
@@ -225,4 +226,5 @@ En toont de UI een begrijpelijke foutmelding.
 
 Gegeven dat de beheerder `Product aanmaken` opent met `brandId` of `categoryId` in de URL  
 Dan mag het formulier het bijbehorende merk of de bijbehorende categorie vooraf selecteren  
+En mag de categorieboom bij een vooraf geselecteerde categorie alleen het bijbehorende pad openklappen en overige takken ingeklapt laten  
 En kan de beheerder deze waarden nog wijzigen voor opslaan.

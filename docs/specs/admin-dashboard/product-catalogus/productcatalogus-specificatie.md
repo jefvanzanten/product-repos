@@ -20,11 +20,12 @@ Dit bestand is alleen een index. Gedrag staat per feature in losse specs, zodat 
 
 | Route | Hoort bij | Status |
 | --- | --- | --- |
-| `/admin/product-catalogus/producten` | zoeken + browsen + toegang tot product aanmaken | geimplementeerd |
-| `/admin/product-catalogus/producten/nieuw` | product aanmaken | geimplementeerd |
-| `/admin/product-catalogus/producten/:productId` | productdetail | geimplementeerd |
-| `/admin/product-catalogus/producten/:productId/verpakkingen/nieuw` | verpakking toevoegen | geimplementeerd |
-| `/admin/product-catalogus/producten/:productId/verpakkingen/:packageId` | verpakkingdetail | geimplementeerd |
+| `/admin/product-catalogus` | zoeken + browsen + rootcategorie aanmaken | geimplementeerd |
+| `/admin/product-catalogus/categorieen/nieuw` | rootcategorie aanmaken | geimplementeerd |
+| `/admin/product-catalogus/nieuw` | product aanmaken vanuit expliciete context | geimplementeerd |
+| `/admin/product-catalogus/:productId` | productdetail | geimplementeerd |
+| `/admin/product-catalogus/:productId/verpakkingen/nieuw` | verpakking toevoegen | geimplementeerd |
+| `/admin/product-catalogus/:productId/verpakkingen/:packageId` | verpakkingdetail | geimplementeerd |
 
 ## Leidende termen
 

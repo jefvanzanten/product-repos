@@ -4,8 +4,8 @@
 
 - Onderdeel: admin dashboard > productcatalogus
 - Routes:
-  - `/admin/product-catalogus/producten`
-  - `/admin/product-catalogus/producten/nieuw`
+  - `/admin/product-catalogus`
+  - `/admin/product-catalogus/nieuw`
 - Status:
   - cataloguszoekveld: geimplementeerd;
   - merk zoeken in productformulier: geimplementeerd voor product aanmaken en product bewerken;
@@ -22,7 +22,7 @@ Deze spec beschrijft de algemene zoekregels. De concrete UI-resultaten en klikge
 
 | Zoekvorm | Waar | Status |
 | --- | --- | --- |
-| Productcatalogus zoeken | `/admin/product-catalogus/producten?q=...` | Werkt met gegroepeerde resultaten volgens browse-spec |
+| Productcatalogus zoeken | `/admin/product-catalogus?q=...` | Werkt met gegroepeerde resultaten volgens browse-spec |
 | Merk zoeken | merkveld in product-aanmaakformulier en product-bewerkformulier | Werkt via `GET /brands?query=...` |
 | Productresultaten zoeken | productcataloguspagina | Geimplementeerd |
 | Categorie zoeken | productcataloguspagina | Geimplementeerd |
@@ -33,19 +33,20 @@ Deze spec beschrijft de algemene zoekregels. De concrete UI-resultaten en klikge
 
 ```text
 Productcatalogus
-Producten
 
 [ Zoek product, merk of categorie ]
-[ Product aanmaken ]
+
+Alle categorieën
+[ Categorie aanmaken ]
 ```
 
 ### Gedrag nu
 
 - Het zoekveld gebruikt queryparameter `q`.
-- Openen van `/admin/product-catalogus/producten?q=cola` vult het zoekveld met `cola`.
+- Openen van `/admin/product-catalogus?q=cola` vult het zoekveld met `cola`.
 - De zoekterm wordt niet automatisch opgesplitst in merk, categorie of productnaam.
 - De zoekterm wordt niet automatisch ingevuld in het productformulier.
-- `Product aanmaken` blijft altijd bereikbaar.
+- `Product aanmaken` wordt niet getoond zolang er geen expliciete categorie- of merkcontext is.
 
 ## Product zoeken op cataloguspagina
 
@@ -148,15 +149,16 @@ Een merkzoekterm vult nooit automatisch productnaam, categorie of verpakking in.
 
 ### AC-01 - Zoekterm blijft zichtbaar
 
-Gegeven dat de beheerder `/admin/product-catalogus/producten?q=cola` opent  
+Gegeven dat de beheerder `/admin/product-catalogus?q=cola` opent  
 Dan staat `cola` in het zoekveld  
 En wordt er geen product automatisch aangemaakt of ingevuld.
 
-### AC-02 - Product aanmaken blijft bereikbaar
+### AC-02 - Geen product aanmaken zonder resultaatcontext
 
-Gegeven dat er een zoekterm is ingevuld  
-Wanneer de beheerder `Product aanmaken` kiest zonder expliciet gekozen resultaatcontext  
-Dan opent het productformulier zonder prefill vanuit de zoekterm.
+Gegeven dat er alleen een zoekterm is ingevuld  
+Wanneer er geen expliciet gekozen merk- of categorieresultaatcontext is  
+Dan toont de catalogus geen `Product aanmaken` actie  
+En wordt de zoekterm niet als prefill gebruikt.
 
 ### AC-03 - Merk suggesties zoeken
 
@@ -186,7 +188,7 @@ Dan toont de UI resultaten gegroepeerd onder `Producten`, `Merken` en `Categorie
 
 Gegeven dat een zoekterm geen producten, merken of categorieën matcht  
 Dan toont de UI een geen-resultaten toestand  
-En blijft `Product aanmaken` beschikbaar.
+En toont de UI geen `Product aanmaken` actie zonder expliciete categorie- of merkcontext.
 
 ### AC-08 - Resultaatselectie verwijdert q
 

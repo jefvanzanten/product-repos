@@ -17,7 +17,7 @@ De huidige admin-slice is product aanmaken:
 - productcataloguspagina openen;
 - direct naar `Product aanmaken` navigeren;
 - categorie kiezen, inline aanmaken en veilig verwijderen;
-- merk zoeken, kiezen of inline aanmaken;
+- merk zoeken, kiezen of vanuit het merkveld aanmaken;
 - productnaam en eerste verpakking invullen;
 - product plus eerste verpakking transactioneel opslaan.
 

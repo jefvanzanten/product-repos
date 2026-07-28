@@ -24,9 +24,9 @@ Een beheerder kan een bestaand product openen, controleren en beheren. Productde
 
 | Route | Doel |
 | --- | --- |
-| `/admin/product-catalogus/producten/:productId` | Productdetail |
-| `/admin/product-catalogus/producten/:productId/verpakkingen/nieuw` | Verpakking toevoegen |
-| `/admin/product-catalogus/producten/:productId/verpakkingen/:packageId` | Verpakkingdetail |
+| `/admin/product-catalogus/:productId` | Productdetail |
+| `/admin/product-catalogus/:productId/verpakkingen/nieuw` | Verpakking toevoegen |
+| `/admin/product-catalogus/:productId/verpakkingen/:packageId` | Verpakkingdetail |
 
 ## Binnen scope
 
@@ -36,7 +36,7 @@ Een beheerder kan een bestaand product openen, controleren en beheren. Productde
 - Categorie wijzigen.
 - Merk wijzigen of leeg maken.
 - Productnaam wijzigen.
-- Merk inline aanmaken vanuit product bewerken.
+- Merk vanuit het merkveld aanmaken tijdens product bewerken.
 - Categorie inline aanmaken vanuit product bewerken.
 - Verpakkingenlijst tonen op productdetail.
 - Verpakking toevoegen via aparte route/pagina.
@@ -62,14 +62,23 @@ Een beheerder kan een bestaand product openen, controleren en beheren. Productde
 De header toont:
 
 - weergavenaam als titel;
-- categoriepad als subtitel.
+- interactieve categorie-breadcrumb onder de titel.
 
 Voorbeeld:
 
 ```text
 Coca-Cola Zero Sugar
-Voeding > Dranken > Frisdrank > Cola
+Alle categorieën > Voeding > Dranken > Frisdrank > Cola
 ```
+
+Regels:
+
+- De breadcrumb begint met `Alle categorieën`.
+- `Alle categorieën` linkt naar `/admin/product-catalogus` zonder queryparameters.
+- Elke categorie in de breadcrumb is afzonderlijk klikbaar en opent `/admin/product-catalogus?categoryId=<categoryId>`.
+- Ook de huidige productcategorie is klikbaar.
+- Wanneer de beheerder via een categorielink teruggaat naar de catalogus, opent de catalogus de categorieboom met alle parentcategorieën uitgeklapt tot en met die categorie.
+- De productgegevenssectie mag de categorie daarnaast als volledig tekstpad tonen.
 
 ### Productgegevens
 
@@ -171,7 +180,7 @@ Geen verpakkingen gevonden voor dit product.
 `Verpakking toevoegen` opent een aparte pagina:
 
 ```text
-/admin/product-catalogus/producten/:productId/verpakkingen/nieuw
+/admin/product-catalogus/:productId/verpakkingen/nieuw
 ```
 
 Na succesvol toevoegen navigeert de gebruiker naar verpakkingdetail van de nieuwe verpakking.
@@ -235,11 +244,15 @@ Productdetail heeft een zichtbare link:
 Terug naar productcatalogus
 ```
 
+Wanneer productdetail is geopend vanuit een categorie- of merkcontext, brengt `Terug naar productcatalogus` de beheerder terug naar dezelfde browsecontext.
+
 Verpakkingdetail heeft een zichtbare link:
 
 ```text
 Terug naar product
 ```
+
+Verpakking toevoegen, verpakkingdetail en verpakking bewerken bewaren de product- en cataloguscontext waar dat logisch is, zodat de beheerder via productdetail terug kan naar dezelfde geopende categorie of merkcontext.
 
 Bij onbekend product toont productdetail binnen de admin-layout:
 
@@ -290,8 +303,10 @@ Nog te bepalen:
 
 Gegeven dat een product bestaat  
 Wanneer de beheerder een productrij in de catalogus opent  
-Dan opent `/admin/product-catalogus/producten/:productId`  
-En ziet de beheerder productgegevens en verpakkingen.
+Dan opent `/admin/product-catalogus/:productId`  
+En ziet de beheerder productgegevens en verpakkingen  
+En ziet de beheerder onder de productnaam een klikbare categorie-breadcrumb met `Alle categorieën` en het categoriepad  
+En opent elke categorielink de catalogus met die categorie geopend in de categorieboom.
 
 ### AC-02 - Product bewerken
 
