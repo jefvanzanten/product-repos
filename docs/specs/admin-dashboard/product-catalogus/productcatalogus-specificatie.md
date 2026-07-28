@@ -1,4 +1,4 @@
-# Spec-index — admin productcatalogus
+# Spec-index - admin productcatalogus
 
 Dit bestand is alleen een index. Gedrag staat per feature in losse specs, zodat oude flows niet door elkaar blijven lopen.
 
@@ -7,8 +7,9 @@ Dit bestand is alleen een index. Gedrag staat per feature in losse specs, zodat 
 | Feature | Spec | Status |
 | --- | --- | --- |
 | Product aanmaken | [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md) | Huidige vertical slice |
-| Product zoeken | [product-zoeken-specificatie.md](./product-zoeken-specificatie.md) | Deels aanwezig: zoekveld en merk-suggesties |
-| Browsbare productcatalogus | [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md) | Gepland / nog niet geïmplementeerd |
+| Product zoeken | [product-zoeken-specificatie.md](./product-zoeken-specificatie.md) | Geimplementeerd |
+| Browsbare productcatalogus | [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md) | Geimplementeerd |
+| Productdetail en verpakkingen | [product-detail-specificatie.md](./product-detail-specificatie.md) | Geimplementeerd |
 
 ## Onderliggende backenddocumenten
 
@@ -19,8 +20,12 @@ Dit bestand is alleen een index. Gedrag staat per feature in losse specs, zodat 
 
 | Route | Hoort bij | Status |
 | --- | --- | --- |
-| `/admin/product-catalogus/producten` | zoeken + browsen + toegang tot product aanmaken | huidige pagina is nog minimaal |
-| `/admin/product-catalogus/producten/nieuw` | product aanmaken | huidige vertical slice |
+| `/admin/product-catalogus` | zoeken + browsen + rootcategorie aanmaken | geimplementeerd |
+| `/admin/product-catalogus/categorieen/nieuw` | rootcategorie aanmaken | geimplementeerd |
+| `/admin/product-catalogus/nieuw` | product aanmaken vanuit expliciete context | geimplementeerd |
+| `/admin/product-catalogus/:productId` | productdetail | geimplementeerd |
+| `/admin/product-catalogus/:productId/verpakkingen/nieuw` | verpakking toevoegen | geimplementeerd |
+| `/admin/product-catalogus/:productId/verpakkingen/:packageId` | verpakkingdetail | geimplementeerd |
 
 ## Leidende termen
 

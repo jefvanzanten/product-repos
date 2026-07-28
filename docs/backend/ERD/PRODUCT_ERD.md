@@ -41,7 +41,7 @@ package_type
     UNIQUE (lower(trim(name)))
 
 product_package
-    id: int PK
+    id: uuid PK
     product_id: uuid FK NOT NULL
     unit_content_id: int FK NOT NULL
     package_type_id: int FK NOT NULL
