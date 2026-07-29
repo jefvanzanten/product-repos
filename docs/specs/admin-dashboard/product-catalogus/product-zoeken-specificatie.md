@@ -10,7 +10,9 @@
   - cataloguszoekveld: geimplementeerd;
   - merk zoeken in productformulier: geimplementeerd voor product aanmaken en product bewerken;
   - echte cataloguszoekresultaten: geimplementeerd.
-- Gerelateerde spec: [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md)
+- Gerelateerde specs:
+  - [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md)
+  - [product-archiveren-specificatie.md](./product-archiveren-specificatie.md)
 
 ## Doel
 
@@ -41,6 +43,8 @@ Alle categorieën
 ## Cataloguszoekveld
 
 - Het zoekveld gebruikt queryparameter `q`.
+- Zonder statusparameter zoekt de catalogus uitsluitend actieve producten.
+- Met `status=archived` zoekt de catalogus uitsluitend gearchiveerde producten.
 - Openen van `/admin/product-catalogus?q=cola` vult het zoekveld met `cola`.
 - De zoekterm wordt niet automatisch opgesplitst in merk, categorie of productnaam.
 - De zoekterm wordt niet automatisch ingevuld in het productformulier.
@@ -136,7 +140,7 @@ Klik op een productresultaat opent productdetail:
 /admin/product-catalogus/:productId
 ```
 
-Wanneer de productrij vanuit zoekresultaten wordt geopend, blijft de zoekcontext beschikbaar voor terugnavigatie naar de catalogus waar dat logisch is.
+Wanneer de productrij vanuit zoekresultaten wordt geopend, blijft de zoekcontext beschikbaar voor terugnavigatie naar de catalogus waar dat logisch is. Een gearchiveerd resultaat toont altijd het tekstlabel `Gearchiveerd`.
 
 ### Merkresultaat openen
 
@@ -229,6 +233,7 @@ De cataloguszoeker gebruikt queryparameters voor deelbare en testbare zoek- en r
 
 ```text
 /admin/product-catalogus?q=<zoekterm>
+/admin/product-catalogus?q=<zoekterm>&status=archived
 /admin/product-catalogus?brandId=<brandId>
 /admin/product-catalogus?categoryId=<categoryId>
 ```
@@ -271,7 +276,7 @@ Een merkzoekterm vult nooit automatisch productnaam, categorie of verpakking in.
 De cataloguszoeker en merkcontext gebruiken de bestaande admin-dashboard endpoints:
 
 ```text
-GET /products/search?query=<query>&productLimit=<limit>&brandLimit=<limit>&categoryLimit=<limit>
+GET /products/search?query=<query>&status=<active|archived>&productLimit=<limit>&brandLimit=<limit>&categoryLimit=<limit>
 GET /products?brandId=<brandId>&limit=<limit>
 GET /brands?query=<zoekterm>
 ```
@@ -359,3 +364,11 @@ Gegeven dat de zoekterm een categorie matcht
 Wanneer de beheerder het categorieresultaat opent  
 Dan wordt `q` verwijderd uit de URL  
 En opent de catalogus de category-browse state voor die categorie met `categoryId=<categoryId>`.
+
+### AC-11 - Zoeken op status
+
+Gegeven dat geen statusparameter bestaat
+Dan levert zoeken alleen actieve producten.
+Gegeven dat `status=archived` actief is
+Dan levert zoeken alleen gearchiveerde producten
+En toont ieder productresultaat het label `Gearchiveerd`.

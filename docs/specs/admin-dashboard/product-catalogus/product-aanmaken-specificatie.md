@@ -4,10 +4,12 @@
 
 - Onderdeel: admin dashboard > productcatalogus
 - Route: `/admin/product-catalogus/nieuw`
-- Status: huidige vertical slice
+- Status: geïmplementeerde basis; afbeeldingen, Calorie Tracker-data en macroprofiel zijn concept
 - Backendcontract: `docs/backend/Endpoints/ADMIN_DASHBOARD_ENDPOINTS.md`
 - Datamodel: `docs/backend/ERD/PRODUCT_ERD.md`
-- Gerelateerde spec: [product-detail-specificatie.md](./product-detail-specificatie.md)
+- Gerelateerde specs:
+  - [product-detail-specificatie.md](./product-detail-specificatie.md)
+  - [product-archiveren-specificatie.md](./product-archiveren-specificatie.md)
 
 ## Doel
 
@@ -16,9 +18,12 @@ Een beheerder kan zonder verplichte zoekstap een product aanmaken met:
 1. een categorie;
 2. optioneel een merk;
 3. een productnaam;
-4. precies één eerste verpakking.
+4. precies één eerste verpakking;
+5. optioneel een product- en verpakkingsafbeelding;
+6. optionele beschikbaarheid voor de Calorie Tracker;
+7. optioneel een macroprofiel.
 
-Opslaan maakt transactioneel één `product` en één eerste `product_package` aan. Na succesvol opslaan navigeert de UI naar productdetail van het nieuwe product.
+Opslaan maakt transactioneel één `product`, één eerste `product_package` en eventuele Calorie Tracker-data aan. Na succesvol opslaan navigeert de UI naar productdetail van het nieuwe product.
 
 ## Binnen scope
 
@@ -31,7 +36,10 @@ Opslaan maakt transactioneel één `product` en één eerste `product_package` a
 - Categorie verwijderen vanuit het formulier wanneer de backend dit toestaat.
 - Merk optioneel zoeken, kiezen of vanuit het merkveld aanmaken.
 - Productnaam invullen.
-- Eerste verpakking invullen.
+- Een optionele productafbeelding kiezen.
+- Optioneel het product beschikbaar maken voor de Calorie Tracker en exact één consumptietype kiezen.
+- Optioneel een macroprofiel op productniveau toevoegen.
+- Eerste verpakking en een optionele verpakkingsafbeelding invullen.
 - Product opslaan via `POST /products`.
 - Na succesvol opslaan redirecten naar productdetail.
 - Backendfouten zichtbaar maken zonder ingevulde waarden te wissen.
@@ -42,7 +50,9 @@ Opslaan maakt transactioneel één `product` en één eerste `product_package` a
 - Producten bewerken.
 - Extra verpakkingen toevoegen of bewerken.
 - Echte productresultaten op de cataloguspagina.
-- Barcode/EAN, productfoto's, status/publicatie/archief.
+- Barcode/EAN.
+- Producten of verpakkingen definitief verwijderen.
+- Archiveren tijdens de eerste aanmaak; een nieuw product start actief.
 - Apart merken- of categoriebeheer buiten de acties in dit formulier.
 - Een apart veld `eenheidsoort`.
 
@@ -66,12 +76,24 @@ Merk, optioneel
 
 Product
 - productnaam
+- optionele productafbeelding
 - live weergavenaam: merk + productnaam
+
+Calorie Tracker, standaard uit
+- beschikbaar voor Calorie Tracker
+- consumptietype: voeding, drinken of supplement
+
+Voedingswaarden, standaard uit
+- macroprofiel toevoegen
+- referentiebasis
+- optionele calorieën, eiwit, koolhydraten en vet
+- voorlopige berekende calorieën wanneer mogelijk
 
 Verpakking
 - verpakkingstype
 - inhoud + inhoudseenheid
 - aantal per verpakking
+- optionele verpakkingsafbeelding
 
 [ Product opslaan ]
 ```
@@ -134,6 +156,37 @@ Als de route wordt geopend met `brandId` of `categoryId`, worden deze alleen geb
 - Weergavenaam is alleen UI: `<merk> <productnaam>` of alleen productnaam.
 - `displayName` wordt niet naar de backend gestuurd.
 
+### Calorie Tracker-beschikbaarheid
+
+- De sectie staat standaard uit.
+- Zonder ingeschakelde beschikbaarheid verschijnt het product niet in productzoeken van de Calorie Tracker.
+- Bij inschakelen is exact één consumptietype verplicht: `voeding`, `drinken` of `supplement`.
+- Een macroprofiel is niet verplicht om het product te kunnen loggen.
+- Een product zonder macroprofiel draagt niet bij aan calorie- of macrototalen.
+
+### Optioneel macroprofiel
+
+- Het macroprofiel hoort bij het product en niet bij een afzonderlijke verpakking.
+- De sectie staat standaard uit.
+- De beheerder kiest een expliciete referentiebasis: `100 g`, `100 ml` of `1 stuk/dosis`.
+- `100 g` is de standaardkeuze.
+- Calorieën, eiwit, koolhydraten en vet zijn ieder afzonderlijk optioneel.
+- Een ingeschakeld profiel vereist minimaal één waarde groter dan nul.
+- Massa-, volume- en teleenheden worden niet automatisch onderling omgerekend.
+- De referentiebasis moet compatibel zijn met de eerste verpakking en later met iedere extra verpakking.
+- Wanneer calorieën leeg zijn en eiwit, koolhydraten en vet alle drie bestaan, toont de client een voorlopige berekening met `4/4/9`.
+- De berekende caloriewaarde wordt bij opslaan als caloriewaarde bewaard met bron `automatisch`.
+- De beheerder kan de berekende waarde vóór opslaan corrigeren; de bron wordt dan `handmatig`.
+- Bij latere macrowijzigingen wordt alleen een automatisch berekende caloriewaarde opnieuw berekend. Een handmatige correctie wordt niet overschreven.
+- De backend valideert of herhaalt de berekening en vertrouwt niet uitsluitend op clientinvoer.
+
+### Afbeeldingen
+
+- Product- en verpakkingsafbeeldingen zijn optioneel.
+- Een verpakkingsafbeelding is leidend voor die verpakking.
+- Zonder verpakkingsafbeelding gebruikt de UI de productafbeelding en daarna een vaste placeholder.
+- Een ontbrekende afbeelding blokkeert opslaan niet.
+
 ### Eerste verpakking
 
 Verplichte velden:
@@ -143,6 +196,8 @@ Verplichte velden:
 - `unitTypeId` - inhoudseenheid;
 - `unitsPerPackage` - positief geheel getal, standaard `1`.
 
+De eerste verpakking heeft daarnaast een optionele afbeelding.
+
 UI-invoer met komma, bijvoorbeeld `1,5`, wordt voor verzending omgezet naar `1.5`. De backend canonicaliseert decimalen, bijvoorbeeld `1.50` naar `1.5`.
 
 ## Backendregels
@@ -151,9 +206,21 @@ UI-invoer met komma, bijvoorbeeld `1,5`, wordt voor verzending omgezet naar `1.5
 - `brandId` mag ontbreken of `null` zijn.
 - Categorie, merk, verpakkingstype en eenheid moeten bestaan wanneer ze worden ingestuurd.
 - `unit_content` wordt gevonden of aangemaakt voor `(unitTypeId, canonicalAmount)`.
-- Product en eerste verpakking worden in één transactie opgeslagen.
-- Bij falen blijft er geen half opgeslagen product over.
+- Product, eerste verpakking, afbeeldingenmetadata, Calorie Tracker-beschikbaarheid en een eventueel macroprofiel worden in één transactie opgeslagen.
+- Bij falen blijft er geen half opgeslagen product of macroprofiel over.
 - Succesresponse bevat voldoende informatie om naar productdetail te navigeren.
+
+### Benodigde contractuitbreiding
+
+Voor deze conceptuitbreiding moeten endpoint en datamodel later expliciet worden uitgebreid met:
+
+- productafbeelding;
+- Calorie Tracker-beschikbaarheid en consumptietype;
+- macroprofiel, referentiebasis, voedingswaarden en bron van calorieën;
+- verpakkingsafbeelding;
+- transactionele validatie van de compatibiliteit tussen macroprofiel en verpakking.
+
+De huidige endpoint- en ERD-documenten zijn voor deze velden nog niet leidend totdat die uitbreiding afzonderlijk is uitgewerkt.
 
 ## Duplicaten
 
@@ -232,3 +299,29 @@ Gegeven dat de beheerder `Product aanmaken` opent met `brandId` of `categoryId` 
 Dan mag het formulier het bijbehorende merk of de bijbehorende categorie vooraf selecteren  
 En mag de categorieboom bij een vooraf geselecteerde categorie alleen het bijbehorende pad openklappen en overige takken ingeklapt laten  
 En kan de beheerder deze waarden nog wijzigen voor opslaan.
+
+### AC-09 - Calorie Tracker-product
+
+Gegeven dat de beheerder beschikbaarheid voor de Calorie Tracker inschakelt
+Dan is exact één consumptietype verplicht
+En kan het product zonder macroprofiel worden opgeslagen.
+
+### AC-10 - Optioneel macroprofiel
+
+Gegeven dat de beheerder het macroprofiel inschakelt
+Dan kiest de beheerder een compatibele referentiebasis
+En is minimaal één voedingswaarde groter dan nul
+En wordt een volledige macroset zonder calorie-invoer client-side voorlopig naar calorieën omgerekend.
+
+### AC-11 - Afbeeldingsfallback
+
+Gegeven dat geen verpakkingsafbeelding is gekozen
+Dan kan het product worden opgeslagen
+En gebruikt de UI later de productafbeelding of een placeholder.
+
+### AC-12 - Transactioneel opslaan
+
+Gegeven dat product, eerste verpakking en macroprofiel worden ingestuurd
+Wanneer één onderdeel ongeldig is
+Dan wordt geen van de onderdelen gedeeltelijk opgeslagen
+En blijven de ingevulde formulierwaarden behouden.

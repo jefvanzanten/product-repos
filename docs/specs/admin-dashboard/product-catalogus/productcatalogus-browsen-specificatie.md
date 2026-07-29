@@ -9,6 +9,7 @@
   - [product-zoeken-specificatie.md](./product-zoeken-specificatie.md)
   - [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md)
   - [product-detail-specificatie.md](./product-detail-specificatie.md)
+  - [product-archiveren-specificatie.md](./product-archiveren-specificatie.md)
 
 Deze spec is leidend voor de browsbare productcatalogus: de categorieboom, categorie-inhoud, categoriebeheer op de browsepagina en de primaire toegang tot product aanmaken vanuit een expliciete categoriecontext. Zoekgedrag, zoekresultaten en zoekgestuurde resultaatstates staan in [product-zoeken-specificatie.md](./product-zoeken-specificatie.md).
 
@@ -25,6 +26,8 @@ Een beheerder kan door bestaande catalogusdata bladeren, rootcategorieën behere
 - Vanuit de opengeklapte categorie een directe subcategorie aanmaken.
 - Producten ophalen en tonen als productrijen of productkaarten.
 - Productrijen linken naar productdetail.
+- Standaard alleen actieve producten tonen.
+- Via een expliciet statusfilter gearchiveerde producten terugvinden.
 - Category-browse state tonen na klikken op een categorie in de categorieboom.
 - Lege root tonen wanneer er nog geen categorieën zijn.
 - Lege geopende categorie tonen wanneer er geen directe subcategorieën en geen directe producten zijn.
@@ -34,10 +37,11 @@ Een beheerder kan door bestaande catalogusdata bladeren, rootcategorieën behere
 
 ## Buiten scope
 
-- Producten verwijderen of archiveren.
+- Producten of verpakkingen definitief verwijderen.
+- Archiveren of heractiveren vanuit de browsekaart; deze acties staan op detail.
 - Categorieën verwijderen, verplaatsen of hersorteren op de cataloguspagina.
 - Extra verpakkingen beheren op de cataloguspagina.
-- Productfoto's of publicatiestatus.
+- Publicatiestatus naast actief/gearchiveerd.
 - Oude trapsgewijze productmanagement-flow.
 
 ## Layout
@@ -74,6 +78,7 @@ Wanneer de beheerder een categorie opent, toont de catalogus een openklapbare ca
 De pagina toont boven de categorieboom:
 
 - de zoekbalk;
+- het statusfilter `Actief` of `Gearchiveerd`;
 - een klikbare breadcrumb met `Alle categorieën` en het categoriepad van root naar de geopende categorie.
 
 Een geopende categorie toont in deze volgorde:
@@ -173,7 +178,7 @@ Alle categorieën > ... > <Naam huidige categorie>
   [ + Subcategorie ] [ + Product ]
 ```
 
-Deze lege categorietoestand wordt getoond wanneer de geopende categorie helemaal leeg is: geen directe subcategorieën en geen directe producten. Ook in deze lege categorietoestand gebruikt de product-aanmaakactie de huidige `categoryId` als prefillcontext. De actieknoppen staan onder de lege-state-inhoud op dezelfde boom-as als de geopende categorie-inhoud.
+Deze lege categorietoestand wordt getoond wanneer de geopende categorie helemaal leeg is: geen directe subcategorieën en geen directe producten. Ook in deze lege categorietoestand gebruikt de product-aanmaakactie de huidige `categoryId` als prefillcontext. De actieknoppen staan samen binnen het lege-state-kaartje, onder de uitlegtekst en op dezelfde boom-as als de geopende categorie-inhoud.
 
 Directe subcategorieën van de geopende categorie worden getoond, ook wanneer ze nog geen producten in hun eigen subtree hebben. Dit is nodig zodat een beheerder feedback krijgt na subcategorie-aanmaak en verder kan navigeren om de catalogus op te bouwen.
 
@@ -191,7 +196,8 @@ Elke rij/kaart toont minimaal:
 
 - weergavenaam;
 - merk wanneer aanwezig;
-- korte verpakkingssamenvatting.
+- korte verpakkingssamenvatting;
+- statuslabel wanneer `Gearchiveerd` actief is.
 
 Als producten binnen een geopende categorie staan, is het categoriepad al zichtbaar als context en hoeft dit niet in elke rij herhaald te worden. Productkaarten in een geopende categorie staan op dezelfde visuele as en binnen dezelfde breedte als de inhoud van die geopende categorie.
 
@@ -352,7 +358,7 @@ De browsecatalogus gebruikt queryparameters en routes voor deelbare en testbare 
 /admin/product-catalogus/categorieen/<categoryId>/bewerken
 ```
 
-`categoryId` bepaalt welke categorie in de categorieboom geopend is. Wanneer de beheerder een categorie opent, wordt de URL:
+`categoryId` bepaalt welke categorie in de categorieboom geopend is. De optionele parameter `status=archived` opent expliciet de gearchiveerde catalogusstate; zonder deze parameter is de status actief. Wanneer de beheerder een categorie opent, wordt de URL:
 
 ```text
 /admin/product-catalogus?categoryId=<categoryId>
@@ -374,7 +380,7 @@ Bij klikken op het potloodicoon voor categorie bewerken wordt de bewerkroute dir
 De browsepagina gebruikt de bestaande admin-dashboard endpoints:
 
 ```text
-GET /products?categoryId=<categoryId>&limit=<limit>
+GET /products?categoryId=<categoryId>&status=<active|archived>&limit=<limit>
 POST /categories
 GET /admin/product-catalogus/categorieen/<categoryId>/bewerken
 POST /admin/product-catalogus/categorieen/<categoryId>/bewerken
@@ -430,7 +436,8 @@ En tonen subcategorieën alleen hun directe naam
 En ziet de beheerder directe producten in de sectie `Producten` onder de geopende categorie wanneer die bestaan  
 En volgen subcategorieën, productsectie, productkaarten en actieknoppen dezelfde visuele boom-as  
 En ziet de beheerder een lege categorietoestand met tekst `Deze categorie is nu nog leeg.` wanneer er geen directe subcategorieën en geen directe producten bestaan  
-En ziet de beheerder een secundaire actie `+ Subcategorie` naast de primaire actie `+ Product` onder de geopende categorie  
+En staan in die lege categorietoestand de secundaire actie `+ Subcategorie` en de primaire actie `+ Product` samen binnen het lege-state-kaartje, onder de uitlegtekst  
+En ziet de beheerder in een niet-lege categorie de secundaire actie `+ Subcategorie` naast de primaire actie `+ Product` onder de geopende categorie  
 En gebruikt `+ Product` de geopende categorie als prefillcontext.
 
 ### AC-03 - Product openen
@@ -523,3 +530,12 @@ En keert de beheerder terug naar de bijbehorende categorielijst waar de nieuwe n
 Wanneer de naam leeg is of al bestaat onder dezelfde parent/root  
 Dan blijft de modal open  
 En ziet de beheerder een duidelijke foutmelding.
+
+### AC-11 - Gearchiveerde producten browsen
+
+Gegeven dat de catalogus standaard geopend is
+Dan toont zij alleen actieve producten.
+Wanneer de beheerder het statusfilter `Gearchiveerd` kiest
+Dan gebruikt de URL `status=archived`
+En toont iedere productkaart een zichtbaar statuslabel
+En kan de beheerder productdetail openen om het product te heractiveren.

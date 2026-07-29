@@ -3,10 +3,11 @@
 ## Status
 
 - Onderdeel: admin dashboard > productcatalogus
-- Status: geimplementeerd
+- Status: geïmplementeerde basis; afbeeldingen, Calorie Tracker-data, impactbevestiging en archiveren zijn concept
 - Hoort bij:
   - [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md)
   - [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md)
+  - [product-archiveren-specificatie.md](./product-archiveren-specificatie.md)
 - Backendcontract: `docs/backend/Endpoints/ADMIN_DASHBOARD_ENDPOINTS.md`
 - Datamodel: `docs/backend/ERD/PRODUCT_ERD.md`
 
@@ -18,7 +19,9 @@ Een beheerder kan een bestaand product openen, controleren en beheren. Productde
 - productgegevens bewerken;
 - verpakkingen van het product bekijken;
 - een verpakking toevoegen;
-- een verpakking openen en bewerken.
+- een verpakking openen en bewerken;
+- afbeeldingen, Calorie Tracker-beschikbaarheid en voedingswaarden beheren;
+- producten en verpakkingen archiveren of heractiveren.
 
 ## Routes
 
@@ -35,22 +38,23 @@ Een beheerder kan een bestaand product openen, controleren en beheren. Productde
 - Productgegevens bewerken via expliciete bewerkmodus.
 - Categorie wijzigen.
 - Merk wijzigen of leeg maken.
-- Productnaam wijzigen.
+- Productnaam en optionele productafbeelding wijzigen.
+- Beschikbaarheid voor de Calorie Tracker en consumptietype beheren.
+- Een optioneel macroprofiel toevoegen, wijzigen of uitschakelen.
 - Merk vanuit het merkveld aanmaken tijdens product bewerken.
 - Categorie inline aanmaken vanuit product bewerken.
 - Verpakkingenlijst tonen op productdetail.
 - Verpakking toevoegen via aparte route/pagina.
 - Verpakkingdetail bekijken via aparte route/pagina.
-- Verpakking bewerken via expliciete bewerkmodus.
+- Verpakking en optionele verpakkingsafbeelding bewerken via expliciete bewerkmodus.
+- Producten en verpakkingen archiveren en heractiveren.
+- Impact tonen wanneer een correctie gekoppelde consumptielogs of voorraadregistraties beïnvloedt.
 - Validatie- en duplicate-regels gelijk houden aan product aanmaken en eerste verpakking.
 
 ## Buiten scope
 
-- Product verwijderen.
-- Product archiveren of heractiveren.
-- Verpakking verwijderen.
-- Verpakking archiveren of heractiveren.
-- Voorraad-, inventarisatie- of opslaglocatie-informatie tonen.
+- Producten of verpakkingen definitief verwijderen.
+- Inhoudelijke voorraad-, inventarisatie- of opslaglocatie-informatie tonen; alleen afhankelijkheidsaantallen bij impactvolle acties zijn binnen scope.
 - Auditmetadata tonen, zoals aangemaakt op of laatst bijgewerkt.
 - Nieuwe verpakkingstypes, inhoudseenheden of eenheidsoorten beheren via UI.
 - Aparte edit-route voor productgegevens.
@@ -93,6 +97,9 @@ Categorie: Voeding > Dranken > Frisdrank > Cola
 Merk: Coca-Cola
 Productnaam: Zero Sugar
 Weergavenaam: Coca-Cola Zero Sugar
+Status: Actief
+Calorie Tracker: Drinken
+Afbeelding: <afbeelding of placeholder>
 ```
 
 Bij merkloos product:
@@ -112,8 +119,14 @@ Bewerkmodus toont:
 - categorie;
 - merk, inclusief leeg maken;
 - productnaam;
+- optionele productafbeelding;
+- beschikbaarheid voor de Calorie Tracker;
+- consumptietype wanneer beschikbaarheid actief is;
+- optioneel macroprofiel;
 - `Opslaan`;
 - `Annuleren`.
+
+Productdetail toont het macroprofiel in een aparte sectie `Voedingswaarden`. Zonder profiel toont deze sectie `Geen macroprofiel` en de actie `Macroprofiel toevoegen`. De velden en validatie zijn gelijk aan [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md).
 
 ### Verpakkingenlijst op productdetail
 
@@ -121,6 +134,8 @@ Productdetail toont een aparte sectie `Verpakkingen` onder de productgegevens.
 
 Elke verpakkingrij toont minimaal:
 
+- verpakkingsafbeelding met productafbeelding en daarna placeholder als fallback;
+- status `Actief` of `Gearchiveerd`;
 - verpakkingstype;
 - inhoudshoeveelheid + inhoudseenheid, indien aanwezig;
 - aantal per verpakking;
@@ -155,6 +170,8 @@ Read-only toont minimaal:
 
 ```text
 Verpakking
+Status: Actief
+Afbeelding: <verpakkingsafbeelding, productafbeelding of placeholder>
 Type: fles
 Inhoud: 1,5 l
 Aantal per verpakking: 1
@@ -181,8 +198,14 @@ Verpakkingen worden niet in product-bewerkmodus bewerkt. Verpakkingen hebben eig
 
 ### Validatie bij product bewerken
 
-Product bewerken gebruikt dezelfde regels als product aanmaken:
+Product bewerken gebruikt dezelfde regels als product aanmaken, inclusief Calorie Tracker-beschikbaarheid, afbeeldingen en macroprofiel:
 
+- een product dat beschikbaar is voor de Calorie Tracker heeft exact één consumptietype;
+- een ingeschakeld macroprofiel heeft een expliciete basis en minimaal één voedingswaarde groter dan nul;
+- de macroprofielbasis blijft compatibel met alle verpakkingen;
+- een automatisch berekende caloriewaarde wordt bij gewijzigde macro's opnieuw berekend;
+- een handmatig gecorrigeerde caloriewaarde wordt bij gewijzigde macro's niet automatisch overschreven;
+- een ontbrekende afbeelding blokkeert opslaan niet;
 - categorie is verplicht;
 - productnaam is verplicht;
 - merk is optioneel;
@@ -222,6 +245,8 @@ Verpakking bewerken gebruikt dezelfde velden en validatie als eerste verpakking 
 - inhoud en inhoudseenheid consistent;
 - aantal per verpakking verplicht, standaard `1` bij toevoegen;
 - eenheidsoort verplicht wanneer relevant;
+- een optionele verpakkingsafbeelding;
+- de verpakking blijft compatibel met een eventueel productmacroprofiel;
 - dubbele verpakking onder hetzelfde product wordt geblokkeerd;
 - bij bewerken telt de huidige verpakking zelf niet als duplicaat.
 
@@ -238,6 +263,23 @@ Na succesvol bewerken:
 - blijft de gebruiker op verpakkingdetail;
 - keert de pagina terug naar read-only mode;
 - toont de pagina de bijgewerkte verpakking.
+
+## Impactvolle correcties
+
+De catalogus is de actuele bron van waarheid voor consumptielogs en voorraadregistraties. Gebruikte product- en verpakkingsdata mag worden gecorrigeerd, ook bij een typo of misclick.
+
+Bij een wijziging aan consumptietype, verpakkingstype, inhoud, inhoudseenheid of aantal per verpakking:
+
+- bepaalt de backend hoeveel consumptielogs en voorraadregistraties geraakt worden;
+- toont de UI deze aantallen in een expliciete bevestiging;
+- werken de nieuwe waarden na opslaan door naar gekoppelde domeinen;
+- wordt een wijziging geblokkeerd als deze niet compatibel is met het macroprofiel.
+
+Er wordt geen product- of voedingssnapshot in een consumptielog bijgewerkt, omdat logs actuele catalogusdata gebruiken.
+
+## Archiveren en heractiveren
+
+Productdetail en verpakkingdetail tonen afhankelijk van de status een archiveer- of herstelactie. Producten en verpakkingen worden nooit definitief verwijderd. Alle regels, afhankelijkheidsmeldingen en cascade-effecten staan in [product-archiveren-specificatie.md](./product-archiveren-specificatie.md).
 
 ## Navigatie en fouttoestanden
 
@@ -290,6 +332,7 @@ PATCH /products/:productId
 GET /products/:productId/packages/:packageId
 POST /products/:productId/packages
 PATCH /products/:productId/packages/:packageId
+<endpoints voor archiveren, heractiveren en afhankelijkheidsaantallen>
 ```
 
 Nog te bepalen:
@@ -345,7 +388,26 @@ Wanneer de beheerder `Verpakking bewerken` kiest
 Dan schakelt de pagina naar bewerkmodus  
 En gelden dezelfde validatieregels als bij eerste verpakking.
 
-### AC-07 - Geen verwijderen of archiveren
+### AC-07 - Geen definitief verwijderen
 
 Gegeven dat productdetail of verpakkingdetail geopend is  
-Dan toont de MVP geen verwijder- of archiefactie.
+Dan toont de UI geen actie om catalogusdata definitief te verwijderen
+En toont zij afhankelijk van de status een archiveer- of herstelactie.
+
+### AC-08 - Macroprofiel beheren
+
+Gegeven dat productdetail geopend is
+Dan kan de beheerder een optioneel macroprofiel toevoegen, wijzigen of uitschakelen
+En blijft het profiel gekoppeld aan het product in plaats van een verpakking.
+
+### AC-09 - Afbeeldingsfallback
+
+Gegeven dat een verpakking geen eigen afbeelding heeft
+Dan toont detail de productafbeelding
+En anders een vaste placeholder.
+
+### AC-10 - Impactvolle correctie
+
+Gegeven dat een product- of verpakkingswijziging logs of voorraadregistraties beïnvloedt
+Dan toont de UI vóór opslaan het aantal geraakte relaties
+En gebruikt ieder gekoppeld domein na bevestiging de gecorrigeerde catalogusdata.

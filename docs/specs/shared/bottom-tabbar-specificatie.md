@@ -47,11 +47,11 @@ Calorie Tracker en Inventory gebruiken dezelfde bottom-tabbar, terwijl iedere ho
 
 | Label | Route | Zichtbaarheid |
 | --- | --- | --- |
-| `Calorie Statestieken` | `/` | Altijd |
-| `Consumptie Logboek` | Voorlopig `/`; een eigen route volgt bij uitwerking van het logboek | Altijd |
-| `Admin Dashboard` | `/admin/product-catalogus` | Alleen voor een geauthenticeerde gebruiker |
+| `Caloriestatistieken` | `/` | Iedere ingelogde gebruiker |
+| `Consumptielogboek` | `/logs` | Iedere ingelogde gebruiker |
+| `Admin` | `/admin/product-catalogus` | Alleen een ingelogde beheerder |
 
-De authenticatiecontrole is in het minimale geraamte nog een tijdelijke placeholder.
+De volledige Calorie Tracker staat achter authenticatie. Zichtbaarheid van de admintab vereist een expliciete beheerdersrol en niet alleen een bestaande sessie.
 
 ### Inventory
 
@@ -63,8 +63,9 @@ De authenticatiecontrole is in het minimale geraamte nog een tijdelijke placehol
 ## Gedrag
 
 - De actieve vormgeving volgt `aria-current="page"` op de aangeleverde link.
-- In het minimale Calorie Tracker-geraamte verwijzen de eerste twee tabs beide naar `/` en zijn zij daarom op die route beide actief; dit vervalt zodra het logboek een eigen route krijgt.
-- Alle routes onder `/admin` markeren de admin-tab als actief.
+- `/` markeert uitsluitend `Caloriestatistieken` als actief.
+- `/logs` en onderliggende logroutes markeren `Consumptielogboek` als actief.
+- Alle routes onder `/admin` markeren de admintab als actief.
 - De tabbar blijft zichtbaar wanneer een adminroute actief is.
 - De app-specifieke layouts blijven eigenaar van labels, routes en conditionele zichtbaarheid.
 - De gedeelde component kent geen Calorie Tracker-, Inventory- of adminroutes.
@@ -99,4 +100,8 @@ En gebruikt deze het horizontale anker op 40% van de viewport.
 ### AC-05 — Calorie Tracker-autorisatie
 
 Gegeven dat de gebruiker niet geauthenticeerd is  
-Dan toont de Calorie Tracker-layout geen tab naar het admin-dashboard.
+Dan toont de Calorie Tracker geen persoonlijke applicatieshell.
+Gegeven dat de gebruiker is ingelogd zonder beheerdersrol
+Dan toont de Calorie Tracker-layout geen admintab.
+Gegeven dat de gebruiker een beheerder is
+Dan is de admintab zichtbaar en zijn de adminroutes toegankelijk.

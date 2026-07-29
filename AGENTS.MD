@@ -39,6 +39,7 @@
 - If the requested code conflicts with it, propose a spec change first with pros and cons.
 - Do not edit `docs/` unless explicitly requested.
 - Documentation should be Dutch
+- DON'T explicitly mention something thats not there. Mention as much possible of what there IS.
 
 ## Tests
 
