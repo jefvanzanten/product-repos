@@ -34,7 +34,6 @@ export function CategoryTree({ browse, categories, onCreateCategory }: CategoryT
 
   return (
     <>
-      {browse.state === "root" ? <h2 className={styles.cardTitle}>Alle categorieën</h2> : null}
       <div className={styles.categoryList}>
         {browse.state === "root" && browse.isEmpty ? <EmptyState title="Er zijn geen categorieën gevonden." text="Maak je eerste categorie aan om de catalogus op te bouwen." /> : null}
         {tree.map((node) => (
@@ -99,8 +98,8 @@ function ActiveCategoryContent({ browse, depth, onCreateCategory }: { readonly b
       ) : null}
       {emptyCategory ? <EmptyState title="Deze categorie is nu nog leeg." text="Maak een nieuwe subcategorie of een product aan om hem te vullen." /> : null}
       <div className={actions.inlineActions}>
-        <button className={actions.secondaryButton} type="button" onClick={() => onCreateCategory({ kind: "child", parentId: browse.category.id, parentName: browse.category.name })}>Subcategorie aanmaken</button>
-        <Link className={actions.primaryLink} to={`/admin/product-catalogus/nieuw?categoryId=${browse.category.id}`}>Product aanmaken</Link>
+        <button className={actions.secondaryButton} type="button" onClick={() => onCreateCategory({ kind: "child", parentId: browse.category.id, parentName: browse.category.name })}>+ Subcategorie</button>
+        <Link className={actions.primaryLink} to={`/admin/product-catalogus/nieuw?categoryId=${browse.category.id}`}>+ Product</Link>
       </div>
     </div>
   );

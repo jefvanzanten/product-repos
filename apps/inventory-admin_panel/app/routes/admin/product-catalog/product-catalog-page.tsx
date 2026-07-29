@@ -18,7 +18,9 @@ export function ProductCatalogPage({ actionData, loaderData }: { readonly action
   const [createModal, setCreateModal] = useState<CategoryCreateModalState | null>(null);
   const editCategory = loaderData.editCategory;
   const browse = loaderData.browse;
-  const categoryBreadcrumb = browse?.state === "category" ? <CategoryBreadcrumb path={browse.categoryPath} /> : null;
+  const categoryBreadcrumb = loaderData.mode === "browse" && browse && browse.state !== "brand"
+    ? <CategoryBreadcrumb path={browse.state === "category" ? browse.categoryPath : []} />
+    : null;
 
   const closeEditModal = (): void => {
     window.location.href = editCategory?.parentId ? `/admin/product-catalogus?categoryId=${editCategory.parentId}` : "/admin/product-catalogus";

@@ -1,10 +1,3 @@
-.cardTitle {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 800;
-  line-height: 1.5rem;
-}
-
 .categoryList,
 .productsSection,
 .treeNode {
@@ -22,17 +15,18 @@
 .categoryRow {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 2.75rem;
-  gap: 0.5rem;
   align-items: stretch;
-}
-
-.categoryLink,
-.editButton {
+  overflow: hidden;
   color: #020617;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
   box-shadow: 0 1px 4px rgb(15 23 42 / 10%);
+}
+
+.categoryLink,
+.editButton {
+  color: inherit;
 }
 
 .categoryLink {

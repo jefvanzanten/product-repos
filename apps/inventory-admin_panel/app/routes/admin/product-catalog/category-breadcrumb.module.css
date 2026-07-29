@@ -3,8 +3,8 @@
   flex-wrap: wrap;
   gap: 0.25rem;
   color: #ccfbf1;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
+  font-size: 1.05rem;
+  line-height: 1.5rem;
 }
 
 .breadcrumb a {

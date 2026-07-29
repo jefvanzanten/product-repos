@@ -19,6 +19,7 @@ Deze index koppelt elk specbestand onder `docs/specs/` aan een uitvoerbaar plan.
 | `docs/specs/calory-tracker/dashboard/macro-calorien-grafiek.md` | `docs/plans/calory-tracker-macro-calorien-grafiek-plan.md` | specificatie + implementatieplan | ondergespecificeerd; nutrition-ERD niet actueel |
 | `docs/specs/calory-tracker/logs/log-overzicht.md` | `docs/plans/calory-tracker-log-overzicht-plan.md` | specificatieplan | leeg; bestaande UI is oude/ongedefinieerde slice |
 | `docs/specs/calory-tracker/logs/log-toevoegen.md` | `docs/plans/calory-tracker-log-toevoegen-plan.md` | specificatieplan | leeg; bestaande modal is oude/ongedefinieerde slice |
+| `docs/specs/workspace/doorlopende-vitest-specsuite-specificatie.md` | `docs/plans/doorlopende-vitest-specsuite-plan.md` | werkwijze | geimplementeerd |
 
 ## Aanbevolen volgorde
 
@@ -28,6 +29,20 @@ Deze index koppelt elk specbestand onder `docs/specs/` aan een uitvoerbaar plan.
 4. Bouw cataloguszoeken en browsen samen, omdat ze dezelfde productrij-, categoriepad- en verpakkingssamenvatting-contracten delen.
 5. Bouw inventory backend/contracts eerst; vervang daarna de placeholder op `/` door voorraad inzien en bottomsheet toevoegen.
 6. Werk calorie-tracker specs uit vóór implementatie. De huidige calorie-ERD is expliciet niet actueel.
+
+## Doorlopende specsuite
+
+Gebruik tijdens spec- en planwerk de Vitest-watchsuite:
+
+```text
+corepack pnpm run test:specs:watch
+```
+
+Deze suite bewaakt dat specs onder `docs/specs/` gekoppeld blijven aan plannen en dat featureplannen test- of verificatieafspraken bevatten. Voor een eenmalige run gebruik je:
+
+```text
+corepack pnpm run test:specs
+```
 
 ## Verificatie-afspraak
 

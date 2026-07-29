@@ -16,13 +16,13 @@
 
 Zoeken helpt de beheerder om bestaande catalogusdata te vinden en duplicaten te voorkomen. Zoeken is nooit verplicht om een product aan te maken.
 
-Deze spec beschrijft de algemene zoekregels. De concrete UI-resultaten en klikgedrag op de cataloguspagina staan in [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md).
+Deze spec beschrijft de algemene zoekregels, de cataloguszoekresultaten, het klikgedrag vanuit zoekresultaten en zoekgestuurde resultaatstates op de cataloguspagina.
 
 ## Zoekvormen
 
 | Zoekvorm | Waar | Status |
 | --- | --- | --- |
-| Productcatalogus zoeken | `/admin/product-catalogus?q=...` | Werkt met gegroepeerde resultaten volgens browse-spec |
+| Productcatalogus zoeken | `/admin/product-catalogus?q=...` | Werkt met gegroepeerde resultaten volgens deze spec |
 | Merk zoeken | merkveld in product-aanmaakformulier en product-bewerkformulier | Werkt via `GET /brands?query=...` |
 | Productresultaten zoeken | productcataloguspagina | Geimplementeerd |
 | Categorie zoeken | productcataloguspagina | Geimplementeerd |
@@ -32,8 +32,6 @@ Deze spec beschrijft de algemene zoekregels. De concrete UI-resultaten en klikge
 ### Cataloguszoekveld
 
 ```text
-Productcatalogus
-
 [ Zoek product, merk of categorie ]
 
 Alle categorieën
@@ -46,7 +44,7 @@ Alle categorieën
 - Openen van `/admin/product-catalogus?q=cola` vult het zoekveld met `cola`.
 - De zoekterm wordt niet automatisch opgesplitst in merk, categorie of productnaam.
 - De zoekterm wordt niet automatisch ingevuld in het productformulier.
-- `Product aanmaken` wordt niet getoond zolang er geen expliciete categorie- of merkcontext is.
+- De product-aanmaakactie wordt niet getoond zolang er geen expliciete categorie- of merkcontext is.
 
 ## Product zoeken op cataloguspagina
 
@@ -99,18 +97,143 @@ Zoekresultaten worden gegroepeerd onder:
 - `Merken`;
 - `Categorieën`.
 
-De volledige UI, limieten per groep, klikgedrag en resultaatstates staan in:
+Voorbeeld:
 
-- [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md)
+```text
+Producten
+- Cola Zero Sugar
+  Merk: Coca-Cola
+  Categorie: Dranken > Frisdrank > Cola
 
-Belangrijke zoekregels:
+Merken
+- Coca-Cola
+  4 producten
 
-- productresultaat openen gaat naar productdetail;
-- merkresultaat openen gaat naar een brand-result state met `brandId` in de URL;
-- categorieresultaat openen gaat naar een category-browse state met `categoryId` in de URL;
-- bij klikken op merk- of categorieresultaat verdwijnt `q` uit de URL;
-- de zoekbalk wordt dan leeg;
-- er worden geen persistente filterchips getoond.
+Categorieën
+- Dranken > Frisdrank > Cola
+  12 producten
+```
+
+Zoekresultaten krijgen per groep een eigen limiet:
+
+- Producten: max 20
+- Merken: max 10
+- Categorieën: max 10
+
+Als er meer resultaten zijn dan de limiet, toont de UI per groep een eigen actie:
+
+```text
+[ Meer producten tonen ]
+[ Meer merken tonen ]
+[ Meer categorieën tonen ]
+```
+
+### Productresultaat openen
+
+Klik op een productresultaat opent productdetail:
+
+```text
+/admin/product-catalogus/:productId
+```
+
+Wanneer de productrij vanuit zoekresultaten wordt geopend, blijft de zoekcontext beschikbaar voor terugnavigatie naar de catalogus waar dat logisch is.
+
+### Merkresultaat openen
+
+Klik op een merkresultaat opent een brand-result state op dezelfde cataloguspagina.
+
+Voorbeeld URL:
+
+```text
+/admin/product-catalogus?brandId=<brandId>
+```
+
+Bij selectie van een merkresultaat:
+
+- wordt `q` verwijderd uit de URL;
+- wordt de zoekbalk leeg;
+- wordt er geen merkchip getoond;
+- wordt er geen inline expand in de zoekresultaten gebruikt.
+
+### Brand-result state
+
+De UI toont producten van het gekozen merk, gegroepeerd onder categorieheaders.
+
+Voorbeeld:
+
+```text
+[ Zoek product, merk of categorie ]
+
+Producten van Heinz
+
+Sauzen
+- Heinz Tomato Ketchup
+- Heinz Mayonaise
+
+Bonen
+- Heinz Baked Beans
+
+[ Product aanmaken voor Heinz ]
+```
+
+Regels:
+
+- categorieën zijn headers/groepering, geen klikbare filteritems;
+- producten zijn klikbaar naar productdetail;
+- de primaire actie staat onder de gegroepeerde producten;
+- de primaire actie opent product aanmaken met `brandId` vooraf geselecteerd;
+- de knoptekst mag de merknaam tonen, omdat de context geen breadcrumb heeft.
+
+Per getoonde productlijst in brand-result state worden in de eerste versie maximaal 50 producten getoond. Als er meer producten zijn, toont de UI:
+
+```text
+[ Meer laden ]
+```
+
+### Categorieresultaat openen
+
+Klik op een categorieresultaat opent de categorie-browse state op dezelfde cataloguspagina.
+
+Voorbeeld URL:
+
+```text
+/admin/product-catalogus?categoryId=<categoryId>
+```
+
+Bij selectie van een categorieresultaat:
+
+- wordt `q` verwijderd uit de URL;
+- blijft de zoekbalk zichtbaar maar leeg;
+- toont de pagina de breadcrumb direct onder de zoekbalk;
+- toont de pagina de gekozen categorie met klikbare breadcrumb, directe subcategorieën en directe producten wanneer die bestaan;
+- de primaire actie blijft `+ Product` en neemt de gekozen `categoryId` als context mee.
+
+Elke zichtbare categorie in categorieresultaten heeft rechts een potloodicoon met een toegankelijke naam zoals `Categorie <naam> bewerken`. De bewerkactie gebruikt dezelfde route en modalregels als categorie bewerken vanuit de categorieboom.
+
+De volledige category-browse layout en categorie-bewerkenregels staan in [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md).
+
+### Geen zoekresultaten
+
+Wanneer zoeken niets oplevert:
+
+```text
+Geen resultaten gevonden voor "<zoekterm>".
+Pas je zoekterm aan of kies een categorie om een product aan te maken.
+```
+
+Er wordt geen product-aanmaakactie getoond, omdat een zoekterm geen expliciete categorie- of merkcontext is.
+
+### Resultaatselectie en URL-state
+
+De cataloguszoeker gebruikt queryparameters voor deelbare en testbare zoek- en resultaatstate:
+
+```text
+/admin/product-catalogus?q=<zoekterm>
+/admin/product-catalogus?brandId=<brandId>
+/admin/product-catalogus?categoryId=<categoryId>
+```
+
+Bij klikken op een merk- of categorieresultaat wordt `q` verwijderd. De zoekterm blijft niet als verborgen context bestaan.
 
 ## Geen automatische productinvulling
 
@@ -121,7 +244,13 @@ Wel mag product aanmaken expliciete context meenemen wanneer de gebruiker een re
 - brand-result state opent product aanmaken met `brandId`;
 - category-browse state opent product aanmaken met `categoryId`.
 
-Dit staat verder uitgewerkt in de browse-spec en product-aanmaken-spec.
+Voorbeelden:
+
+```text
+Product aanmaken voor Coca-Cola
+```
+
+Dit staat verder uitgewerkt in de product-aanmaken-spec.
 
 ## Merk zoeken in product aanmaken en product bewerken
 
@@ -137,10 +266,29 @@ Dit staat verder uitgewerkt in de browse-spec en product-aanmaken-spec.
 
 Een merkzoekterm vult nooit automatisch productnaam, categorie of verpakking in.
 
+## Benodigde backend/API
+
+De cataloguszoeker en merkcontext gebruiken de bestaande admin-dashboard endpoints:
+
+```text
+GET /products/search?query=<query>&productLimit=<limit>&brandLimit=<limit>&categoryLimit=<limit>
+GET /products?brandId=<brandId>&limit=<limit>
+GET /brands?query=<zoekterm>
+```
+
+Regels:
+
+- `GET /products/search` levert gegroepeerde product-, merk- en categorieresultaten voor de cataloguspagina.
+- `GET /products?brandId=...` levert de producten voor de brand-result state.
+- `GET /brands?query=...` levert merksuggesties in product aanmaken en product bewerken.
+
 ## Buiten scope
 
 - Zoeken op verpakkingstype of verpakkingsinhoud.
 - Barcode zoeken.
+- Vaste filterdropdowns zoals `Categorie: Alle` of `Merk: Alle`.
+- Persistente filterchips, zoals `Coca-Cola x`.
+- Inline uitbreiden van merkresultaten binnen zoekresultaten.
 - Full-text ranking of fuzzy matching.
 - Automatisch product aanmaken op basis van zoekterm.
 - Oude productmanagement-search-flow met producttype/merkproduct/variant/SKU.
@@ -157,7 +305,7 @@ En wordt er geen product automatisch aangemaakt of ingevuld.
 
 Gegeven dat er alleen een zoekterm is ingevuld  
 Wanneer er geen expliciet gekozen merk- of categorieresultaatcontext is  
-Dan toont de catalogus geen `Product aanmaken` actie  
+Dan toont de catalogus geen product-aanmaakactie  
 En wordt de zoekterm niet als prefill gebruikt.
 
 ### AC-03 - Merk suggesties zoeken
@@ -188,7 +336,7 @@ Dan toont de UI resultaten gegroepeerd onder `Producten`, `Merken` en `Categorie
 
 Gegeven dat een zoekterm geen producten, merken of categorieën matcht  
 Dan toont de UI een geen-resultaten toestand  
-En toont de UI geen `Product aanmaken` actie zonder expliciete categorie- of merkcontext.
+En toont de UI geen product-aanmaakactie zonder expliciete categorie- of merkcontext.
 
 ### AC-08 - Resultaatselectie verwijdert q
 
@@ -196,3 +344,18 @@ Gegeven dat de beheerder zoekresultaten ziet
 Wanneer de beheerder een merk- of categorieresultaat opent  
 Dan wordt `q` verwijderd uit de URL  
 En toont de pagina een expliciete browse- of resultaatstaat.
+
+### AC-09 - Merkresultaat openen
+
+Gegeven dat de zoekterm een merk matcht  
+Wanneer de beheerder het merkresultaat opent  
+Dan toont de catalogus producten van dat merk gegroepeerd per categorie  
+En toont de UI geen merkchip of inline uitgeklapte zoekresultaten  
+En opent de actie `Product aanmaken voor <merk>` het productformulier met `brandId` vooraf geselecteerd.
+
+### AC-10 - Categorieresultaat openen
+
+Gegeven dat de zoekterm een categorie matcht  
+Wanneer de beheerder het categorieresultaat opent  
+Dan wordt `q` verwijderd uit de URL  
+En opent de catalogus de category-browse state voor die categorie met `categoryId=<categoryId>`.

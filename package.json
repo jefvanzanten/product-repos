@@ -9,6 +9,8 @@
     "lint": "corepack pnpm -r --if-present run lint",
     "typecheck": "corepack pnpm -r --if-present run typecheck",
     "test": "corepack pnpm -r --if-present run test",
+    "test:specs": "corepack pnpm --filter calory_tracker exec vitest --config ../../vitest.specs.config.ts --run",
+    "test:specs:watch": "corepack pnpm --filter calory_tracker exec vitest --config ../../vitest.specs.config.ts --watch --bail=1",
     "backend:build": "corepack pnpm --filter @product-repos/backend build",
     "backend:dev": "corepack pnpm --filter @product-repos/backend dev",
     "backend:start": "corepack pnpm --filter @product-repos/backend start",
@@ -19,7 +21,7 @@
     "db:studio": "corepack pnpm --filter @product-repos/backend db:studio",
     "db:seed": "corepack pnpm --filter @product-repos/backend db:seed",
     "inventory:build": "corepack pnpm --filter inventory build",
-    "inventory:dev": "corepack pnpm --filter inventory dev",
+    "inventory:dev": "corepack pnpm --filter inventory dev --host 0.0.0.0",
     "inventory:start": "corepack pnpm --filter inventory start",
     "inventory:typecheck": "corepack pnpm --filter inventory typecheck"
   },

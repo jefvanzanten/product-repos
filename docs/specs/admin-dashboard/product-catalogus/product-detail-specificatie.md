@@ -76,6 +76,7 @@ Alle categorieën > Voeding > Dranken > Frisdrank > Cola
 Regels:
 
 - De breadcrumb begint met `Alle categorieën`.
+- De breadcrumb gebruikt `1.05rem` tekstgrootte met `1.5rem` regelhoogte, zodat deze consistent is met de productcatalogus-breadcrumb.
 - `Alle categorieën` linkt naar `/admin/product-catalogus` zonder queryparameters.
 - Elke categorie in de breadcrumb is afzonderlijk klikbaar en opent `/admin/product-catalogus?categoryId=<categoryId>`.
 - Ook de huidige productcategorie is klikbaar.

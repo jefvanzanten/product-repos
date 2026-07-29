@@ -4,6 +4,18 @@
 
 - Function names need to be English
 
+## UI and layout changes
+
+- Whenever a task changes UI or layout code, including CSS, styling,
+  spacing, sizing, positioning, responsiveness, or visual hierarchy,
+  the final response MUST include a `Spec impact` section.
+- In that section, propose the exact change that should be made to the
+  nearest relevant feature specification to keep documentation and
+  implementation aligned.
+- Do not modify documentation unless the user explicitly requests it.
+- If no relevant layout specification exists, explicitly state that a
+  layout section should be added and summarize what it should document.
+
 ## Comments
 
 - Every function needs to be commented with the Docstring notation
