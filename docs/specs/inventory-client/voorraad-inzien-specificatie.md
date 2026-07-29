@@ -44,6 +44,8 @@ Inventarisatie
 
 De toevoegactie opent geen nieuwe pagina, maar de bottomsheet uit [voorraad-toevoegen-bottom-sheet-specificatie.md](./voorraad-toevoegen-bottom-sheet-specificatie.md).
 
+De pagina rendert binnen de [gedeelde applicatieshell met bottom-tabbar](../shared/bottom-tabbar-specificatie.md). De tab `Inventarisatie` verwijst naar deze route.
+
 ## Benodigde data — nog te specificeren
 
 Nog te bepalen met backend/contracts:

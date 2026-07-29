@@ -19,7 +19,8 @@ Nog te specificeren.
 
 ## Layout
 
-Nog te specificeren.
+- Het logboek wordt bereikbaar via de tab `Consumptie Logboek` in de [gedeelde applicatieshell met bottom-tabbar](../../shared/bottom-tabbar-specificatie.md).
+- In het minimale geraamte verwijst deze tab nog naar `/`; de definitieve logboekroute is nog te specificeren.
 
 ## Gedrag
 

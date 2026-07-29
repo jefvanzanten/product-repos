@@ -19,6 +19,8 @@ De gebruiker ziet direct hoeveel calorieën die op die dag heeft verbruikt en wa
 
 - Toon een caloriecomponent waarin verbruikte calorieën en targetcalorieën voor de dag naast of in dezelfde grafiek zichtbaar zijn.
 - Toon een tweede grafiek voor macro's, onderverdeeld in koolhydraten, vetten en eiwitten.
+- Render het dashboard binnen de [gedeelde applicatieshell met bottom-tabbar](../../shared/bottom-tabbar-specificatie.md).
+- Zolang de grafieken nog niet zijn uitgewerkt, toont het minimale geraamte de gecentreerde tekst `calory tracker`.
 
 ## Acceptatiecriteria
 

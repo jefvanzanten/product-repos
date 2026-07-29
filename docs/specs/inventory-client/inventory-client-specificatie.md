@@ -11,7 +11,7 @@ Dit is de index voor de client/inventarisatiekant van de app. Dit is niet de adm
 
 ## Layout
 
-Niet van toepassing: dit bestand is alleen een index. Layout-eisen staan in de `Layout`-sectie van de onderliggende feature-specs.
+Feature-inhoud staat in de `Layout`-sectie van de onderliggende specs. De overkoepelende navigatie volgt de [specificatie voor de gedeelde bottom-tabbar en applicatieshell](../shared/bottom-tabbar-specificatie.md).
 
 ## Route
 
