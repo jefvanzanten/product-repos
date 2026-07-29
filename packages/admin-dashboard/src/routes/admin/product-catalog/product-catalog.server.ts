@@ -1,4 +1,4 @@
-import { browseCatalog, createCategory, getCategories, mapApiError, searchCatalog, updateCategory } from "../../../../features/admin/product-catalog/services/productCatalogService.server";
+import { browseCatalog, createCategory, getCategories, mapApiError, searchCatalog, updateCategory } from "../../../api/admin-dashboard-api.server";
 import type { ActionResult, LoaderData } from "./product-catalog.types";
 
 /**

@@ -1,5 +1,7 @@
 import type { CatalogBrowseResponse, CatalogSearchResponse, CategoryDto } from "@product-repos/contracts";
-import type { FormErrors } from "../../../../features/admin/product-catalog/services/productCatalogService.server";
+
+/** Field and form errors returned by product catalog mutations. */
+export type FormErrors = Record<string, string>;
 
 /** Data required to render the product catalog route. */
 export type LoaderData = {

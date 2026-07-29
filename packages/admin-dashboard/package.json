@@ -1,0 +1,40 @@
+{
+  "name": "@product-repos/admin-dashboard",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./bottom-tab-bar": "./src/components/bottom-tab-bar/bottom-tab-bar.tsx",
+    "./react-router/admin-index": "./src/routes/admin/index.tsx",
+    "./react-router/brand-lookup.server": "./src/routes/admin/brand-lookup.server.ts",
+    "./react-router/locations": "./src/routes/admin/locations.tsx",
+    "./react-router/new-product": "./src/routes/admin/new-product/new-product.tsx",
+    "./react-router/new-product.server": "./src/routes/admin/new-product/new-product-route.server.ts",
+    "./react-router/product-catalog": "./src/routes/admin/product-catalog/product-catalog.tsx",
+    "./react-router/product-catalog.server": "./src/routes/admin/product-catalog/product-catalog-route.server.ts",
+    "./react-router/edit-category": "./src/routes/admin/product-catalog/edit-category.tsx",
+    "./react-router/edit-category.server": "./src/routes/admin/product-catalog/edit-category-route.server.ts",
+    "./react-router/product-detail": "./src/routes/admin/product-detail/product-detail.tsx",
+    "./react-router/product-detail.server": "./src/routes/admin/product-detail/product-detail-route.server.ts",
+    "./react-router/package-form": "./src/routes/admin/product-package/package-form.tsx",
+    "./react-router/package-form.server": "./src/routes/admin/product-package/package-form-route.server.ts",
+    "./react-router/package-detail": "./src/routes/admin/product-package/package-detail.tsx",
+    "./react-router/package-detail.server": "./src/routes/admin/product-package/package-detail-route.server.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@product-repos/contracts": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router": "8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
-import type { FormErrors } from "../../../../features/admin/product-catalog/services/productCatalogService.server";
+import type { FormErrors } from "./product-catalog.types";
 import actions from "./catalog-actions.module.css";
 import styles from "./category-modal.module.css";
 

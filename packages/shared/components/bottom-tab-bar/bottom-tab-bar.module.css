@@ -1,24 +1,18 @@
-.bottom-tabbar {
+.bottomTabBar {
   position: fixed;
   right: 0;
   bottom: 0;
   left: 0;
   z-index: 40;
   display: flex;
-  height: 64px;
+  height: 56px;
   margin: 0 auto;
-  padding: 7px 0 8px;
+  /* padding: 7px 0 8px; */
   background: rgba(31, 31, 31, 0.98);
   box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.03);
-
-  @media (min-width: 520px) {
-    left: 50%;
-    width: min(100vw, 430px);
-    transform: translateX(-50%);
-  }
 }
 
-.bottom-tab {
+.bottomTabBar > :global(a) {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -31,21 +25,31 @@
   font-weight: 400;
   line-height: 1;
   text-decoration: none;
+  border-right: 1px solid #3a3939;
 }
 
-.icon {
+.bottomTabBar > :global(a)::before {
   width: 13px;
   height: 13px;
   border-radius: 3px;
   background: #5f5f5f;
   opacity: 0.75;
+  content: "";
 }
 
-.bottom-tab--active {
+.bottomTabBar > :global(a[aria-current="page"]) {
   color: #d6d6d6;
+}
 
-  & .icon {
-    background: #8f8f8f;
-    opacity: 1;
+.bottomTabBar > :global(a[aria-current="page"])::before {
+  background: #8f8f8f;
+  opacity: 1;
+}
+
+@media (min-width: 520px) {
+  .bottomTabBar {
+    left: 40%;
+    width: min(100vw, 430px);
+    transform: translateX(-50%);
   }
 }

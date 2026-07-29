@@ -1,8 +1,1 @@
-import type { Route } from "../../+types/root";
-
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
-  ];
-}
+export { meta } from "@product-repos/admin-dashboard/react-router/admin-index";

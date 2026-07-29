@@ -1,35 +1,17 @@
-import type { Route } from "./+types/edit-category";
-import { handleProductCatalogAction, loadProductCatalog } from "./product-catalog.server";
-import { ProductCatalogPage } from "./product-catalog-page";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import {
+  handleEditCategoryRouteAction,
+  loadEditCategoryRoute,
+} from "@product-repos/admin-dashboard/react-router/edit-category.server";
 
-export { meta } from "./product-catalog";
+export { default, meta } from "@product-repos/admin-dashboard/react-router/edit-category";
 
-/**
- * Load catalog data with the requested category open in edit mode.
- *
- * @param args - React Router loader arguments.
- * @returns The product catalog route data.
- */
-export async function loader({ params, request }: Route.LoaderArgs) {
-  return loadProductCatalog(request, Number(params.categoryId));
+/** Delegate edit-category loading to the shared server handler. */
+export async function loader(args: LoaderFunctionArgs) {
+  return loadEditCategoryRoute(args);
 }
 
-/**
- * Handle product catalog edit form submissions.
- *
- * @param args - React Router action arguments.
- * @returns The category mutation result.
- */
-export async function action({ request }: Route.ActionArgs) {
-  return handleProductCatalogAction(request);
-}
-
-/**
- * Render the product catalog page with the category modal open.
- *
- * @param props - React Router component props.
- * @returns The product catalog edit page.
- */
-export default function EditCategory({ actionData, loaderData }: Route.ComponentProps): React.ReactNode {
-  return <ProductCatalogPage actionData={actionData} loaderData={loaderData} />;
+/** Delegate category edits to the shared server handler. */
+export async function action(args: ActionFunctionArgs) {
+  return handleEditCategoryRouteAction(args);
 }

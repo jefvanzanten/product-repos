@@ -96,11 +96,19 @@ function ActiveCategoryContent({ browse, depth, onCreateCategory }: { readonly b
           {browse.products.items.map((product) => <ProductCard key={product.id} product={product} context={{ categoryId: browse.category.id }} showCategory={false} />)}
         </section>
       ) : null}
-      {emptyCategory ? <EmptyState title="Deze categorie is nu nog leeg." text="Maak een nieuwe subcategorie of een product aan om hem te vullen." /> : null}
-      <div className={actions.inlineActions}>
-        <button className={actions.secondaryButton} type="button" onClick={() => onCreateCategory({ kind: "child", parentId: browse.category.id, parentName: browse.category.name })}>+ Subcategorie</button>
-        <Link className={actions.primaryLink} to={`/admin/product-catalogus/nieuw?categoryId=${browse.category.id}`}>+ Product</Link>
-      </div>
+      {emptyCategory ? (
+        <EmptyState title="Deze categorie is nu nog leeg." text="Maak een nieuwe subcategorie of een product aan om hem te vullen.">
+          <div className={actions.inlineActions}>
+            <button className={actions.secondaryButton} type="button" onClick={() => onCreateCategory({ kind: "child", parentId: browse.category.id, parentName: browse.category.name })}>+ Subcategorie</button>
+            <Link className={actions.primaryLink} to={`/admin/product-catalogus/nieuw?categoryId=${browse.category.id}`}>+ Product</Link>
+          </div>
+        </EmptyState>
+      ) : (
+        <div className={actions.inlineActions}>
+          <button className={actions.secondaryButton} type="button" onClick={() => onCreateCategory({ kind: "child", parentId: browse.category.id, parentName: browse.category.name })}>+ Subcategorie</button>
+          <Link className={actions.primaryLink} to={`/admin/product-catalogus/nieuw?categoryId=${browse.category.id}`}>+ Product</Link>
+        </div>
+      )}
     </div>
   );
 }

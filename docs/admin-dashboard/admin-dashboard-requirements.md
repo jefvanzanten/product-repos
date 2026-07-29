@@ -9,6 +9,14 @@ Dit bestand is een korte ingang naar de actuele admin-docs. Gedrag staat per fea
 - De admin-navbar heeft bovenaan extra ademruimte binnen het dashboardframe.
 - De afstand tussen de admin-navbar en de eerste content, zoals de productcatalogus-zoekbalk, is compact zodat de zoekbalk visueel dichter onder de navigatie staat.
 
+## Gedeelde applicatiestructuur
+
+- De inhoudelijke adminpagina's, paginacomponenten, loaders en actions worden gedeeld vanuit `packages/admin-dashboard`.
+- Iedere host-app beheert haar eigen admin-layout, navbar en dashboardframe.
+- De gedeelde adminpagina wordt binnen de React Router `Outlet` van deze app-specifieke layout gerenderd.
+- Inventory en Calorie Tracker bieden de gedeelde adminroutes onder `/admin` aan.
+- Iedere app-specifieke admin-layout volgt de algemene lay-outregels uit dit document.
+
 ## Productcatalogus
 
 - Product requirements: [product-requirements.md](./product-requirements.md)
