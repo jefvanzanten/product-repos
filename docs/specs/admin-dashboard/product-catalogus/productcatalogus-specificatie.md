@@ -11,6 +11,10 @@ Dit bestand is alleen een index. Gedrag staat per feature in losse specs, zodat 
 | Browsbare productcatalogus | [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md) | Geimplementeerd |
 | Productdetail en verpakkingen | [product-detail-specificatie.md](./product-detail-specificatie.md) | Geimplementeerd |
 
+## Layout
+
+Niet van toepassing: dit bestand is alleen een index. Layout-eisen staan in de `Layout`-sectie van de onderliggende feature-specs.
+
 ## Onderliggende backenddocumenten
 
 - [Admin dashboard endpoints](../../../backend/Endpoints/ADMIN_DASHBOARD_ENDPOINTS.md)

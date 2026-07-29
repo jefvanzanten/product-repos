@@ -55,9 +55,11 @@ Een beheerder kan een bestaand product openen, controleren en beheren. Productde
 - Nieuwe verpakkingstypes, inhoudseenheden of eenheidsoorten beheren via UI.
 - Aparte edit-route voor productgegevens.
 
-## Productdetail - read-only
+## Layout
 
-### Header
+### Productdetail - read-only
+
+#### Header
 
 De header toont:
 
@@ -80,7 +82,7 @@ Regels:
 - Wanneer de beheerder via een categorielink teruggaat naar de catalogus, opent de catalogus de categorieboom met alle parentcategorieën uitgeklapt tot en met die categorie.
 - De productgegevenssectie mag de categorie daarnaast als volledig tekstpad tonen.
 
-### Productgegevens
+#### Productgegevens
 
 De productgegevenssectie toont:
 
@@ -104,11 +106,7 @@ Weergavenaam: Chocoladevlokken
 
 Product bewerken start met een potlood-icoon of editknop met toegankelijk label `Product bewerken`.
 
-## Product bewerken
-
-Productdetail schakelt op dezelfde pagina naar bewerkmodus. Er is geen aparte product-edit-route in MVP.
-
-Bewerkmodus bevat:
+Bewerkmodus toont:
 
 - categorie;
 - merk, inclusief leeg maken;
@@ -116,34 +114,7 @@ Bewerkmodus bevat:
 - `Opslaan`;
 - `Annuleren`.
 
-Verpakkingen worden niet in product-bewerkmodus bewerkt. Verpakkingen hebben eigen routes en acties.
-
-### Validatie bij product bewerken
-
-Product bewerken gebruikt dezelfde regels als product aanmaken:
-
-- categorie is verplicht;
-- productnaam is verplicht;
-- merk is optioneel;
-- merk en productnaam blijven gescheiden;
-- duplicaat product wordt geblokkeerd op dezelfde categorie, hetzelfde merk en dezelfde genormaliseerde productnaam;
-- bij bewerken telt het huidige product zelf niet als duplicaat.
-
-Bij validatiefouten:
-
-- blijft de gebruiker in bewerkmodus;
-- blijven ingevulde waarden behouden;
-- verschijnen veldfouten onder de relevante velden;
-- wordt er niets opgeslagen;
-- vindt er geen redirect plaats.
-
-Na succesvol opslaan:
-
-- blijft de gebruiker op productdetail;
-- keert de pagina terug naar read-only mode;
-- toont de pagina de bijgewerkte gegevens.
-
-## Verpakkingenlijst op productdetail
+### Verpakkingenlijst op productdetail
 
 Productdetail toont een aparte sectie `Verpakkingen` onder de productgegevens.
 
@@ -175,17 +146,7 @@ Geen verpakkingen gevonden voor dit product.
 [ Verpakking toevoegen ]
 ```
 
-## Verpakking toevoegen
-
-`Verpakking toevoegen` opent een aparte pagina:
-
-```text
-/admin/product-catalogus/:productId/verpakkingen/nieuw
-```
-
-Na succesvol toevoegen navigeert de gebruiker naar verpakkingdetail van de nieuwe verpakking.
-
-## Verpakkingdetail - read-only
+### Verpakkingdetail - read-only
 
 Verpakkingdetail is eerst read-only. Bewerken start via een potlood-icoon of editknop met toegankelijk label `Verpakking bewerken`.
 
@@ -210,6 +171,47 @@ Aantal per verpakking: 6
 Eenheidsoort: blik
 Samenvatting: multipack 6 x blik 330 ml
 ```
+
+## Product bewerken
+
+Productdetail schakelt op dezelfde pagina naar bewerkmodus. Er is geen aparte product-edit-route in MVP.
+
+Verpakkingen worden niet in product-bewerkmodus bewerkt. Verpakkingen hebben eigen routes en acties.
+
+### Validatie bij product bewerken
+
+Product bewerken gebruikt dezelfde regels als product aanmaken:
+
+- categorie is verplicht;
+- productnaam is verplicht;
+- merk is optioneel;
+- merk en productnaam blijven gescheiden;
+- duplicaat product wordt geblokkeerd op dezelfde categorie, hetzelfde merk en dezelfde genormaliseerde productnaam;
+- bij bewerken telt het huidige product zelf niet als duplicaat.
+
+Bij validatiefouten:
+
+- blijft de gebruiker in bewerkmodus;
+- blijven ingevulde waarden behouden;
+- verschijnen veldfouten onder de relevante velden;
+- wordt er niets opgeslagen;
+- vindt er geen redirect plaats.
+
+Na succesvol opslaan:
+
+- blijft de gebruiker op productdetail;
+- keert de pagina terug naar read-only mode;
+- toont de pagina de bijgewerkte gegevens.
+
+## Verpakking toevoegen
+
+`Verpakking toevoegen` opent een aparte pagina:
+
+```text
+/admin/product-catalogus/:productId/verpakkingen/nieuw
+```
+
+Na succesvol toevoegen navigeert de gebruiker naar verpakkingdetail van de nieuwe verpakking.
 
 ## Verpakking bewerken
 

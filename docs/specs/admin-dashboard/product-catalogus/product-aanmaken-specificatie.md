@@ -46,7 +46,7 @@ Opslaan maakt transactioneel één `product` en één eerste `product_package` a
 - Apart merken- of categoriebeheer buiten de acties in dit formulier.
 - Een apart veld `eenheidsoort`.
 
-## Scherminhoud
+## Layout
 
 ```text
 <- Productcatalogus
@@ -76,6 +76,10 @@ Verpakking
 [ Product opslaan ]
 ```
 
+Layoutregels:
+
+- Bij een vooraf geselecteerde categorie via `categoryId` mag de categorieboom initieel alleen het pad naar die categorie openklappen en mogen andere, niet-bijbehorende categorieën ingeklapt blijven.
+
 ## Gedrag
 
 ### Laden
@@ -90,7 +94,7 @@ Merken worden gezocht wanneer de gebruiker in het merkveld typt:
 
 - `GET /brands?query=<zoekterm>`
 
-Als de route wordt geopend met `brandId` of `categoryId`, worden deze alleen gebruikt als expliciete context die vooraf geselecteerd mag worden. Bij een meegegeven `categoryId` mag de categorieboom initieel alleen het pad naar de geselecteerde categorie openklappen en mogen andere, niet-bijbehorende categorieën ingeklapt blijven. Een queryparameter `q` wordt nooit gebruikt als productnaam, merknaam of categorienaam.
+Als de route wordt geopend met `brandId` of `categoryId`, worden deze alleen gebruikt als expliciete context die vooraf geselecteerd mag worden. Een queryparameter `q` wordt nooit gebruikt als productnaam, merknaam of categorienaam.
 
 ### Categorie kiezen en aanmaken
 

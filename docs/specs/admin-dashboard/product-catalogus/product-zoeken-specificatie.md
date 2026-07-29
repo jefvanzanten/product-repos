@@ -27,9 +27,9 @@ Deze spec beschrijft de algemene zoekregels. De concrete UI-resultaten en klikge
 | Productresultaten zoeken | productcataloguspagina | Geimplementeerd |
 | Categorie zoeken | productcataloguspagina | Geimplementeerd |
 
-## Cataloguszoekveld
+## Layout
 
-### Scherminhoud
+### Cataloguszoekveld
 
 ```text
 Productcatalogus
@@ -40,7 +40,7 @@ Alle categorieën
 [ Categorie aanmaken ]
 ```
 
-### Gedrag nu
+## Cataloguszoekveld
 
 - Het zoekveld gebruikt queryparameter `q`.
 - Openen van `/admin/product-catalogus?q=cola` vult het zoekveld met `cola`.

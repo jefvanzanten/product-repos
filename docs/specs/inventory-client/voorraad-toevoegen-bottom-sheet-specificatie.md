@@ -28,7 +28,7 @@ Een gebruiker kan vanaf de inventory-tab snel voorraad toevoegen zonder de pagin
 - Barcode-scanning.
 - Bulkvoorraad toevoegen.
 
-## Scherminhoud
+## Layout
 
 ```text
 Bottomsheet: Voorraad toevoegen

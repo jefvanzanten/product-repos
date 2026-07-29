@@ -48,13 +48,17 @@ Een beheerder kan door bestaande catalogusdata bladeren, rootcategorieën behere
 - Productfoto's of publicatiestatus.
 - Oude trapsgewijze productmanagement-flow.
 
-## Hoofdpagina zonder context
+## Layout
+
+De admin-navigatie toont al dat de beheerder zich op `Productcatalogus` bevindt. De cataloguspagina rendert daarom geen extra paginakop `Productcatalogus` in de contentzone onder de navbar; de inhoud start met de zoekbalk en daarna de contextuele browse- of resultaatinhoud.
+
+Alle schermopbouw, plaatsing, visuele volgorde en lege/resultaatstates staan in deze sectie. Gedrag en backendregels staan in de latere secties.
+
+### Hoofdpagina zonder context
 
 Wanneer de beheerder `/admin/product-catalogus` opent zonder query of context, toont de pagina de root van de catalogus.
 
 ```text
-Productcatalogus
-
 [ Zoek product, merk of categorie ]
 
 Alle categorieën
@@ -69,7 +73,7 @@ Op de rootpagina wordt geen `Product aanmaken` getoond, omdat er nog geen explic
 
 De hoofdpagina toont geen platte lijst met alle producten. Browsen verloopt via categorieën of zoeken. Producten kunnen pas vanuit een gekozen categorie, subcategorie of merkcontext worden aangemaakt.
 
-## Categorie-browse
+### Categorie-browse
 
 Wanneer de beheerder een categorie opent, toont de catalogus een openklapbare categorieboom. De geopende categorie blijft zichtbaar als rij in die boom. Direct onder die rij staat de inhoud die bij de geopende categorie hoort.
 
@@ -88,8 +92,6 @@ Een geopende categorie toont in deze volgorde:
 Voorbeeld met subcategorieën en directe producten:
 
 ```text
-Productcatalogus
-
 [ Zoek product, merk of categorie ]
 
 Alle categorieën > Voeding > Tussendoortjes > Rijstwafels met smaak
@@ -119,8 +121,6 @@ Alle categorieën > Voeding > Tussendoortjes > Rijstwafels met smaak
 Voorbeeld met subcategorieën en zonder directe producten:
 
 ```text
-Productcatalogus
-
 [ Zoek product, merk of categorie ]
 
 Alle categorieën > Voeding > Tussendoortjes
@@ -140,6 +140,8 @@ Alle categorieën > Voeding > Tussendoortjes
 Regels:
 
 - De zoekbalk blijft zichtbaar in categorie-browse.
+- De adminnavigatie, zoekbalk en breadcrumb blijven op hun plek staan; alleen de categorieboom scrolt wanneer de browse-inhoud hoger is dan de beschikbare viewport.
+- Wanneer de beheerder een al geopende categorie in de categorieboom opnieuw kiest, klapt die categorie dicht; de catalogus opent dan de parentcategorie, of de rootcatalogus wanneer de gekozen categorie geen parent heeft.
 - De breadcrumb staat direct onder de zoekbalk en boven de categorieboom.
 - De breadcrumb begint altijd met `Alle categorieën` en toont daarna het categoriepad van root naar de geopende categorie.
 - `Alle categorieën` linkt naar `/admin/product-catalogus` zonder queryparameters.
@@ -156,7 +158,7 @@ Regels:
 - Er is één primaire knop `Product aanmaken`; daarnaast staat maximaal één secundaire knop `Subcategorie aanmaken`.
 - `Subcategorie aanmaken` en `Product aanmaken` staan samen onder de inhoud van de geopende categorie.
 
-## Lege categorieën in browse
+### Lege categorieën in browse
 
 De browsepagina is geen volledige categoriebeheerinterface, maar ondersteunt wel het aanmaken van directe subcategorieën vanuit een geopende categorie.
 
@@ -180,83 +182,7 @@ Deze lege categorietoestand wordt getoond wanneer de geopende categorie helemaal
 
 Directe subcategorieën van de geopende categorie worden getoond, ook wanneer ze nog geen producten in hun eigen subtree hebben. Dit is nodig zodat een beheerder feedback krijgt na subcategorie-aanmaak en verder kan navigeren om de catalogus op te bouwen.
 
-## Rootcategorie aanmaken vanuit de catalogusroot
-
-De actie `Categorie aanmaken` staat alleen op de rootpagina zonder geselecteerde categorie.
-
-De actie opent een modal:
-
-```text
-Nieuwe categorie maken
-
-[ Naam categorie ]
-
-[ Toevoegen ] [ Annuleren ]
-```
-
-Regels:
-
-- De modal maakt een rootcategorie met `parentId: null`.
-- De modal toont geen extra uitlegtekst; alleen de modaltitel, het invoerveld en de acties zijn zichtbaar.
-- Het invoerveld heeft een toegankelijke naam, bijvoorbeeld `Naam categorie`.
-- `Toevoegen` is de bevestigingsactie.
-- `Annuleren` sluit de modal zonder wijziging en keert terug naar `/admin/product-catalogus`.
-- Een lege of alleen uit whitespace bestaande naam kan niet worden opgeslagen.
-- Bij een backendvalidatiefout of dubbele rootcategorienaam blijft de modal open en toont de UI de fout bij het veld of in de modal.
-- Na succesvol aanmaken sluit de modal, blijft de beheerder op de rootpagina en wordt de lijst met rootcategorieën vernieuwd zodat de nieuwe categorie zichtbaar is.
-- De nieuwe categorie linkt naar `/admin/product-catalogus?categoryId=<nieuwCategoryId>`.
-
-## Subcategorie aanmaken vanuit categorie-browse
-
-De actie `Subcategorie aanmaken` staat in dezelfde actiezone als `Product aanmaken` onder de geopende categorie.
-
-De actie opent een modal. Voorbeeld voor de categorie `Brood en broodvervangers`:
-
-```text
-Nieuwe subcategorie maken in Brood en broodvervangers
-
-[ Naam subcategorie ]
-
-[ Toevoegen ] [ Annuleren ]
-```
-
-Regels:
-
-- De modal maakt een directe childcategorie onder de huidige categorie.
-- De modal toont geen extra uitlegtekst; alleen de modaltitel, het invoerveld en de acties zijn zichtbaar.
-- Het invoerveld heeft een toegankelijke naam, bijvoorbeeld `Naam subcategorie`. Als het ontwerp visueel alleen een veld toont, mag het label visueel verborgen zijn.
-- `Toevoegen` is de bevestigingsactie.
-- `Annuleren` sluit de modal zonder wijziging.
-- Buiten de modal klikken of Escape sluit de modal zonder wijziging, tenzij dit conflicteert met bestaande modalrichtlijnen.
-- Een lege of alleen uit whitespace bestaande naam kan niet worden opgeslagen.
-- Bij een backendvalidatiefout of dubbele siblingnaam blijft de modal open en toont de UI de fout bij het veld of in de modal.
-- Na succesvol aanmaken sluit de modal, blijft de beheerder op de huidige categoriepagina en wordt de lijst met subcategorieën vernieuwd zodat de nieuwe subcategorie zichtbaar is.
-- De nieuwe subcategorie linkt naar `/admin/product-catalogus?categoryId=<nieuwCategoryId>`.
-
-## Categorie bewerken vanuit de categorieboom
-
-Elke zichtbare categorie in de rootlijst, subcategorielijst en categorieresultaten heeft rechts een potloodicoon met een toegankelijke naam zoals `Categorie <naam> bewerken`.
-
-De bewerkactie opent een modal op de route:
-
-```text
-/admin/product-catalogus/categorieen/<categoryId>/bewerken
-```
-
-Regels:
-
-- De route is direct zichtbaar/deelbaar wanneer de beheerder het potloodicoon gebruikt.
-- De modal heeft titel `Categorie bewerken`.
-- Het invoerveld heeft toegankelijke naam `Naam categorie` en is voorgevuld met de huidige categorienaam.
-- `Opslaan` is de bevestigingsactie.
-- `Annuleren` sluit de modal zonder wijziging en keert terug naar de lijst waarin de categorie stond: root voor rootcategorieën, of de parentcategorie voor subcategorieën.
-- Een lege of alleen uit whitespace bestaande naam kan niet worden opgeslagen.
-- Een naam die al bestaat bij dezelfde parentcategorie/root blijft geblokkeerd.
-- Bij een backendvalidatiefout of dubbele siblingnaam blijft de modal open en toont de UI de fout bij het veld of in de modal.
-- Na succesvol opslaan sluit de modal en wordt de beheerder teruggestuurd naar de bijbehorende categorielijst, waar de nieuwe naam zichtbaar is.
-- Hernoemen wijzigt alleen de categorienaam; parent, sortering, producten en subcategorieën blijven ongewijzigd.
-
-## Productrij of productkaart
+### Productrij of productkaart
 
 Elke concrete productrij of productkaart linkt naar productdetail:
 
@@ -281,6 +207,181 @@ fles 1,5 l
 blik 330 ml
 3 verpakkingen
 ```
+
+### Zoekresultaten
+
+Zoekresultaten worden gegroepeerd:
+
+```text
+Producten
+- Cola Zero Sugar
+  Merk: Coca-Cola
+  Categorie: Dranken > Frisdrank > Cola
+
+Merken
+- Coca-Cola
+  4 producten
+
+Categorieën
+- Dranken > Frisdrank > Cola
+  12 producten
+```
+
+Zoekresultaten krijgen per groep een eigen limiet:
+
+- Producten: max 20
+- Merken: max 10
+- Categorieën: max 10
+
+Als er meer resultaten zijn dan de limiet, toont de UI per groep een eigen actie:
+
+```text
+[ Meer producten tonen ]
+[ Meer merken tonen ]
+[ Meer categorieën tonen ]
+```
+
+### Brand-result state
+
+De UI toont producten van het gekozen merk, gegroepeerd onder categorieheaders.
+
+Voorbeeld:
+
+```text
+[ Zoek product, merk of categorie ]
+
+Producten van Heinz
+
+Sauzen
+- Heinz Tomato Ketchup
+- Heinz Mayonaise
+
+Bonen
+- Heinz Baked Beans
+
+[ Product aanmaken voor Heinz ]
+```
+
+In brand-result state:
+
+- categorieën zijn headers/groepering, geen klikbare filteritems;
+- producten zijn klikbaar naar productdetail;
+- de primaire actie staat onder de gegroepeerde producten.
+
+### Lege rootcatalogus
+
+Wanneer er nog geen rootcategorieën zijn:
+
+```text
+Alle categorieën
+Er zijn geen categorieën gevonden.
+Maak je eerste categorie aan om de catalogus op te bouwen.
+[ Categorie aanmaken ]
+```
+
+De actie opent de rootcategorie-modal en maakt een categorie met `parentId: null`. De lege rootstate gebruikt dezelfde browse-inhoudszone met minimale hoogte, zodat de actie onder de inhoud blijft staan.
+
+### Geen zoekresultaten
+
+Wanneer zoeken niets oplevert:
+
+```text
+Geen resultaten gevonden voor "<zoekterm>".
+Pas je zoekterm aan of kies een categorie om een product aan te maken.
+```
+
+Er wordt geen product-aanmaakactie getoond, omdat een zoekterm geen expliciete categorie- of merkcontext is.
+
+### Modals
+
+Rootcategorie aanmaken:
+
+```text
+Nieuwe categorie maken
+
+[ Naam categorie ]
+
+[ Toevoegen ] [ Annuleren ]
+```
+
+Subcategorie aanmaken, bijvoorbeeld in `Brood en broodvervangers`:
+
+```text
+Nieuwe subcategorie maken in Brood en broodvervangers
+
+[ Naam subcategorie ]
+
+[ Toevoegen ] [ Annuleren ]
+```
+
+Categorie bewerken:
+
+```text
+Categorie bewerken
+
+[ Naam categorie ]
+
+[ Opslaan ] [ Annuleren ]
+```
+
+Modalregels:
+
+- Modals tonen geen extra uitlegtekst; alleen de modaltitel, het invoerveld en de acties zijn zichtbaar.
+- Invoervelden hebben een toegankelijke naam (`Naam categorie` of `Naam subcategorie`). Als het ontwerp visueel alleen een veld toont, mag het label visueel verborgen zijn.
+- `Toevoegen` of `Opslaan` is de bevestigingsactie.
+- `Annuleren` is de annuleeractie.
+
+## Rootcategorie aanmaken vanuit de catalogusroot
+
+De actie `Categorie aanmaken` staat alleen op de rootpagina zonder geselecteerde categorie.
+
+De actie opent de rootcategorie-modal uit Layout.
+
+Regels:
+
+- De modal maakt een rootcategorie met `parentId: null`.
+- `Annuleren` sluit de modal zonder wijziging en keert terug naar `/admin/product-catalogus`.
+- Een lege of alleen uit whitespace bestaande naam kan niet worden opgeslagen.
+- Bij een backendvalidatiefout of dubbele rootcategorienaam blijft de modal open en toont de UI de fout bij het veld of in de modal.
+- Na succesvol aanmaken sluit de modal, blijft de beheerder op de rootpagina en wordt de lijst met rootcategorieën vernieuwd zodat de nieuwe categorie zichtbaar is.
+- De nieuwe categorie linkt naar `/admin/product-catalogus?categoryId=<nieuwCategoryId>`.
+
+## Subcategorie aanmaken vanuit categorie-browse
+
+De actie `Subcategorie aanmaken` staat in dezelfde actiezone als `Product aanmaken` onder de geopende categorie.
+
+De actie opent de subcategorie-modal uit Layout.
+
+Regels:
+
+- De modal maakt een directe childcategorie onder de huidige categorie.
+- `Annuleren` sluit de modal zonder wijziging.
+- Buiten de modal klikken of Escape sluit de modal zonder wijziging, tenzij dit conflicteert met bestaande modalrichtlijnen.
+- Een lege of alleen uit whitespace bestaande naam kan niet worden opgeslagen.
+- Bij een backendvalidatiefout of dubbele siblingnaam blijft de modal open en toont de UI de fout bij het veld of in de modal.
+- Na succesvol aanmaken sluit de modal, blijft de beheerder op de huidige categoriepagina en wordt de lijst met subcategorieën vernieuwd zodat de nieuwe subcategorie zichtbaar is.
+- De nieuwe subcategorie linkt naar `/admin/product-catalogus?categoryId=<nieuwCategoryId>`.
+
+## Categorie bewerken vanuit de categorieboom
+
+Elke zichtbare categorie in de rootlijst, subcategorielijst en categorieresultaten heeft rechts een potloodicoon met een toegankelijke naam zoals `Categorie <naam> bewerken`.
+
+De bewerkactie opent een modal op de route:
+
+```text
+/admin/product-catalogus/categorieen/<categoryId>/bewerken
+```
+
+Regels:
+
+- De route is direct zichtbaar/deelbaar wanneer de beheerder het potloodicoon gebruikt.
+- De categorie-bewerken-modal uit Layout is voorgevuld met de huidige categorienaam.
+- `Annuleren` sluit de modal zonder wijziging en keert terug naar de lijst waarin de categorie stond: root voor rootcategorieën, of de parentcategorie voor subcategorieën.
+- Een lege of alleen uit whitespace bestaande naam kan niet worden opgeslagen.
+- Een naam die al bestaat bij dezelfde parentcategorie/root blijft geblokkeerd.
+- Bij een backendvalidatiefout of dubbele siblingnaam blijft de modal open en toont de UI de fout bij het veld of in de modal.
+- Na succesvol opslaan sluit de modal en wordt de beheerder teruggestuurd naar de bijbehorende categorielijst, waar de nieuwe naam zichtbaar is.
+- Hernoemen wijzigt alleen de categorienaam; parent, sortering, producten en subcategorieën blijven ongewijzigd.
 
 ## Productlimieten en meer laden
 
@@ -308,38 +409,7 @@ Zoeken gebruikt de regels uit [product-zoeken-specificatie.md](./product-zoeken-
 - zoeken matcht productnaam, merknaam, categorienaam en categoriepad;
 - zoeken matcht niet op verpakking, barcode, alias of externe data.
 
-Zoekresultaten worden gegroepeerd:
-
-```text
-Producten
-- Cola Zero Sugar
-  Merk: Coca-Cola
-  Categorie: Dranken > Frisdrank > Cola
-
-Merken
-- Coca-Cola
-  4 producten
-
-Categorieën
-- Dranken > Frisdrank > Cola
-  12 producten
-```
-
-### Zoekresultaatlimieten
-
-Zoekresultaten krijgen per groep een eigen limiet:
-
-- Producten: max 20
-- Merken: max 10
-- Categorieën: max 10
-
-Als er meer resultaten zijn dan de limiet, toont de UI per groep een eigen actie:
-
-```text
-[ Meer producten tonen ]
-[ Meer merken tonen ]
-[ Meer categorieën tonen ]
-```
+De zoekresultaatlayout en resultaatslimieten staan in Layout.
 
 ## Klikgedrag vanuit zoekresultaten
 
@@ -368,31 +438,9 @@ Bij selectie van een merkresultaat:
 - wordt er geen merkchip getoond;
 - wordt er geen inline expand in de zoekresultaten gebruikt.
 
-De UI toont producten van dat merk, gegroepeerd onder categorieheaders.
+De brand-result layout staat in Layout.
 
-Voorbeeld:
-
-```text
-Productcatalogus
-Producten van Heinz
-
-[ Zoek product, merk of categorie ]
-
-Sauzen
-- Heinz Tomato Ketchup
-- Heinz Mayonaise
-
-Bonen
-- Heinz Baked Beans
-
-[ Product aanmaken voor Heinz ]
-```
-
-In brand-result state:
-
-- categorieën zijn headers/groepering, geen klikbare filteritems;
-- producten zijn klikbaar naar productdetail;
-- de primaire actie opent product aanmaken met `brandId` vooraf geselecteerd.
+In brand-result state opent de primaire actie product aanmaken met `brandId` vooraf geselecteerd.
 
 ### Categorieresultaat
 
@@ -442,30 +490,6 @@ Product aanmaken
 ```text
 Product aanmaken voor Coca-Cola
 ```
-
-## Lege rootcatalogus
-
-Wanneer er nog geen rootcategorieën zijn:
-
-```text
-Alle categorieën
-Er zijn geen categorieën gevonden.
-Maak je eerste categorie aan om de catalogus op te bouwen.
-[ Categorie aanmaken ]
-```
-
-De actie opent de rootcategorie-modal en maakt een categorie met `parentId: null`. De lege rootstate gebruikt dezelfde browse-inhoudszone met minimale hoogte, zodat de actie onder de inhoud blijft staan.
-
-## Geen zoekresultaten
-
-Wanneer zoeken niets oplevert:
-
-```text
-Geen resultaten gevonden voor "<zoekterm>".
-Pas je zoekterm aan of kies een categorie om een product aan te maken.
-```
-
-Er wordt geen product-aanmaakactie getoond, omdat een zoekterm geen expliciete categorie- of merkcontext is.
 
 ## URL-state
 

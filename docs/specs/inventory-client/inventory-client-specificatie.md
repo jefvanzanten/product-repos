@@ -9,6 +9,10 @@ Dit is de index voor de client/inventarisatiekant van de app. Dit is niet de adm
 | Voorraad inzien | [voorraad-inzien-specificatie.md](./voorraad-inzien-specificatie.md) | Gepland / te herwerken |
 | Voorraad toevoegen | [voorraad-toevoegen-bottom-sheet-specificatie.md](./voorraad-toevoegen-bottom-sheet-specificatie.md) | Gepland |
 
+## Layout
+
+Niet van toepassing: dit bestand is alleen een index. Layout-eisen staan in de `Layout`-sectie van de onderliggende feature-specs.
+
 ## Route
 
 | Route | Doel |

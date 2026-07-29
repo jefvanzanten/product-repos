@@ -1,2 +1,34 @@
-Dit is een component waarbij de gebruiker direct ziet hoeveel calorieën die op die dag heeft verbruikt. En wat de targetcalorieënverbruik voor die dag moet zijn.
-Dit is ook onderverdeeld onder macro's. Dus Dit is een tweede grafiek waarbij er onderverdeeld is onder koolhydraten, vetten en eiwitten.
+# Specificatie — macro- en caloriegrafiek
+
+## Status
+
+- Onderdeel: calory tracker > dashboard
+- Status: concept
+
+## Doel
+
+De gebruiker ziet direct hoeveel calorieën die op die dag heeft verbruikt en wat het targetcalorieënverbruik voor die dag is.
+
+## Binnen scope
+
+- Dagelijkse calorie-inname tonen.
+- Dagelijks caloriedoel tonen.
+- Macroverdeling tonen voor koolhydraten, vetten en eiwitten.
+
+## Layout
+
+- Toon een caloriecomponent waarin verbruikte calorieën en targetcalorieën voor de dag naast of in dezelfde grafiek zichtbaar zijn.
+- Toon een tweede grafiek voor macro's, onderverdeeld in koolhydraten, vetten en eiwitten.
+
+## Acceptatiecriteria
+
+### AC-01 — Calorieën tonen
+
+Gegeven dat de gebruiker het dashboard opent  
+Dan ziet de gebruiker de verbruikte calorieën van die dag  
+En ziet de gebruiker het target voor die dag.
+
+### AC-02 — Macro's tonen
+
+Gegeven dat de gebruiker het dashboard opent  
+Dan ziet de gebruiker een macroverdeling voor koolhydraten, vetten en eiwitten.

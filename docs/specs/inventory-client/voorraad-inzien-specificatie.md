@@ -26,7 +26,7 @@ Een gebruiker kan in de inventory client snel zien welke voorraad er is en waar 
 - Uitgebreide rapportages.
 - Barcode-scanning, tenzij later expliciet gespecificeerd.
 
-## Scherminhoud
+## Layout
 
 ```text
 Inventarisatie

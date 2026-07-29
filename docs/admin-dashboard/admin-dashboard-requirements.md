@@ -2,6 +2,11 @@
 
 Dit bestand is een korte ingang naar de actuele admin-docs. Gedrag staat per feature in de specs.
 
+## Algemene layout
+
+- Op desktop staat de admin-dashboardcontent horizontaal en verticaal gecentreerd in de viewport.
+- Op kleinere schermen blijft de mobiele/top-aligned layout leidend, met een rand van ongeveer 1em rondom de admin-content.
+
 ## Productcatalogus
 
 - Product requirements: [product-requirements.md](./product-requirements.md)
