@@ -1,22 +1,9 @@
+import type { BrandDto, CatalogBrowseResponse, CatalogSearchResponse, CategoryDto, PackageTypeDto, ProductCreatedDto, ProductDetailDto, ProductPackageDto, ProductPackageRequest, UnitTypeDto, UpdateProductRequest } from "@product-repos/contracts";
+
 const apiBaseUrl = process.env.API_URL ?? "http://localhost:3000";
 const apiUrl = apiBaseUrl.replace(/\/$/, "");
 
-type CategoryDto = { id: number; name: string; parentId: number | null };
-type BrandDto = { id: string; name: string };
-type UnitTypeDto = { id: number; name: string };
-type PackageTypeDto = { id: number; name: string };
-type ProductCreatedDto = {
-  id: string;
-  name: string;
-  category: CategoryDto;
-  brand: BrandDto | null;
-  package: {
-    id: number;
-    packageType: PackageTypeDto;
-    unitContent: { id: number; amount: string; unitType: UnitTypeDto };
-    unitsPerPackage: number;
-  };
-};
+type ProductPackageWithProductId = ProductPackageDto & { readonly productId: string };
 
 type ApiError = {
   code?: string;
@@ -36,6 +23,10 @@ async function getBrands(query: string): Promise<BrandDto[]> {
   return getJson<BrandDto[]>(`/brands?${params.toString()}`);
 }
 
+async function getBrand(brandId: string): Promise<BrandDto> {
+  return getJson<BrandDto>(`/brands/${brandId}`);
+}
+
 async function getUnitTypes(): Promise<UnitTypeDto[]> {
   return getJson<UnitTypeDto[]>("/unit-types");
 }
@@ -44,8 +35,34 @@ async function getPackageTypes(): Promise<PackageTypeDto[]> {
   return getJson<PackageTypeDto[]>("/package-types");
 }
 
+async function browseCatalog(input: { readonly categoryId?: string | null; readonly brandId?: string | null; readonly limit?: number }): Promise<CatalogBrowseResponse> {
+  const params = new URLSearchParams();
+  if (input.categoryId) params.set("categoryId", input.categoryId);
+  if (input.brandId) params.set("brandId", input.brandId);
+  if (input.limit) params.set("limit", String(input.limit));
+  const query = params.toString();
+  return getJson<CatalogBrowseResponse>(`/products${query ? `?${query}` : ""}`);
+}
+
+async function searchCatalog(query: string): Promise<CatalogSearchResponse> {
+  const params = new URLSearchParams({ query });
+  return getJson<CatalogSearchResponse>(`/products/search?${params.toString()}`);
+}
+
+async function getProduct(productId: string): Promise<ProductDetailDto> {
+  return getJson<ProductDetailDto>(`/products/${productId}`);
+}
+
+async function getProductPackage(productId: string, packageId: string): Promise<ProductPackageWithProductId> {
+  return getJson<ProductPackageWithProductId>(`/products/${productId}/packages/${packageId}`);
+}
+
 async function createCategory(input: { name: string; parentId: number | null }): Promise<CategoryDto> {
   return postJson<CategoryDto>("/categories", input);
+}
+
+async function updateCategory(input: { id: number; name: string }): Promise<CategoryDto> {
+  return patchJson<CategoryDto>(`/categories/${input.id}`, { name: input.name });
 }
 
 async function deleteCategory(id: number): Promise<void> {
@@ -60,9 +77,21 @@ async function createProduct(input: {
   name: string;
   categoryId: number;
   brandId?: string | null;
-  package: { packageTypeId: number; amount: string; unitTypeId: number; unitsPerPackage: number };
+  package: ProductPackageRequest;
 }): Promise<ProductCreatedDto> {
   return postJson<ProductCreatedDto>("/products", input);
+}
+
+async function updateProduct(productId: string, input: UpdateProductRequest): Promise<ProductDetailDto> {
+  return patchJson<ProductDetailDto>(`/products/${productId}`, input);
+}
+
+async function addProductPackage(productId: string, input: ProductPackageRequest): Promise<ProductPackageWithProductId> {
+  return postJson<ProductPackageWithProductId>(`/products/${productId}/packages`, input);
+}
+
+async function updateProductPackage(productId: string, packageId: string, input: ProductPackageRequest): Promise<ProductPackageWithProductId> {
+  return patchJson<ProductPackageWithProductId>(`/products/${productId}/packages/${packageId}`, input);
 }
 
 function mapApiError(error: unknown): FormErrors {
@@ -73,20 +102,37 @@ function mapApiError(error: unknown): FormErrors {
   if (body.code === "CATEGORY_HAS_CHILDREN") return { form: "Verwijder eerst de subcategorieën onder deze categorie." };
   if (body.code === "CATEGORY_HAS_PRODUCTS") return { form: "Deze categorie is nog gekoppeld aan producten." };
   if (body.code === "PRODUCT_ALREADY_EXISTS") return { productName: "Dit product bestaat al." };
+  if (body.code === "PRODUCT_PACKAGE_ALREADY_EXISTS") return { form: "Deze verpakking bestaat al voor dit product." };
+  if (body.code === "PRODUCT_NOT_FOUND") return { form: "Product niet gevonden." };
+  if (body.code === "PRODUCT_PACKAGE_NOT_FOUND") return { form: "Verpakking niet gevonden." };
   if (body.code === "REFERENCE_NOT_FOUND") return { form: "Een gekozen categorie, merk of verpakking bestaat niet meer. Kies opnieuw." };
   if (body.code === "VALIDATION_ERROR") return { form: body.message ?? "Controleer de ingevulde velden." };
   return { form: body.message ?? `Aanvraag mislukt met status ${error.status}.` };
 }
 
+function isNotFound(error: unknown): boolean {
+  return error instanceof BackendApiError && error.status === 404;
+}
+
 async function getJson<T>(path: string): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`);
-  if (!response.ok) throw new Error(`${path} failed with status ${response.status}`);
+  if (!response.ok) throw new BackendApiError(response.status, await readApiError(response));
   return response.json() as Promise<T>;
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new BackendApiError(response.status, await readApiError(response));
+  return response.json() as Promise<T>;
+}
+
+async function patchJson<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(`${apiUrl}${path}`, {
+    method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
@@ -109,5 +155,5 @@ class BackendApiError extends Error {
   }
 }
 
-export type { BrandDto, CategoryDto, FormErrors, PackageTypeDto, ProductCreatedDto, UnitTypeDto };
-export { createBrand, createCategory, createProduct, deleteCategory, getBrands, getCategories, getPackageTypes, getUnitTypes, mapApiError };
+export type { BrandDto, CategoryDto, FormErrors, PackageTypeDto, ProductCreatedDto, ProductDetailDto, ProductPackageDto, ProductPackageRequest, ProductPackageWithProductId, UnitTypeDto };
+export { addProductPackage, browseCatalog, createBrand, createCategory, createProduct, deleteCategory, getBrand, getBrands, getCategories, getPackageTypes, getProduct, getProductPackage, getUnitTypes, isNotFound, mapApiError, searchCatalog, updateCategory, updateProduct, updateProductPackage };

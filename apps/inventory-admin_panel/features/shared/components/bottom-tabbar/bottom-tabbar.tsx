@@ -5,6 +5,7 @@ import styles from "./bottom-tabbar.module.css";
 export default function BottomTabbar(): React.ReactNode {
   const location = useLocation();
   const isAdminActive = location.pathname.startsWith("/admin");
+  if (isAdminActive) return null;
 
   return (
     <nav className={styles["bottom-tabbar"]} aria-label="Hoofdnavigatie">
@@ -20,7 +21,7 @@ export default function BottomTabbar(): React.ReactNode {
         <span>Inventarisatie</span>
       </NavLink>
       <NavLink
-        to="/admin/product-catalogus/producten"
+        to="/admin/product-catalogus"
         className={
           isAdminActive
             ? `${styles["bottom-tab"]} ${styles["bottom-tab--active"]}`

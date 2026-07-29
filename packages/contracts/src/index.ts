@@ -6,5 +6,5 @@ export { unitContentDtoSchema, unitTypeDtoSchema, unitTypeInsertSchema, unitType
 export type { CreateUnitTypeInput, UnitContentDto, UnitType, UnitTypeDto, UpdateUnitTypeInput } from './unit-types.ts';
 export { packageTypeDtoSchema } from './package-types.ts';
 export type { PackageTypeDto } from './package-types.ts';
-export { createProductRequestSchema, productCreatedDtoSchema, productInsertSchema, productPackageDtoSchema, productSelectSchema, productUpdateSchema, productWithRelationsSchema } from './products.ts';
-export type { CreateProductInput, CreateProductRequest, Product, ProductCreatedDto, ProductPackageDto, ProductWithRelations, UpdateProductInput } from './products.ts';
+export { catalogBrowseResponseSchema, catalogCategoryRowSchema, catalogProductRowSchema, catalogSearchResponseSchema, createProductRequestSchema, productCreatedDtoSchema, productDetailDtoSchema, productInsertSchema, productPackageDtoSchema, productPackageRequestSchema, productSelectSchema, productUpdateSchema, productWithRelationsSchema, updateProductRequestSchema } from './products.ts';
+export type { CatalogBrowseResponse, CatalogCategoryRow, CatalogProductRow, CatalogSearchResponse, CreateProductInput, CreateProductRequest, Product, ProductCreatedDto, ProductDetailDto, ProductPackageDto, ProductPackageRequest, ProductWithRelations, UpdateProductInput, UpdateProductRequest } from './products.ts';

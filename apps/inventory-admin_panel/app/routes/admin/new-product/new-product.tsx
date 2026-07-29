@@ -1,20 +1,29 @@
 import type { Route } from "./+types/new-product";
 import { useEffect, useMemo, useState } from "react";
-import { Form, Link, useFetcher, useNavigation } from "react-router";
+import { Form, Link, redirect, useFetcher, useNavigation } from "react-router";
 import { buildCategoryTreeOptions } from "../../../../features/admin/product-catalog/categoryTree";
 import type { CategoryTreeOption } from "../../../../features/admin/product-catalog/categoryTree";
-import { createBrand, createCategory, createProduct, deleteCategory, getBrands, getCategories, getPackageTypes, getUnitTypes, mapApiError } from "../../../../features/admin/product-catalog/services/productCatalogService.server";
-import type { BrandDto, CategoryDto, FormErrors, ProductCreatedDto } from "../../../../features/admin/product-catalog/services/productCatalogService.server";
+import { createBrand, createCategory, createProduct, deleteCategory, getBrand, getBrands, getCategories, getPackageTypes, getUnitTypes, mapApiError } from "../../../../features/admin/product-catalog/services/productCatalogService.server";
+import type { BrandDto, CategoryDto, FormErrors } from "../../../../features/admin/product-catalog/services/productCatalogService.server";
 import styles from "./new-product.module.css";
 
 export function meta({}: Route.MetaArgs) { return [{ title: "Product aanmaken" }]; }
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
-  const brandQuery = url.searchParams.get("merk")?.trim() ?? "";
+  const brandId = url.searchParams.get("brandId")?.trim() || undefined;
+  const categoryId = url.searchParams.get("categoryId")?.trim() || undefined;
+  const brandQuery = "";
+  const [brands, selectedBrand] = await Promise.all([
+    getBrands(brandQuery),
+    brandId ? getBrand(brandId).catch(() => null) : Promise.resolve(null),
+  ]);
   return {
+    brandId,
+    categoryId,
     brandQuery,
-    brands: await getBrands(brandQuery),
+    brands: selectedBrand && !brands.some((brand) => brand.id === selectedBrand.id) ? [selectedBrand, ...brands] : brands,
+    selectedBrand,
     categories: await getCategories(),
     packageTypes: await getPackageTypes(),
     unitTypes: await getUnitTypes(),
@@ -22,9 +31,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 type SubmittedValues = Record<string, string>;
-type ActionResult = { errors?: FormErrors; created?: ProductCreatedDto; createdCategory?: CategoryDto; deletedCategoryId?: number; values?: SubmittedValues };
+type ActionResult = { errors?: FormErrors; createdCategory?: CategoryDto; deletedCategoryId?: number; values?: SubmittedValues };
 
-export async function action({ request }: Route.ActionArgs): Promise<ActionResult> {
+export async function action({ request }: Route.ActionArgs): Promise<ActionResult | Response> {
   const form = await request.formData();
   const values = Object.fromEntries([...form.entries()].map(([key, value]) => [key, String(value)]));
   try {
@@ -59,7 +68,8 @@ export async function action({ request }: Route.ActionArgs): Promise<ActionResul
     const unitTypeId = Number(form.get("unitTypeId"));
     const unitsPerPackage = Number(form.get("unitsPerPackage"));
 
-    return { created: await createProduct({ name: productName, categoryId, brandId, package: { amount, packageTypeId, unitTypeId, unitsPerPackage } }) };
+    const created = await createProduct({ name: productName, categoryId, brandId, package: { amount, packageTypeId, unitTypeId, unitsPerPackage } });
+    return redirect(`/admin/product-catalogus/${created.id}`);
   } catch (error) {
     return { errors: mapApiError(error), values };
   }
@@ -68,24 +78,22 @@ export async function action({ request }: Route.ActionArgs): Promise<ActionResul
 export default function NewProduct({ actionData, loaderData }: Route.ComponentProps): React.ReactNode {
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
-  const created = actionData?.created;
   const values = actionData?.values ?? {};
   const categoryOptions = useMemo(() => buildCategoryTreeOptions(loaderData.categories), [loaderData.categories]);
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <Link className={styles.backLink} to="/admin/product-catalogus/producten">← Productcatalogus</Link>
+        <Link className={styles.backLink} to="/admin/product-catalogus">← Productcatalogus</Link>
         <h1 className={styles.title}>Product aanmaken</h1>
         <p className={styles.intro}>Vul categorie, merk, product en verpakking in.</p>
       </header>
       {actionData?.errors?.form ? <p className={styles.formError}>{actionData.errors.form}</p> : null}
-      {created ? <CreatedProduct product={created} /> : null}
       <Form className={styles.form} method="post" preventScrollReset>
         <Fieldset title="Categorie">
-          <CategoryTreePicker defaultValue={values.categoryId} errors={actionData?.errors} options={categoryOptions} />
+          <CategoryTreePicker defaultValue={values.categoryId ?? loaderData.categoryId} errors={actionData?.errors} options={categoryOptions} />
         </Fieldset>
         <Fieldset title="Merk (optioneel)">
-          <BrandCombobox defaultBrandId={values.brandId} defaultBrandName={values.brandName} defaultQuery={values.brandQuery ?? loaderData.brandQuery} error={actionData?.errors?.brandName} initialBrands={loaderData.brands} />
+          <BrandCombobox defaultBrandId={values.brandId ?? loaderData.brandId} defaultBrandName={values.brandName} defaultQuery={values.brandQuery ?? loaderData.selectedBrand?.name ?? loaderData.brandQuery} error={actionData?.errors?.brandName} initialBrands={loaderData.brands} />
         </Fieldset>
         <Fieldset title="Product"><TextInput defaultValue={values.productName} error={actionData?.errors?.productName ?? actionData?.errors?.name} label="Productnaam" name="productName" placeholder="Bijv. Zero Sugar" /></Fieldset>
         <Fieldset title="Verpakking">
@@ -422,4 +430,3 @@ function buildOptionByCategoryId(options: ReadonlyArray<CategoryTreeOption>): Re
   return optionByCategoryId;
 }
 
-function CreatedProduct({ product }: { product: ProductCreatedDto }) { return <section className={styles.createdProduct}><strong>Product aangemaakt:</strong> {(product.brand ? `${product.brand.name} ` : "") + product.name}<pre className={styles.createdProductPre}>{JSON.stringify(product, null, 2)}</pre></section>; }

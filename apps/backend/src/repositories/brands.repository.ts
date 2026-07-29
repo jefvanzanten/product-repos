@@ -2,6 +2,12 @@ import { asc, eq, like, sql } from "drizzle-orm";
 import { db } from "../db/index";
 import { brand } from "../db/schema";
 
+export type BrandRow = typeof brand.$inferSelect;
+
+export function findAllBrands(): BrandRow[] {
+  return db.select().from(brand).all();
+}
+
 export function searchBrands(query: string) {
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];

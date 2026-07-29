@@ -15,8 +15,12 @@ export default [
     layout("../features/admin/shared/layout/layout.tsx", [
       route("admin", "routes/admin/index.tsx", [
         route("brand-lookup", "routes/admin/brand-lookup.ts"),
-        route("product-catalogus/producten", "routes/admin/product-catalog/product-catalog.tsx"),
-        route("product-catalogus/producten/nieuw", "routes/admin/new-product/new-product.tsx"),
+        route("product-catalogus", "routes/admin/product-catalog/product-catalog.tsx"),
+        route("product-catalogus/categorieen/:categoryId/bewerken", "routes/admin/product-catalog/edit-category.tsx"),
+        route("product-catalogus/nieuw", "routes/admin/new-product/new-product.tsx"),
+        route("product-catalogus/:productId/verpakkingen/nieuw", "routes/admin/product-package/package-form.tsx"),
+        route("product-catalogus/:productId/verpakkingen/:packageId", "routes/admin/product-package/package-detail.tsx"),
+        route("product-catalogus/:productId", "routes/admin/product-detail/product-detail.tsx"),
         route("locations", "routes/admin/locations.tsx"),
       ]),
     ]),

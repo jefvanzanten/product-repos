@@ -1,0 +1,13 @@
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  color: #ccfbf1;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.breadcrumb a {
+  color: inherit;
+  text-decoration: underline;
+}

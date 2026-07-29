@@ -1,0 +1,19 @@
+.cardTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.5rem;
+}
+
+.productGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.groupTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.5rem;
+}

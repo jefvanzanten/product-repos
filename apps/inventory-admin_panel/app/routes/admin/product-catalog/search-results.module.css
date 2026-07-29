@@ -1,0 +1,37 @@
+.cardTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.5rem;
+}
+
+.searchResults,
+.resultGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.searchResults {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.resultRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  color: #020617;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 10%);
+}
+
+.resultRow strong {
+  font-size: 1rem;
+}

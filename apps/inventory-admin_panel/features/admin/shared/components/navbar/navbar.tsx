@@ -6,7 +6,7 @@ export default function NavBar(): React.ReactNode {
   return (
     <nav className={styles["bottom-tabbar"]} aria-label="Hoofdnavigatie">
       <NavLink
-        to="/admin/product-catalogus/producten"
+        to="/admin/product-catalogus"
         className={({ isActive }) =>
           isActive
             ? `${styles["nav-item"]} ${styles["nav-item--active"]}`

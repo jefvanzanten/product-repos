@@ -1,0 +1,14 @@
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  color: #334155;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.5rem;
+}
+
+.emptyState p {
+  margin: 0;
+}

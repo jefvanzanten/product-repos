@@ -1,12 +1,13 @@
 .layout {
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 430px;
-  min-height: 100dvh;
-  margin-right: auto;
-  margin-left: auto;
-  padding: 2.5rem 1rem 5rem;
+  height: 100dvh;
+  margin: 0;
+  overflow: hidden;
+  padding: 1em;
   color: #ffffff;
   background: radial-gradient(
     circle at 82% 8%,
@@ -15,14 +16,35 @@
     #101124 100%
   );
   box-shadow: 0 25px 50px -12px rgb(0 0 0 / 25%);
+}
 
-  @media (min-width: 640px) {
-    padding-right: 1.5rem;
-    padding-left: 1.5rem;
+.dashboardFrame,
+.content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dashboardFrame {
+  flex: 1 1 auto;
+}
+
+.content {
+  flex: 1 1 auto;
+}
+
+@media (min-width: 768px) {
+  .layout {
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 1.875rem;
   }
 
-  @media (min-width: 768px) {
-    width: 40vw;
-    max-width: 720px;
+  .dashboardFrame {
+    flex: 0 1 auto;
+    width: min(100%, 42rem);
+    max-height: calc(100dvh - 5rem);
   }
 }
