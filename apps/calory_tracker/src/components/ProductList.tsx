@@ -1,8 +1,8 @@
-import type { ProductWithRelations } from '@product-repos/contracts';
+import type { CalorieTrackerProduct } from '../api/legacy-types';
 import { ProductCard } from './ProductCard';
 
 interface ProductListProps {
-  products: ProductWithRelations[];
+  products: CalorieTrackerProduct[];
 }
 
 export function ProductList({ products }: ProductListProps) {

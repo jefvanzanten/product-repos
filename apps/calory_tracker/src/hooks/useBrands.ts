@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import type { Brand } from '@product-repos/contracts';
+import type { CalorieTrackerBrand } from '../api/legacy-types';
 import { api } from '../api/client';
 
 export function useBrands() {
-  const [brands, setBrands] = useState<Brand[]>([]);
+  const [brands, setBrands] = useState<CalorieTrackerBrand[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

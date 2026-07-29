@@ -1,9 +1,9 @@
-import type { Brand } from '@product-repos/contracts';
+import type { CalorieTrackerBrand } from '../api/legacy-types';
 import type { Consumption } from '../api/client';
 
 interface ConsumptionFilterProps {
   consumptions: Consumption[];
-  brands: Brand[];
+  brands: CalorieTrackerBrand[];
   selectedConsumptionId: number | null;
   selectedBrandId: number | null;
   onConsumptionChange: (id: number | null) => void;

@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { ProductWithRelations } from '@product-repos/contracts';
+import type { CalorieTrackerProduct } from '../api/legacy-types';
 import { api } from '../api/client';
 import { useUnits } from '../hooks/useUnits';
 
 interface Props {
   onClose: () => void;
-  products: ProductWithRelations[];
+  products: CalorieTrackerProduct[];
   onSuccess: () => void;
 }
 
@@ -96,7 +96,8 @@ export function AddConsumptionLogModal({ onClose, products, onSuccess }: Props) 
       listRef.current?.children[prev]?.scrollIntoView({ block: 'nearest' });
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (highlightedIndex >= 0) handleProductSelect(filteredOptions[highlightedIndex]);
+      const highlightedOption = filteredOptions[highlightedIndex];
+      if (highlightedOption) handleProductSelect(highlightedOption);
     } else if (e.key === 'Escape') {
       setDropdownOpen(false);
       setHighlightedIndex(-1);

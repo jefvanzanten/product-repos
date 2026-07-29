@@ -1,8 +1,8 @@
-import type { ProductWithRelations } from '@product-repos/contracts';
+import type { CalorieTrackerProduct } from '../api/legacy-types';
 import { BrandBadge } from './BrandBadge';
 
 interface ProductCardProps {
-  product: ProductWithRelations;
+  product: CalorieTrackerProduct;
 }
 
 export function ProductCard({ product }: ProductCardProps) {

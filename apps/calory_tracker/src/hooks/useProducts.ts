@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import type { ProductWithRelations } from '@product-repos/contracts';
+import type { CalorieTrackerProduct } from '../api/legacy-types';
 import { api } from '../api/client';
 
 export function useProducts() {
-  const [products, setProducts] = useState<ProductWithRelations[]>([]);
+  const [products, setProducts] = useState<CalorieTrackerProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

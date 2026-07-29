@@ -1,0 +1,31 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  background: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+.route-error {
+  width: min(100% - 2rem, 42rem);
+  margin: 4rem auto;
+}

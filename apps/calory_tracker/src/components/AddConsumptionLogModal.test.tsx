@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AddConsumptionLogModal } from './AddConsumptionLogModal';
-import type { ProductWithRelations } from '@product-repos/contracts';
+import type { CalorieTrackerProduct } from '../api/legacy-types';
 
 vi.mock('../api/client', () => ({
   api: {
@@ -19,7 +19,7 @@ vi.mock('../api/client', () => ({
   },
 }));
 
-const mockProducts: ProductWithRelations[] = [
+const mockProducts: CalorieTrackerProduct[] = [
   {
     id: 1,
     consumptionsId: 1,

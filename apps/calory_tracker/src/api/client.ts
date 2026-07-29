@@ -1,4 +1,4 @@
-import type { Brand, ProductWithRelations, UnitType } from '@product-repos/contracts';
+import type { CalorieTrackerBrand, CalorieTrackerProduct, CalorieTrackerUnit } from './legacy-types';
 
 export interface Consumption {
   id: number;
@@ -14,9 +14,9 @@ export interface ConsumptionLog {
 }
 
 export interface ConsumptionLogWithRelations extends ConsumptionLog {
-  brand: Brand | null;
+  brand: CalorieTrackerBrand | null;
   consumption: Consumption | null;
-  unit: UnitType | null;
+  unit: CalorieTrackerUnit | null;
 }
 
 export type CreateConsumptionLogInput = Omit<ConsumptionLog, 'id'>;
@@ -44,17 +44,17 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 
 export const api = {
   products: {
-    getAll: () => get<ProductWithRelations[]>('/products'),
-    getById: (id: number) => get<ProductWithRelations>(`/products/${id}`),
+    getAll: () => get<CalorieTrackerProduct[]>('/products'),
+    getById: (id: number) => get<CalorieTrackerProduct>(`/products/${id}`),
   },
   brands: {
-    getAll: () => get<Brand[]>('/brands'),
+    getAll: () => get<CalorieTrackerBrand[]>('/brands'),
   },
   consumptions: {
     getAll: () => get<Consumption[]>('/consumptions'),
   },
   units: {
-    getAll: () => get<UnitType[]>('/units'),
+    getAll: () => get<CalorieTrackerUnit[]>('/units'),
   },
   consumptionLogs: {
     getAll: () => get<ConsumptionLogWithRelations[]>('/consumption-logs'),

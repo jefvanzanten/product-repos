@@ -1,0 +1,75 @@
+.layout {
+  position: fixed;
+  inset: 0 0 64px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+  padding: 1em;
+  color: #ffffff;
+  background: radial-gradient(
+    circle at 82% 8%,
+    rgba(79, 92, 181, 0.82),
+    rgba(16, 18, 36, 0.95) 48%,
+    #101124 100%
+  );
+}
+
+.dashboardFrame,
+.content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dashboardFrame,
+.content {
+  flex: 1 1 auto;
+}
+
+.navbar {
+  display: flex;
+  gap: 22px;
+  margin: 0 0 0.5rem;
+  padding: 0.75rem 0 0;
+}
+
+.navItem {
+  position: relative;
+  display: inline-flex;
+  padding: 0 0 14px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 16px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.activeNavItem {
+  color: #ffffff;
+}
+
+.activeNavItem::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.95);
+  content: "";
+}
+
+@media (min-width: 768px) {
+  .layout {
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 1.875rem;
+  }
+
+  .dashboardFrame {
+    flex: 0 1 auto;
+    width: min(100%, 42rem);
+    max-height: calc(100dvh - 5rem - 64px);
+  }
+}
