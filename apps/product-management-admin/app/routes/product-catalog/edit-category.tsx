@@ -21,7 +21,7 @@ export async function loader(args: LoaderFunctionArgs): Promise<LoaderData> {
 }
 
 /** Handle a protected category edit. */
-export async function action(args: ActionFunctionArgs): Promise<ActionResult> {
+export async function action(args: ActionFunctionArgs): Promise<ActionResult | Response> {
   await requireAdministrator(args.request);
   return handleEditCategoryRouteAction(args);
 }

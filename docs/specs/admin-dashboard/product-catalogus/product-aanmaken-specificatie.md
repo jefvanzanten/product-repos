@@ -4,7 +4,7 @@
 
 - Onderdeel: admin dashboard > productcatalogus
 - Route: `/product-catalogus/nieuw`
-- Status: geïmplementeerde basis; afbeeldingen, Calorie Tracker-data en macroprofiel zijn concept
+- Status: consumptietype en macroprofiel geïmplementeerd; afbeeldingen en overige Calorie Tracker-data zijn concept
 - Backendcontract: `docs/backend/Endpoints/ADMIN_DASHBOARD_ENDPOINTS.md`
 - Datamodel: `docs/backend/ERD/PRODUCT_ERD.md`
 - Gerelateerde specs:
@@ -60,7 +60,7 @@ Opslaan maakt transactioneel één `product`, één eerste `product_package` en 
 
 ```text
 Product aanmaken
-Vul categorie, merk, product en verpakking in.
+Vul categorie, merk, product, voedingswaarden en verpakking in.
 
 Alle categorieën > <volledig pad naar geselecteerde categorie>
 
@@ -70,23 +70,17 @@ Categorie
 - subcategorie toevoegen
 - categorie verwijderen wanneer toegestaan
 
+Productnaam
+- productnaam
+- optionele productafbeelding
+
 Merk, optioneel
 - typ om merken te zoeken
 - bestaand merk kiezen
 - nieuw merk aanmaken
 
-Product
-- productnaam
-- optionele productafbeelding
-
-Calorie Tracker
-- consumptietype: voeding, drinken of supplement
-
-Voedingswaarden, standaard uit
-- macroprofiel toevoegen
-- referentiebasis
-- optionele calorieën, eiwit, koolhydraten en vet
-- voorlopige berekende calorieën wanneer mogelijk
+Consumptietype
+- voeding, drinken of supplement
 
 Verpakking
 - verpakkingstype
@@ -94,6 +88,12 @@ Verpakking
 - inhoud + inhoudseenheid
 - aantal per verpakking
 - optionele verpakkingsafbeelding
+
+Voedingswaarden, standaard uit
+- macroprofiel toevoegen
+- referentiebasis
+- optionele calorieën, eiwit, koolhydraten en vet
+- voorlopige berekende calorieën wanneer mogelijk
 
 [ Product opslaan ]
 ```
@@ -107,6 +107,12 @@ Layoutregels:
 - De categorieboom gebruikt voor categorierijen, inspringing en chevrons dezelfde visuele patronen als de categorieboom van de browsbare productcatalogus. Productspecifieke selecteer-, toevoeg- en verwijderacties blijven beschikbaar.
 - Bij een vooraf geselecteerde categorie via `categoryId` mag de categorieboom initieel alleen het pad naar die categorie openklappen en mogen andere, niet-bijbehorende categorieën ingeklapt blijven.
 - Bij een vooraf geselecteerde categorie scrolt de categorieboom na openen direct naar de geselecteerde categorierij, zodat deze zonder handmatig scrollen zichtbaar is.
+- De desktopcontent heeft een breedte van `650px`; onder deze breedte blijft de content vloeibaar.
+- Formulierkaarten hebben een radius van `18px`; invoervelden, selecties en radiotegels zijn `44px` hoog.
+- Tussen de hoofdkaarten zit afhankelijk van de Figma-sectie `40px` tot `42px` verticale ruimte.
+- Onder de desktopbreedte stapelen consumptietype-, referentiebasis- en macrovelden verticaal zonder horizontale overflow.
+- Het macroprofiel staat initieel uit. De ingeschakelde Figma-weergave beschrijft de uitgeklapte toestand na activering.
+- De schakelaar voor voedingswaarden staat volledig binnen de formulierkaart, uitgelijnd in de rechterbovenhoek.
 - De primaire knop `Product opslaan` gebruikt `1rem` verticale padding.
 
 ## Gedrag

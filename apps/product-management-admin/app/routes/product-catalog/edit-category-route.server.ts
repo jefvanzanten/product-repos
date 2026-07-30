@@ -1,4 +1,8 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
+import {
+  parseAdminSourceFromSearch,
+  toAdminRedirectPath,
+} from "../../admin-navigation";
 import { handleProductCatalogAction, loadProductCatalog } from "./product-catalog.server";
 import type { ActionResult, LoaderData } from "./product-catalog.types";
 
@@ -18,6 +22,14 @@ export async function loadEditCategoryRoute({ params, request }: LoaderFunctionA
  * @param args - React Router action arguments.
  * @returns The category mutation result.
  */
-export async function handleEditCategoryRouteAction({ request }: ActionFunctionArgs): Promise<ActionResult> {
-  return handleProductCatalogAction(request);
+export async function handleEditCategoryRouteAction({ request }: ActionFunctionArgs): Promise<ActionResult | Response> {
+  const requestUrl = new URL(request.url);
+  const source = parseAdminSourceFromSearch(requestUrl.searchParams);
+  const result = await handleProductCatalogAction(request);
+  if (!result.ok || !result.updatedCategory) return result;
+
+  const target = result.updatedCategory.parentId === null
+    ? "/product-catalogus"
+    : `/product-catalogus?categoryId=${result.updatedCategory.parentId}`;
+  return redirect(toAdminRedirectPath(target, source));
 }

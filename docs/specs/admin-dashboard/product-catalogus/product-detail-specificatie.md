@@ -3,7 +3,7 @@
 ## Status
 
 - Onderdeel: admin dashboard > productcatalogus
-- Status: geïmplementeerde basis; afbeeldingen, Calorie Tracker-data en archiveren zijn concept
+- Status: productdetail, consumptietype en macroprofiel geïmplementeerd; afbeeldingen, overige Calorie Tracker-data en archiveren zijn concept
 - Hoort bij:
   - [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md)
   - [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md)
@@ -125,7 +125,9 @@ Bewerkmodus toont:
 - `Opslaan`;
 - `Annuleren`.
 
-Productdetail toont het macroprofiel in een aparte sectie `Voedingswaarden`. Zonder profiel toont deze sectie `Geen macroprofiel` en de actie `Macroprofiel toevoegen`. De velden en validatie zijn gelijk aan [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md).
+Productdetail toont productgegevens, voedingswaarden en verpakkingen als drie afzonderlijke witte kaarten met een radius van `8px` en een desktopbreedte van `672px`. Tussen de kaarten zit `24px` verticale ruimte.
+
+Het macroprofiel staat in de middelste kaart `Voedingswaarden`. Zonder profiel toont deze kaart `Geen macroprofiel toegevoegd.` en de actie `Macroprofiel toevoegen`. Met profiel toont de kaart de referentiebasis en alleen bekende waarden; een bekende nulwaarde blijft zichtbaar. De velden en validatie zijn gelijk aan [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md).
 
 ### Verpakkingenlijst op productdetail
 
@@ -191,6 +193,10 @@ Samenvatting: multipack 6 x blik 330 ml
 ## Product bewerken
 
 Productdetail schakelt op dezelfde pagina naar bewerkmodus. Er is geen aparte product-edit-route in MVP.
+
+De bewerkmodus gebruikt dezelfde afzonderlijke formulierkaarten als product aanmaken, in deze volgorde: `Categorie`, `Productnaam`, `Merk`, `Consumptietype` en `Voedingswaarden`. De desktopcontent is `650px` breed. Tussen de hoofdkaarten zit `42px` verticale ruimte; op smalle schermen stapelen radio- en macrovelden zonder horizontale overflow. De schakelaar voor voedingswaarden staat volledig binnen de formulierkaart, uitgelijnd in de rechterbovenhoek.
+
+De acties staan onder de kaarten. Op desktop is `Annuleren` `180px` breed en vult `Wijzigingen opslaan` de resterende breedte. Op smalle schermen worden de acties over de volledige breedte gestapeld.
 
 Verpakkingen worden niet in product-bewerkmodus bewerkt. Verpakkingen hebben eigen routes en acties.
 
@@ -279,13 +285,7 @@ Productdetail en verpakkingdetail tonen afhankelijk van de status een archiveer-
 
 ## Navigatie en fouttoestanden
 
-Productdetail heeft een zichtbare link:
-
-```text
-Terug naar productcatalogus
-```
-
-Wanneer productdetail is geopend vanuit een categorie- of merkcontext, brengt `Terug naar productcatalogus` de beheerder terug naar dezelfde browsecontext.
+Op een bestaand productdetail vervalt de afzonderlijke link `Terug naar productcatalogus`. De interactieve categorie-breadcrumb onder de productnaam is de navigatie terug naar de catalogus. `Alle categorieën` opent de catalogusroot en een categorienaam opent die categorie in de categorieboom.
 
 Verpakkingdetail heeft een zichtbare link:
 
@@ -345,7 +345,8 @@ Wanneer de beheerder een productrij in de catalogus opent
 Dan opent `/product-catalogus/:productId`  
 En ziet de beheerder productgegevens en verpakkingen  
 En ziet de beheerder onder de productnaam een klikbare categorie-breadcrumb met `Alle categorieën` en het categoriepad  
-En opent elke categorielink de catalogus met die categorie geopend in de categorieboom.
+En opent elke categorielink de catalogus met die categorie geopend in de categorieboom
+En toont productdetail geen afzonderlijke link `Terug naar productcatalogus`.
 
 ### AC-02 - Product bewerken
 

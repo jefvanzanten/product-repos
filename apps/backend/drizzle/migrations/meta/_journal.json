@@ -29,6 +29,20 @@
       "when": 1785391611828,
       "tag": "0003_better_auth",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1785427200000,
+      "tag": "0004_product_consumption_macros",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1785430800000,
+      "tag": "0005_product_package_integer_ids",
+      "breakpoints": true
     }
   ]
 }

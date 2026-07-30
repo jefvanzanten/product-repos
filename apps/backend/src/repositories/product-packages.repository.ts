@@ -1,8 +1,9 @@
 import type { ProductPackageDto, ProductPackageRequest } from "@product-repos/contracts";
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "../db";
-import { packageType, product, productPackage, unitContent, unitType } from "../db/schema";
+import { packageType, product, productMacroProfile, productPackage, unitContent, unitType } from "../db/schema";
 import { err, ok, type Result } from "../domain";
+import { requiredDimensionForReferenceBasis } from "../product-catalog/product-macro-profile";
 import { findPackageTypeById, findUnitTypeById } from "./units.repository";
 
 export type ProductPackageExecutor = Pick<typeof db, "select" | "insert">;
@@ -25,12 +26,14 @@ export type InsertProductPackageInput = {
   readonly unitsPerPackage: number;
 };
 
+/** Add a package when references, duplicates, and macro dimensions are valid. */
 export function addProductPackage(productId: string, input: ProductPackageRequest): Result<ProductPackageDto & { readonly productId: string }> {
   if (!productExists(productId)) return err({ code: "PRODUCT_NOT_FOUND", message: "Product not found" });
 
   const unitTypeRow = findUnitTypeById(input.unitTypeId);
   const packageTypeRow = findPackageTypeById(input.packageTypeId);
   if (!unitTypeRow || !packageTypeRow) return err({ code: "REFERENCE_NOT_FOUND", message: "Reference not found" });
+  if (!isPackageDimensionCompatible(productId, unitTypeRow.dimension)) return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Package unit dimension is incompatible with the macro profile" });
 
   const amountNumber = Number(input.amount);
   const created = db.transaction((tx) => {
@@ -46,6 +49,7 @@ export function addProductPackage(productId: string, input: ProductPackageReques
   return ok({ productId, ...toProductPackageDto({ productPackage: created.productPackageRow, packageType: packageTypeRow, unitContent: created.unitContentRow, unitType: unitTypeRow }) });
 }
 
+/** Read one package belonging to a product. */
 export function getProductPackage(productId: string, packageId: number): Result<ProductPackageDto & { readonly productId: string }> {
   if (!productExists(productId)) return err({ code: "PRODUCT_NOT_FOUND", message: "Product not found" });
   const fullRow = findProductPackageFullRow(productId, packageId);
@@ -53,6 +57,7 @@ export function getProductPackage(productId: string, packageId: number): Result<
   return ok({ productId, ...toProductPackageDto(fullRow) });
 }
 
+/** Update a package when references, duplicates, and macro dimensions are valid. */
 export function updateProductPackage(productId: string, packageId: number, input: ProductPackageRequest): Result<ProductPackageDto & { readonly productId: string }> {
   if (!productExists(productId)) return err({ code: "PRODUCT_NOT_FOUND", message: "Product not found" });
   const existingPackage = db.select().from(productPackage).where(and(eq(productPackage.id, packageId), eq(productPackage.productId, productId))).get();
@@ -61,6 +66,7 @@ export function updateProductPackage(productId: string, packageId: number, input
   const unitTypeRow = findUnitTypeById(input.unitTypeId);
   const packageTypeRow = findPackageTypeById(input.packageTypeId);
   if (!unitTypeRow || !packageTypeRow) return err({ code: "REFERENCE_NOT_FOUND", message: "Reference not found" });
+  if (!isPackageDimensionCompatible(productId, unitTypeRow.dimension)) return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Package unit dimension is incompatible with the macro profile" });
 
   const amountNumber = Number(input.amount);
   const updated = db.transaction((tx) => {
@@ -76,16 +82,19 @@ export function updateProductPackage(productId: string, packageId: number, input
   return ok({ productId, ...toProductPackageDto({ productPackage: updated.productPackageRow, packageType: packageTypeRow, unitContent: updated.unitContentRow, unitType: unitTypeRow }) });
 }
 
+/** Find or create canonical unit content through the active executor. */
 export function findOrCreateUnitContent(executor: ProductPackageExecutor, unitTypeId: number, amount: number): UnitContentRow {
   const existing = executor.select().from(unitContent).where(and(eq(unitContent.unitTypeId, unitTypeId), eq(unitContent.amount, amount))).get();
   if (existing) return existing;
   return executor.insert(unitContent).values({ unitTypeId, amount }).returning().get();
 }
 
+/** Insert one product package through the active executor. */
 export function insertProductPackage(executor: ProductPackageExecutor, input: InsertProductPackageInput): ProductPackageRow {
   return executor.insert(productPackage).values(input).returning().get();
 }
 
+/** Read all package relation rows for one product. */
 export function findProductPackageFullRows(productId: string): ProductPackageFullRow[] {
   return db.select({ productPackage, packageType, unitContent, unitType })
     .from(productPackage)
@@ -96,6 +105,7 @@ export function findProductPackageFullRows(productId: string): ProductPackageFul
     .all();
 }
 
+/** Read one package relation row for one product. */
 export function findProductPackageFullRow(productId: string, packageId: number): ProductPackageFullRow | undefined {
   return db.select({ productPackage, packageType, unitContent, unitType })
     .from(productPackage)
@@ -106,20 +116,39 @@ export function findProductPackageFullRow(productId: string, packageId: number):
     .get();
 }
 
+/** Project package persistence rows into the public protocol shape. */
 export function toProductPackageDto(row: ProductPackageFullRow): ProductPackageDto {
   return {
     id: row.productPackage.id,
     packageType: { id: row.packageType.id, name: row.packageType.name },
-    unitContent: { id: row.unitContent.id, amount: String(row.unitContent.amount), unitType: { id: row.unitType.id, name: row.unitType.name } },
+    unitContent: {
+      id: row.unitContent.id,
+      amount: String(row.unitContent.amount),
+      unitType: {
+        id: row.unitType.id,
+        name: row.unitType.name,
+        symbol: row.unitType.symbol,
+        dimension: row.unitType.dimension,
+        conversionToBase: String(row.unitType.conversionToBase),
+      },
+    },
     unitsPerPackage: row.productPackage.unitsPerPackage,
     summary: formatPackageSummary(row.productPackage, row.packageType, row.unitContent, row.unitType),
   };
 }
 
+/** Check whether a product exists before package operations. */
 function productExists(productId: string): boolean {
   return db.select({ id: product.id }).from(product).where(eq(product.id, productId)).get() !== undefined;
 }
 
+/** Check a package dimension against the product's optional macro profile. */
+function isPackageDimensionCompatible(productId: string, dimension: UnitTypeRow["dimension"]): boolean {
+  const profile = db.select({ referenceBasis: productMacroProfile.referenceBasis }).from(productMacroProfile).where(eq(productMacroProfile.productId, productId)).get();
+  return !profile || requiredDimensionForReferenceBasis(profile.referenceBasis) === dimension;
+}
+
+/** Format a product package summary for catalog display. */
 function formatPackageSummary(productPackageRow: ProductPackageRow, packageTypeRow: PackageTypeRow, unitContentRow: UnitContentRow, unitTypeRow: UnitTypeRow): string {
   const amount = String(unitContentRow.amount);
   if (productPackageRow.unitsPerPackage <= 1) return `${packageTypeRow.name} ${amount} ${unitTypeRow.name}`;

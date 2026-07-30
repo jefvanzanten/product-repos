@@ -10,6 +10,12 @@ import {
 import { AdminForm as Form, useAdminPath, useAdminSource } from "../../admin-source-context";
 import { requireAdministrator } from "../../auth.server";
 import { buildCategoryTreeOptions } from "../../features/admin/product-catalog/categoryTree";
+import {
+  ConsumptionTypeSection,
+  MacroProfileSection,
+  ProductFormActions,
+  ProductNameSection,
+} from "../../features/admin/product-forms/product-form-sections";
 import type { CategoryTreeOption } from "../../features/admin/product-catalog/categoryTree";
 import { CategoryBreadcrumb } from "../product-catalog/category-breadcrumb";
 import type {
@@ -59,7 +65,7 @@ export default function NewProduct(): React.ReactNode {
     <main className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>Product aanmaken</h1>
-        <p className={styles.intro}>Vul categorie, merk, product en verpakking in.</p>
+        <p className={styles.intro}>Vul categorie, merk, product, voedingswaarden en verpakking in.</p>
       </header>
       <CategoryBreadcrumb path={breadcrumbPath} />
       {actionData?.errors?.form ? <p className={styles.formError}>{actionData.errors.form}</p> : null}
@@ -67,16 +73,18 @@ export default function NewProduct(): React.ReactNode {
         <Fieldset title="Categorie">
           <CategoryTreePicker defaultValue={defaultCategoryId} errors={actionData?.errors} options={categoryOptions} onSelectedCategoryChange={setBreadcrumbCategoryId} />
         </Fieldset>
+        <ProductNameSection error={actionData?.errors?.productName ?? actionData?.errors?.name} value={values.productName} />
         <Fieldset title="Merk (optioneel)">
           <BrandCombobox defaultBrandId={values.brandId ?? loaderData.brandId} defaultBrandName={values.brandName} defaultQuery={values.brandQuery ?? loaderData.selectedBrand?.name ?? loaderData.brandQuery} error={actionData?.errors?.brandName} initialBrands={loaderData.brands} />
         </Fieldset>
-        <Fieldset title="Product"><TextInput defaultValue={values.productName} error={actionData?.errors?.productName ?? actionData?.errors?.name} label="Productnaam" name="productName" placeholder="Bijv. Zero Sugar" /></Fieldset>
+        <ConsumptionTypeSection error={actionData?.errors?.consumptionType} value={values.consumptionType} />
         <Fieldset title="Verpakking">
           <select className={styles.select} name="packageTypeId" defaultValue={values.packageTypeId ?? ""} required><option value="">Verpakkingstype</option>{loaderData.packageTypes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
           <div className={styles.packageGrid}><TextInput defaultValue={values.amount} error={actionData?.errors?.amount} label="Inhoud" name="amount" placeholder="1,5" /><select className={`${styles.select} ${styles.selectAlignedEnd}`} name="unitTypeId" defaultValue={values.unitTypeId ?? ""} required><option value="">Eenheid</option>{loaderData.unitTypes.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></div>
           <TextInput defaultValue={values.unitsPerPackage ?? "1"} error={actionData?.errors?.unitsPerPackage} label="Aantal per verpakking" name="unitsPerPackage" placeholder="1" type="number" />
         </Fieldset>
-        <button className={styles.submitButton} disabled={busy} type="submit">{busy ? "Opslaan..." : "Product opslaan"}</button>
+        <MacroProfileSection errors={actionData?.errors} profile={null} values={values} />
+        <ProductFormActions busy={busy} />
       </Form>
     </main>
   );
@@ -152,7 +160,7 @@ function BrandCombobox({ defaultBrandId, defaultBrandName, defaultQuery, error, 
 
   return (
     <div className={styles.brandCombobox} onBlur={(event) => { const nextFocus = event.relatedTarget; if (nextFocus instanceof Node && event.currentTarget.contains(nextFocus)) return; setOpen(false); }}>
-      <label className={styles.brandLabel}>Merk<input aria-autocomplete="list" aria-expanded={showSuggestionBox} autoComplete="off" className={styles.brandInput} name="brandQuery" placeholder="Typ om merken te zoeken, bijv. Coca-Cola" type="text" value={inputValue} onChange={(event) => clearSelectedBrand(event.currentTarget.value)} onFocus={() => setOpen(true)} /></label>
+      <label className={styles.brandLabel}><span className={styles.visuallyHidden}>Merk</span><input aria-autocomplete="list" aria-expanded={showSuggestionBox} autoComplete="off" className={styles.brandInput} name="brandQuery" placeholder="Typ om merken te zoeken, bijv. Coca-Cola" type="text" value={inputValue} onChange={(event) => clearSelectedBrand(event.currentTarget.value)} onFocus={() => setOpen(true)} /></label>
       <input name="brandId" type="hidden" value={selectedBrandId} />
       <input name="brandName" type="hidden" value={newBrandName} />
       {showSuggestionBox ? (

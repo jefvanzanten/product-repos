@@ -2,100 +2,127 @@
   display: flex;
   flex: 1 1 0%;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 24px;
   width: min(100%, 672px);
-  padding-top: 1.75rem;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 27px 0 32px;
+  scrollbar-width: none;
+}
+
+.page::-webkit-scrollbar {
+  width: 0;
+}
+
+.editingPage {
+  width: min(100%, 650px);
 }
 
 .header {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 8px;
+}
+
+.title,
+.editTitle {
+  margin: 0;
+  color: #ffffff;
+  font-weight: 800;
 }
 
 .title {
-  margin: 0;
-  color: #ffffff;
-  font-size: 1.25rem;
-  font-weight: 800;
-  line-height: 1.75rem;
+  font-size: 19px;
+  line-height: 23px;
 }
 
-.backLink {
-  color: #a7f3d0;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
+.editTitle {
+  font-size: 30px;
+  line-height: 36px;
+}
+
+.intro {
+  margin: 0;
+  color: #c7c8d5;
+  font-size: 14px;
+  line-height: 17px;
 }
 
 .breadcrumb {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem;
-  color: #a7f3d0;
-  font-size: 1.05rem;
-  line-height: 1.5rem;
+  gap: 4px;
+  color: #bfece5;
+  font-size: 13px;
+  line-height: 19px;
 }
 
-.breadcrumb a,
-.backLink {
-  text-decoration: underline;
+.breadcrumb a {
+  color: inherit;
+  text-decoration: none;
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  min-height: 23.5rem;
-  padding: 1rem;
-  color: #020617;
+  gap: 10px;
+  padding: 16px;
+  color: #111425;
   background: #ffffff;
-  border-radius: 0.5rem;
-}
-
-.detailsSection,
-.packagesSection,
-.editForm {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  border-radius: 8px;
 }
 
 .sectionTitle {
   margin: 0;
-  font-size: 1rem;
+  font-size: 15px;
   font-weight: 800;
-  line-height: 1.5rem;
+  line-height: 18px;
 }
 
 .definitionList {
   display: grid;
-  gap: 0.75rem;
+  gap: 9px;
   margin: 0;
+  font-size: 13px;
+  line-height: 20px;
 }
 
 .definitionList div {
   display: grid;
-  grid-template-columns: 8rem minmax(0, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 0;
 }
 
 .definitionList dt {
-  font-weight: 800;
+  color: #34384a;
+  font-weight: 700;
 }
 
 .definitionList dd {
+  min-width: 0;
   margin: 0;
+  color: #111425;
 }
 
 .packageCard {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 1rem;
-  color: #020617;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgb(15 23 42 / 8%);
+  gap: 5px;
+  padding: 14px;
+  color: #111425;
+  font-size: 13px;
+  border: 1px solid #d9deea;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.packageCard strong {
+  font-size: 14px;
+}
+
+.packageCard span,
+.muted {
+  color: #505466;
 }
 
 .primaryButton,
@@ -105,59 +132,87 @@
   align-items: center;
   justify-content: center;
   width: max-content;
-  min-height: 2.75rem;
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 800;
-  border-radius: 0.5rem;
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 8px;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 8%);
   cursor: pointer;
 }
 
 .primaryButton,
 .primaryLink {
   color: #ffffff;
-  background: #209b7e;
+  background: #20a489;
   border: 0;
+  text-decoration: none;
 }
 
 .secondaryButton {
-  color: #020617;
+  color: #111425;
   background: #ffffff;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #d9deea;
 }
 
-.actions {
+.editForm {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 42px;
+  width: 100%;
 }
 
 .label {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
-  font-size: 0.875rem;
-  font-weight: 800;
+  gap: 10px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .input {
-  height: 2.75rem;
-  padding: 0 0.75rem;
-  color: #020617;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.5rem;
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  color: #111425;
+  font-size: 14px;
+  background: #ffffff;
+  border: 1px solid #d9deea;
+  border-radius: 8px;
 }
 
 .formError {
   margin: 0;
-  padding: 0.75rem;
+  padding: 12px;
   color: #7f1d1d;
-  font-size: 0.875rem;
+  font-size: 14px;
   background: #fee2e2;
-  border-radius: 0.5rem;
+  border-radius: 8px;
+}
+
+.inlineError {
+  color: #fecaca;
+  font-size: 12px;
 }
 
 .muted {
   margin: 0;
-  color: #475569;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+@media (max-width: 639px) {
+  .page {
+    padding-top: 16px;
+  }
+
+  .definitionList div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .editForm {
+    gap: 24px;
+  }
 }

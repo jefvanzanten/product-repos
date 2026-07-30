@@ -1,5 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { parseAdminSourceFromSearch, withAdminSource } from "../../admin-navigation";
+import { preserveProductFormValues } from "../../features/admin/product-forms/product-form-data";
+import { submitUpdateProductForm } from "../../features/admin/product-forms/product-mutations.server";
 import {
   createBrand,
   getCategories,
@@ -42,18 +44,14 @@ export async function loadProductDetailRoute({ params, request }: LoaderFunction
  */
 export async function handleProductDetailRouteAction({ params, request }: ActionFunctionArgs): Promise<ProductDetailActionResult> {
   const form = await request.formData();
-  const values = Object.fromEntries([...form.entries()].map(([key, value]) => [key, String(value)]));
+  const values = preserveProductFormValues(form);
   try {
-    const productName = String(form.get("productName") ?? "").trim();
-    const categoryId = Number(form.get("categoryId"));
-    const brandName = String(form.get("brandName") ?? "").trim();
-    const brand = brandName ? await createBrand({ name: brandName }, request) : null;
-    const product = await updateProduct(String(params.productId), {
-      name: productName,
-      categoryId,
-      brandId: brand?.id ?? null,
-    }, request);
-    return { ok: true, product };
+    const submission = await submitUpdateProductForm(String(params.productId), form, {
+      createBrand: (input) => createBrand(input, request),
+      updateProduct: (productId, input) => updateProduct(productId, input, request),
+    });
+    if (!submission.ok) return { errors: submission.errors, values };
+    return { ok: true, product: submission.product };
   } catch (error) {
     return { errors: mapApiError(error), values };
   }

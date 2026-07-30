@@ -2,10 +2,11 @@
   display: flex;
   flex: 1 1 0%;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 24px;
+  width: min(100%, 650px);
   min-height: 0;
   overflow: hidden;
-  padding: 2rem 0.25rem 0 0;
+  padding-top: 31px;
 }
 
 .header {
@@ -23,9 +24,9 @@
 
 .intro {
   margin: 0;
-  color: rgb(255 255 255 / 70%);
-  font-size: 0.875rem;
-  line-height: 1.25rem;
+  color: #c7c8d5;
+  font-size: 14px;
+  line-height: 17px;
 }
 
 .formError {
@@ -42,40 +43,56 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 40px;
   min-height: 0;
   overflow-y: auto;
-  padding: 0 0.25rem 2rem 0;
+  padding: 17px 0 32px;
+  scrollbar-width: none;
+}
+
+.form::-webkit-scrollbar {
+  width: 0;
 }
 
 .fieldset {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 12px;
   margin: 0;
-  padding: 1rem;
-  background: rgb(255 255 255 / 10%);
+  padding: 18px 17px;
+  background: #3b3f61;
   border: 0;
-  border-radius: 1rem;
+  border-radius: 18px;
 }
 
 .fieldsetLegend {
-  padding: 0 0.25rem;
-  font-size: 1.125rem;
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 18px;
   font-weight: 700;
-  line-height: 1.75rem;
+  line-height: 22px;
 }
 
 .select,
 .textInput,
 .brandInput {
   width: 100%;
-  height: 2.75rem;
-  padding: 0 0.75rem;
-  color: #020617;
-  background: #ffffff;
-  border: 0;
-  border-radius: 0.5rem;
+  height: 44px;
+  padding: 0 16px;
+  color: #111425;
+  font-size: 14px;
+  background-color: #ffffff;
+  border: 1px solid #d9deea;
+  border-radius: 8px;
+}
+
+.select {
+  padding-right: 42px;
+  appearance: none;
+  background-image: url('/assets/product-forms/dropdown.svg');
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 14px 14px;
 }
 
 .selectAlignedEnd {
@@ -88,20 +105,6 @@
   gap: 0.75rem;
 }
 
-.submitButton {
-  width: 100%;
-  min-height: 3rem;
-  padding: 1rem 1.25rem;
-  color: #ffffff;
-  font-weight: 600;
-  background: #209b7e;
-  border: 0;
-  border-radius: 0.75rem;
-
-  &:disabled {
-    opacity: 0.6;
-  }
-}
 
 .brandCombobox {
   position: relative;
@@ -407,4 +410,28 @@
   margin: 0.5rem 0 0;
   font-size: 0.75rem;
   line-height: 1rem;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  clip: rect(0 0 0 0);
+}
+
+@media (max-width: 639px) {
+  .page {
+    padding-top: 16px;
+  }
+
+  .form {
+    gap: 24px;
+  }
+
+  .packageGrid {
+    grid-template-columns: 1fr;
+  }
 }

@@ -1,0 +1,238 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  padding: 18px 17px;
+  color: #ffffff;
+  background: #3b3f61;
+  border: 0;
+  border-radius: 18px;
+}
+
+.legend {
+  margin: 0 0 8px;
+  padding: 0;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 22px;
+}
+
+.input,
+.select {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  color: #111425;
+  font: inherit;
+  font-size: 14px;
+  background: #ffffff;
+  border: 1px solid #d9deea;
+  border-radius: 8px;
+}
+
+.help {
+  margin: 0;
+  color: #c7c8d5;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.radioGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.radioTile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  overflow: hidden;
+  color: #111425;
+  font-size: 14px;
+  font-weight: 600;
+  background: #ffffff;
+  border: 1px solid #d9deea;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.radioTile:has(input:checked) {
+  background: #bfece5;
+  border: 2px solid #20a489;
+}
+
+.radioTile:has(input:focus-visible) {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.radioTile input,
+.toggleLabel input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.radioIcon {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  background: #ffffff;
+  border: 1px solid #505466;
+  border-radius: 50%;
+}
+
+.radioTile input:checked + .radioIcon {
+  background: transparent url('/assets/product-forms/radio-selected.svg') center / 14px 14px no-repeat;
+  border: 0;
+}
+
+.toggleLabel {
+  position: absolute;
+  top: -12px;
+  right: 17px;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.toggleVisual {
+  display: block;
+  width: 44px;
+  height: 24px;
+  background: #7a7d89;
+  border-radius: 12px;
+}
+
+.toggleVisual::after {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 3px;
+  background: #ffffff;
+  border-radius: 50%;
+  content: "";
+}
+
+.toggleLabel input:checked + .toggleVisual {
+  background: transparent url('/assets/product-forms/toggle-on.svg') center / 44px 24px no-repeat;
+}
+
+.toggleLabel input:checked + .toggleVisual::after {
+  display: none;
+}
+
+.toggleLabel:has(input:focus-visible) {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+.macroContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fieldLabel,
+.inputLabel {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 17px;
+}
+
+.macroGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.inputLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.error {
+  color: #fecaca;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.actions,
+.createActions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.cancelButton,
+.saveButton {
+  height: 48px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 8%);
+  cursor: pointer;
+}
+
+.cancelButton {
+  flex: 0 0 180px;
+  color: #111425;
+  background: #ffffff;
+  border: 1px solid #d9deea;
+}
+
+.saveButton {
+  flex: 1 1 auto;
+  color: #ffffff;
+  background: #20a489;
+  border: 0;
+}
+
+.saveButton:disabled {
+  opacity: 0.6;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  clip: rect(0 0 0 0);
+}
+
+@media (max-width: 639px) {
+  .radioGrid,
+  .macroGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .radioGrid {
+    height: auto;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .cancelButton {
+    flex-basis: 48px;
+    width: 100%;
+  }
+}

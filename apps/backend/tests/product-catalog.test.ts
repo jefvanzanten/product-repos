@@ -10,6 +10,8 @@ async function createTestProduct(name: string) {
       name,
       categoryId: testCatalog.categoryId,
       brandId: testCatalog.brandId,
+      consumptionType: "DRINK",
+      macroProfile: null,
       package: {
         packageTypeId: testCatalog.packageTypeId,
         amount: "1.5",
@@ -38,14 +40,16 @@ describe("product catalog browsing", () => {
 
     const browseResponse = await requestAsAdmin(`/products?categoryId=${testCatalog.categoryId}`);
     expect(browseResponse.status).toBe(200);
-    const browse = await browseResponse.json() as { state: string; products: { items: Array<{ id: string; packageSummary: string }> } };
+    const browse = await browseResponse.json() as { state: string; products: { items: Array<{ id: string; consumptionType: string; packageSummary: string }> } };
     expect(browse.state).toBe("category");
-    expect(browse.products.items.some((product) => product.id === created.id && product.packageSummary === "fles 1.5 liter")).toBe(true);
+    expect(browse.products.items.some((product) => product.id === created.id && product.consumptionType === "DRINK" && product.packageSummary === "fles 1.5 liter")).toBe(true);
 
     const detailResponse = await requestAsAdmin(`/products/${created.id}`);
     expect(detailResponse.status).toBe(200);
-    const detail = await detailResponse.json() as { id: string; displayName: string; packages: Array<{ summary: string }> };
+    const detail = await detailResponse.json() as { id: string; displayName: string; consumptionType: string; macroProfile: unknown; packages: Array<{ summary: string }> };
     expect(detail.id).toBe(created.id);
+    expect(detail.consumptionType).toBe("DRINK");
+    expect(detail.macroProfile).toBeNull();
     expect(detail.displayName).toContain("Testmerk");
     expect(detail.packages[0]?.summary).toBe("fles 1.5 liter");
   });

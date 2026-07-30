@@ -1,4 +1,10 @@
-import type { BrandDto, CatalogBrowseResponse, CatalogSearchResponse, CategoryDto, PackageTypeDto, ProductCreatedDto, ProductDetailDto, ProductPackageDto, ProductPackageRequest, UnitTypeDto, UpdateProductRequest } from "@product-repos/contracts";
+import {
+  catalogBrowseResponseSchema,
+  catalogSearchResponseSchema,
+  productCreatedDtoSchema,
+  productDetailDtoSchema,
+} from "@product-repos/contracts";
+import type { BrandDto, CatalogBrowseResponse, CatalogSearchResponse, CategoryDto, CreateProductRequest, PackageTypeDto, ProductCreatedDto, ProductDetailDto, ProductPackageDto, ProductPackageRequest, UnitTypeDto, UpdateProductRequest } from "@product-repos/contracts";
 
 const apiBaseUrl = process.env.API_URL ?? "http://localhost:3000";
 const apiUrl = apiBaseUrl.replace(/\/$/, "");
@@ -47,18 +53,18 @@ async function browseCatalog(input: { readonly categoryId?: string | null; reado
   if (input.brandId) params.set("brandId", input.brandId);
   if (input.limit) params.set("limit", String(input.limit));
   const query = params.toString();
-  return getJson<CatalogBrowseResponse>(`/products${query ? `?${query}` : ""}`, request);
+  return catalogBrowseResponseSchema.parse(await getJson<unknown>(`/products${query ? `?${query}` : ""}`, request));
 }
 
 /** Search the catalog with the incoming session. */
 async function searchCatalog(query: string, request: Request): Promise<CatalogSearchResponse> {
   const params = new URLSearchParams({ query });
-  return getJson<CatalogSearchResponse>(`/products/search?${params.toString()}`, request);
+  return catalogSearchResponseSchema.parse(await getJson<unknown>(`/products/search?${params.toString()}`, request));
 }
 
 /** Fetch product detail with the incoming session. */
 async function getProduct(productId: string, request: Request): Promise<ProductDetailDto> {
-  return getJson<ProductDetailDto>(`/products/${productId}`, request);
+  return productDetailDtoSchema.parse(await getJson<unknown>(`/products/${productId}`, request));
 }
 
 /** Fetch package detail with the incoming session. */
@@ -87,18 +93,13 @@ async function createBrand(input: { name: string }, request: Request): Promise<B
 }
 
 /** Create a product with the incoming session. */
-async function createProduct(input: {
-  name: string;
-  categoryId: number;
-  brandId?: string | null;
-  package: ProductPackageRequest;
-}, request: Request): Promise<ProductCreatedDto> {
-  return postJson<ProductCreatedDto>("/products", input, request);
+async function createProduct(input: CreateProductRequest, request: Request): Promise<ProductCreatedDto> {
+  return productCreatedDtoSchema.parse(await postJson<unknown>("/products", input, request));
 }
 
 /** Update a product with the incoming session. */
 async function updateProduct(productId: string, input: UpdateProductRequest, request: Request): Promise<ProductDetailDto> {
-  return patchJson<ProductDetailDto>(`/products/${productId}`, input, request);
+  return productDetailDtoSchema.parse(await patchJson<unknown>(`/products/${productId}`, input, request));
 }
 
 /** Add a product package with the incoming session. */
@@ -121,6 +122,8 @@ function mapApiError(error: unknown): FormErrors {
   if (body.code === "CATEGORY_HAS_PRODUCTS") return { form: "Deze categorie is nog gekoppeld aan producten." };
   if (body.code === "PRODUCT_ALREADY_EXISTS") return { productName: "Dit product bestaat al." };
   if (body.code === "PRODUCT_PACKAGE_ALREADY_EXISTS") return { form: "Deze verpakking bestaat al voor dit product." };
+  if (body.code === "PRODUCT_MACRO_PROFILE_INVALID") return { macroProfile: body.message ?? "Controleer de voedingswaarden." };
+  if (body.code === "UNIT_DIMENSION_INCOMPATIBLE") return { referenceBasis: "De referentiebasis past niet bij de verpakkingseenheid." };
   if (body.code === "PRODUCT_NOT_FOUND") return { form: "Product niet gevonden." };
   if (body.code === "PRODUCT_PACKAGE_NOT_FOUND") return { form: "Verpakking niet gevonden." };
   if (body.code === "REFERENCE_NOT_FOUND") return { form: "Een gekozen categorie, merk of verpakking bestaat niet meer. Kies opnieuw." };

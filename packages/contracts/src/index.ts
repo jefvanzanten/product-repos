@@ -2,9 +2,9 @@ export { brandDtoSchema, brandInsertSchema, brandSelectSchema, brandUpdateSchema
 export type { Brand, BrandDto, CreateBrandInput, CreateBrandRequest, UpdateBrandInput } from './brands.ts';
 export { categoryDtoSchema, createCategoryRequestSchema } from './categories.ts';
 export type { CategoryDto, CreateCategoryRequest } from './categories.ts';
-export { unitContentDtoSchema, unitTypeDtoSchema, unitTypeInsertSchema, unitTypeSelectSchema, unitTypeUpdateSchema } from './unit-types.ts';
-export type { CreateUnitTypeInput, UnitContentDto, UnitType, UnitTypeDto, UpdateUnitTypeInput } from './unit-types.ts';
+export { unitContentDtoSchema, unitDimensionSchema, unitTypeDtoSchema, unitTypeInsertSchema, unitTypeSelectSchema, unitTypeUpdateSchema } from './unit-types.ts';
+export type { CreateUnitTypeInput, UnitContentDto, UnitDimension, UnitType, UnitTypeDto, UpdateUnitTypeInput } from './unit-types.ts';
 export { packageTypeDtoSchema } from './package-types.ts';
 export type { PackageTypeDto } from './package-types.ts';
-export { catalogBrowseResponseSchema, catalogCategoryRowSchema, catalogProductRowSchema, catalogSearchResponseSchema, createProductRequestSchema, productCreatedDtoSchema, productDetailDtoSchema, productInsertSchema, productPackageDtoSchema, productPackageRequestSchema, productSelectSchema, productUpdateSchema, productWithRelationsSchema, updateProductRequestSchema } from './products.ts';
-export type { CatalogBrowseResponse, CatalogCategoryRow, CatalogProductRow, CatalogSearchResponse, CreateProductInput, CreateProductRequest, Product, ProductCreatedDto, ProductDetailDto, ProductPackageDto, ProductPackageRequest, ProductWithRelations, UpdateProductInput, UpdateProductRequest } from './products.ts';
+export { caloriesSourceSchema, catalogBrowseResponseSchema, catalogCategoryRowSchema, catalogProductRowSchema, catalogSearchResponseSchema, consumptionTypeSchema, createProductRequestSchema, macroProfileSchema, macroReferenceBasisSchema, productCreatedDtoSchema, productDetailDtoSchema, productInsertSchema, productPackageDtoSchema, productPackageRequestSchema, productSelectSchema, productUpdateSchema, productWithRelationsSchema, updateProductRequestSchema } from './products.ts';
+export type { CaloriesSource, CatalogBrowseResponse, CatalogCategoryRow, CatalogProductRow, CatalogSearchResponse, ConsumptionType, CreateProductInput, CreateProductRequest, MacroProfile, MacroReferenceBasis, Product, ProductCreatedDto, ProductDetailDto, ProductPackageDto, ProductPackageRequest, ProductWithRelations, UpdateProductInput, UpdateProductRequest } from './products.ts';

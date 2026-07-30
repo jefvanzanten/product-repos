@@ -310,7 +310,7 @@ Regels:
 - Een lege of alleen uit whitespace bestaande naam kan niet worden opgeslagen.
 - Een naam die al bestaat bij dezelfde parentcategorie/root blijft geblokkeerd.
 - Bij een backendvalidatiefout of dubbele siblingnaam blijft de modal open en toont de UI de fout bij het veld of in de modal.
-- Na succesvol opslaan sluit de modal en wordt de beheerder teruggestuurd naar de bijbehorende categorielijst, waar de nieuwe naam zichtbaar is.
+- Eén klik op `Opslaan` verwerkt de wijziging. Na succesvol opslaan sluit de modal direct en wordt de beheerder teruggestuurd naar de bijbehorende categorielijst, waar de nieuwe naam zichtbaar is.
 - Hernoemen wijzigt alleen de categorienaam; parent, sortering, producten en subcategorieën blijven ongewijzigd.
 
 ## Productlimieten en meer laden
@@ -522,8 +522,9 @@ Dan opent de route `/product-catalogus/categorieen/<categoryId>/bewerken`
 En is deze route direct zichtbaar in de browser-URL  
 En ziet de beheerder een modal `Categorie bewerken` met het veld `Naam categorie` voorgevuld met de huidige naam.
 
-Wanneer de beheerder een geldige nieuwe naam invult en `Opslaan` kiest  
+Wanneer de beheerder een geldige nieuwe naam invult en één keer `Opslaan` kiest
 Dan wordt de categorienaam aangepast  
+En sluit de modal direct na de succesvolle verwerking
 En blijft parent, sortering, producten en subcategorieën ongewijzigd  
 En keert de beheerder terug naar de bijbehorende categorielijst waar de nieuwe naam zichtbaar is.
 

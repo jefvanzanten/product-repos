@@ -114,12 +114,14 @@ function browseBrand(brandId: string, limit: number): Result<CatalogBrowseRespon
   return ok({ state: "brand", brand: { id: brandRow.id, name: brandRow.name }, productGroups, hasMore: brandProducts.length > limit, cursor: brandProducts.length > limit ? String(limit * 2) : null });
 }
 
+/** Project a product row into the catalog response contract. */
 function toCatalogProductRow(productRow: ProductRow, brandRow: BrandRow | null, categoryPath: string): CatalogProductRow {
   const firstPackage = findProductPackageFullRows(productRow.id)[0];
   return {
     id: productRow.id,
     displayName: displayProductName(productRow, brandRow),
     brand: brandRow ? { id: brandRow.id, name: brandRow.name } : null,
+    consumptionType: productRow.consumptionType,
     categoryPath,
     packageSummary: firstPackage ? toProductPackageDto(firstPackage).summary : "Geen verpakking",
   };

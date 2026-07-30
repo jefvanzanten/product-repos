@@ -1,6 +1,8 @@
 import { redirect } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { parseAdminSourceFromSearch, toAdminRedirectPath } from "../../admin-navigation";
+import { preserveProductFormValues } from "../../features/admin/product-forms/product-form-data";
+import { submitCreateProductForm } from "../../features/admin/product-forms/product-mutations.server";
 import {
   createBrand,
   createCategory,
@@ -56,7 +58,7 @@ export async function loadNewProductRoute({ request }: LoaderFunctionArgs): Prom
  */
 export async function handleNewProductRouteAction({ request }: ActionFunctionArgs): Promise<NewProductActionResult | Response> {
   const form = await request.formData();
-  const values = Object.fromEntries([...form.entries()].map(([key, value]) => [key, String(value)]));
+  const values = preserveProductFormValues(form);
 
   try {
     const intent = String(form.get("_action") ?? "createProduct");
@@ -87,34 +89,14 @@ export async function handleNewProductRouteAction({ request }: ActionFunctionArg
       return { deletedCategoryId: categoryId, values };
     }
 
-    const categoryId = Number(form.get("categoryId"));
-    const brandQuery = String(form.get("brandQuery") ?? "").trim();
-    let brandId = String(form.get("brandId") ?? "").trim() || null;
-    const brandName = String(form.get("brandName") ?? "").trim();
-    if (brandQuery && !brandId && !brandName) {
-      return {
-        errors: { brandName: "Kies een suggestie of maak het merk aan met de plus-optie." },
-        values,
-      };
-    }
-    if (brandName) {
-      const brand = await createBrand({ name: brandName }, request);
-      brandId = brand.id;
-    }
+    const submission = await submitCreateProductForm(form, {
+      createBrand: (input) => createBrand(input, request),
+      createProduct: (input) => createProduct(input, request),
+    });
+    if (!submission.ok) return { errors: submission.errors, values };
 
-    const productName = String(form.get("productName") ?? "").trim();
-    const amount = String(form.get("amount") ?? "").trim().replace(",", ".");
-    const packageTypeId = Number(form.get("packageTypeId"));
-    const unitTypeId = Number(form.get("unitTypeId"));
-    const unitsPerPackage = Number(form.get("unitsPerPackage"));
-    const created = await createProduct({
-      name: productName,
-      categoryId,
-      brandId,
-      package: { amount, packageTypeId, unitTypeId, unitsPerPackage },
-    }, request);
     const source = parseAdminSourceFromSearch(new URL(request.url).searchParams);
-    return redirect(toAdminRedirectPath(`/product-catalogus/${created.id}`, source));
+    return redirect(toAdminRedirectPath(`/product-catalogus/${submission.product.id}`, source));
   } catch (error) {
     return { errors: mapApiError(error), values };
   }

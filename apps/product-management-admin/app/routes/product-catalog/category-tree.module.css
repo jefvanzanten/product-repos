@@ -32,7 +32,7 @@
 .categoryLink {
   display: flex;
   align-items: center;
-  min-height: 3rem;
+  min-height: 50px;
   padding: 0 0.875rem;
   overflow: hidden;
   font-size: 0.875rem;
@@ -57,17 +57,13 @@
   align-items: center;
   justify-content: center;
   width: 2.75rem;
-  min-height: 3rem;
+  min-height: 50px;
 }
 
 .pencilIcon {
-  width: 1.125rem;
-  height: 1.125rem;
-  fill: none;
-  stroke: #020617;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  display: block;
+  width: 18px;
+  height: 18px;
 }
 
 .categoryContent {

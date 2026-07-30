@@ -22,7 +22,9 @@ migrate(testDb, { migrationsFolder });
 const categoryId = (sqlite.query("INSERT INTO category (name) VALUES (?) RETURNING id").get("Frisdrank") as { id: number }).id;
 const brandId = crypto.randomUUID();
 sqlite.query("INSERT INTO brand (id, name) VALUES (?, ?)").run(brandId, "Testmerk");
-const unitTypeId = (sqlite.query("INSERT INTO unit_type (name) VALUES (?) RETURNING id").get("liter") as { id: number }).id;
+const unitTypeId = (sqlite.query("INSERT INTO unit_type (name, symbol, dimension, conversion_to_base) VALUES (?, ?, ?, ?) RETURNING id").get("liter", "l", "VOLUME", 1000) as { id: number }).id;
+const massUnitTypeId = (sqlite.query("INSERT INTO unit_type (name, symbol, dimension, conversion_to_base) VALUES (?, ?, ?, ?) RETURNING id").get("gram", "g", "MASS", 1) as { id: number }).id;
+const countUnitTypeId = (sqlite.query("INSERT INTO unit_type (name, symbol, dimension, conversion_to_base) VALUES (?, ?, ?, ?) RETURNING id").get("stuk", "st", "COUNT", 1) as { id: number }).id;
 const packageTypeId = (sqlite.query("INSERT INTO package_type (name) VALUES (?) RETURNING id").get("fles") as { id: number }).id;
 sqlite.close();
 
@@ -84,6 +86,8 @@ export const testCatalog = {
   categoryId,
   brandId,
   unitTypeId,
+  massUnitTypeId,
+  countUnitTypeId,
   packageTypeId,
 } as const;
 

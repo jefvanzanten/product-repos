@@ -49,7 +49,7 @@ export function CategoryTree({ browse, categories, onCreateCategory }: CategoryT
       </div>
       {browse.state === "root" ? (
         <div className={actions.cardActions}>
-          <button className={actions.primaryButton} type="button" onClick={() => onCreateCategory({ kind: "root", parentId: null })}>Categorie aanmaken</button>
+          <button className={actions.primaryButton} type="button" onClick={() => onCreateCategory({ kind: "root", parentId: null })}>+ Categorie</button>
         </div>
       ) : null}
     </>
@@ -132,13 +132,9 @@ function CategoryRow({ category, depth, hasChildren, open }: { readonly category
   );
 }
 
+/** Render the exact 18 by 18 Figma edit asset. */
 function PencilIcon(): React.ReactNode {
-  return (
-    <svg className={styles.pencilIcon} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M4.75 16.75 4 20l3.25-.75L18.6 7.9a1.7 1.7 0 0 0 0-2.4l-.1-.1a1.7 1.7 0 0 0-2.4 0L4.75 16.75Z" />
-      <path d="m14.75 6.75 2.5 2.5" />
-    </svg>
-  );
+  return <img alt="" className={styles.pencilIcon} height="18" src="/product-management-admin/assets/product-forms/edit.svg" width="18" />;
 }
 
 type CategoryTreeNodeData = {

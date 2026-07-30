@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { canonicalDecimal, positiveInt, trimRequired } from "../domain";
 import { browseProductCatalog, searchProductCatalog } from "../repositories/product-catalog.repository";
 import { addProductPackage, getProductPackage, updateProductPackage } from "../repositories/product-packages.repository";
-import { createProduct, getProductDetail, updateProduct } from "../repositories/products.repository";
+import { createNewProduct, getProductById, updateExistingProduct } from "../services/products.service";
 
 const status = {
   VALIDATION_ERROR: 400,
@@ -16,8 +16,11 @@ const status = {
   PRODUCT_NOT_FOUND: 404,
   PRODUCT_PACKAGE_ALREADY_EXISTS: 409,
   PRODUCT_PACKAGE_NOT_FOUND: 404,
+  PRODUCT_MACRO_PROFILE_INVALID: 409,
+  UNIT_DIMENSION_INCOMPATIBLE: 400,
 } as const;
 
+/** Create the product catalog HTTP routes. */
 export function productRoutes() {
   const router = new Hono();
 
@@ -50,10 +53,12 @@ export function productRoutes() {
     if (!name.ok) return c.json(name.error, 400);
     const packageInput = parsePackageInput(parsed.data.package);
     if (!packageInput.ok) return c.json(packageInput.error, 400);
-    const result = createProduct({
+    const result = createNewProduct({
       name: name.value,
       categoryId: parsed.data.categoryId,
       brandId: parsed.data.brandId ?? null,
+      consumptionType: parsed.data.consumptionType,
+      macroProfile: parsed.data.macroProfile ?? null,
       package: packageInput.value,
     });
     if (!result.ok) return c.json(result.error, status[result.error.code]);
@@ -61,7 +66,7 @@ export function productRoutes() {
   });
 
   router.get("/products/:productId", (c) => {
-    const result = getProductDetail(c.req.param("productId"));
+    const result = getProductById(c.req.param("productId"));
     if (!result.ok) return c.json(result.error, status[result.error.code]);
     return c.json(result.value);
   });
@@ -72,7 +77,13 @@ export function productRoutes() {
     const name = trimRequired(parsed.data.name, "name");
     if (!name.ok) return c.json(name.error, 400);
 
-    const result = updateProduct(c.req.param("productId"), { name: name.value, categoryId: parsed.data.categoryId, brandId: parsed.data.brandId });
+    const result = updateExistingProduct(c.req.param("productId"), {
+      name: name.value,
+      categoryId: parsed.data.categoryId,
+      brandId: parsed.data.brandId,
+      consumptionType: parsed.data.consumptionType,
+      macroProfile: parsed.data.macroProfile,
+    });
     if (!result.ok) return c.json(result.error, status[result.error.code]);
     return c.json(result.value);
   });
@@ -112,12 +123,14 @@ export function productRoutes() {
   return router;
 }
 
+/** Parse a bounded positive result limit. */
 function parseLimit(value: string | undefined, fallback: number, max: number): number {
   const number = Number(value);
   if (!Number.isInteger(number) || number < 1) return fallback;
   return Math.min(number, max);
 }
 
+/** Parse an optional positive integer query parameter. */
 function parseOptionalPositiveInt(value: string | undefined): number | undefined | "invalid" {
   if (!value) return undefined;
   const parsed = Number(value);
@@ -125,11 +138,13 @@ function parseOptionalPositiveInt(value: string | undefined): number | undefined
   return parsed;
 }
 
+/** Parse a required positive integer path parameter. */
 function parseRequiredPositiveInt(value: string | undefined): number | null {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed >= 1 ? parsed : null;
 }
 
+/** Parse package decimals and counts for application use. */
 function parsePackageInput(input: { readonly packageTypeId: number; readonly amount: string; readonly unitTypeId: number; readonly unitsPerPackage: number }) {
   const amount = canonicalDecimal(input.amount);
   if (!amount.ok) return amount;
