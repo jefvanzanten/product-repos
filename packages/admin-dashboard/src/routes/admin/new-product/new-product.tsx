@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Form,
-  Link,
   useActionData,
   useFetcher,
   useLoaderData,
@@ -9,12 +8,14 @@ import {
 } from "react-router";
 import { buildCategoryTreeOptions } from "../../../features/admin/product-catalog/categoryTree";
 import type { CategoryTreeOption } from "../../../features/admin/product-catalog/categoryTree";
+import { CategoryBreadcrumb } from "../product-catalog/category-breadcrumb";
 import type {
   BrandDto,
   FormErrors,
   NewProductActionResult,
   NewProductLoaderData,
 } from "./new-product.types";
+import browseTreeStyles from "../product-catalog/category-tree.module.css";
 import styles from "./new-product.module.css";
 
 export function meta() { return [{ title: "Product aanmaken" }]; }
@@ -25,18 +26,24 @@ export default function NewProduct(): React.ReactNode {
   const navigation = useNavigation();
   const busy = navigation.state !== "idle";
   const values = actionData?.values ?? {};
+  const defaultCategoryId = values.categoryId ?? loaderData.categoryId ?? "";
   const categoryOptions = useMemo(() => buildCategoryTreeOptions(loaderData.categories), [loaderData.categories]);
+  const [breadcrumbCategoryId, setBreadcrumbCategoryId] = useState(defaultCategoryId);
+  const breadcrumbPath = useMemo(() => buildSelectedCategoryPath(categoryOptions, breadcrumbCategoryId), [breadcrumbCategoryId, categoryOptions]);
+
+  useEffect(() => setBreadcrumbCategoryId(defaultCategoryId), [defaultCategoryId]);
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <Link className={styles.backLink} to="/admin/product-catalogus">← Productcatalogus</Link>
         <h1 className={styles.title}>Product aanmaken</h1>
         <p className={styles.intro}>Vul categorie, merk, product en verpakking in.</p>
       </header>
+      <CategoryBreadcrumb path={breadcrumbPath} />
       {actionData?.errors?.form ? <p className={styles.formError}>{actionData.errors.form}</p> : null}
       <Form className={styles.form} method="post" preventScrollReset>
         <Fieldset title="Categorie">
-          <CategoryTreePicker defaultValue={values.categoryId ?? loaderData.categoryId} errors={actionData?.errors} options={categoryOptions} />
+          <CategoryTreePicker defaultValue={defaultCategoryId} errors={actionData?.errors} options={categoryOptions} onSelectedCategoryChange={setBreadcrumbCategoryId} />
         </Fieldset>
         <Fieldset title="Merk (optioneel)">
           <BrandCombobox defaultBrandId={values.brandId ?? loaderData.brandId} defaultBrandName={values.brandName} defaultQuery={values.brandQuery ?? loaderData.selectedBrand?.name ?? loaderData.brandQuery} error={actionData?.errors?.brandName} initialBrands={loaderData.brands} />
@@ -47,7 +54,6 @@ export default function NewProduct(): React.ReactNode {
           <div className={styles.packageGrid}><TextInput defaultValue={values.amount} error={actionData?.errors?.amount} label="Inhoud" name="amount" placeholder="1,5" /><select className={`${styles.select} ${styles.selectAlignedEnd}`} name="unitTypeId" defaultValue={values.unitTypeId ?? ""} required><option value="">Eenheid</option>{loaderData.unitTypes.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></div>
           <TextInput defaultValue={values.unitsPerPackage ?? "1"} error={actionData?.errors?.unitsPerPackage} label="Aantal per verpakking" name="unitsPerPackage" placeholder="1" type="number" />
         </Fieldset>
-        <p className={styles.note}>Live weergavenaam: merk + productnaam. Deze naam wordt niet naar de backend gestuurd.</p>
         <button className={styles.submitButton} disabled={busy} type="submit">{busy ? "Opslaan..." : "Product opslaan"}</button>
       </Form>
     </main>
@@ -181,10 +187,14 @@ type VisibleCategoryTreeOption = {
   readonly originalIndex: number;
 };
 
-function CategoryTreePicker({ defaultValue, errors, options }: { defaultValue?: string; errors?: FormErrors; options: ReadonlyArray<CategoryTreeOption> }) {
+function CategoryTreePicker({ defaultValue, errors, onSelectedCategoryChange, options }: { defaultValue?: string; errors?: FormErrors; onSelectedCategoryChange: (categoryId: string) => void; options: ReadonlyArray<CategoryTreeOption> }) {
   const fetcher = useFetcher<NewProductActionResult>();
   const [selectedCategoryId, setSelectedCategoryId] = useState(defaultValue ?? "");
-  const [expandedCategoryIds, setExpandedCategoryIds] = useState<ReadonlySet<string>>(() => collectCategoryIds(options));
+  const [expandedCategoryIds, setExpandedCategoryIds] = useState<ReadonlySet<string>>(
+    () => collectInitiallyExpandedCategoryIds(options, defaultValue),
+  );
+  const [categoryIdToReveal, setCategoryIdToReveal] = useState(defaultValue ?? "");
+  const categoryToRevealRef = useRef<HTMLDivElement>(null);
   const [inlineParentId, setInlineParentId] = useState<string | null>();
   const [inlineName, setInlineName] = useState("");
   const busy = fetcher.state !== "idle";
@@ -196,20 +206,29 @@ function CategoryTreePicker({ defaultValue, errors, options }: { defaultValue?: 
 
   useEffect(() => setSelectedCategoryId(defaultValue ?? ""), [defaultValue]);
   useEffect(() => {
-    if (!defaultValue) return;
-    setExpandedCategoryIds((current) => mergeCategoryIds(current, collectAncestorCategoryIds(options, defaultValue)));
+    setExpandedCategoryIds(collectInitiallyExpandedCategoryIds(options, defaultValue));
   }, [defaultValue, options]);
+  useEffect(() => setCategoryIdToReveal(defaultValue ?? ""), [defaultValue]);
+  useEffect(() => {
+    if (!categoryIdToReveal || !selectedCategoryIsVisible) return;
+    const categoryRow = categoryToRevealRef.current;
+    if (!categoryRow) return;
+    categoryRow.scrollIntoView({ block: "center", inline: "nearest" });
+    setCategoryIdToReveal("");
+  }, [categoryIdToReveal, selectedCategoryIsVisible, visibleOptions]);
   useEffect(() => {
     if (!createdCategory) return;
     setSelectedCategoryId(String(createdCategory.id));
+    onSelectedCategoryChange(String(createdCategory.id));
     setExpandedCategoryIds((current) => expandCategoryParentPath(current, options, createdCategory.parentId));
     setInlineParentId(undefined);
     setInlineName("");
-  }, [createdCategory, options]);
+  }, [createdCategory, onSelectedCategoryChange, options]);
   useEffect(() => {
     if (deletedCategoryId === undefined || selectedCategoryId !== String(deletedCategoryId)) return;
     setSelectedCategoryId("");
-  }, [deletedCategoryId, selectedCategoryId]);
+    onSelectedCategoryChange("");
+  }, [deletedCategoryId, onSelectedCategoryChange, selectedCategoryId]);
 
   const parentIndex = inlineParentId === undefined || inlineParentId === null ? -1 : options.findIndex((option) => String(option.category.id) === inlineParentId);
   const parentOption = parentIndex >= 0 ? options[parentIndex] : undefined;
@@ -268,9 +287,20 @@ function CategoryTreePicker({ defaultValue, errors, options }: { defaultValue?: 
           const isExpanded = expandedCategoryIds.has(categoryId);
           return (
             <div key={option.category.id} className={styles.categoryGroup}>
-              <div className={styles.categoryRow} role="treeitem" aria-expanded={hasChildren ? isExpanded : undefined} aria-level={option.depth + 1} style={{ paddingLeft: `${0.4 + option.depth * 0.8}rem` }}>
-                {hasChildren ? <button className={styles.expandButton} type="button" aria-label={`${isExpanded ? "Categorie inklappen" : "Categorie uitklappen"}: ${option.path}`} title={`${isExpanded ? "Inklappen" : "Uitklappen"}: ${option.path}`} onClick={() => toggleExpanded(option.category.id)}>{isExpanded ? "−" : "+"}</button> : <span className={styles.expandPlaceholder} aria-hidden="true" />}
-                <label className={styles.categoryLabel}><input className={styles.categoryRadio} checked={selectedCategoryId === categoryId} name="categoryId" type="radio" value={option.category.id} onChange={() => setSelectedCategoryId(categoryId)} /><span className={styles.categoryName}>{option.depth > 0 ? "↳ " : ""}{option.category.name}</span></label>
+              <div
+                ref={categoryIdToReveal === categoryId ? categoryToRevealRef : undefined}
+                className={`${browseTreeStyles.categoryRow} ${styles.categoryPickerRow} ${selectedCategoryId === categoryId ? styles.categoryPickerRowSelected : ""}`}
+                role="treeitem"
+                aria-expanded={hasChildren ? isExpanded : undefined}
+                aria-level={option.depth + 1}
+                style={{ marginLeft: `${option.depth}rem` }}
+              >
+                {hasChildren ? (
+                  <button className={styles.categoryExpandButton} type="button" aria-label={`${isExpanded ? "Categorie inklappen" : "Categorie uitklappen"}: ${option.path}`} title={`${isExpanded ? "Inklappen" : "Uitklappen"}: ${option.path}`} onClick={() => toggleExpanded(option.category.id)}>
+                    <span className={`${browseTreeStyles.chevron} ${isExpanded ? browseTreeStyles.chevronOpen : ""}`} aria-hidden="true">▸</span>
+                  </button>
+                ) : <span className={styles.expandPlaceholder} aria-hidden="true" />}
+                <label className={styles.categoryLabel}><input className={styles.categoryRadio} checked={selectedCategoryId === categoryId} name="categoryId" type="radio" value={option.category.id} onChange={() => { setSelectedCategoryId(categoryId); onSelectedCategoryChange(categoryId); }} /><span className={styles.categoryName}>{option.category.name}</span></label>
                 <button className={styles.categoryAddChildButton} type="button" aria-label={`Subcategorie maken onder ${option.path}`} title={`Subcategorie maken onder ${option.path}`} onClick={() => openInlineInput(categoryId)}>+</button>
                 <button className={styles.categoryDeleteButton} disabled={busy} type="button" aria-label={`Categorie ${option.path} verwijderen`} title={`Categorie ${option.path} verwijderen`} onClick={() => submitDeleteCategory(option.category.id)}>×</button>
               </div>
@@ -288,6 +318,30 @@ function CategoryTreePicker({ defaultValue, errors, options }: { defaultValue?: 
 
 function shortCategoryPath(path: string): string {
   return path.split(" > ").map((part) => part.split(" ")[0] ?? part).join(" > ");
+}
+
+/**
+ * Build the complete breadcrumb path for the currently selected category.
+ *
+ * @param options - Category options containing parent relations.
+ * @param selectedCategoryId - The selected category identifier.
+ * @returns Categories ordered from the root category through the selection.
+ */
+function buildSelectedCategoryPath(options: ReadonlyArray<CategoryTreeOption>, selectedCategoryId: string): ReadonlyArray<CategoryTreeOption["category"]> {
+  const optionByCategoryId = buildOptionByCategoryId(options);
+  const path: Array<CategoryTreeOption["category"]> = [];
+  const visitedCategoryIds = new Set<string>();
+  let currentOption = optionByCategoryId.get(selectedCategoryId);
+  while (currentOption) {
+    const currentCategoryId = String(currentOption.category.id);
+    if (visitedCategoryIds.has(currentCategoryId)) break;
+    visitedCategoryIds.add(currentCategoryId);
+    path.unshift(currentOption.category);
+    currentOption = currentOption.category.parentId === null
+      ? undefined
+      : optionByCategoryId.get(String(currentOption.category.parentId));
+  }
+  return path;
 }
 
 function buildChildCountByParentId(options: ReadonlyArray<CategoryTreeOption>): ReadonlyMap<number, number> {
@@ -326,10 +380,14 @@ function findVisibleSubtreeEndIndex(visibleOptions: ReadonlyArray<VisibleCategor
   return endIndex;
 }
 
-function collectCategoryIds(options: ReadonlyArray<CategoryTreeOption>): ReadonlySet<string> {
-  const categoryIds = new Set<string>();
-  for (const option of options) categoryIds.add(String(option.category.id));
-  return categoryIds;
+/**
+ * Determine which category branches are open when the picker receives its context.
+ *
+ * A preselected category opens only its ancestor path. Without category context the
+ * picker mirrors the catalog root and starts with every branch collapsed.
+ */
+function collectInitiallyExpandedCategoryIds(options: ReadonlyArray<CategoryTreeOption>, categoryId: string | undefined): ReadonlySet<string> {
+  return collectAncestorCategoryIds(options, categoryId);
 }
 
 function collectAncestorCategoryIds(options: ReadonlyArray<CategoryTreeOption>, categoryId: string | undefined): ReadonlySet<string> {

@@ -48,8 +48,23 @@
 
 @media (min-width: 520px) {
   .bottomTabBar {
-    left: 40%;
-    width: min(100vw, 430px);
+    right: auto;
+    left: 50%;
+    bottom: 2em;
+    width: min(calc(100vw - 32px), 430px);
+    overflow: hidden;
+    border-radius: 8px;
     transform: translateX(-50%);
+  }
+
+  .bottomTabBar > :global(a:first-child) {
+    border-start-start-radius: 8px;
+    border-end-start-radius: 8px;
+  }
+
+  .bottomTabBar > :global(a:last-child) {
+    border-right: 0;
+    border-start-end-radius: 8px;
+    border-end-end-radius: 8px;
   }
 }

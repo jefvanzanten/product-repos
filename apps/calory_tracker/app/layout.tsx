@@ -33,10 +33,7 @@ export default function BottomTabsLayout(): ReactNode {
       <Outlet />
       <BottomTabBar>
         <NavLink to="/" end className={styles["nav-link"]}>
-          Calorie Statestieken
-        </NavLink>
-        <NavLink to="/" end className={styles["nav-link"]}>
-          Consumptie Logboek
+          Calory Tracker
         </NavLink>
         {isAdmin && (
           <Link
