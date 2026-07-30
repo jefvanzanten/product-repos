@@ -16,19 +16,28 @@ Deze index koppelt elk specbestand onder `docs/specs/` aan een uitvoerbaar plan.
 | `docs/specs/inventory-client/inventory-client-specificatie.md` | `docs/plans/inventory-client-roadmap-plan.md` | roadmap | index, huidige `/` is placeholderachtig |
 | `docs/specs/inventory-client/voorraad-inzien-specificatie.md` | `docs/plans/inventory-voorraad-inzien-plan.md` | implementatieplan | nieuw; placeholder vervangen |
 | `docs/specs/inventory-client/voorraad-toevoegen-bottom-sheet-specificatie.md` | `docs/plans/inventory-voorraad-toevoegen-bottomsheet-plan.md` | implementatieplan | nieuw |
-| `docs/specs/calory-tracker/dashboard/macro-calorien-grafiek.md` | `docs/plans/calory-tracker-macro-calorien-grafiek-plan.md` | specificatie + implementatieplan | ondergespecificeerd; nutrition-ERD niet actueel |
+| `docs/specs/shared/bottom-tabbar-specificatie.md` | `docs/plans/zelfstandige-app-deployments-en-admin-herkomst-plan.md` | wijzigingsplan | drie zelfstandige frontenddeployments en dynamische adminterugkeercontext gepland |
+| `docs/specs/calory-tracker/calory-tracker-specificatie.md` | `docs/plans/zelfstandige-app-deployments-en-admin-herkomst-plan.md` | architectuur-/roadmapplan | zelfstandige host en cross-app adminnavigatie gepland; feature-uitvoering blijft in losse plannen |
+| `docs/specs/calory-tracker/dashboard/calorien-statestieken.md` | `docs/plans/calory-tracker-macro-calorien-grafiek-plan.md` | wijzigings-/implementatieplan | bestaande planrichting moet bij uitvoering aan de actuele, uitgebreidere spec worden getoetst |
 | `docs/specs/calory-tracker/logs/log-overzicht.md` | `docs/plans/calory-tracker-log-overzicht-plan.md` | specificatieplan | leeg; bestaande UI is oude/ongedefinieerde slice |
 | `docs/specs/calory-tracker/logs/log-toevoegen.md` | `docs/plans/calory-tracker-log-toevoegen-plan.md` | specificatieplan | leeg; bestaande modal is oude/ongedefinieerde slice |
 | `docs/specs/workspace/doorlopende-vitest-specsuite-specificatie.md` | `docs/plans/doorlopende-vitest-specsuite-plan.md` | werkwijze | geimplementeerd |
 
+## Routeconventie voor adminplannen
+
+Adminfeatureplannen gebruiken app-interne routes zoals `/product-catalogus`. Het publieke basispad `/product-management-admin` wordt bij deployment ervoor geplaatst. Wanneer Product Management Admin met een geldige `source` is geopend, behouden links, formulieren en redirects die broncontext ook wanneer routevoorbeelden haar voor leesbaarheid weglaten.
+
+Het historische `admin-dashboard-shared-package-calory-router-plan.md` behoudt de oude `/admin`-routes om de reeds uitgevoerde package-extractie te beschrijven; `zelfstandige-app-deployments-en-admin-herkomst-plan.md` vervangt die hostarchitectuur.
+
 ## Aanbevolen volgorde
 
-1. Rond de bestaande Product-ERD/schema-alignment af volgens `docs/plans/product-erd-backend-schema-plan.md`.
-2. Implementeer minimale productdetail-read endpoints en route, zodat `Product aanmaken` naar detail kan redirecten.
-3. Maak `Product aanmaken` spec-compleet: context-prefill en redirect in plaats van aangemaakt-JSON tonen.
-4. Bouw cataloguszoeken en browsen samen, omdat ze dezelfde productrij-, categoriepad- en verpakkingssamenvatting-contracten delen.
-5. Bouw inventory backend/contracts eerst; vervang daarna de placeholder op `/` door voorraad inzien en bottomsheet toevoegen.
-6. Werk calorie-tracker specs uit vóór implementatie. De huidige calorie-ERD is expliciet niet actueel.
+1. Splits de drie frontendhosts en borg adminherkomst volgens `docs/plans/zelfstandige-app-deployments-en-admin-herkomst-plan.md`, voordat nieuwe clientfeatures meer routes aan de huidige gecombineerde hosts toevoegen.
+2. Rond de bestaande Product-ERD/schema-alignment af volgens `docs/plans/product-erd-backend-schema-plan.md`.
+3. Implementeer minimale productdetail-read endpoints en route, zodat `Product aanmaken` naar detail kan redirecten.
+4. Maak `Product aanmaken` spec-compleet: context-prefill en redirect in plaats van aangemaakt-JSON tonen.
+5. Bouw cataloguszoeken en browsen samen, omdat ze dezelfde productrij-, categoriepad- en verpakkingssamenvatting-contracten delen.
+6. Bouw inventory backend/contracts eerst; vervang daarna de placeholder op `/` door voorraad inzien en bottomsheet toevoegen.
+7. Werk calorie-tracker specs uit vóór implementatie. De huidige calorie-ERD is expliciet niet actueel.
 
 ## Doorlopende specsuite
 
@@ -51,6 +60,7 @@ Gebruik workspace-commando's alleen via `corepack pnpm`, bijvoorbeeld:
 ```text
 corepack pnpm --filter @product-repos/backend test
 corepack pnpm --filter @product-repos/backend typecheck
+corepack pnpm --filter product-management-admin typecheck
 corepack pnpm --filter inventory test
 corepack pnpm --filter inventory typecheck
 corepack pnpm --filter calory_tracker test

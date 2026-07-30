@@ -3,7 +3,7 @@
 ## Status
 
 - Onderdeel: admin dashboard > productcatalogus
-- Route: `/admin/product-catalogus/nieuw`
+- Route: `/product-catalogus/nieuw`
 - Status: geïmplementeerde basis; afbeeldingen, Calorie Tracker-data en macroprofiel zijn concept
 - Backendcontract: `docs/backend/Endpoints/ADMIN_DASHBOARD_ENDPOINTS.md`
 - Datamodel: `docs/backend/ERD/PRODUCT_ERD.md`
@@ -20,7 +20,7 @@ Een beheerder kan zonder verplichte zoekstap een product aanmaken met:
 3. een productnaam;
 4. precies één eerste verpakking;
 5. optioneel een product- en verpakkingsafbeelding;
-6. optionele beschikbaarheid voor de Calorie Tracker;
+6. een verplicht consumptietype;
 7. optioneel een macroprofiel.
 
 Opslaan maakt transactioneel één `product`, één eerste `product_package` en eventuele Calorie Tracker-data aan. Na succesvol opslaan navigeert de UI naar productdetail van het nieuwe product.
@@ -37,7 +37,7 @@ Opslaan maakt transactioneel één `product`, één eerste `product_package` en 
 - Merk optioneel zoeken, kiezen of vanuit het merkveld aanmaken.
 - Productnaam invullen.
 - Een optionele productafbeelding kiezen.
-- Optioneel het product beschikbaar maken voor de Calorie Tracker en exact één consumptietype kiezen.
+- Exact één consumptietype kiezen: voeding, drinken of supplement.
 - Optioneel een macroprofiel op productniveau toevoegen.
 - Eerste verpakking en een optionele verpakkingsafbeelding invullen.
 - Product opslaan via `POST /products`.
@@ -54,14 +54,15 @@ Opslaan maakt transactioneel één `product`, één eerste `product_package` en 
 - Producten of verpakkingen definitief verwijderen.
 - Archiveren tijdens de eerste aanmaak; een nieuw product start actief.
 - Apart merken- of categoriebeheer buiten de acties in dit formulier.
-- Een apart veld `eenheidsoort`.
+- Een los extra model voor individuele eenheden buiten verpakkingstypes.
 
 ## Layout
 
 ```text
-<- Productcatalogus
 Product aanmaken
 Vul categorie, merk, product en verpakking in.
+
+Alle categorieën > <volledig pad naar geselecteerde categorie>
 
 Categorie
 - bestaande categorieboom
@@ -77,10 +78,8 @@ Merk, optioneel
 Product
 - productnaam
 - optionele productafbeelding
-- live weergavenaam: merk + productnaam
 
-Calorie Tracker, standaard uit
-- beschikbaar voor Calorie Tracker
+Calorie Tracker
 - consumptietype: voeding, drinken of supplement
 
 Voedingswaarden, standaard uit
@@ -91,6 +90,7 @@ Voedingswaarden, standaard uit
 
 Verpakking
 - verpakkingstype
+- individueel verpakkingstype bij multiverpakkingen
 - inhoud + inhoudseenheid
 - aantal per verpakking
 - optionele verpakkingsafbeelding
@@ -100,7 +100,14 @@ Verpakking
 
 Layoutregels:
 
+- De volledige breadcrumb staat buiten de categorieselector, direct onder de paginatitel en introductietekst en boven het productformulier.
+- De paginatitel, introductietekst en breadcrumb blijven vast zichtbaar. Alleen het productformulier eronder scrolt verticaal; de categorieboom behoudt daarnaast haar eigen interne scrollgebied.
+- De breadcrumb begint met `Alle categorieën` en toont daarna het volledige pad naar de geselecteerde categorie. Ieder segment opent de overeenkomstige categoriecontext in de browsbare productcatalogus. Zonder geselecteerde categorie toont de breadcrumb alleen `Alle categorieën`.
+- De breadcrumb wordt direct bijgewerkt wanneer de beheerder een andere categorie selecteert.
+- De categorieboom gebruikt voor categorierijen, inspringing en chevrons dezelfde visuele patronen als de categorieboom van de browsbare productcatalogus. Productspecifieke selecteer-, toevoeg- en verwijderacties blijven beschikbaar.
 - Bij een vooraf geselecteerde categorie via `categoryId` mag de categorieboom initieel alleen het pad naar die categorie openklappen en mogen andere, niet-bijbehorende categorieën ingeklapt blijven.
+- Bij een vooraf geselecteerde categorie scrolt de categorieboom na openen direct naar de geselecteerde categorierij, zodat deze zonder handmatig scrollen zichtbaar is.
+- De primaire knop `Product opslaan` gebruikt `1rem` verticale padding.
 
 ## Gedrag
 
@@ -156,11 +163,11 @@ Als de route wordt geopend met `brandId` of `categoryId`, worden deze alleen geb
 - Weergavenaam is alleen UI: `<merk> <productnaam>` of alleen productnaam.
 - `displayName` wordt niet naar de backend gestuurd.
 
-### Calorie Tracker-beschikbaarheid
+### Consumptietype
 
-- De sectie staat standaard uit.
-- Zonder ingeschakelde beschikbaarheid verschijnt het product niet in productzoeken van de Calorie Tracker.
-- Bij inschakelen is exact één consumptietype verplicht: `voeding`, `drinken` of `supplement`.
+- Ieder product heeft exact één consumptietype: `voeding`, `drinken` of `supplement`.
+- Het consumptietype is verplicht bij opslaan.
+- Archivering bepaalt of een product of verpakking in productzoeken van de Calorie Tracker verschijnt.
 - Een macroprofiel is niet verplicht om het product te kunnen loggen.
 - Een product zonder macroprofiel draagt niet bij aan calorie- of macrototalen.
 
@@ -196,6 +203,8 @@ Verplichte velden:
 - `unitTypeId` - inhoudseenheid;
 - `unitsPerPackage` - positief geheel getal, standaard `1`.
 
+Voor een multiverpakking met `unitsPerPackage > 1` is daarnaast `individualPackageTypeId` verplicht. Bij een enkelvoudige verpakking blijft `individualPackageTypeId` leeg.
+
 De eerste verpakking heeft daarnaast een optionele afbeelding.
 
 UI-invoer met komma, bijvoorbeeld `1,5`, wordt voor verzending omgezet naar `1.5`. De backend canonicaliseert decimalen, bijvoorbeeld `1.50` naar `1.5`.
@@ -206,21 +215,21 @@ UI-invoer met komma, bijvoorbeeld `1,5`, wordt voor verzending omgezet naar `1.5
 - `brandId` mag ontbreken of `null` zijn.
 - Categorie, merk, verpakkingstype en eenheid moeten bestaan wanneer ze worden ingestuurd.
 - `unit_content` wordt gevonden of aangemaakt voor `(unitTypeId, canonicalAmount)`.
-- Product, eerste verpakking, afbeeldingenmetadata, Calorie Tracker-beschikbaarheid en een eventueel macroprofiel worden in één transactie opgeslagen.
+- Product, eerste verpakking, afbeeldingenmetadata, consumptietype en een eventueel macroprofiel worden in één transactie opgeslagen.
 - Bij falen blijft er geen half opgeslagen product of macroprofiel over.
 - Succesresponse bevat voldoende informatie om naar productdetail te navigeren.
 
-### Benodigde contractuitbreiding
+### Backendcontract
 
-Voor deze conceptuitbreiding moeten endpoint en datamodel later expliciet worden uitgebreid met:
+Het endpoint- en datamodel beschrijven voor deze slice:
 
-- productafbeelding;
-- Calorie Tracker-beschikbaarheid en consumptietype;
+- verplicht consumptietype;
 - macroprofiel, referentiebasis, voedingswaarden en bron van calorieën;
-- verpakkingsafbeelding;
-- transactionele validatie van de compatibiliteit tussen macroprofiel en verpakking.
+- transactionele validatie van de compatibiliteit tussen macroprofiel en verpakking;
+- rekenbare inhoudseenheden;
+- multiverpakkingen via een individueel verpakkingstype.
 
-De huidige endpoint- en ERD-documenten zijn voor deze velden nog niet leidend totdat die uitbreiding afzonderlijk is uitgewerkt.
+Product- en verpakkingsafbeeldingen blijven conceptueel onderdeel van de UI-specificatie en vereisen nog een aparte contractuitbreiding.
 
 ## Duplicaten
 
@@ -237,7 +246,7 @@ Geblokkeerd:
 
 Na succesvol product aanmaken:
 
-- navigeert de UI naar `/admin/product-catalogus/:productId`;
+- navigeert de UI naar `/product-catalogus/:productId`;
 - blijft de gebruiker niet op het aanmaakformulier;
 - wordt het formulier niet alleen gereset als eindstate;
 - kan de beheerder op productdetail de aangemaakte gegevens controleren en extra verpakkingen toevoegen.
@@ -248,7 +257,7 @@ Na succesvol product aanmaken:
 
 Gegeven dat de beheerder in categorie-browse of brand-result state staat  
 Wanneer de beheerder `Product aanmaken` kiest  
-Dan opent `/admin/product-catalogus/nieuw` met de expliciete context als queryparameter zonder verplichte zoekstap.
+Dan opent `/product-catalogus/nieuw` met de expliciete context als queryparameter zonder verplichte zoekstap.
 
 ### AC-02 - Product met bestaand merk aanmaken
 
@@ -297,12 +306,15 @@ En toont de UI een begrijpelijke foutmelding.
 
 Gegeven dat de beheerder `Product aanmaken` opent met `brandId` of `categoryId` in de URL  
 Dan mag het formulier het bijbehorende merk of de bijbehorende categorie vooraf selecteren  
+En toont de breadcrumb buiten de categorieselector het volledige pad naar de geselecteerde categorie  
 En mag de categorieboom bij een vooraf geselecteerde categorie alleen het bijbehorende pad openklappen en overige takken ingeklapt laten  
-En kan de beheerder deze waarden nog wijzigen voor opslaan.
+En scrolt de categorieboom direct naar de geselecteerde categorierij  
+En kan de beheerder deze waarden nog wijzigen voor opslaan  
+En wordt de breadcrumb direct bijgewerkt na een andere categorieselectie.
 
-### AC-09 - Calorie Tracker-product
+### AC-09 - Consumptietype
 
-Gegeven dat de beheerder beschikbaarheid voor de Calorie Tracker inschakelt
+Gegeven dat de beheerder een product aanmaakt
 Dan is exact één consumptietype verplicht
 En kan het product zonder macroprofiel worden opgeslagen.
 

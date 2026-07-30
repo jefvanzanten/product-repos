@@ -6,7 +6,7 @@ Bron: `docs/specs/admin-dashboard/product-catalogus/product-zoeken-specificatie.
 
 Aanwezig:
 
-- cataloguszoekveld bewaart `q` in `/admin/product-catalogus/producten`;
+- cataloguszoekveld bewaart `q` in `/product-catalogus/producten`;
 - openen met `?q=cola` vult het zoekveld;
 - `Product aanmaken` blijft bereikbaar;
 - merkzoeken in product-aanmaken werkt via `GET /brands?query=...` en backend zoekt pas vanaf twee tekens.
@@ -67,9 +67,9 @@ Leg limieten vast: producten 20, merken 10, categorieën 10.
 
 ### Stap 4 — Klikgedrag implementeren
 
-- Productresultaat linkt naar `/admin/product-catalogus/producten/:productId`.
-- Merkresultaat linkt naar `/admin/product-catalogus/producten?brandId=<brandId>` en verwijdert `q`.
-- Categorieresultaat linkt naar `/admin/product-catalogus/producten?categoryId=<categoryId>` en verwijdert `q`.
+- Productresultaat linkt naar `/product-catalogus/producten/:productId`.
+- Merkresultaat linkt naar `/product-catalogus/producten?brandId=<brandId>` en verwijdert `q`.
+- Categorieresultaat linkt naar `/product-catalogus/producten?categoryId=<categoryId>` en verwijdert `q`.
 - Na merk/categorie-selectie is de zoekbalk leeg en bestaan er geen filterchips.
 
 ### Stap 5 — Product-aanmaken guardrail

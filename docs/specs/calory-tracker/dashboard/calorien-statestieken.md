@@ -31,7 +31,7 @@ De gebruiker ziet de calorie- en macrototalen van vandaag en kan per waarde opti
 
 ## Databron en berekening
 
-- De backend levert één aggregaat voor vandaag in de tijdzone van de gebruiker.
+- De backend levert één aggregaat voor vandaag in de browsertijdzone die de client meestuurt.
 - De frontend haalt niet alle logs op om zelf dagtotalen te berekenen.
 - Alleen aanwezige calorie- en macrowaarden dragen bij aan hun betreffende totaal.
 - Een log zonder macroprofiel draagt nergens aan bij en veroorzaakt geen waarschuwing of ontbrekende-data-aantal.
@@ -113,10 +113,9 @@ Macrodoelen hoeven het caloriedoel niet exact te verklaren. De UI blokkeert en w
 
 ## Geldigheid van doelen
 
-- Doelen gelden per lokale kalenderdag.
-- Een nieuw of gewijzigd doel geldt voor de volledige huidige dag, ook wanneer het later op die dag is opgeslagen.
-- Doelen worden met een ingangsdatum geversioneerd, zodat een toekomstige historische weergave het destijds geldende doel kan reconstrueren.
-- Een uitgeschakeld doel blijft historisch bewaard, maar is vanaf de nieuwe ingangsdatum niet actief.
+- Doelen zijn actuele persoonlijke instellingen zonder historische versies.
+- Een nieuw of gewijzigd doel geldt direct voor het dashboard van vandaag, ook wanneer het later op die dag is opgeslagen.
+- Een uitgeschakeld doel wordt als `null` opgeslagen en is daarna niet actief.
 
 ## Verversen en toestanden
 
@@ -162,7 +161,7 @@ En zijn waarden zonder doel zichtbaar als nul-totalen.
 
 Gegeven dat de gebruiker geldige optionele doelen invoert
 Wanneer de gebruiker `Opslaan` kiest
-Dan gelden de doelen voor de volledige huidige lokale dag
+Dan vervangen deze waarden de actuele doelen
 En worden de bijbehorende componenten direct als voortgang getoond.
 
 ### AC-07 - Catalogusdata doorrekenen

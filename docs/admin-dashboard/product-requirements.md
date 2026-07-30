@@ -2,7 +2,7 @@
 
 ## Status
 
-- Product: `apps/inventory-admin_panel`
+- Product: `apps/product-management-admin`
 - Gebied: admin dashboard > productcatalogus
 - Spec-index: `docs/specs/admin-dashboard/product-catalogus/productcatalogus-specificatie.md`
 
@@ -44,11 +44,15 @@ Zie: [Product aanmaken](../specs/admin-dashboard/product-catalogus/product-aanma
 
 ## Routes
 
-| Route | Feature |
+De routes hieronder zijn app-intern. Het publieke basispad `/product-management-admin` wordt ervoor geplaatst.
+
+| App-interne route | Feature |
 | --- | --- |
-| `/admin/product-catalogus/producten` | zoeken/browsen + toegang tot product aanmaken |
-| `/admin/product-catalogus/producten/nieuw` | product aanmaken |
-| `/admin/locations` | opbergplaatsen beheren, buiten productcatalogus-specs |
+| `/product-catalogus` | zoeken/browsen + toegang tot product aanmaken |
+| `/product-catalogus/nieuw` | product aanmaken |
+| `/locations` | opbergplaatsen beheren, buiten productcatalogus-specs |
+
+Een geldige `source`-queryparameter blijft tijdens navigatie binnen deze routes behouden volgens de [gedeelde bottom-tabbar- en applicatieshellspecificatie](../specs/shared/bottom-tabbar-specificatie.md).
 
 ## Backendbronnen
 

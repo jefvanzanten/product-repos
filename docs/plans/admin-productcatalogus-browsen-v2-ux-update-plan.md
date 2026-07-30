@@ -13,7 +13,7 @@ De browsbare productcatalogus is al geimplementeerd. Deze update gaat alleen ove
 
 ## Scope
 
-Alleen aanpassen op `/admin/product-catalogus/producten` wanneer `categoryId` actief is.
+Alleen aanpassen op `/product-catalogus/producten` wanneer `categoryId` actief is.
 
 Niet opnieuw doen:
 
@@ -41,13 +41,13 @@ Niet opnieuw doen:
 ### Stap 3 — Breadcrumb klikbaar maken
 
 - Vervang de platte breadcrumbtekst door een `nav` met segmenten.
-- Voeg vooraan `Alle categorieën` toe met link naar `/admin/product-catalogus/producten`.
-- Maak ancestorcategorieën klikbaar naar `/admin/product-catalogus/producten?categoryId=<id>`.
+- Voeg vooraan `Alle categorieën` toe met link naar `/product-catalogus/producten`.
+- Maak ancestorcategorieën klikbaar naar `/product-catalogus/producten?categoryId=<id>`.
 - Toon de huidige categorie als laatste segment; deze hoeft niet klikbaar te zijn.
 
 ### Stap 4 — Aanmaakknop verkorten
 
-- In categorie-browse blijft de href `/admin/product-catalogus/producten/nieuw?categoryId=<id>`.
+- In categorie-browse blijft de href `/product-catalogus/producten/nieuw?categoryId=<id>`.
 - Wijzig alleen het label naar `Product aanmaken`.
 - Laat brand-result state ongewijzigd: `Product aanmaken voor <merk>`.
 

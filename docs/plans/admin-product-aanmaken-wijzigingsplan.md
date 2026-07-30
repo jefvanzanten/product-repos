@@ -37,14 +37,14 @@ Maak de bestaande vertical slice volledig conform de spec zonder nieuwe catalogu
 
 ### Stap 1 — Productdetail-minimum beschikbaar maken
 
-- Implementeer of stub eerst `/admin/product-catalogus/producten/:productId` met minimaal read-only gegevens.
+- Implementeer of stub eerst `/product-catalogus/producten/:productId` met minimaal read-only gegevens.
 - Voeg backend `GET /products/:productId` en contract toe als productdetail nog niet bestaat.
 - Deze stap is nodig omdat product-aanmaken volgens de spec moet redirecten naar productdetail.
 
 ### Stap 2 — Context-prefill contract kiezen
 
-- Ondersteun `/admin/product-catalogus/producten/nieuw?categoryId=<id>` door bestaande `GET /categories` te gebruiken.
-- Ondersteun `/admin/product-catalogus/producten/nieuw?brandId=<uuid>` met één expliciete backendkeuze:
+- Ondersteun `/product-catalogus/producten/nieuw?categoryId=<id>` door bestaande `GET /categories` te gebruiken.
+- Ondersteun `/product-catalogus/producten/nieuw?brandId=<uuid>` met één expliciete backendkeuze:
   - voorkeur: `GET /brands/:brandId`; of
   - alternatief: laat de verwijzende pagina voldoende brandcontext server-side resolvebaar maken.
 - Leg de gekozen endpointvorm vast voordat frontend hier hard op leunt.
@@ -54,7 +54,7 @@ Maak de bestaande vertical slice volledig conform de spec zonder nieuwe catalogu
 - Lees `brandId` en `categoryId` uit de URL; gebruik `q` nooit voor prefill.
 - Selecteer bestaande categorie wanneer `categoryId` geldig is; toon gewone formulierfout/state wanneer de id niet meer bestaat.
 - Selecteer bestaand merk wanneer `brandId` geldig is; laat merk wijzigbaar.
-- Vervang succesvolle action-result rendering door `redirect('/admin/product-catalogus/producten/' + created.id)`.
+- Vervang succesvolle action-result rendering door `redirect('/product-catalogus/producten/' + created.id)`.
 - Verwijder de tijdelijke `CreatedProduct` JSON-eindstate zodra redirect werkt.
 
 ### Stap 4 — Formuliergedrag hard maken
@@ -86,9 +86,9 @@ Maak de bestaande vertical slice volledig conform de spec zonder nieuwe catalogu
 
 ## Acceptatiecriteria
 
-- `/admin/product-catalogus/producten/nieuw` opent zonder verplichte zoekstap.
+- `/product-catalogus/producten/nieuw` opent zonder verplichte zoekstap.
 - `brandId` en `categoryId` in de URL worden vooraf geselecteerd en blijven wijzigbaar.
 - `q` wordt nooit productnaam-, merk- of categorie-prefill.
-- Succesvolle create navigeert naar `/admin/product-catalogus/producten/:productId`.
+- Succesvolle create navigeert naar `/product-catalogus/producten/:productId`.
 - De tijdelijke created-JSON is geen eindstate meer.
 - Backend- en frontendtests plus typecheck slagen via `corepack pnpm`.

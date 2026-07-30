@@ -4,8 +4,8 @@
 
 - Onderdeel: admin dashboard > productcatalogus
 - Routes:
-  - `/admin/product-catalogus`
-  - `/admin/product-catalogus/nieuw`
+  - `/product-catalogus`
+  - `/product-catalogus/nieuw`
 - Status:
   - cataloguszoekveld: geimplementeerd;
   - merk zoeken in productformulier: geimplementeerd voor product aanmaken en product bewerken;
@@ -24,7 +24,7 @@ Deze spec beschrijft de algemene zoekregels, de cataloguszoekresultaten, het kli
 
 | Zoekvorm | Waar | Status |
 | --- | --- | --- |
-| Productcatalogus zoeken | `/admin/product-catalogus?q=...` | Werkt met gegroepeerde resultaten volgens deze spec |
+| Productcatalogus zoeken | `/product-catalogus?q=...` | Werkt met gegroepeerde resultaten volgens deze spec |
 | Merk zoeken | merkveld in product-aanmaakformulier en product-bewerkformulier | Werkt via `GET /brands?query=...` |
 | Productresultaten zoeken | productcataloguspagina | Geimplementeerd |
 | Categorie zoeken | productcataloguspagina | Geimplementeerd |
@@ -45,7 +45,7 @@ Alle categorieën
 - Het zoekveld gebruikt queryparameter `q`.
 - Zonder statusparameter zoekt de catalogus uitsluitend actieve producten.
 - Met `status=archived` zoekt de catalogus uitsluitend gearchiveerde producten.
-- Openen van `/admin/product-catalogus?q=cola` vult het zoekveld met `cola`.
+- Openen van `/product-catalogus?q=cola` vult het zoekveld met `cola`.
 - De zoekterm wordt niet automatisch opgesplitst in merk, categorie of productnaam.
 - De zoekterm wordt niet automatisch ingevuld in het productformulier.
 - De product-aanmaakactie wordt niet getoond zolang er geen expliciete categorie- of merkcontext is.
@@ -137,7 +137,7 @@ Als er meer resultaten zijn dan de limiet, toont de UI per groep een eigen actie
 Klik op een productresultaat opent productdetail:
 
 ```text
-/admin/product-catalogus/:productId
+/product-catalogus/:productId
 ```
 
 Wanneer de productrij vanuit zoekresultaten wordt geopend, blijft de zoekcontext beschikbaar voor terugnavigatie naar de catalogus waar dat logisch is. Een gearchiveerd resultaat toont altijd het tekstlabel `Gearchiveerd`.
@@ -149,7 +149,7 @@ Klik op een merkresultaat opent een brand-result state op dezelfde cataloguspagi
 Voorbeeld URL:
 
 ```text
-/admin/product-catalogus?brandId=<brandId>
+/product-catalogus?brandId=<brandId>
 ```
 
 Bij selectie van een merkresultaat:
@@ -201,7 +201,7 @@ Klik op een categorieresultaat opent de categorie-browse state op dezelfde catal
 Voorbeeld URL:
 
 ```text
-/admin/product-catalogus?categoryId=<categoryId>
+/product-catalogus?categoryId=<categoryId>
 ```
 
 Bij selectie van een categorieresultaat:
@@ -232,10 +232,10 @@ Er wordt geen product-aanmaakactie getoond, omdat een zoekterm geen expliciete c
 De cataloguszoeker gebruikt queryparameters voor deelbare en testbare zoek- en resultaatstate:
 
 ```text
-/admin/product-catalogus?q=<zoekterm>
-/admin/product-catalogus?q=<zoekterm>&status=archived
-/admin/product-catalogus?brandId=<brandId>
-/admin/product-catalogus?categoryId=<categoryId>
+/product-catalogus?q=<zoekterm>
+/product-catalogus?q=<zoekterm>&status=archived
+/product-catalogus?brandId=<brandId>
+/product-catalogus?categoryId=<categoryId>
 ```
 
 Bij klikken op een merk- of categorieresultaat wordt `q` verwijderd. De zoekterm blijft niet als verborgen context bestaan.
@@ -302,7 +302,7 @@ Regels:
 
 ### AC-01 - Zoekterm blijft zichtbaar
 
-Gegeven dat de beheerder `/admin/product-catalogus?q=cola` opent  
+Gegeven dat de beheerder `/product-catalogus?q=cola` opent  
 Dan staat `cola` in het zoekveld  
 En wordt er geen product automatisch aangemaakt of ingevuld.
 

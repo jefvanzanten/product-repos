@@ -16,12 +16,12 @@ De admin productcatalogus-roadmap in een uitvoerbare volgorde zetten zonder de o
 ## Huidige situatie
 
 - Routes bestaan voor:
-  - `/admin/product-catalogus/producten`;
-  - `/admin/product-catalogus/producten/nieuw`.
+  - `/product-catalogus/producten`;
+  - `/product-catalogus/producten/nieuw`.
 - Routes ontbreken voor:
-  - `/admin/product-catalogus/producten/:productId`;
-  - `/admin/product-catalogus/producten/:productId/verpakkingen/nieuw`;
-  - `/admin/product-catalogus/producten/:productId/verpakkingen/:packageId`.
+  - `/product-catalogus/producten/:productId`;
+  - `/product-catalogus/producten/:productId/verpakkingen/nieuw`;
+  - `/product-catalogus/producten/:productId/verpakkingen/:packageId`.
 - Backend heeft vooral de create-product vertical slice.
 - Productdetail, echte cataloguszoekresultaten en browse-states ontbreken nog.
 
@@ -36,7 +36,7 @@ De admin productcatalogus-roadmap in een uitvoerbare volgorde zetten zonder de o
 ### Stap 2 — Product aanmaken spec-compleet maken
 
 - Laat `/nieuw?brandId=...` en `/nieuw?categoryId=...` expliciete context vooraf selecteren.
-- Redirect na succesvol opslaan naar `/admin/product-catalogus/producten/:productId`.
+- Redirect na succesvol opslaan naar `/product-catalogus/producten/:productId`.
 - Verwijder de tijdelijke aangemaakt-JSON als eindstate.
 
 ### Stap 3 — Zoeken en browsen bouwen op gedeelde contracten

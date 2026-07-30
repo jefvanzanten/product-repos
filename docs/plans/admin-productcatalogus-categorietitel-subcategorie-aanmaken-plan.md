@@ -6,7 +6,7 @@ Status: uitgevoerd.
 
 ## Scope
 
-Alleen de categorie-browse state op `/admin/product-catalogus/producten?categoryId=<id>`.
+Alleen de categorie-browse state op `/product-catalogus/producten?categoryId=<id>`.
 
 Wel:
 

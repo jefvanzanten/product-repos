@@ -3,7 +3,7 @@
 ## Status
 
 - Onderdeel: admin dashboard > productcatalogus
-- Route: `/admin/product-catalogus`
+- Route: `/product-catalogus`
 - Status: geimplementeerd; categorietitel, subcategorie-aanmaak en categorienaam bewerken toegevoegd
 - Gerelateerde specs:
   - [product-zoeken-specificatie.md](./product-zoeken-specificatie.md)
@@ -54,7 +54,7 @@ Alle schermopbouw, plaatsing, visuele volgorde en lege browse-states staan in de
 
 ### Hoofdpagina zonder context
 
-Wanneer de beheerder `/admin/product-catalogus` opent zonder query of context, toont de pagina de root van de catalogus.
+Wanneer de beheerder `/product-catalogus` opent zonder query of context, toont de pagina de root van de catalogus.
 
 ```text
 [ Zoek product, merk of categorie ]
@@ -144,11 +144,11 @@ Regels:
 - De breadcrumb staat direct onder de zoekbalk en boven de categorieboom.
 - De breadcrumb gebruikt `1.05rem` tekstgrootte met `1.5rem` regelhoogte.
 - De breadcrumb begint altijd met `Alle categorieën` en toont daarna het categoriepad van root naar de geopende categorie.
-- `Alle categorieën` linkt naar `/admin/product-catalogus` zonder queryparameters.
-- Elke ancestorcategorie in de breadcrumb opent `/admin/product-catalogus?categoryId=<categoryId>`.
+- `Alle categorieën` linkt naar `/product-catalogus` zonder catalogusqueryparameters; een geldige `source` blijft behouden.
+- Elke ancestorcategorie in de breadcrumb opent `/product-catalogus?categoryId=<categoryId>`.
 - Het laatste breadcrumbsegment toont de geopende categorie als huidige context.
 - Elke categoriekaart of -rij toont rechts binnen hetzelfde categorie-item een potloodicoon om de categorie te bewerken. Het potloodicoon heeft geen eigen kaart, outline of scheidingslijn.
-- Het potloodicoon opent `/admin/product-catalogus/categorieen/<categoryId>/bewerken`; bij browsernavigatie wordt deze route direct zichtbaar in de browser-URL.
+- Het potloodicoon opent `/product-catalogus/categorieen/<categoryId>/bewerken`; bij browsernavigatie wordt deze route direct zichtbaar in de browser-URL.
 - Directe subcategorieën staan onder de geopende categorierij en tonen alleen hun eigen naam.
 - Producten die direct aan de geopende categorie hangen, staan in de sectie `Producten` onder die categorie.
 - Producten uit onderliggende subcategorieën staan pas onder die subcategorie wanneer de beheerder die subcategorie opent.
@@ -187,7 +187,7 @@ Directe subcategorieën van de geopende categorie worden getoond, ook wanneer ze
 Elke concrete productrij of productkaart linkt naar productdetail:
 
 ```text
-/admin/product-catalogus/:productId
+/product-catalogus/:productId
 ```
 
 Wanneer de productrij vanuit een categoriecontext wordt geopend, blijft die browsecontext beschikbaar voor terugnavigatie naar de catalogus.
@@ -270,11 +270,11 @@ De actie opent de rootcategorie-modal uit Layout.
 Regels:
 
 - De modal maakt een rootcategorie met `parentId: null`.
-- `Annuleren` sluit de modal zonder wijziging en keert terug naar `/admin/product-catalogus`.
+- `Annuleren` sluit de modal zonder wijziging en keert terug naar `/product-catalogus`.
 - Een lege of alleen uit whitespace bestaande naam kan niet worden opgeslagen.
 - Bij een backendvalidatiefout of dubbele rootcategorienaam blijft de modal open en toont de UI de fout bij het veld of in de modal.
 - Na succesvol aanmaken sluit de modal, blijft de beheerder op de rootpagina en wordt de lijst met rootcategorieën vernieuwd zodat de nieuwe categorie zichtbaar is.
-- De nieuwe categorie linkt naar `/admin/product-catalogus?categoryId=<nieuwCategoryId>`.
+- De nieuwe categorie linkt naar `/product-catalogus?categoryId=<nieuwCategoryId>`.
 
 ## Subcategorie aanmaken vanuit categorie-browse
 
@@ -290,7 +290,7 @@ Regels:
 - Een lege of alleen uit whitespace bestaande naam kan niet worden opgeslagen.
 - Bij een backendvalidatiefout of dubbele siblingnaam blijft de modal open en toont de UI de fout bij het veld of in de modal.
 - Na succesvol aanmaken sluit de modal, blijft de beheerder op de huidige categoriepagina en wordt de lijst met subcategorieën vernieuwd zodat de nieuwe subcategorie zichtbaar is.
-- De nieuwe subcategorie linkt naar `/admin/product-catalogus?categoryId=<nieuwCategoryId>`.
+- De nieuwe subcategorie linkt naar `/product-catalogus?categoryId=<nieuwCategoryId>`.
 
 ## Categorie bewerken vanuit de categorieboom
 
@@ -299,7 +299,7 @@ Elke zichtbare categorie in de rootlijst en subcategorielijst heeft rechts binne
 De bewerkactie opent een modal op de route:
 
 ```text
-/admin/product-catalogus/categorieen/<categoryId>/bewerken
+/product-catalogus/categorieen/<categoryId>/bewerken
 ```
 
 Regels:
@@ -354,14 +354,14 @@ Voorbeeld:
 De browsecatalogus gebruikt queryparameters en routes voor deelbare en testbare categoriebrowse-state:
 
 ```text
-/admin/product-catalogus?categoryId=<categoryId>
-/admin/product-catalogus/categorieen/<categoryId>/bewerken
+/product-catalogus?categoryId=<categoryId>
+/product-catalogus/categorieen/<categoryId>/bewerken
 ```
 
 `categoryId` bepaalt welke categorie in de categorieboom geopend is. De optionele parameter `status=archived` opent expliciet de gearchiveerde catalogusstate; zonder deze parameter is de status actief. Wanneer de beheerder een categorie opent, wordt de URL:
 
 ```text
-/admin/product-catalogus?categoryId=<categoryId>
+/product-catalogus?categoryId=<categoryId>
 ```
 
 Wanneer deze URL direct wordt geopend:
@@ -382,8 +382,8 @@ De browsepagina gebruikt de bestaande admin-dashboard endpoints:
 ```text
 GET /products?categoryId=<categoryId>&status=<active|archived>&limit=<limit>
 POST /categories
-GET /admin/product-catalogus/categorieen/<categoryId>/bewerken
-POST /admin/product-catalogus/categorieen/<categoryId>/bewerken
+GET /product-catalogus/categorieen/<categoryId>/bewerken
+POST /product-catalogus/categorieen/<categoryId>/bewerken
 ```
 
 Voor rootcategorie-aanmaak verstuurt de UI:
@@ -518,7 +518,7 @@ Gegeven dat categorieën zichtbaar zijn in de categorieboom
 Dan ziet de beheerder rechts in elk categorie-item een potloodicoon om te bewerken.
 
 Wanneer de beheerder het potloodicoon bij een categorie kiest  
-Dan opent de route `/admin/product-catalogus/categorieen/<categoryId>/bewerken`  
+Dan opent de route `/product-catalogus/categorieen/<categoryId>/bewerken`  
 En is deze route direct zichtbaar in de browser-URL  
 En ziet de beheerder een modal `Categorie bewerken` met het veld `Naam categorie` voorgevuld met de huidige naam.
 

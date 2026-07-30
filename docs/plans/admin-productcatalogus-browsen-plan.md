@@ -4,7 +4,7 @@ Bron: `docs/specs/admin-dashboard/product-catalogus/productcatalogus-browsen-spe
 
 ## Statusinschatting
 
-Huidige frontendroute `/admin/product-catalogus/producten` bevat alleen:
+Huidige frontendroute `/product-catalogus/producten` bevat alleen:
 
 - titel `Producten`;
 - zoekveld met `q`;

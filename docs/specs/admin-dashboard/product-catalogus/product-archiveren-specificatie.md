@@ -23,7 +23,7 @@ Producten en verpakkingen worden nooit definitief verwijderd. Zij kunnen alleen 
 - Een afzonderlijke verpakking archiveren en heractiveren.
 - Gearchiveerde data uit normale zoek- en browsestates verbergen.
 - Gearchiveerde data via een expliciet statusfilter terugvinden.
-- Afhankelijkheidsaantallen tonen bij impactvolle cataloguswijzigingen.
+- Archiveren en heractiveren zonder relaties met logs of voorraadregistraties te verbreken.
 
 ## Buiten scope
 
@@ -52,11 +52,9 @@ Gearchiveerde producten en verpakkingen:
 
 Productdetail bevat bij een actief product de actie `Product archiveren`.
 
-Voor opslaan toont de UI een bevestiging met:
+Voor opslaan toont de UI een eenvoudige bevestiging met:
 
 - productnaam;
-- aantal gekoppelde consumptielogs;
-- aantal gekoppelde voorraadregistraties;
 - uitleg dat alle verpakkingen uit actieve zoekresultaten verdwijnen.
 
 Archiveren maakt het product en alle onderliggende verpakkingen niet-selecteerbaar. De eigen status van iedere verpakking blijft bewaard, zodat heractiveren van het product alleen verpakkingen terugbrengt die vóór productarchivering actief waren.
@@ -78,7 +76,7 @@ Verpakkingdetail bevat afhankelijk van de status:
 - `Verpakking archiveren`; of
 - `Verpakking heractiveren`.
 
-Voor archiveren toont de UI het aantal gekoppelde consumptielogs en voorraadregistraties. Bestaande relaties blijven werken.
+Voor archiveren mag de UI een eenvoudige bevestiging tonen. Bestaande relaties blijven werken.
 
 Een verpakking kan alleen actief selecteerbaar worden wanneer ook het bovenliggende product actief is. Heractiveren onder een gearchiveerd product herstelt daarom alleen de eigen verpakkingsstatus; de verpakking blijft buiten actieve zoekresultaten totdat het product is hersteld.
 
@@ -97,7 +95,7 @@ In de status `Gearchiveerd`:
 - toont ieder resultaat het label `Gearchiveerd`;
 - opent een resultaat het normale productdetail met herstelactie.
 
-## Impactvolle correcties
+## Cataloguscorrecties
 
 Een beheerder mag gebruikte product- en verpakkingsdata corrigeren, ook wanneer logs of voorraadregistraties bestaan.
 
@@ -109,9 +107,7 @@ Bij wijzigingen aan bijvoorbeeld:
 - inhoudshoeveelheid;
 - aantal per verpakking;
 
-haalt de backend vooraf of tijdens validatie het aantal gekoppelde consumptielogs en voorraadregistraties op. De UI vraagt expliciete bevestiging wanneer afhankelijkheden bestaan.
-
-Na opslaan gebruiken gekoppelde domeinen direct de gecorrigeerde catalogusdata. Een wijziging die niet compatibel is met het macroprofiel wordt geblokkeerd.
+gebruiken gekoppelde domeinen na opslaan direct de gecorrigeerde catalogusdata. De backend haalt geen afhankelijkheidsaantallen op. Een wijziging die niet compatibel is met het macroprofiel wordt geblokkeerd.
 
 ## Acceptatiecriteria
 
@@ -145,8 +141,8 @@ En blijft de gearchiveerde verpakking zichtbaar in bestaande relaties.
 Gegeven dat het statusfilter `Gearchiveerd` actief is
 Dan kan de beheerder gearchiveerde producten vinden en hun detail openen.
 
-### AC-06 - Impactbevestiging
+### AC-06 - Correctie zonder afhankelijkheidsaantallen
 
 Gegeven dat een correctie gekoppelde logs of voorraadregistraties beïnvloedt
-Dan toont de UI de aantallen vóór bevestiging
+Dan gebruikt ieder gekoppeld domein na opslaan de gecorrigeerde catalogusdata
 En wordt een incompatibele wijziging geblokkeerd.

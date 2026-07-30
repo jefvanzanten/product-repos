@@ -3,7 +3,7 @@
 ## Status
 
 - Onderdeel: admin dashboard > productcatalogus
-- Status: geïmplementeerde basis; afbeeldingen, Calorie Tracker-data, impactbevestiging en archiveren zijn concept
+- Status: geïmplementeerde basis; afbeeldingen, Calorie Tracker-data en archiveren zijn concept
 - Hoort bij:
   - [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md)
   - [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md)
@@ -20,16 +20,16 @@ Een beheerder kan een bestaand product openen, controleren en beheren. Productde
 - verpakkingen van het product bekijken;
 - een verpakking toevoegen;
 - een verpakking openen en bewerken;
-- afbeeldingen, Calorie Tracker-beschikbaarheid en voedingswaarden beheren;
+- afbeeldingen, consumptietype en voedingswaarden beheren;
 - producten en verpakkingen archiveren of heractiveren.
 
 ## Routes
 
 | Route | Doel |
 | --- | --- |
-| `/admin/product-catalogus/:productId` | Productdetail |
-| `/admin/product-catalogus/:productId/verpakkingen/nieuw` | Verpakking toevoegen |
-| `/admin/product-catalogus/:productId/verpakkingen/:packageId` | Verpakkingdetail |
+| `/product-catalogus/:productId` | Productdetail |
+| `/product-catalogus/:productId/verpakkingen/nieuw` | Verpakking toevoegen |
+| `/product-catalogus/:productId/verpakkingen/:packageId` | Verpakkingdetail |
 
 ## Binnen scope
 
@@ -39,7 +39,7 @@ Een beheerder kan een bestaand product openen, controleren en beheren. Productde
 - Categorie wijzigen.
 - Merk wijzigen of leeg maken.
 - Productnaam en optionele productafbeelding wijzigen.
-- Beschikbaarheid voor de Calorie Tracker en consumptietype beheren.
+- Consumptietype beheren.
 - Een optioneel macroprofiel toevoegen, wijzigen of uitschakelen.
 - Merk vanuit het merkveld aanmaken tijdens product bewerken.
 - Categorie inline aanmaken vanuit product bewerken.
@@ -54,9 +54,9 @@ Een beheerder kan een bestaand product openen, controleren en beheren. Productde
 ## Buiten scope
 
 - Producten of verpakkingen definitief verwijderen.
-- Inhoudelijke voorraad-, inventarisatie- of opslaglocatie-informatie tonen; alleen afhankelijkheidsaantallen bij impactvolle acties zijn binnen scope.
+- Inhoudelijke voorraad-, inventarisatie- of opslaglocatie-informatie tonen.
 - Auditmetadata tonen, zoals aangemaakt op of laatst bijgewerkt.
-- Nieuwe verpakkingstypes, inhoudseenheden of eenheidsoorten beheren via UI.
+- Nieuwe verpakkingstypes of inhoudseenheden beheren via UI.
 - Aparte edit-route voor productgegevens.
 
 ## Layout
@@ -81,8 +81,8 @@ Regels:
 
 - De breadcrumb begint met `Alle categorieën`.
 - De breadcrumb gebruikt `1.05rem` tekstgrootte met `1.5rem` regelhoogte, zodat deze consistent is met de productcatalogus-breadcrumb.
-- `Alle categorieën` linkt naar `/admin/product-catalogus` zonder queryparameters.
-- Elke categorie in de breadcrumb is afzonderlijk klikbaar en opent `/admin/product-catalogus?categoryId=<categoryId>`.
+- `Alle categorieën` linkt naar `/product-catalogus` zonder catalogusqueryparameters; een geldige `source` blijft behouden.
+- Elke categorie in de breadcrumb is afzonderlijk klikbaar en opent `/product-catalogus?categoryId=<categoryId>`.
 - Ook de huidige productcategorie is klikbaar.
 - Wanneer de beheerder via een categorielink teruggaat naar de catalogus, opent de catalogus de categorieboom met alle parentcategorieën uitgeklapt tot en met die categorie.
 - De productgegevenssectie mag de categorie daarnaast als volledig tekstpad tonen.
@@ -98,7 +98,7 @@ Merk: Coca-Cola
 Productnaam: Zero Sugar
 Weergavenaam: Coca-Cola Zero Sugar
 Status: Actief
-Calorie Tracker: Drinken
+Consumptietype: Drinken
 Afbeelding: <afbeelding of placeholder>
 ```
 
@@ -120,8 +120,7 @@ Bewerkmodus toont:
 - merk, inclusief leeg maken;
 - productnaam;
 - optionele productafbeelding;
-- beschikbaarheid voor de Calorie Tracker;
-- consumptietype wanneer beschikbaarheid actief is;
+- consumptietype;
 - optioneel macroprofiel;
 - `Opslaan`;
 - `Annuleren`.
@@ -139,7 +138,7 @@ Elke verpakkingrij toont minimaal:
 - verpakkingstype;
 - inhoudshoeveelheid + inhoudseenheid, indien aanwezig;
 - aantal per verpakking;
-- eenheidsoort wanneer relevant;
+- individueel verpakkingstype bij multiverpakkingen;
 - een duidelijke samenvatting;
 - link/tap naar verpakkingdetail.
 
@@ -175,7 +174,6 @@ Afbeelding: <verpakkingsafbeelding, productafbeelding of placeholder>
 Type: fles
 Inhoud: 1,5 l
 Aantal per verpakking: 1
-Eenheidsoort: fles
 Samenvatting: fles 1,5 l
 ```
 
@@ -186,7 +184,7 @@ Verpakking
 Type: multipack
 Inhoud: 330 ml
 Aantal per verpakking: 6
-Eenheidsoort: blik
+Individueel verpakkingstype: blik
 Samenvatting: multipack 6 x blik 330 ml
 ```
 
@@ -198,9 +196,9 @@ Verpakkingen worden niet in product-bewerkmodus bewerkt. Verpakkingen hebben eig
 
 ### Validatie bij product bewerken
 
-Product bewerken gebruikt dezelfde regels als product aanmaken, inclusief Calorie Tracker-beschikbaarheid, afbeeldingen en macroprofiel:
+Product bewerken gebruikt dezelfde regels als product aanmaken, inclusief consumptietype, afbeeldingen en macroprofiel:
 
-- een product dat beschikbaar is voor de Calorie Tracker heeft exact één consumptietype;
+- ieder product heeft exact één consumptietype;
 - een ingeschakeld macroprofiel heeft een expliciete basis en minimaal één voedingswaarde groter dan nul;
 - de macroprofielbasis blijft compatibel met alle verpakkingen;
 - een automatisch berekende caloriewaarde wordt bij gewijzigde macro's opnieuw berekend;
@@ -232,7 +230,7 @@ Na succesvol opslaan:
 `Verpakking toevoegen` opent een aparte pagina:
 
 ```text
-/admin/product-catalogus/:productId/verpakkingen/nieuw
+/product-catalogus/:productId/verpakkingen/nieuw
 ```
 
 Na succesvol toevoegen navigeert de gebruiker naar verpakkingdetail van de nieuwe verpakking.
@@ -244,7 +242,7 @@ Verpakking bewerken gebruikt dezelfde velden en validatie als eerste verpakking 
 - verpakkingstype verplicht;
 - inhoud en inhoudseenheid consistent;
 - aantal per verpakking verplicht, standaard `1` bij toevoegen;
-- eenheidsoort verplicht wanneer relevant;
+- individueel verpakkingstype verplicht bij multiverpakkingen;
 - een optionele verpakkingsafbeelding;
 - de verpakking blijft compatibel met een eventueel productmacroprofiel;
 - dubbele verpakking onder hetzelfde product wordt geblokkeerd;
@@ -264,22 +262,20 @@ Na succesvol bewerken:
 - keert de pagina terug naar read-only mode;
 - toont de pagina de bijgewerkte verpakking.
 
-## Impactvolle correcties
+## Cataloguscorrecties
 
 De catalogus is de actuele bron van waarheid voor consumptielogs en voorraadregistraties. Gebruikte product- en verpakkingsdata mag worden gecorrigeerd, ook bij een typo of misclick.
 
 Bij een wijziging aan consumptietype, verpakkingstype, inhoud, inhoudseenheid of aantal per verpakking:
 
-- bepaalt de backend hoeveel consumptielogs en voorraadregistraties geraakt worden;
-- toont de UI deze aantallen in een expliciete bevestiging;
-- werken de nieuwe waarden na opslaan door naar gekoppelde domeinen;
+- werken de nieuwe waarden na opslaan direct door naar gekoppelde domeinen;
 - wordt een wijziging geblokkeerd als deze niet compatibel is met het macroprofiel.
 
-Er wordt geen product- of voedingssnapshot in een consumptielog bijgewerkt, omdat logs actuele catalogusdata gebruiken.
+Er worden geen afhankelijkheidsaantallen opgehaald of getoond. Er wordt geen product- of voedingssnapshot in een consumptielog bijgewerkt, omdat logs actuele catalogusdata gebruiken.
 
 ## Archiveren en heractiveren
 
-Productdetail en verpakkingdetail tonen afhankelijk van de status een archiveer- of herstelactie. Producten en verpakkingen worden nooit definitief verwijderd. Alle regels, afhankelijkheidsmeldingen en cascade-effecten staan in [product-archiveren-specificatie.md](./product-archiveren-specificatie.md).
+Productdetail en verpakkingdetail tonen afhankelijk van de status een archiveer- of herstelactie. Producten en verpakkingen worden nooit definitief verwijderd. Alle regels voor archiveren, herstellen en selecteerbaarheid staan in [product-archiveren-specificatie.md](./product-archiveren-specificatie.md).
 
 ## Navigatie en fouttoestanden
 
@@ -322,9 +318,9 @@ Verpakking niet gevonden.
 [ Terug naar product ]
 ```
 
-## Backend/API - nog te specificeren
+## Backend/API
 
-Deze feature vereist aparte endpoint- en DTO-keuzes. Waarschijnlijke API-vorm:
+Het HTTP-contract staat in `docs/backend/Endpoints/ADMIN_DASHBOARD_ENDPOINTS.md` en beschrijft:
 
 ```text
 GET /products/:productId
@@ -332,16 +328,13 @@ PATCH /products/:productId
 GET /products/:productId/packages/:packageId
 POST /products/:productId/packages
 PATCH /products/:productId/packages/:packageId
-<endpoints voor archiveren, heractiveren en afhankelijkheidsaantallen>
+POST /products/:productId/archive
+POST /products/:productId/restore
+POST /products/:productId/packages/:packageId/archive
+POST /products/:productId/packages/:packageId/restore
 ```
 
-Nog te bepalen:
-
-- exacte response DTO voor productdetail;
-- exacte response DTO voor verpakkingdetail;
-- exacte patch-request DTO's;
-- foutcodes voor niet gevonden product/verpakking;
-- duplicate-foutcodes voor product en verpakking.
+Het contract bevat de DTO's voor consumptietype, macroprofiel, rekenbare eenheden, multiverpakkingen, archivering en foutcodes.
 
 ## Acceptatiecriteria
 
@@ -349,7 +342,7 @@ Nog te bepalen:
 
 Gegeven dat een product bestaat  
 Wanneer de beheerder een productrij in de catalogus opent  
-Dan opent `/admin/product-catalogus/:productId`  
+Dan opent `/product-catalogus/:productId`  
 En ziet de beheerder productgegevens en verpakkingen  
 En ziet de beheerder onder de productnaam een klikbare categorie-breadcrumb met `Alle categorieën` en het categoriepad  
 En opent elke categorielink de catalogus met die categorie geopend in de categorieboom.
@@ -406,8 +399,8 @@ Gegeven dat een verpakking geen eigen afbeelding heeft
 Dan toont detail de productafbeelding
 En anders een vaste placeholder.
 
-### AC-10 - Impactvolle correctie
+### AC-10 - Cataloguscorrectie
 
 Gegeven dat een product- of verpakkingswijziging logs of voorraadregistraties beïnvloedt
-Dan toont de UI vóór opslaan het aantal geraakte relaties
-En gebruikt ieder gekoppeld domein na bevestiging de gecorrigeerde catalogusdata.
+Dan gebruikt ieder gekoppeld domein na opslaan de gecorrigeerde catalogusdata
+En worden geen afhankelijkheidsaantallen vereist.

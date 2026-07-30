@@ -9,16 +9,30 @@ Dit bestand is een korte ingang naar de actuele admin-docs. Gedrag staat per fea
 - De admin-navbar heeft bovenaan extra ademruimte binnen het dashboardframe.
 - De afstand tussen de admin-navbar en de eerste content, zoals de productcatalogus-zoekbalk, is compact zodat de zoekbalk visueel dichter onder de navigatie staat.
 
-## Gedeelde applicatiestructuur
+## Zelfstandige applicatiestructuur
 
-- De inhoudelijke adminpagina's, paginacomponenten, loaders en actions worden gedeeld vanuit `packages/admin-dashboard`.
-- Iedere host-app beheert haar eigen admin-layout, admin-navbar en dashboardframe.
-- De gedeelde adminpagina wordt binnen de React Router `Outlet` van deze app-specifieke layout gerenderd.
-- Inventory en Calorie Tracker bieden de gedeelde adminroutes onder `/admin` aan.
-- `/admin` vereist een ingelogde beheerder. Een niet-ingelogde gebruiker wordt doorgestuurd naar `/login`; een ingelogde gebruiker zonder beheerdersrol krijgt geen toegang; een ingelogde beheerder wordt doorgestuurd naar `/admin/product-catalogus`.
-- De hosts gebruiken de [gedeelde bottom-tabbar en applicatieshell](../specs/shared/bottom-tabbar-specificatie.md); de host-layout levert de app-specifieke tabs als children aan.
-- De bottom-tabbar blijft zichtbaar op adminroutes. De admin-layout reserveert 64 px aan de onderzijde: 56 px voor de tabbar en 8 px tussenruimte.
-- Iedere app-specifieke admin-layout volgt de algemene lay-outregels uit dit document.
+- Product Management Admin is een zelfstandige React Router-app onder `apps/product-management-admin`.
+- De app wordt onafhankelijk van Calorie Tracker en Inventory gebouwd en gedeployed onder `/product-management-admin`.
+- De inhoudelijke adminpagina's, paginacomponenten, loaders, actions, server-adapters en featurecomponenten staan rechtstreeks in `apps/product-management-admin`.
+- Het tijdelijke gedeelde package `packages/admin-dashboard` vervalt, omdat geen andere applicatie de adminimplementatie meer gebruikt.
+- De admin-app beheert haar eigen documentroot, routeboom, login, autorisatiegrens, applicatielayout, admin-navbar, dashboardframe en bottom-tabbar.
+- Calorie Tracker en Inventory bevatten geen inhoudelijke adminroutes en verwijzen met een gewone browserlink naar deze admin-app.
+- De app-interne route `/` stuurt een ingelogde beheerder door naar `/product-catalogus` met behoud van een geldige `source`.
+- Een niet-ingelogde bezoeker van een inhoudelijke adminroute wordt doorgestuurd naar `/login` met behoud van de geldige bron- en terugkeercontext.
+- Een ingelogde gebruiker zonder beheerdersrol krijgt geen toegang tot inhoudelijke adminroutes.
+- De publieke productcatalogusroute is `/product-management-admin/product-catalogus`.
+- De publieke opbergplaatsenroute is `/product-management-admin/locations`.
+- De admin-app gebruikt de [gedeelde bottom-tabbar en applicatieshell](../specs/shared/bottom-tabbar-specificatie.md).
+- De bottom-tabbar blijft zichtbaar op inhoudelijke adminroutes. De admin-layout reserveert 64 px aan de onderzijde: 56 px voor de tabbar en 8 px tussenruimte.
+
+## Terugkeercontext
+
+- Calorie Tracker opent admin met `source=calory-tracker`; Inventory gebruikt `source=inventory`.
+- Alleen deze twee waarden zijn geldig. De waarde verleent geen autorisatie en wordt niet als vrije redirect-URL geïnterpreteerd.
+- De admin-layout vertaalt de geldige bron naar één terugkeertab: `Calory Tracker` naar `/calory-tracker` of `Inventarisatie` naar `/inventory`.
+- De actuele geldige queryparameter is leidend en blijft behouden tijdens interne links, zoekopdrachten, formulieracties, redirects en login.
+- Een laatst bekende geldige bron mag als fallback worden gebruikt wanneer een vervolgverzoek geen geldige bron bevat.
+- Zonder geldige actuele of bekende bron toont de admin-layout geen terugkeertab.
 
 ## Productcatalogus
 

@@ -12,31 +12,39 @@ Dit bestand is alleen een index. Gedrag staat per feature in losse specs, zodat 
 | Productdetail en verpakkingen | [product-detail-specificatie.md](./product-detail-specificatie.md) | Geïmplementeerde basis; uitbreiding concept |
 | Producten en verpakkingen archiveren | [product-archiveren-specificatie.md](./product-archiveren-specificatie.md) | Concept |
 
-## Autorisatie
+## Applicatie, routes en autorisatie
 
-- Alle routes onder `/admin/product-catalogus` vereisen een ingelogde gebruiker met de beheerdersrol.
+- Product Management Admin is een zelfstandige applicatie onder het publieke basispad `/product-management-admin`.
+- De productcatalogusimplementatie, routes, loaders, actions, server-adapters en featurecomponenten staan rechtstreeks onder `apps/product-management-admin`.
+- Er is geen afzonderlijk `packages/admin-dashboard`-package en Calorie Tracker en Inventory importeren geen adminfeaturecode.
+- De routes in deze spec en de onderliggende featurespecificaties zijn app-interne routes; de publieke URL ontstaat door `/product-management-admin` ervoor te plaatsen.
+- Alle routes onder `/product-catalogus` vereisen een ingelogde gebruiker met de beheerdersrol.
 - Alleen ingelogd zijn is niet voldoende.
 - De beheerder krijgt via deze routes geen toegang tot persoonlijke consumptielogs of doelen van andere gebruikers.
+- De optionele queryparameter `source` bevat uitsluitend `inventory` of `calory-tracker` en bepaalt de terugkeertab van de admin-app.
+- Iedere interne link, GET-formulieractie, mutation en redirect behoudt een geldige `source` naast featureparameters zoals `q`, `categoryId`, `brandId` en `status`.
+- Routevoorbeelden in de productcatalogusspecificaties laten `source` alleen voor leesbaarheid weg; wanneer de admin-app met een geldige broncontext is geopend, blijft die parameter wel aanwezig.
 
 ## Layout
 
 Niet van toepassing: dit bestand is alleen een index. Layout-eisen staan in de `Layout`-sectie van de onderliggende feature-specs.
 
-## Onderliggende backenddocumenten
+## Onderliggende documenten
 
+- [Productcatalogus domeinregels](../../../domein/productcatalogus-domeinregels.md)
 - [Admin dashboard endpoints](../../../backend/Endpoints/ADMIN_DASHBOARD_ENDPOINTS.md)
 - [Product ERD](../../../backend/ERD/PRODUCT_ERD.md)
 
 ## Productcatalogus-routes
 
-| Route | Hoort bij | Status |
+| App-interne route | Hoort bij | Status |
 | --- | --- | --- |
-| `/admin/product-catalogus` | zoeken + browsen + rootcategorie aanmaken | geimplementeerd |
-| `/admin/product-catalogus/categorieen/nieuw` | rootcategorie aanmaken | geimplementeerd |
-| `/admin/product-catalogus/nieuw` | product aanmaken vanuit expliciete context | geimplementeerd |
-| `/admin/product-catalogus/:productId` | productdetail | geimplementeerd |
-| `/admin/product-catalogus/:productId/verpakkingen/nieuw` | verpakking toevoegen | geimplementeerd |
-| `/admin/product-catalogus/:productId/verpakkingen/:packageId` | verpakkingdetail | geimplementeerd |
+| `/product-catalogus` | zoeken + browsen + rootcategorie aanmaken | geimplementeerd |
+| `/product-catalogus/categorieen/nieuw` | rootcategorie aanmaken | geimplementeerd |
+| `/product-catalogus/nieuw` | product aanmaken vanuit expliciete context | geimplementeerd |
+| `/product-catalogus/:productId` | productdetail | geimplementeerd |
+| `/product-catalogus/:productId/verpakkingen/nieuw` | verpakking toevoegen | geimplementeerd |
+| `/product-catalogus/:productId/verpakkingen/:packageId` | verpakkingdetail | geimplementeerd |
 
 ## Leidende termen
 
@@ -49,7 +57,6 @@ Gebruik in de UI en specs alleen deze catalogustermen:
 - inhoud/inhoudseenheid;
 - aantal per verpakking;
 - product- en verpakkingsafbeelding;
-- beschikbaarheid voor de Calorie Tracker;
 - consumptietype;
 - macroprofiel;
 - actief/gearchiveerd.

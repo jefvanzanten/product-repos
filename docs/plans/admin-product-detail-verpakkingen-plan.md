@@ -23,7 +23,7 @@ Productdetail wordt de centrale plek waar een beheerder productgegevens en verpa
 
 ### Stap 1 — Read-only productdetail als eerste slice
 
-- Voeg route toe: `/admin/product-catalogus/producten/:productId`.
+- Voeg route toe: `/product-catalogus/producten/:productId`.
 - Voeg backend toe: `GET /products/:productId`.
 - Definieer `ProductDetail` contract met:
   - `id`, `name`, `displayName`;
@@ -50,7 +50,7 @@ Productdetail wordt de centrale plek waar een beheerder productgegevens en verpa
 
 ### Stap 4 — Verpakking toevoegen
 
-- Voeg route toe: `/admin/product-catalogus/producten/:productId/verpakkingen/nieuw`.
+- Voeg route toe: `/product-catalogus/producten/:productId/verpakkingen/nieuw`.
 - Voeg backend `POST /products/:productId/packages` toe.
 - Reuse validatie van eerste verpakking:
   - packageTypeId verplicht;
@@ -61,7 +61,7 @@ Productdetail wordt de centrale plek waar een beheerder productgegevens en verpa
 
 ### Stap 5 — Verpakkingdetail en bewerken
 
-- Voeg route toe: `/admin/product-catalogus/producten/:productId/verpakkingen/:packageId`.
+- Voeg route toe: `/product-catalogus/producten/:productId/verpakkingen/:packageId`.
 - Voeg backend toe:
   - `GET /products/:productId/packages/:packageId`;
   - `PATCH /products/:productId/packages/:packageId`.

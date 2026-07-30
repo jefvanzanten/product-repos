@@ -59,7 +59,8 @@ Volg `docs/plans/inventory-voorraad-toevoegen-bottomsheet-plan.md`:
 
 ### Stap 4 — Admin-catalogus koppeling
 
-- Wanneer product ontbreekt: verwijs naar `/admin/product-catalogus/producten/nieuw` of naar een later gespecificeerde snelle catalogusflow.
+- Wanneer een product ontbreekt: verwijs met een gewone cross-app browserlink naar `/product-management-admin/product-catalogus/nieuw?source=inventory` of naar een later gespecificeerde snelle catalogusflow.
+- Behoud `source=inventory` tijdens de Product Management Admin-flow, zodat de admin-bottom-tabbar teruglinkt naar `/inventory`.
 - Maak geen catalogusproducten automatisch aan vanuit inventory.
 
 ## Acceptatiecriteria

@@ -1,5 +1,9 @@
 # Plan — admin dashboard als gedeeld package + React Router in calorie tracker
 
+## Status
+
+De package-extractie en React Router-migratie uit dit plan vormen een gerealiseerde technische tussenstap. Het in meerdere host-apps mounten van dezelfde adminrouteboom is als gewenste eindarchitectuur vervangen door `docs/plans/zelfstandige-app-deployments-en-admin-herkomst-plan.md`. Dat vervolgplan verplaatst de package-inhoud naar de zelfstandige Product Management Admin-app en verwijdert `packages/admin-dashboard`. Dit document blijft alleen de historische onderbouwing van de eerdere extractie en mag niet meer als deploy- of eindarchitectuur worden gelezen.
+
 ## Bronnen
 
 - `docs/admin-dashboard/admin-dashboard-requirements.md`

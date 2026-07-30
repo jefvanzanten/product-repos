@@ -19,7 +19,7 @@ De gebruiker kan snel een consumptie registreren door een bestaande actieve cata
 - Eén verpakking selecteren.
 - Hoeveelheid en eenheid invoeren.
 - Datum en tijd aanpassen.
-- Een log idempotent opslaan.
+- Een log met een clientgegenereerd log-ID veilig opnieuw kunnen opslaan na een retry.
 - Na opslaan terugkeren naar de logboekcontext.
 
 ## Buiten scope
@@ -65,7 +65,7 @@ Niet binnen scope van zoeken:
 - verpakkingsinhoud;
 - categorie.
 
-Zoekresultaten zijn verpakkingen, niet kale producten. Alleen actieve verpakkingen van producten die beschikbaar zijn voor de Calorie Tracker worden getoond.
+Zoekresultaten zijn verpakkingen, niet kale producten. Alleen actieve producten met actieve verpakkingen worden getoond.
 
 Een resultaat toont minimaal:
 
@@ -156,8 +156,8 @@ De log bewaart de oorspronkelijke waarde en gekozen eenheid. De backend leidt de
 ## Opslaan
 
 - De opslaanknop is tijdens de aanvraag uitgeschakeld.
-- Iedere create-aanvraag bevat een idempotentiesleutel.
-- De backend maakt voor dezelfde gebruiker en idempotentiesleutel maximaal één log aan.
+- Iedere create-aanvraag bevat een door de client gegenereerd log-ID.
+- De backend maakt voor hetzelfde log-ID maximaal één log aan.
 - Bij een tijdelijke netwerkfout blijft de invoer in het geopende formulier behouden en kan de gebruiker opnieuw proberen.
 - Volledige offline synchronisatie is niet vereist.
 
@@ -205,9 +205,9 @@ Gegeven dat zoeken geen actieve verpakking oplevert
 Dan toont de flow `Product niet gevonden`
 En geen productaanvraag- of vrije invoeractie.
 
-### AC-06 - Idempotent opslaan
+### AC-06 - Retryveilig opslaan
 
-Gegeven dat dezelfde create-aanvraag door dubbel tikken of opnieuw proberen meerdere keren aankomt
+Gegeven dat dezelfde create-aanvraag met hetzelfde clientgegenereerde log-ID door dubbel tikken of opnieuw proberen meerdere keren aankomt
 Dan ontstaat maximaal één consumptielog.
 
 ### AC-07 - Filter behouden
