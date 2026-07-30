@@ -5,5 +5,5 @@ import { getBrands } from "../../api/admin-dashboard-api.server";
 export async function loadBrandLookupRoute({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const brandQuery = url.searchParams.get("merk")?.trim() ?? "";
-  return { brandQuery, brands: await getBrands(brandQuery) };
+  return { brandQuery, brands: await getBrands(brandQuery, request) };
 }

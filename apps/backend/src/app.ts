@@ -1,12 +1,15 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { auth } from "./auth/auth.ts";
+import { requireCatalogAccess } from "./auth/catalog-authorization.ts";
 import { brandRoutes } from "./routes/brands";
 import { healthRoutes } from "./routes/health";
 import { categoryRoutes } from "./routes/categories";
 import { productRoutes } from "./routes/product.route";
 import { unitRoutes } from "./routes/units";
 
+/** Create the configured Hono API application. */
 export function createApp() {
   const app = new Hono();
 
@@ -22,10 +25,17 @@ export function createApp() {
     "*",
     cors({
       origin: (origin) => (allowedOrigins.includes(origin) ? origin : null),
+      allowHeaders: ["Content-Type", "Authorization"],
       allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       credentials: true,
     }),
   );
+
+  app.on(["GET", "POST"], "/api/auth/*", (context) => {
+    return auth.handler(context.req.raw);
+  });
+
+  app.use("*", requireCatalogAccess);
 
   app.get("/", (c) => {
     return c.json({

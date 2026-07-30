@@ -29,8 +29,8 @@ export async function loadNewProductRoute({ request }: LoaderFunctionArgs): Prom
   const categoryId = url.searchParams.get("categoryId")?.trim() || undefined;
   const brandQuery = "";
   const [brands, selectedBrand] = await Promise.all([
-    getBrands(brandQuery),
-    brandId ? getBrand(brandId).catch(() => null) : Promise.resolve(null),
+    getBrands(brandQuery, request),
+    brandId ? getBrand(brandId, request).catch(() => null) : Promise.resolve(null),
   ]);
 
   return {
@@ -41,9 +41,9 @@ export async function loadNewProductRoute({ request }: LoaderFunctionArgs): Prom
       ? [selectedBrand, ...brands]
       : brands,
     selectedBrand,
-    categories: await getCategories(),
-    packageTypes: await getPackageTypes(),
-    unitTypes: await getUnitTypes(),
+    categories: await getCategories(request),
+    packageTypes: await getPackageTypes(request),
+    unitTypes: await getUnitTypes(request),
   };
 }
 
@@ -66,7 +66,7 @@ export async function handleNewProductRouteAction({ request }: ActionFunctionArg
       const createdCategory = await createCategory({
         name: categoryName,
         parentId: parentRaw ? Number(parentRaw) : null,
-      });
+      }, request);
       return {
         createdCategory,
         values: {
@@ -82,7 +82,7 @@ export async function handleNewProductRouteAction({ request }: ActionFunctionArg
       if (!Number.isInteger(categoryId) || categoryId < 1) {
         return { errors: { form: "Categorie is ongeldig." }, values };
       }
-      await deleteCategory(categoryId);
+      await deleteCategory(categoryId, request);
       return { deletedCategoryId: categoryId, values };
     }
 
@@ -97,7 +97,7 @@ export async function handleNewProductRouteAction({ request }: ActionFunctionArg
       };
     }
     if (brandName) {
-      const brand = await createBrand({ name: brandName });
+      const brand = await createBrand({ name: brandName }, request);
       brandId = brand.id;
     }
 
@@ -111,7 +111,7 @@ export async function handleNewProductRouteAction({ request }: ActionFunctionArg
       categoryId,
       brandId,
       package: { amount, packageTypeId, unitTypeId, unitsPerPackage },
-    });
+    }, request);
     return redirect(`/admin/product-catalogus/${created.id}`);
   } catch (error) {
     return { errors: mapApiError(error), values };

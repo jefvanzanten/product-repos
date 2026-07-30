@@ -1,8 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { app, testCatalog } from "./test-app";
+import { requestAsAdmin, testCatalog } from "./test-app";
 
+/** Create a catalog product through the authenticated API test boundary. */
 async function createTestProduct(name: string) {
-  const response = await app.request("/products", {
+  const response = await requestAsAdmin("/products", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -23,7 +24,7 @@ async function createTestProduct(name: string) {
 
 describe("product catalog browsing", () => {
   it("returns root categories without a flat product list", async () => {
-    const response = await app.request("/products");
+    const response = await requestAsAdmin("/products");
     expect(response.status).toBe(200);
     const body = await response.json() as { state: string; categories: Array<{ name: string }>; products?: unknown };
 
@@ -35,13 +36,13 @@ describe("product catalog browsing", () => {
   it("returns category browse products and product detail", async () => {
     const created = await createTestProduct(`Browse ${crypto.randomUUID()}`);
 
-    const browseResponse = await app.request(`/products?categoryId=${testCatalog.categoryId}`);
+    const browseResponse = await requestAsAdmin(`/products?categoryId=${testCatalog.categoryId}`);
     expect(browseResponse.status).toBe(200);
     const browse = await browseResponse.json() as { state: string; products: { items: Array<{ id: string; packageSummary: string }> } };
     expect(browse.state).toBe("category");
     expect(browse.products.items.some((product) => product.id === created.id && product.packageSummary === "fles 1.5 liter")).toBe(true);
 
-    const detailResponse = await app.request(`/products/${created.id}`);
+    const detailResponse = await requestAsAdmin(`/products/${created.id}`);
     expect(detailResponse.status).toBe(200);
     const detail = await detailResponse.json() as { id: string; displayName: string; packages: Array<{ summary: string }> };
     expect(detail.id).toBe(created.id);
@@ -52,7 +53,7 @@ describe("product catalog browsing", () => {
   it("searches products, brands and categories", async () => {
     const created = await createTestProduct(`Search ${crypto.randomUUID()}`);
 
-    const response = await app.request("/products/search?query=Testmerk");
+    const response = await requestAsAdmin("/products/search?query=Testmerk");
     expect(response.status).toBe(200);
     const body = await response.json() as {
       products: Array<{ id: string }>;
@@ -63,7 +64,7 @@ describe("product catalog browsing", () => {
     expect(body.products.some((product) => product.id === created.id)).toBe(true);
     expect(body.brands.some((brand) => brand.name === "Testmerk")).toBe(true);
 
-    const categoryResponse = await app.request("/products/search?query=Frisdrank");
+    const categoryResponse = await requestAsAdmin("/products/search?query=Frisdrank");
     const categoryBody = await categoryResponse.json() as { categories: Array<{ path: string }> };
     expect(categoryBody.categories.some((category) => category.path === "Frisdrank")).toBe(true);
   });

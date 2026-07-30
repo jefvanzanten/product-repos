@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@product-repos/admin-dashboard": "workspace:*",
+    "@product-repos/auth-client": "workspace:*",
+    "@product-repos/shared": "workspace:*",
     "@react-router/node": "8.0.0",
     "@react-router/serve": "8.0.0",
     "@tanstack/react-query": "^5.95.2",

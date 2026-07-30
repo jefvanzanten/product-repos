@@ -1,0 +1,27 @@
+{
+  "name": "@product-repos/auth-client",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/auth-client.ts",
+    "./login-page": "./src/login-page.tsx",
+    "./roles": "./src/roles.ts",
+    "./session.server": "./src/session.server.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.0",
+    "@types/react": "^19.2.14",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "better-auth": "^1.6.25"
+  }
+}

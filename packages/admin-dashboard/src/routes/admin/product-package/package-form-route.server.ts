@@ -24,9 +24,9 @@ export async function loadPackageFormRoute({ params, request }: LoaderFunctionAr
   try {
     return {
       found: true,
-      product: await getProduct(String(params.productId)),
-      packageTypes: await getPackageTypes(),
-      unitTypes: await getUnitTypes(),
+      product: await getProduct(String(params.productId), request),
+      packageTypes: await getPackageTypes(request),
+      unitTypes: await getUnitTypes(request),
       context,
     };
   } catch (error) {
@@ -45,7 +45,7 @@ export async function handlePackageFormRouteAction({ params, request }: ActionFu
   const form = await request.formData();
   const values = Object.fromEntries([...form.entries()].map(([key, value]) => [key, String(value)]));
   try {
-    const created = await addProductPackage(String(params.productId), readPackageForm(form));
+    const created = await addProductPackage(String(params.productId), readPackageForm(form), request);
     return redirect(
       `/admin/product-catalogus/${params.productId}/verpakkingen/${created.id}${contextSearch(new URL(request.url))}`,
     );

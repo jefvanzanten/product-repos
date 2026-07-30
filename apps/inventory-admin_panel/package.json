@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@product-repos/admin-dashboard": "workspace:*",
+    "@product-repos/auth-client": "workspace:*",
+    "@product-repos/shared": "workspace:*",
     "@react-router/node": "8.0.0",
     "@react-router/serve": "8.0.0",
     "isbot": "^5.1.36",

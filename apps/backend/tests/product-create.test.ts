@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { app, testCatalog } from "./test-app";
+import { requestAsAdmin, testCatalog } from "./test-app";
 
 describe("product creation", () => {
   it("creates a product with selected category, selected brand and package", async () => {
-    const response = await app.request("/products", {
+    const response = await requestAsAdmin("/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

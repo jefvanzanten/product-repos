@@ -1,37 +1,19 @@
-import { NavLink, Outlet } from "react-router";
-import styles from "./admin-layout.module.css";
+import AdminLayout from "@product-repos/admin-dashboard/react-router/admin-layout";
+import type { ReactNode } from "react";
+import type { LoaderFunctionArgs } from "react-router";
+import { requireAdministrator } from "../auth.server";
+
+/** Require an administrator before loading any shared admin child route. */
+export async function loader({ request }: LoaderFunctionArgs): Promise<null> {
+  await requireAdministrator(request);
+  return null;
+}
 
 /**
- * Render the Calorie Tracker-specific shell around shared admin pages.
+ * Render the shared admin layout for the Calorie Tracker admin route.
  *
- * @returns The admin navigation and active shared admin page.
+ * @returns The shared admin dashboard layout.
  */
-export default function AdminLayout(): React.ReactNode {
-  return (
-    <div className={styles.layout}>
-      <div className={styles.dashboardFrame}>
-        <nav className={styles.navbar} aria-label="Adminnavigatie">
-          <NavLink
-            to="/admin/product-catalogus"
-            className={({ isActive }) =>
-              isActive ? `${styles.navItem} ${styles.activeNavItem}` : styles.navItem
-            }
-          >
-            Productcatalogus
-          </NavLink>
-          <NavLink
-            to="/admin/locations"
-            className={({ isActive }) =>
-              isActive ? `${styles.navItem} ${styles.activeNavItem}` : styles.navItem
-            }
-          >
-            Opbergplaatsen
-          </NavLink>
-        </nav>
-        <div className={styles.content}>
-          <Outlet />
-        </div>
-      </div>
-    </div>
-  );
+export default function AdminLayoutRoute(): ReactNode {
+  return <AdminLayout />;
 }

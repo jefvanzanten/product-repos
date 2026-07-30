@@ -7,6 +7,10 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   ssr: {
-    noExternal: ["@product-repos/admin-dashboard"],
+    noExternal: [
+      "@product-repos/admin-dashboard",
+      "@product-repos/auth-client",
+      "@product-repos/shared",
+    ],
   },
 });

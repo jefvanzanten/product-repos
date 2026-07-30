@@ -8,6 +8,7 @@ import {
 // export default [index("routes/home.tsx")] satisfies RouteConfig;
 
 export default [
+  route("login", "routes/login.tsx"),
   layout("../features/shared/layout/layout.tsx", [
     index("routes/inventory.tsx"),
     // route("home", "routes/home.tsx"),

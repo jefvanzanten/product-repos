@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./bottom-tab-bar": "./src/components/bottom-tab-bar/bottom-tab-bar.tsx",
+    "./react-router/admin-layout": "./src/routes/admin/admin-layout.tsx",
     "./react-router/admin-index": "./src/routes/admin/index.tsx",
     "./react-router/brand-lookup.server": "./src/routes/admin/brand-lookup.server.ts",
     "./react-router/locations": "./src/routes/admin/locations.tsx",

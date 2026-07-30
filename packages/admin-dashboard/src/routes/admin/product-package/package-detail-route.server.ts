@@ -24,13 +24,13 @@ export async function loadPackageDetailRoute({ params, request }: LoaderFunction
   const packageId = String(params.packageId);
   const context = contextSearch(new URL(request.url));
   try {
-    const product = await getProduct(productId);
+    const product = await getProduct(productId, request);
     return {
       found: true,
       product,
-      packageDetail: await getProductPackage(productId, packageId),
-      packageTypes: await getPackageTypes(),
-      unitTypes: await getUnitTypes(),
+      packageDetail: await getProductPackage(productId, packageId, request),
+      packageTypes: await getPackageTypes(request),
+      unitTypes: await getUnitTypes(request),
       context,
     };
   } catch (error) {
@@ -55,6 +55,7 @@ export async function handlePackageDetailRouteAction({ params, request }: Action
       String(params.productId),
       String(params.packageId),
       readPackageForm(form),
+      request,
     );
     return { ok: true, packageDetail };
   } catch (error) {

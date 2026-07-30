@@ -10,21 +10,21 @@ import type { ActionResult, LoaderData } from "./product-catalog.types";
  */
 export async function loadProductCatalog(request: Request, editCategoryId?: number): Promise<LoaderData> {
   const url = new URL(request.url);
-  const categories = await getCategories();
+  const categories = await getCategories(request);
   const editCategory = editCategoryId ? categories.find((category) => category.id === editCategoryId) ?? null : null;
   const query = url.searchParams.get("q")?.trim() ?? "";
   const browseCategoryId = url.searchParams.get("categoryId") ?? (editCategory?.parentId ? String(editCategory.parentId) : null);
   const brandId = url.searchParams.get("brandId");
 
   if (query.length >= 2) {
-    return { query, mode: "search", search: await searchCatalog(query), browse: null, categories, editCategory };
+    return { query, mode: "search", search: await searchCatalog(query, request), browse: null, categories, editCategory };
   }
 
   return {
     query: "",
     mode: "browse",
     search: null,
-    browse: await browseCatalog({ categoryId: browseCategoryId, brandId }),
+    browse: await browseCatalog({ categoryId: browseCategoryId, brandId }, request),
     categories,
     editCategory,
   };
@@ -45,14 +45,14 @@ export async function handleProductCatalogAction(request: Request): Promise<Acti
       if (!name) return { errors: { categoryName: "Vul een categorienaam in." } };
       const parentIdRaw = String(form.get("parentId") ?? "");
       const parentId = parentIdRaw ? Number(parentIdRaw) : null;
-      return { ok: true, createdCategory: await createCategory({ name, parentId }) };
+      return { ok: true, createdCategory: await createCategory({ name, parentId }, request) };
     }
     if (intent === "updateCategory") {
       const name = String(form.get("categoryName") ?? "").trim();
       const categoryId = Number(form.get("categoryId"));
       if (!Number.isInteger(categoryId) || categoryId < 1) return { errors: { form: "Categorie is ongeldig." } };
       if (!name) return { errors: { categoryName: "Vul een categorienaam in." } };
-      return { ok: true, updatedCategory: await updateCategory({ id: categoryId, name }) };
+      return { ok: true, updatedCategory: await updateCategory({ id: categoryId, name }, request) };
     }
     return { errors: { form: "Onbekende actie." } };
   } catch (error) {

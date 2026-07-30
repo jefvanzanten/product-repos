@@ -15,6 +15,7 @@ Dit bestand is een korte ingang naar de actuele admin-docs. Gedrag staat per fea
 - Iedere host-app beheert haar eigen admin-layout, admin-navbar en dashboardframe.
 - De gedeelde adminpagina wordt binnen de React Router `Outlet` van deze app-specifieke layout gerenderd.
 - Inventory en Calorie Tracker bieden de gedeelde adminroutes onder `/admin` aan.
+- `/admin` vereist een ingelogde beheerder. Een niet-ingelogde gebruiker wordt doorgestuurd naar `/login`; een ingelogde gebruiker zonder beheerdersrol krijgt geen toegang; een ingelogde beheerder wordt doorgestuurd naar `/admin/product-catalogus`.
 - De hosts gebruiken de [gedeelde bottom-tabbar en applicatieshell](../specs/shared/bottom-tabbar-specificatie.md); de host-layout levert de app-specifieke tabs als children aan.
 - De bottom-tabbar blijft zichtbaar op adminroutes. De admin-layout reserveert 64 px aan de onderzijde: 56 px voor de tabbar en 8 px tussenruimte.
 - Iedere app-specifieke admin-layout volgt de algemene lay-outregels uit dit document.

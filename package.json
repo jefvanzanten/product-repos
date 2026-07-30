@@ -24,6 +24,7 @@
     "db:push": "corepack pnpm --filter @product-repos/backend db:push",
     "db:studio": "corepack pnpm --filter @product-repos/backend db:studio",
     "db:seed": "corepack pnpm --filter @product-repos/backend db:seed",
+    "auth:seed-user": "corepack pnpm --filter @product-repos/backend auth:seed-user",
     "inventory:build": "corepack pnpm --filter inventory build",
     "inventory:dev": "corepack pnpm --filter inventory dev --host 0.0.0.0",
     "inventory:start": "corepack pnpm --filter inventory start",
@@ -37,7 +38,7 @@
     "pnpm": "10.28.2"
   },
   "dependencies": {
-    "drizzle-orm": "^0.38.3",
+    "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",
     "zod": "^4.3.6"
   },

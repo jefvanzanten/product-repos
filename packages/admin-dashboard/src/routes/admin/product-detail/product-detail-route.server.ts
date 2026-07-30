@@ -23,8 +23,8 @@ export async function loadProductDetailRoute({ params, request }: LoaderFunction
   try {
     return {
       found: true,
-      product: await getProduct(String(params.productId)),
-      categories: await getCategories(),
+      product: await getProduct(String(params.productId), request),
+      categories: await getCategories(request),
       backUrl,
     };
   } catch (error) {
@@ -46,12 +46,12 @@ export async function handleProductDetailRouteAction({ params, request }: Action
     const productName = String(form.get("productName") ?? "").trim();
     const categoryId = Number(form.get("categoryId"));
     const brandName = String(form.get("brandName") ?? "").trim();
-    const brand = brandName ? await createBrand({ name: brandName }) : null;
+    const brand = brandName ? await createBrand({ name: brandName }, request) : null;
     const product = await updateProduct(String(params.productId), {
       name: productName,
       categoryId,
       brandId: brand?.id ?? null,
-    });
+    }, request);
     return { ok: true, product };
   } catch (error) {
     return { errors: mapApiError(error), values };

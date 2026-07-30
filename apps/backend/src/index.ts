@@ -20,13 +20,18 @@ try {
   process.exit(1);
 }
 
-const shutdown = (signal: string) => {
+/** Stop the HTTP server and close database resources for a process signal. */
+const shutdown = async (signal: string): Promise<void> => {
   console.log(`Received ${signal}, shutting down gracefully...`);
-  server.stop();
+  await server.stop();
   closeDatabase();
   console.log('Server closed successfully');
   process.exit(0);
 };
 
-process.on('SIGINT', () => shutdown('SIGINT'));
-process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => {
+  void shutdown('SIGINT');
+});
+process.on('SIGTERM', () => {
+  void shutdown('SIGTERM');
+});

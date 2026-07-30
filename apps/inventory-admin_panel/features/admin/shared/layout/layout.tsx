@@ -1,16 +1,19 @@
-import { Outlet } from "react-router";
-import NavBar from "../components/navbar/navbar";
-import styles from "./layout.module.css";
+import AdminLayout from "@product-repos/admin-dashboard/react-router/admin-layout";
+import type { ReactNode } from "react";
+import type { LoaderFunctionArgs } from "react-router";
+import { requireAdministrator } from "../../../../app/auth.server";
 
-export default function TopNavbarLayout() {
-  return (
-    <div className={styles.layout}>
-      <div className={styles.dashboardFrame}>
-        <NavBar />
-        <div className={styles.content}>
-          <Outlet />
-        </div>
-      </div>
-    </div>
-  );
+/** Require an administrator before loading any shared admin child route. */
+export async function loader({ request }: LoaderFunctionArgs): Promise<null> {
+  await requireAdministrator(request);
+  return null;
+}
+
+/**
+ * Render the shared admin layout for the Inventory admin route.
+ *
+ * @returns The shared admin dashboard layout.
+ */
+export default function AdminLayoutRoute(): ReactNode {
+  return <AdminLayout />;
 }
