@@ -4,7 +4,7 @@
 
 - Onderdeel: gedeelde clientnavigatie
 - Hosts: Calorie Tracker, Inventory en Product Management Admin
-- Status: wijziging gepland
+- Status: geïmplementeerd; productie-uitrol nog te bevestigen
 
 ## Doel
 
@@ -29,6 +29,9 @@ De drie basispaden worden door drie afzonderlijke frontenddeployments bediend. N
 - Calorie Tracker en Inventory bevatten geen inhoudelijke adminroutes en hebben geen dependency op een adminfeaturepackage.
 - Product Management Admin wordt zelfstandig onder `/product-management-admin` gemount en is rechtstreeks eigenaar van zijn adminroutes, loaders, actions, server-adapters en featurecomponenten.
 - De adminimplementatie staat onder `apps/product-management-admin`; `packages/admin-dashboard` en package `@product-repos/admin-dashboard` bestaan in de doelarchitectuur niet meer.
+- In de lokale ontwikkelomgeving blijven de drie zelfstandige Vite-devservers actief, zodat wijzigingen via HMR direct zichtbaar zijn; Docker is daarvoor niet vereist.
+- Een cross-app devproxy handelt het React Router-endpoint `/<doelapp>/@react-router/critical.css` af vóór de React Router-middleware van de bronapp en stuurt het verzoek naar de Vite-devserver van de doelapp.
+- De doorgestuurde kritieke stylesheet bevat de CSS van de doelroute; een succesvolle maar lege CSS-response is niet toegestaan.
 
 ## Algemene layout
 
@@ -104,6 +107,8 @@ De terugkeertab is in de admin-app niet actief; de tab `Admin dashboard` is acti
 - Binnen Product Management Admin markeren alle inhoudelijke adminroutes `Admin dashboard` als actief.
 - De bottom-tabbar blijft zichtbaar op inhoudelijke adminroutes.
 - Navigatie van Calorie Tracker of Inventory naar Product Management Admin is een volledige cross-app browsernavigatie.
+- Bij cross-app browsernavigatie beschikt de doelapp vóór de eerste zichtbare paint over haar kritieke CSS; er verschijnt geen ongestylede tussenweergave.
+- De publieke basisroute zonder afsluitende slash blijft geldig en mag naar de slashvariant redirecten.
 
 ## Acceptatiecriteria
 
@@ -175,3 +180,20 @@ En bevat Inventory geen Calorie Tracker- of adminrouteboom
 En bevat Product Management Admin geen persoonlijke Calorie Tracker- of Inventory-features
 En bevat Product Management Admin de adminimplementatie rechtstreeks
 En bestaat er geen afzonderlijk adminfeaturepackage.
+
+### AC-11 — Gestylede cross-app eerste paint
+
+Gegeven dat een gebruiker via de bottom-tabbar naar een andere frontenddeployment navigeert
+Wanneer het document van de doelapp voor het eerst zichtbaar wordt
+Dan is de kritieke CSS van de doelroute al toegepast
+En verschijnt er geen ongestylede tussenweergave
+En blijven SVG-pictogrammen vanaf de eerste paint binnen hun vastgelegde afmetingen
+En blijft een publieke basisroute zonder afsluitende slash geldig, eventueel via een redirect naar de slashvariant.
+
+### AC-12 — Kritieke CSS via de lokale devproxy
+
+Gegeven dat de zelfstandige Vite-devservers via de lokale cross-app proxy worden gebruikt
+Wanneer een doelapp haar React Router-stylesheet via `/<doelapp>/@react-router/critical.css` opvraagt
+Dan bereikt het verzoek de Vite-devserver van die doelapp voordat de bronapp het kan onderscheppen
+En retourneert het endpoint een niet-lege CSS-response met de stijlen van de doelroute
+En blijft HMR voor wijzigingen in iedere applicatie actief.

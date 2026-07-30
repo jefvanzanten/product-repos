@@ -1,11 +1,9 @@
 import { BottomTabBar } from "@product-repos/shared/bottom-tab-bar";
 import type { ReactNode } from "react";
 import {
-  Link,
   NavLink,
   Outlet,
   useLoaderData,
-  useLocation,
   type LoaderFunctionArgs,
 } from "react-router";
 import { isAdministrator } from "@product-repos/auth-client/roles";
@@ -24,8 +22,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
  */
 export default function BottomTabsLayout(): ReactNode {
   const { user } = useLoaderData<typeof loader>();
-  const location = useLocation();
-  const isAdminActive = location.pathname.startsWith("/admin");
   const isAdmin = isAdministrator(user.role);
 
   return (
@@ -36,12 +32,9 @@ export default function BottomTabsLayout(): ReactNode {
           Calory Tracker
         </NavLink>
         {isAdmin && (
-          <Link
-            to="/admin/product-catalogus"
-            aria-current={isAdminActive ? "page" : undefined}
-          >
+          <a href="/product-management-admin/product-catalogus?source=calory-tracker">
             Admin Dashboard
-          </Link>
+          </a>
         )}
       </BottomTabBar>
     </div>
