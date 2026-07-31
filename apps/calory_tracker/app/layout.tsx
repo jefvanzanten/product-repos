@@ -1,12 +1,8 @@
+import { isAdministrator } from "@product-repos/auth-client/roles";
 import { BottomTabBar } from "@product-repos/shared/bottom-tab-bar";
 import type { ReactNode } from "react";
-import {
-  NavLink,
-  Outlet,
-  useLoaderData,
-  type LoaderFunctionArgs,
-} from "react-router";
-import { isAdministrator } from "@product-repos/auth-client/roles";
+import { NavLink, Outlet, useLoaderData, useLocation, type LoaderFunctionArgs } from "react-router";
+import { CalorieTrackerNavbar } from "./calorie-tracker-components";
 import { requireUser } from "./auth.server";
 import styles from "./layout.module.css";
 
@@ -15,22 +11,22 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return { user: await requireUser(request) };
 }
 
-/**
- * Render the Calory Tracker routes with host-specific links in the shared tab bar.
- *
- * @returns The active Calory Tracker route and primary navigation.
- */
+/** Render authenticated routes in the shared Calorie Tracker application shell. */
 export default function BottomTabsLayout(): ReactNode {
   const { user } = useLoaderData<typeof loader>();
+  const location = useLocation();
   const isAdmin = isAdministrator(user.role);
+  const showsTrackerNavbar = location.pathname === "/"
+    || location.pathname === "/logs"
+    || location.pathname === "/logs/nieuw"
+    || location.pathname.endsWith("/bewerken");
 
   return (
     <div className={styles.layout}>
+      {showsTrackerNavbar && <CalorieTrackerNavbar />}
       <Outlet />
       <BottomTabBar>
-        <NavLink to="/" end className={styles["nav-link"]}>
-          Calory Tracker
-        </NavLink>
+        <NavLink to="/">Calory Tracker</NavLink>
         {isAdmin && (
           <a href="/product-management-admin/product-catalogus?source=calory-tracker">
             Admin Dashboard

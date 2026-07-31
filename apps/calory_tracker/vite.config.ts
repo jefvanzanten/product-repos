@@ -94,6 +94,7 @@ export default defineConfig({
   ssr: {
     noExternal: [
       "@product-repos/auth-client",
+      "@product-repos/contracts",
       "@product-repos/shared",
     ],
   },

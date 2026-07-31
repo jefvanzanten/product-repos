@@ -1,6 +1,10 @@
 .layout {
   min-height: 100dvh;
-  padding-bottom: 64px;
-  color: #ffffff;
-  background: #101020;
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  color: #fff;
+  background: var(--ct-bg);
+}
+
+@media (min-width: 520px) {
+  .layout { padding-bottom: calc(112px + env(safe-area-inset-bottom)); }
 }

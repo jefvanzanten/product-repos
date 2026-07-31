@@ -70,6 +70,9 @@ importers:
       '@product-repos/auth-client':
         specifier: workspace:*
         version: link:../../packages/auth-client
+      '@product-repos/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@product-repos/shared':
         specifier: workspace:*
         version: link:../../packages/shared
