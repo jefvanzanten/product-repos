@@ -104,6 +104,17 @@ export function StatusPanel({
   );
 }
 
+/** Return keyboard-focusable elements that are actually visible inside a dialog. */
+function getVisibleDialogControls(dialog: HTMLElement): ReadonlyArray<HTMLElement> {
+  const candidates = dialog.querySelectorAll<HTMLElement>("button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href]");
+  return Array.from(candidates).filter(isVisibleDialogControl);
+}
+
+/** Determine whether a focus candidate participates in the rendered layout. */
+function isVisibleDialogControl(element: HTMLElement): boolean {
+  return element.getClientRects().length > 0 && window.getComputedStyle(element).visibility !== "hidden";
+}
+
 /** Focus-trapped modal surface with Escape handling and opener focus restoration. */
 export function FocusDialog({
   title,
@@ -121,7 +132,8 @@ export function FocusDialog({
 
   useEffect(() => {
     openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const first = dialogRef.current?.querySelector<HTMLElement>("button, input, select, a[href]");
+    const dialog = dialogRef.current;
+    const first = dialog === null ? undefined : getVisibleDialogControls(dialog)[0];
     first?.focus();
     return () => openerRef.current?.focus();
   }, []);
@@ -135,8 +147,7 @@ export function FocusDialog({
     }
     const dialog = dialogRef.current;
     if (event.key !== "Tab" || dialog === null) return;
-    const focusable = Array.from(dialog.querySelectorAll<HTMLElement>("button, input, select, a[href]"))
-      .filter((element) => !(element instanceof HTMLButtonElement || element instanceof HTMLInputElement || element instanceof HTMLSelectElement) || !element.disabled);
+    const focusable = getVisibleDialogControls(dialog);
     const firstFocusable = focusable[0];
     const lastFocusable = focusable[focusable.length - 1];
     if (firstFocusable === undefined || lastFocusable === undefined) return;
