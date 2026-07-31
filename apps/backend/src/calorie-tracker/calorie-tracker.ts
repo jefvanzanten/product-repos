@@ -57,6 +57,14 @@ export type CreateLogOutcome = {
   readonly log: ConsumptionLog;
 };
 
+/** Outcome of physically cleaning up deleted logs after their retention period. */
+export type CleanupDeletedLogsOutcome = {
+  readonly deletedCount: number;
+  readonly cutoffInclusive: string;
+};
+
+const deletedLogRetentionMilliseconds = 30 * 24 * 60 * 60 * 1_000;
+
 /** Cohesive application service for user-owned Calorie Tracker operations. */
 export class CalorieTracker {
   /** Create a Calorie Tracker service with explicit persistence and time capabilities. */
@@ -192,6 +200,15 @@ export class CalorieTracker {
     const restored = this.store.restoreLog(userId, logId, existing.deletedAt, updatedAt);
     if (restored === undefined) return failure("LOG_NOT_FOUND", "Log not found");
     return this.projectLog(restored);
+  }
+
+  /** Physically delete soft-deleted logs retained for at least thirty days. */
+  cleanupDeletedLogs(): CalorieTrackerResult<CleanupDeletedLogsOutcome> {
+    const cutoffInclusive = new Date(this.clock.now().getTime() - deletedLogRetentionMilliseconds).toISOString();
+    return success({
+      deletedCount: this.store.deleteExpiredLogs(cutoffInclusive),
+      cutoffInclusive,
+    });
   }
 
   /** Return current goals or an empty goal projection when none have been stored. */

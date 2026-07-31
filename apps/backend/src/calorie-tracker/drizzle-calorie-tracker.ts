@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, isNull, lte } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import { db } from "../db/index.ts";
 import {
@@ -225,9 +225,17 @@ export class DrizzleCalorieTracker {
     const logs = db.select({ packageId: consumptionLog.productPackageId, consumedAt: consumptionLog.consumedAt, createdAt: consumptionLog.createdAt })
       .from(consumptionLog)
       .where(and(eq(consumptionLog.userId, userId), isNull(consumptionLog.deletedAt)))
-      .orderBy(desc(consumptionLog.consumedAt), desc(consumptionLog.createdAt))
+      .orderBy(desc(consumptionLog.consumedAt), desc(consumptionLog.createdAt), desc(consumptionLog.id))
       .all();
     return [...new Set(logs.map((row) => row.packageId))];
+  }
+
+  /** Physically delete soft-deleted logs whose retention deadline has elapsed. */
+  deleteExpiredLogs(cutoffInclusive: string): number {
+    return db.delete(consumptionLog).where(and(
+      isNotNull(consumptionLog.deletedAt),
+      lte(consumptionLog.deletedAt, cutoffInclusive),
+    )).returning({ id: consumptionLog.id }).all().length;
   }
 }
 
