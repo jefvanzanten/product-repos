@@ -36,12 +36,14 @@ De drie basispaden worden door drie afzonderlijke frontenddeployments bediend. N
 ## Algemene layout
 
 - De bottom-tabbar staat vast onderaan de viewport.
-- De hoogte is **56 px**.
+- Op compacte viewports bestaat de totale hoogte uit **56 px bruikbare tabbarhoogte plus `env(safe-area-inset-bottom, 0px)`**.
+- De veilige onderruimte wordt als onderpadding binnen de vaste tabbar opgenomen; labels en pictogrammen blijven in de 56 px bruikbare hoogte.
 - De tabbar staat boven de pagina-inhoud met `z-index: 40`.
-- Iedere layout met een bottom-tabbar reserveert 64 px aan de onderzijde: 56 px voor de tabbar en 8 px tussenruimte. Hierdoor valt content niet achter de tabbar.
-- Vanaf een viewportbreedte van 520 px is de tabbar maximaal 430 px breed, staat deze horizontaal gecentreerd en houdt deze `2em` afstand tot de onderkant van de viewport.
+- Iedere hostlayout reserveert op compacte viewports minimaal `calc(64px + env(safe-area-inset-bottom, 0px))` aan de onderzijde: 56 px bruikbare tabbarhoogte, 8 px tussenruimte en de volledige veilige onderruimte. Hierdoor valt content niet achter de tabbar.
+- Vanaf een viewportbreedte van 520 px is de tabbar maximaal 430 px breed, staat deze horizontaal gecentreerd en houdt deze `calc(2em + env(safe-area-inset-bottom, 0px))` afstand tot de onderkant van de viewport.
 - De Calorie Tracker-appshell gebruikt `#101020` als achtergrond buiten de pagina-inhoud.
-- De Calorie Tracker-hoofdpagina is maximaal 430 px breed en staat horizontaal gecentreerd.
+- De Calorie Tracker-content gebruikt op compacte viewports een gecentreerde container van maximaal 430 px.
+- Vanaf het desktopbreakpoint mag de routecontent verbreden tot maximaal 1208 px; de bottom-tabbar blijft onafhankelijk maximaal 430 px breed en gecentreerd.
 
 ## Visuele vormgeving
 
@@ -101,7 +103,7 @@ De terugkeertab is in de admin-app niet actief; de tab `Admin dashboard` is acti
 
 ## Actieve status en navigatie
 
-- Binnen Calorie Tracker markeert de basisroute uitsluitend `Calory Tracker` als actief.
+- Binnen alle inhoudelijke Calorie Tracker-routes, waaronder Caloriestatistieken en Consumptielogboek, is `Calory Tracker` actief in de bottom-tabbar.
 - Binnen Inventory markeert de basisroute uitsluitend `Inventarisatie` als actief.
 - De navbar bovenaan de Calorie Tracker-pagina's verzorgt de navigatie en actieve status voor `Caloriestatistieken` en `Consumptielogboek`.
 - Binnen Product Management Admin markeren alle inhoudelijke adminroutes `Admin dashboard` als actief.
@@ -120,17 +122,17 @@ En levert de applicatielayout zelf de links en actieve status aan.
 
 ### AC-02 — Hoogte en contentruimte
 
-Gegeven dat de bottom-tabbar zichtbaar is
-Dan is deze 56 px hoog
-En reserveert de actieve applicatielayout 64 px aan de onderzijde
-En blijft er 8 px tussenruimte tussen de content en de tabbar.
+Gegeven dat de bottom-tabbar op een compact viewport zichtbaar is
+Dan heeft deze 56 px bruikbare hoogte plus de volledige `safe-area-inset-bottom`
+En reserveert de actieve applicatielayout minimaal 64 px plus diezelfde veilige onderruimte aan de onderzijde
+En blijft er 8 px tussenruimte tussen de content en de bruikbare tabbar.
 
 ### AC-03 — Responsieve breedte en positie
 
 Gegeven dat de viewport minimaal 520 px breed is
 Dan is de tabbar maximaal 430 px breed
 En staat deze horizontaal gecentreerd
-En staat deze `2em` van de onderkant van de viewport
+En staat deze `2em` plus de aanwezige `safe-area-inset-bottom` van de onderkant van de viewport
 En zijn de buitenste hoeken met 8 px afgerond.
 
 ### AC-04 — Calorie Tracker naar admin
@@ -197,3 +199,12 @@ Wanneer een doelapp haar React Router-stylesheet via `/<doelapp>/@react-router/c
 Dan bereikt het verzoek de Vite-devserver van die doelapp voordat de bronapp het kan onderscheppen
 En retourneert het endpoint een niet-lege CSS-response met de stijlen van de doelroute
 En blijft HMR voor wijzigingen in iedere applicatie actief.
+
+### AC-13 — Responsieve Calorie Tracker-content
+
+Gegeven dat de Calorie Tracker op een compact viewport wordt getoond
+Dan blijft de contentcontainer maximaal 430 px breed en gecentreerd.
+
+Gegeven dat het desktopbreakpoint actief is
+Dan mag de routecontent verbreden tot maximaal 1208 px
+En blijft de bottom-tabbar maximaal 430 px breed en onafhankelijk gecentreerd.

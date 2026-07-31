@@ -3,12 +3,13 @@ import { z } from "zod/v4";
 const canonicalDecimalPattern = /^(?:0|[1-9]\d*)(?:\.\d+)?$/;
 const positiveDecimalPattern = /^(?:0\.(?:0*\d*[1-9]\d*)|[1-9]\d*(?:\.\d+)?)$/;
 const positiveGoalDecimalPattern = /^(?:0\.[1-9]|[1-9]\d*(?:\.\d)?)$/;
+const decimalProtocolCharacterLimit = 256;
 
 /** Canonical non-negative decimal string used by Calorie Tracker protocols. */
-export const calorieTrackerDecimalSchema = z.string().regex(canonicalDecimalPattern);
+export const calorieTrackerDecimalSchema = z.string().max(decimalProtocolCharacterLimit).regex(canonicalDecimalPattern);
 
 /** Canonical decimal string greater than zero used by Calorie Tracker protocols. */
-export const calorieTrackerPositiveDecimalSchema = z.string().regex(positiveDecimalPattern);
+export const calorieTrackerPositiveDecimalSchema = z.string().max(decimalProtocolCharacterLimit).regex(positiveDecimalPattern);
 
 /** ISO local calendar date accepted by date-scoped endpoints. */
 export const localDateSchema = z.iso.date();
@@ -72,6 +73,14 @@ export const calorieTrackerUnitTypeSchema = z.object({
   conversionToBase: calorieTrackerPositiveDecimalSchema,
 }).strict();
 
+/** Optional portion available for one catalog package. */
+export const calorieTrackerPortionSchema = z.object({
+  name: z.string(),
+  contentAmount: calorieTrackerPositiveDecimalSchema,
+  contentUnit: calorieTrackerUnitTypeSchema,
+  portionsPerPackage: z.number().int().positive().nullable(),
+}).strict();
+
 /** Active package returned by recent-package and package-search endpoints. */
 export const packageSearchResultSchema = z.object({
   packageId: z.number().int().positive(),
@@ -81,10 +90,9 @@ export const packageSearchResultSchema = z.object({
   brand: calorieTrackerBrandSchema.nullable(),
   consumptionType: calorieTrackerConsumptionTypeSchema,
   packageType: calorieTrackerPackageTypeSchema,
-  individualPackageType: calorieTrackerPackageTypeSchema.nullable(),
   contentAmount: calorieTrackerPositiveDecimalSchema,
   contentUnit: calorieTrackerUnitTypeSchema,
-  unitsPerPackage: z.number().int().positive(),
+  portion: calorieTrackerPortionSchema.nullable(),
   summary: z.string(),
   imageUrl: z.string().url().nullable(),
 }).strict();
@@ -164,9 +172,9 @@ export const deleteLogResultSchema = z.object({
 /** Current optional calorie and macro goals for one user. */
 export const nutritionGoalSchema = z.object({
   caloriesKcal: z.number().int().positive().nullable(),
-  proteinG: z.string().regex(positiveGoalDecimalPattern).nullable(),
-  carbohydratesG: z.string().regex(positiveGoalDecimalPattern).nullable(),
-  fatG: z.string().regex(positiveGoalDecimalPattern).nullable(),
+  proteinG: z.string().max(decimalProtocolCharacterLimit).regex(positiveGoalDecimalPattern).nullable(),
+  carbohydratesG: z.string().max(decimalProtocolCharacterLimit).regex(positiveGoalDecimalPattern).nullable(),
+  fatG: z.string().max(decimalProtocolCharacterLimit).regex(positiveGoalDecimalPattern).nullable(),
   updatedAt: z.iso.datetime({ offset: true }).nullable(),
 }).strict();
 
@@ -203,6 +211,8 @@ export type CalorieTrackerBrand = z.infer<typeof calorieTrackerBrandSchema>;
 export type CalorieTrackerPackageType = z.infer<typeof calorieTrackerPackageTypeSchema>;
 /** A unit-type reference. */
 export type CalorieTrackerUnitType = z.infer<typeof calorieTrackerUnitTypeSchema>;
+/** An optional portion available for a catalog package. */
+export type CalorieTrackerPortion = z.infer<typeof calorieTrackerPortionSchema>;
 /** A package available for a new consumption log. */
 export type PackageSearchResult = z.infer<typeof packageSearchResultSchema>;
 /** An input unit available for a selected package. */

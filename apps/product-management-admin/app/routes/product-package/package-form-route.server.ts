@@ -55,15 +55,19 @@ export async function handlePackageFormRouteAction({ params, request }: ActionFu
   }
 }
 
-/** Parse package form fields into an API request. */
+/** Parse total package content and a separately enabled optional portion. */
 function readPackageForm(form: FormData) {
-  const individualPackageTypeId = String(form.get("individualPackageTypeId") ?? "").trim();
+  const portionsPerPackage = String(form.get("portionsPerPackage") ?? "").trim();
   return {
     packageTypeId: Number(form.get("packageTypeId")),
-    individualPackageTypeId: individualPackageTypeId.length === 0 ? null : Number(individualPackageTypeId),
     amount: String(form.get("amount") ?? "").trim().replace(",", "."),
     unitTypeId: Number(form.get("unitTypeId")),
-    unitsPerPackage: Number(form.get("unitsPerPackage")),
+    portion: String(form.get("portionEnabled") ?? "") !== "on" ? null : {
+      name: String(form.get("portionName") ?? "").trim(),
+      amount: String(form.get("portionAmount") ?? "").trim().replace(",", "."),
+      unitTypeId: Number(form.get("portionUnitTypeId")),
+      portionsPerPackage: portionsPerPackage.length === 0 ? null : Number(portionsPerPackage),
+    },
   };
 }
 

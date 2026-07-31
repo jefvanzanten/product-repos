@@ -14,13 +14,12 @@ const category = { id: 34, name: "Drinken", parentId: null } as const;
 const productPackage = {
   id: 7,
   packageType: { id: 3, name: "fles" },
-  individualPackageType: null,
   unitContent: {
     id: 5,
     amount: "500",
     unitType: { id: 4, name: "milliliter", symbol: "ml", dimension: "VOLUME" as const, conversionToBase: "1" },
   },
-  unitsPerPackage: 1,
+  portion: null,
   summary: "fles 500 milliliter",
 } as const;
 
@@ -39,7 +38,6 @@ function createProductFormData(): FormData {
   form.set("amount", "500");
   form.set("packageTypeId", "3");
   form.set("unitTypeId", "4");
-  form.set("unitsPerPackage", "1");
   return form;
 }
 
@@ -73,14 +71,18 @@ describe("product create and edit mutations", () => {
       brandId,
       consumptionType: "DRINK",
       macroProfile: null,
-      package: { amount: "500", packageTypeId: 3, individualPackageTypeId: null, unitTypeId: 4, unitsPerPackage: 1 },
+      package: { amount: "500", packageTypeId: 3, unitTypeId: 4, portion: null },
     }]);
   });
 
-  it("submits an explicit individual package type for a multi-package", async () => {
+  it("submits total content and a separate optional portion", async () => {
     const form = createProductFormData();
-    form.set("individualPackageTypeId", "9");
-    form.set("unitsPerPackage", "6");
+    form.set("amount", "1980");
+    form.set("portionEnabled", "on");
+    form.set("portionName", "blikje");
+    form.set("portionAmount", "330");
+    form.set("portionUnitTypeId", "4");
+    form.set("portionsPerPackage", "6");
     const submitted: CreateProductRequest[] = [];
 
     /** Record and return a multi-package product. */
@@ -95,9 +97,13 @@ describe("product create and edit mutations", () => {
         macroProfile: null,
         package: {
           ...productPackage,
-          individualPackageType: { id: 9, name: "blikje" },
-          unitsPerPackage: 6,
-          summary: "sixpack (6 blikje x 500 milliliter)",
+          unitContent: { ...productPackage.unitContent, amount: "1980" },
+          portion: {
+            name: "blikje",
+            unitContent: productPackage.unitContent,
+            portionsPerPackage: 6,
+          },
+          summary: "sixpack 1980 milliliter (6 × 330 milliliter per blikje)",
         },
       };
     }
@@ -108,7 +114,12 @@ describe("product create and edit mutations", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(submitted[0]?.package).toMatchObject({ individualPackageTypeId: 9, unitsPerPackage: 6 });
+    expect(submitted[0]?.package).toEqual({
+      amount: "1980",
+      packageTypeId: 3,
+      unitTypeId: 4,
+      portion: { name: "blikje", amount: "330", unitTypeId: 4, portionsPerPackage: 6 },
+    });
   });
 
   it("edits a product and adds nutritional values from mock form data", async () => {

@@ -12,7 +12,7 @@ import { product, productMacroProfile } from "../db/schema";
 import { err, ok, type Result } from "../domain";
 import { findBrandById, type BrandRow } from "./brands.repository";
 import { findAllCategories, findCategoryById, findCategoryPath, type CategoryRow } from "./category.repository";
-import { findOrCreateUnitContent, findProductPackageFullRows, insertProductPackage, toProductPackageDto } from "./product-packages.repository";
+import { findOrCreateUnitContent, findProductPackageFullRow, findProductPackageFullRows, insertProductPackage, persistProductPackagePortion, toProductPackageDto } from "./product-packages.repository";
 import { findPackageTypeById, findUnitTypeById } from "./units.repository";
 
 /** Input persisted atomically when a product is created. */
@@ -86,16 +86,17 @@ export function createProduct(input: CreateProductPersistenceInput): Result<Prod
   const brandRow = input.brandId === null ? null : findBrandById(input.brandId) ?? null;
   const unitTypeRow = findUnitTypeById(input.package.unitTypeId);
   const packageTypeRow = findPackageTypeById(input.package.packageTypeId);
-  const individualPackageTypeRow = input.package.individualPackageTypeId === null
-    ? null
-    : findPackageTypeById(input.package.individualPackageTypeId) ?? null;
-  if (!categoryRow || (input.brandId !== null && !brandRow) || !unitTypeRow || !packageTypeRow || (input.package.individualPackageTypeId !== null && !individualPackageTypeRow)) return err({ code: "REFERENCE_NOT_FOUND", message: "Reference not found" });
+  const portionUnitTypeRow = input.package.portion === null ? null : findUnitTypeById(input.package.portion.unitTypeId) ?? null;
+  if (!categoryRow || (input.brandId !== null && !brandRow) || !unitTypeRow || !packageTypeRow || (input.package.portion !== null && !portionUnitTypeRow)) return err({ code: "REFERENCE_NOT_FOUND", message: "Reference not found" });
+  if (portionUnitTypeRow !== null && portionUnitTypeRow.dimension !== unitTypeRow.dimension) {
+    return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Portion and package content must use the same unit dimension" });
+  }
 
   const duplicate = findDuplicateProduct(input.name, input.categoryId, input.brandId);
   if (duplicate) return err({ code: "PRODUCT_ALREADY_EXISTS", message: "Product already exists", existingProductId: duplicate.id });
 
   const created = db.transaction((tx) => {
-    const unitContentRow = findOrCreateUnitContent(tx, input.package.unitTypeId, input.package.amount);
+    const totalUnitContentRow = findOrCreateUnitContent(tx, input.package.unitTypeId, input.package.amount);
     const productRow = tx.insert(product).values({
       name: input.name,
       categoryId: input.categoryId,
@@ -104,15 +105,16 @@ export function createProduct(input: CreateProductPersistenceInput): Result<Prod
     }).returning().get();
     const productPackageRow = insertProductPackage(tx, {
       productId: productRow.id,
-      unitContentId: unitContentRow.id,
+      unitContentId: totalUnitContentRow.id,
       packageTypeId: input.package.packageTypeId,
-      individualPackageTypeId: input.package.individualPackageTypeId,
-      unitsPerPackage: input.package.unitsPerPackage,
     });
+    persistProductPackagePortion(tx, productPackageRow.id, input.package.portion);
     persistMacroProfile(tx, productRow.id, input.macroProfile);
-    return { productRow, unitContentRow, productPackageRow };
+    return { productRow, productPackageRow };
   });
 
+  const createdPackage = findProductPackageFullRow(created.productRow.id, created.productPackageRow.id);
+  if (createdPackage === undefined) throw new Error("Created first package could not be projected");
   return ok({
     id: created.productRow.id,
     name: created.productRow.name,
@@ -120,7 +122,7 @@ export function createProduct(input: CreateProductPersistenceInput): Result<Prod
     category: { id: categoryRow.id, name: categoryRow.name, parentId: categoryRow.parentId },
     brand: brandRow ? { id: brandRow.id, name: brandRow.name } : null,
     macroProfile: input.macroProfile,
-    package: toProductPackageDto({ productPackage: created.productPackageRow, packageType: packageTypeRow, individualPackageType: individualPackageTypeRow, unitContent: created.unitContentRow, unitType: unitTypeRow }),
+    package: toProductPackageDto(createdPackage),
   });
 }
 

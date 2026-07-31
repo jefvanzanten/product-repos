@@ -1,6 +1,7 @@
 import type {
   AvailableInputUnit,
   CalorieTrackerErrorResponse,
+  CalorieTrackerPortion,
   CalorieTrackerUnitType,
   ConsumptionInputMode,
   ConsumptionLog,
@@ -23,6 +24,7 @@ import {
   localDateForInstant,
   parsePositiveDecimal,
   sumMacroValues,
+  type QuantityPackage,
   type QuantityUnit,
 } from "./domain.ts";
 import {
@@ -63,6 +65,11 @@ export type CleanupDeletedLogsOutcome = {
   readonly cutoffInclusive: string;
 };
 
+type ProjectionReferences = {
+  readonly packages: ReadonlyMap<number, CatalogPackageRecord>;
+  readonly units: ReadonlyMap<number, UnitTypeRecord>;
+};
+
 const deletedLogRetentionMilliseconds = 30 * 24 * 60 * 60 * 1_000;
 
 /** Cohesive application service for user-owned Calorie Tracker operations. */
@@ -99,8 +106,8 @@ export class CalorieTracker {
     const packageRecord = this.store.findCatalogPackage(packageId);
     if (packageRecord === undefined || !isActivePackage(packageRecord)) return failure("PRODUCT_PACKAGE_NOT_FOUND", "Product package not found");
     const values: AvailableInputUnit[] = [{ inputMode: "PACKAGE", unitType: null, label: packageRecord.packageTypeName }];
-    if (packageRecord.unitsPerPackage > 1 && packageRecord.individualPackageTypeName !== null) {
-      values.push({ inputMode: "INDIVIDUAL_UNIT", unitType: null, label: packageRecord.individualPackageTypeName });
+    if (packageRecord.portionName !== null) {
+      values.push({ inputMode: "INDIVIDUAL_UNIT", unitType: null, label: packageRecord.portionName });
     }
     for (const unit of this.store.findUnitTypes().filter((candidate) => candidate.dimension === packageRecord.contentUnitDimension)) {
       values.push({ inputMode: "CONTENT_UNIT", unitType: toUnitType(unit), label: unit.name });
@@ -110,9 +117,11 @@ export class CalorieTracker {
 
   /** List active user-owned logs for a local date and optional type filter. */
   listLogs(userId: string, date: string, timezone: string, filter: ConsumptionTypeFilter): CalorieTrackerResult<LogList> {
-    const logs = this.store.findUserLogs(userId)
+    const window = utcSearchWindow(date);
+    const references = this.readProjectionReferences();
+    const logs = this.store.findUserLogsInWindow(userId, window.startInclusive, window.endExclusive)
       .filter((row) => localDateForInstant(row.consumedAt, row.timezone) === date)
-      .map((row) => this.projectLog(row))
+      .map((row) => this.projectLog(row, references))
       .filter((result): result is { readonly ok: true; readonly value: ConsumptionLog } => result.ok)
       .map((result) => result.value)
       .filter((log) => filter === "all" || log.package.consumptionType.toLowerCase() === filter);
@@ -171,7 +180,7 @@ export class CalorieTracker {
     const existing = this.store.findLogById(logId);
     if (existing === undefined || existing.userId !== userId || existing.deletedAt !== null) return failure("LOG_NOT_FOUND", "Log not found");
     if (existing.updatedAt !== input.expectedUpdatedAt) return failure("LOG_UPDATE_CONFLICT", "The log has changed since it was opened");
-    const parsed = this.parseMutationInput(input, existing.productPackageId);
+    const parsed = this.parseMutationInput(input, existing);
     if (!parsed.ok) return parsed;
     const updatedAt = nextTimestamp(this.clock.now(), existing.updatedAt);
     const updated = this.store.updateLog(userId, logId, input.expectedUpdatedAt, { ...parsed.value, timezone, updatedAt });
@@ -235,9 +244,11 @@ export class CalorieTracker {
 
   /** Aggregate exact daily nutrition totals from current catalog data and active logs. */
   getDailyStatistics(userId: string, date: string, timezone: string): CalorieTrackerResult<DailyStatistics> {
-    const values = this.store.findUserLogs(userId)
+    const window = utcSearchWindow(date);
+    const references = this.readProjectionReferences();
+    const values = this.store.findUserLogsInWindow(userId, window.startInclusive, window.endExclusive)
       .filter((row) => localDateForInstant(row.consumedAt, row.timezone) === date)
-      .map((row) => this.projectLog(row))
+      .map((row) => this.projectLog(row, references))
       .filter((result): result is { readonly ok: true; readonly value: ConsumptionLog } => result.ok)
       .map((result) => result.value.macroValues);
     const summed = sumMacroValues(values);
@@ -254,7 +265,7 @@ export class CalorieTracker {
   /** Parse and normalize a create or update payload into persistence values. */
   private parseMutationInput(
     input: Omit<CreateConsumptionLog, "id"> | UpdateConsumptionLog,
-    currentPackageId: number | undefined,
+    currentLog: ConsumptionLogRecord | undefined,
   ): CalorieTrackerResult<{
     readonly productPackageId: number;
     readonly quantity: string;
@@ -264,7 +275,13 @@ export class CalorieTracker {
   }> {
     const packageRecord = this.store.findCatalogPackage(input.packageId);
     if (packageRecord === undefined) return failure("PRODUCT_PACKAGE_NOT_FOUND", "Product package not found");
-    if (!isActivePackage(packageRecord) && packageRecord.packageId !== currentPackageId) return failure("PRODUCT_PACKAGE_ARCHIVED", "Product package is archived");
+    if (!isActivePackage(packageRecord)) {
+      const keepsArchivedInput = currentLog !== undefined
+        && packageRecord.packageId === currentLog.productPackageId
+        && input.inputMode === currentLog.inputMode
+        && input.inputUnitTypeId === currentLog.inputUnitTypeId;
+      if (!keepsArchivedInput) return failure("PRODUCT_PACKAGE_ARCHIVED", "Archived package input cannot be replaced");
+    }
     const quantity = parsePositiveDecimal(input.quantity);
     if (!quantity.ok) return { ok: false, error: quantity.error };
     const inputUnit = input.inputUnitTypeId === null ? null : this.store.findUnitType(input.inputUnitTypeId) ?? null;
@@ -284,11 +301,19 @@ export class CalorieTracker {
     });
   }
 
+  /** Read current catalog references once for a list or aggregate projection. */
+  private readProjectionReferences(): ProjectionReferences {
+    return {
+      packages: new Map(this.store.findCatalogPackages().map((value) => [value.packageId, value])),
+      units: new Map(this.store.findUnitTypes().map((value) => [value.id, value])),
+    };
+  }
+
   /** Project a persistence log using current catalog, package, unit, and nutrition data. */
-  private projectLog(row: ConsumptionLogRecord): CalorieTrackerResult<ConsumptionLog> {
-    const packageRecord = this.store.findCatalogPackage(row.productPackageId);
+  private projectLog(row: ConsumptionLogRecord, references?: ProjectionReferences): CalorieTrackerResult<ConsumptionLog> {
+    const packageRecord = references?.packages.get(row.productPackageId) ?? this.store.findCatalogPackage(row.productPackageId);
     if (packageRecord === undefined) return failure("REFERENCE_NOT_FOUND", "Log package reference is missing");
-    const inputUnit = row.inputUnitTypeId === null ? null : this.store.findUnitType(row.inputUnitTypeId) ?? null;
+    const inputUnit = row.inputUnitTypeId === null ? null : references?.units.get(row.inputUnitTypeId) ?? this.store.findUnitType(row.inputUnitTypeId) ?? null;
     const derived = deriveConsumptionQuantity(toQuantityPackage(packageRecord), {
       quantity: canonicalDecimal(row.quantity),
       inputMode: row.inputMode,
@@ -316,6 +341,15 @@ export class CalorieTracker {
   }
 }
 
+/** Build a bounded UTC window that covers every real-world local offset for one date. */
+function utcSearchWindow(date: string): { readonly startInclusive: string; readonly endExclusive: string } {
+  const dateStart = Date.parse(`${date}T00:00:00.000Z`);
+  return {
+    startInclusive: new Date(dateStart - 24 * 60 * 60 * 1_000).toISOString(),
+    endExclusive: new Date(dateStart + 48 * 60 * 60 * 1_000).toISOString(),
+  };
+}
+
 /** Construct a successful application result. */
 function success<T>(value: T): CalorieTrackerResult<T> {
   return { ok: true, value };
@@ -335,9 +369,9 @@ function isActivePackage(row: CatalogPackageRecord): boolean {
   return row.productArchivedAt === null && row.packageArchivedAt === null;
 }
 
-/** Sort package search matches with single packages first and stable names thereafter. */
+/** Sort package search matches with packages without portions first and stable names thereafter. */
 function compareSearchPackages(left: CatalogPackageRecord, right: CatalogPackageRecord): number {
-  const packageRank = Number(left.unitsPerPackage > 1) - Number(right.unitsPerPackage > 1);
+  const packageRank = Number(left.portionName !== null) - Number(right.portionName !== null);
   return packageRank
     || left.productName.localeCompare(right.productName, "nl", { sensitivity: "base" })
     || (left.brandName ?? "").localeCompare(right.brandName ?? "", "nl", { sensitivity: "base" })
@@ -355,11 +389,13 @@ function toUnitType(row: UnitTypeRecord): CalorieTrackerUnitType {
   };
 }
 
-/** Format a current package summary for compact package selection. */
+/** Format total package content and optional portion data for compact selection. */
 function packageSummary(row: CatalogPackageRecord): string {
-  const amount = canonicalDecimal(row.contentAmount);
-  if (row.unitsPerPackage === 1) return `${row.packageTypeName} ${amount} ${row.contentUnitSymbol}`;
-  return `${row.packageTypeName} (${row.unitsPerPackage} x ${amount} ${row.contentUnitSymbol})`;
+  const total = `${row.packageTypeName} ${canonicalDecimal(row.contentAmount)} ${row.contentUnitSymbol}`;
+  const portion = toCalorieTrackerPortion(row);
+  if (portion === null) return total;
+  const count = portion.portionsPerPackage === null ? "" : `${portion.portionsPerPackage} × `;
+  return `${total} (${count}${canonicalDecimal(portion.contentAmount)} ${portion.contentUnit.symbol} per ${portion.name})`;
 }
 
 /** Project joined package rows into the shared strict search contract. */
@@ -372,9 +408,6 @@ function toPackageSearchResult(row: CatalogPackageRecord): PackageSearchResult {
     brand: row.brandId === null || row.brandName === null ? null : { id: row.brandId, name: row.brandName },
     consumptionType: row.consumptionType,
     packageType: { id: row.packageTypeId, name: row.packageTypeName },
-    individualPackageType: row.individualPackageTypeId === null || row.individualPackageTypeName === null
-      ? null
-      : { id: row.individualPackageTypeId, name: row.individualPackageTypeName },
     contentAmount: canonicalDecimal(row.contentAmount),
     contentUnit: {
       id: row.contentUnitId,
@@ -383,14 +416,50 @@ function toPackageSearchResult(row: CatalogPackageRecord): PackageSearchResult {
       dimension: row.contentUnitDimension,
       conversionToBase: canonicalDecimal(row.contentUnitConversionToBase),
     },
-    unitsPerPackage: row.unitsPerPackage,
+    portion: toCalorieTrackerPortion(row),
     summary: packageSummary(row),
     imageUrl: null,
   };
 }
 
+/** Project complete optional portion joins into the strict Calorie Tracker contract. */
+function toCalorieTrackerPortion(row: CatalogPackageRecord): CalorieTrackerPortion | null {
+  if (row.portionName === null) return null;
+  if (
+    row.portionContentAmount === null
+    || row.portionContentUnitId === null
+    || row.portionContentUnitName === null
+    || row.portionContentUnitSymbol === null
+    || row.portionContentUnitDimension === null
+    || row.portionContentUnitConversionToBase === null
+  ) throw new Error("Persisted package portion is missing unit content");
+  return {
+    name: row.portionName,
+    contentAmount: canonicalDecimal(row.portionContentAmount),
+    contentUnit: {
+      id: row.portionContentUnitId,
+      name: row.portionContentUnitName,
+      symbol: row.portionContentUnitSymbol,
+      dimension: row.portionContentUnitDimension,
+      conversionToBase: canonicalDecimal(row.portionContentUnitConversionToBase),
+    },
+    portionsPerPackage: row.portionsPerPackage,
+  };
+}
+
+/** Project an optional package portion into pure quantity-conversion input. */
+function toQuantityPortion(row: CatalogPackageRecord): QuantityPackage["portion"] {
+  const portion = toCalorieTrackerPortion(row);
+  if (portion === null) return null;
+  return {
+    contentAmount: portion.contentAmount,
+    contentUnit: portion.contentUnit,
+    label: portion.name,
+  };
+}
+
 /** Project package data into the pure quantity-conversion input. */
-function toQuantityPackage(row: CatalogPackageRecord) {
+function toQuantityPackage(row: CatalogPackageRecord): QuantityPackage {
   return {
     contentAmount: canonicalDecimal(row.contentAmount),
     contentUnit: {
@@ -400,9 +469,8 @@ function toQuantityPackage(row: CatalogPackageRecord) {
       dimension: row.contentUnitDimension,
       conversionToBase: canonicalDecimal(row.contentUnitConversionToBase),
     } satisfies QuantityUnit,
-    unitsPerPackage: row.unitsPerPackage,
     packageLabel: row.packageTypeName,
-    individualLabel: row.individualPackageTypeName,
+    portion: toQuantityPortion(row),
   };
 }
 

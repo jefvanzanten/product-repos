@@ -122,9 +122,8 @@ function parseProductPackageWithProductId(input: unknown): ProductPackageWithPro
   const value = productPackageDtoSchema.parse({
     id: readUnknownField(input, "id"),
     packageType: readUnknownField(input, "packageType"),
-    individualPackageType: readUnknownField(input, "individualPackageType"),
     unitContent: readUnknownField(input, "unitContent"),
-    unitsPerPackage: readUnknownField(input, "unitsPerPackage"),
+    portion: readUnknownField(input, "portion"),
     summary: readUnknownField(input, "summary"),
   });
   return { ...value, productId };

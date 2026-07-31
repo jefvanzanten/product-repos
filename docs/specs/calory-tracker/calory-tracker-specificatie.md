@@ -4,7 +4,7 @@ Dit bestand is de algemene ingang voor de Calorie Tracker. Gedrag staat per feat
 
 ## Doel
 
-De Calorie Tracker laat een ingelogde gebruiker consumpties registreren en de calorie- en macrototalen van vandaag vergelijken met optionele persoonlijke doelen.
+De Calorie Tracker laat een ingelogde gebruiker consumpties registreren en de calorie- en macrototalen van vandaag of een eerdere geselecteerde dag vergelijken met optionele persoonlijke doelen.
 
 ## Actuele specs
 
@@ -42,13 +42,15 @@ De React Router-routes van deze app worden in productie onder het publieke basis
 
 | Bestemming | App-interne route | Publieke bestemming | Zichtbaarheid |
 | --- | --- | --- | --- |
-| Caloriestatistieken | `/` | `/calory-tracker` | Iedere ingelogde gebruiker |
+| Caloriestatistieken | `/?date=YYYY-MM-DD` | `/calory-tracker?date=YYYY-MM-DD` | Iedere ingelogde gebruiker |
 | Consumptielogboek | `/logs?date=YYYY-MM-DD&type=all` | `/calory-tracker/logs?date=YYYY-MM-DD&type=all` | Iedere ingelogde gebruiker |
 | Product Management Admin | niet van toepassing | `/product-management-admin/product-catalogus?source=calory-tracker` | Alleen beheerders |
 
+Caloriestatistieken en Consumptielogboek delen de geselecteerde `date`-context. Navigatie via de Calorie Tracker-navbar neemt deze datum in beide richtingen mee; het typefilter bestaat alleen in het logboek.
+
 De adminbestemming is een gewone browserlink naar een andere deployment. Product Management Admin gebruikt `source=calory-tracker` om in zijn bottom-tabbar een terugkeertab naar `/calory-tracker` te tonen. De regels voor bronbehoud staan in de [gedeelde bottom-tabbar- en applicatieshellspecificatie](../shared/bottom-tabbar-specificatie.md).
 
-Er is voorlopig geen aparte instellingentab. Calorie- en macrodoelen worden vanuit Caloriestatistieken beheerd.
+Er is voorlopig geen aparte instellingentab. Calorie- en macrodoelen worden vanuit Caloriestatistieken in een compacte modal beheerd, zonder eigen route.
 
 ## Leidende domeinregels
 
@@ -79,7 +81,7 @@ Een optioneel macroprofiel hoort bij het product en geldt voor alle compatibele 
 - Zelfregistratie.
 - Barcodezoeken en barcodescannen.
 - Volledig offline loggen en synchroniseren.
-- Historische statistiekpagina's; Caloriestatistieken toont alleen vandaag.
+- Meerdaagse statistiektrends, week- en maandgrafieken; Caloriestatistieken toont één geselecteerde kalenderdag per keer.
 - Automatische voorraadmutaties vanuit consumptielogs.
 - Vrije producten of calorie-only logs buiten de catalogus.
 - Een productaanvraagflow bij `Product niet gevonden`.
@@ -118,3 +120,9 @@ Wanneer die Product Management Admin opent
 Dan verlaat de browser de Calorie Tracker-deployment
 En opent `/product-management-admin/product-catalogus?source=calory-tracker`
 En bevat de Calorie Tracker zelf geen inhoudelijke adminroute.
+
+### AC-06 - Gedeelde datumcontext
+
+Gegeven dat de gebruiker in Caloriestatistieken of het Consumptielogboek een datum heeft geselecteerd
+Wanneer die via de Calorie Tracker-navbar naar het andere onderdeel navigeert
+Dan blijft dezelfde datum in de doel-URL behouden.

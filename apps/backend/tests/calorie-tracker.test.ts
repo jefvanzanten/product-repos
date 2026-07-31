@@ -39,10 +39,10 @@ async function createLoggablePackage(consumptionType: "FOOD" | "DRINK" | "SUPPLE
         caloriesSource: "MANUAL",
       },
       package: {
-        packageTypeId: testCatalog.packageTypeId, individualPackageTypeId: null,
+        packageTypeId: testCatalog.packageTypeId,
         amount: "100",
         unitTypeId: testCatalog.massUnitTypeId,
-        unitsPerPackage: 1,
+        portion: null,
       },
     }),
   });
@@ -130,6 +130,11 @@ describe("Calorie Tracker authenticated route integration", () => {
       inputUnitTypeId: testCatalog.massUnitTypeId,
       consumedAt: created.consumedAt,
     } as const;
+    const archivedInputChange = await requestJson(`/calorie-tracker/logs/${created.id}`, "PATCH", updateBody);
+    expect(archivedInputChange.status).toBe(409);
+    expect(await archivedInputChange.json()).toMatchObject({ code: "PRODUCT_PACKAGE_ARCHIVED" });
+
+    executeTestSql("UPDATE product_package SET archived_at = NULL WHERE id = ?", packageId);
     const update = await requestJson(`/calorie-tracker/logs/${created.id}`, "PATCH", updateBody);
     expect(update.status).toBe(200);
     const updated = consumptionLogSchema.parse(await update.json());

@@ -25,11 +25,11 @@ export function trimRequired(value: unknown, field: string): Result<string> {
   return ok(trimmed);
 }
 
-/** Parse a positive canonical decimal string. */
-export function canonicalDecimal(value: unknown): Result<string> {
-  if (typeof value !== "string" || !/^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(value)) return err({ code: "VALIDATION_ERROR", message: "Request is invalid", fields: { amount: "Amount must be a positive decimal string" } });
+/** Parse a positive canonical decimal string for one named request field. */
+export function canonicalDecimal(value: unknown, field = "amount"): Result<string> {
+  if (typeof value !== "string" || !/^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(value)) return err({ code: "VALIDATION_ERROR", message: "Request is invalid", fields: { [field]: "Amount must be a positive decimal string" } });
   const number = Number(value);
-  if (!Number.isFinite(number) || number <= 0) return err({ code: "VALIDATION_ERROR", message: "Request is invalid", fields: { amount: "Amount must be positive" } });
+  if (!Number.isFinite(number) || number <= 0) return err({ code: "VALIDATION_ERROR", message: "Request is invalid", fields: { [field]: "Amount must be positive" } });
   return ok(String(number));
 }
 

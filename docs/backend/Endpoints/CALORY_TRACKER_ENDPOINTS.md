@@ -47,6 +47,9 @@ GET /calorie-tracker/packages/search:
   query:
     query?: string; trim; minSearchLength=2
     limit?: int; default=20; max=100
+  behavior:
+    query omitted: recent gebruikte actieve verpakkingen van de ingelogde gebruiker
+    query present: actieve verpakkingen gevonden op productnaam of merknaam
   returns:
     200: PackageSearchResult[]
   domain:
@@ -126,10 +129,12 @@ POST /calorie-tracker/logs/:logId/restore:
 ### Statistieken en doelen
 
 ```yaml
-GET /calorie-tracker/statistics/today:
+GET /calorie-tracker/statistics:
   headers: [X-Browser-Timezone]
+  query:
+    date: localDate YYYY-MM-DD; today or past
   returns:
-    200: TodayStatistics
+    200: DailyStatistics
   errors:
     400: [VALIDATION_ERROR]
   domain:
@@ -152,8 +157,16 @@ PUT /calorie-tracker/goals:
 Alle velden verwijzen naar de gelijknamige ERD-kolom in camelCase, behalve wanneer hier `derived`, `embedded` of `catalogus` staat.
 
 ```yaml
+PackagePortion:
+  source: product_package_portion + unit_content
+  fields:
+    - name
+    - contentAmount: unit_content.amount
+    - contentUnit: catalogus UnitType
+    - portionsPerPackage: int|null
+
 PackageSearchResult:
-  source: product_package + product + catalogusreferenties
+  source: product_package + optional product_package_portion + product + catalogusreferenties
   fields:
     - packageId: product_package.id
     - productId: product.id
@@ -162,10 +175,9 @@ PackageSearchResult:
     - brand: catalogus Brand|null
     - consumptionType: product.consumption_type
     - packageType: catalogus PackageType
-    - individualPackageType: catalogus PackageType|null
-    - contentAmount: unit_content.amount
+    - contentAmount: unit_content.amount # volledige verpakkingsinhoud
     - contentUnit: catalogus UnitType
-    - unitsPerPackage: product_package.units_per_package
+    - portion: PackagePortion|null
     - summary: derived
     - imageUrl: derived|null
 
@@ -196,7 +208,7 @@ ConsumptionLog:
     - updatedAt
 
 LogList:
-  fields: [date, timezone, type, count, items:ConsumptionLog[]]
+  fields: [date, timezone, type, items:ConsumptionLog[]]
 
 CreateConsumptionLog:
   id: consumption_log.id # client-generated
@@ -227,6 +239,6 @@ UpsertNutritionGoal:
   carbohydratesG: user_nutrition_goal.carbohydrates_g|null
   fatG: user_nutrition_goal.fat_g|null
 
-TodayStatistics:
+DailyStatistics:
   fields: [date, timezone, totals:MacroValues, goals:NutritionGoal|null]
 ```

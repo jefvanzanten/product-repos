@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNotNull, isNull, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNotNull, isNull, lt, lte } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import { db } from "../db/index.ts";
 import {
@@ -8,6 +8,7 @@ import {
   product,
   productMacroProfile,
   productPackage,
+  productPackagePortion,
   unitContent,
   unitType,
   userNutritionGoal,
@@ -25,15 +26,20 @@ export type CatalogPackageRecord = {
   readonly packageArchivedAt: string | null;
   readonly packageTypeId: number;
   readonly packageTypeName: string;
-  readonly individualPackageTypeId: number | null;
-  readonly individualPackageTypeName: string | null;
   readonly contentAmount: string;
   readonly contentUnitId: number;
   readonly contentUnitName: string;
   readonly contentUnitSymbol: string;
   readonly contentUnitDimension: "MASS" | "VOLUME" | "COUNT";
   readonly contentUnitConversionToBase: string;
-  readonly unitsPerPackage: number;
+  readonly portionName: string | null;
+  readonly portionContentAmount: string | null;
+  readonly portionContentUnitId: number | null;
+  readonly portionContentUnitName: string | null;
+  readonly portionContentUnitSymbol: string | null;
+  readonly portionContentUnitDimension: "MASS" | "VOLUME" | "COUNT" | null;
+  readonly portionContentUnitConversionToBase: string | null;
+  readonly portionsPerPackage: number | null;
   readonly macroProfile: ProductMacroProfileRecord | null;
 };
 
@@ -71,7 +77,8 @@ export type UpdateConsumptionLogRecord = Pick<InsertConsumptionLogRecord, "produ
 export class DrizzleCalorieTracker {
   /** Read all catalog packages with current product, unit, brand, and macro data. */
   findCatalogPackages(): ReadonlyArray<CatalogPackageRecord> {
-    const individualPackageType = alias(packageType, "individual_package_type");
+    const portionContent = alias(unitContent, "portion_content");
+    const portionUnit = alias(unitType, "portion_unit");
     const rows = db.select({
       packageId: productPackage.id,
       productId: product.id,
@@ -83,15 +90,20 @@ export class DrizzleCalorieTracker {
       packageArchivedAt: productPackage.archivedAt,
       packageTypeId: packageType.id,
       packageTypeName: packageType.name,
-      individualPackageTypeId: individualPackageType.id,
-      individualPackageTypeName: individualPackageType.name,
       contentAmount: unitContent.amount,
       contentUnitId: unitType.id,
       contentUnitName: unitType.name,
       contentUnitSymbol: unitType.symbol,
       contentUnitDimension: unitType.dimension,
       contentUnitConversionToBase: unitType.conversionToBase,
-      unitsPerPackage: productPackage.unitsPerPackage,
+      portionName: productPackagePortion.name,
+      portionContentAmount: portionContent.amount,
+      portionContentUnitId: portionUnit.id,
+      portionContentUnitName: portionUnit.name,
+      portionContentUnitSymbol: portionUnit.symbol,
+      portionContentUnitDimension: portionUnit.dimension,
+      portionContentUnitConversionToBase: portionUnit.conversionToBase,
+      portionsPerPackage: productPackagePortion.portionsPerPackage,
       macroReferenceBasis: productMacroProfile.referenceBasis,
       macroCaloriesKcal: productMacroProfile.caloriesKcal,
       macroProteinG: productMacroProfile.proteinG,
@@ -101,9 +113,11 @@ export class DrizzleCalorieTracker {
       .innerJoin(product, eq(productPackage.productId, product.id))
       .leftJoin(brand, eq(product.brandId, brand.id))
       .innerJoin(packageType, eq(productPackage.packageTypeId, packageType.id))
-      .leftJoin(individualPackageType, eq(productPackage.individualPackageTypeId, individualPackageType.id))
       .innerJoin(unitContent, eq(productPackage.unitContentId, unitContent.id))
       .innerJoin(unitType, eq(unitContent.unitTypeId, unitType.id))
+      .leftJoin(productPackagePortion, eq(productPackage.id, productPackagePortion.productPackageId))
+      .leftJoin(portionContent, eq(productPackagePortion.unitContentId, portionContent.id))
+      .leftJoin(portionUnit, eq(portionContent.unitTypeId, portionUnit.id))
       .leftJoin(productMacroProfile, eq(product.id, productMacroProfile.productId))
       .all();
 
@@ -118,15 +132,20 @@ export class DrizzleCalorieTracker {
       packageArchivedAt: row.packageArchivedAt,
       packageTypeId: row.packageTypeId,
       packageTypeName: row.packageTypeName,
-      individualPackageTypeId: row.individualPackageTypeId,
-      individualPackageTypeName: row.individualPackageTypeName,
       contentAmount: row.contentAmount,
       contentUnitId: row.contentUnitId,
       contentUnitName: row.contentUnitName,
       contentUnitSymbol: row.contentUnitSymbol,
       contentUnitDimension: row.contentUnitDimension,
       contentUnitConversionToBase: row.contentUnitConversionToBase,
-      unitsPerPackage: row.unitsPerPackage,
+      portionName: row.portionName,
+      portionContentAmount: row.portionContentAmount,
+      portionContentUnitId: row.portionContentUnitId,
+      portionContentUnitName: row.portionContentUnitName,
+      portionContentUnitSymbol: row.portionContentUnitSymbol,
+      portionContentUnitDimension: row.portionContentUnitDimension,
+      portionContentUnitConversionToBase: row.portionContentUnitConversionToBase,
+      portionsPerPackage: row.portionsPerPackage,
       macroProfile: row.macroReferenceBasis === null ? null : {
         referenceBasis: row.macroReferenceBasis,
         caloriesKcal: row.macroCaloriesKcal,
@@ -152,12 +171,14 @@ export class DrizzleCalorieTracker {
     return db.select().from(unitType).where(eq(unitType.id, unitTypeId)).get();
   }
 
-  /** Read active and deleted logs for a user in stable chronological order. */
-  findUserLogs(userId: string, includeDeleted = false): ReadonlyArray<ConsumptionLogRecord> {
-    const predicate = includeDeleted
-      ? eq(consumptionLog.userId, userId)
-      : and(eq(consumptionLog.userId, userId), isNull(consumptionLog.deletedAt));
-    return db.select().from(consumptionLog).where(predicate).orderBy(asc(consumptionLog.consumedAt), asc(consumptionLog.createdAt), asc(consumptionLog.id)).all();
+  /** Read active user logs from a bounded UTC window in stable chronological order. */
+  findUserLogsInWindow(userId: string, startInclusive: string, endExclusive: string): ReadonlyArray<ConsumptionLogRecord> {
+    return db.select().from(consumptionLog).where(and(
+      eq(consumptionLog.userId, userId),
+      isNull(consumptionLog.deletedAt),
+      gte(consumptionLog.consumedAt, startInclusive),
+      lt(consumptionLog.consumedAt, endExclusive),
+    )).orderBy(asc(consumptionLog.consumedAt), asc(consumptionLog.createdAt), asc(consumptionLog.id)).all();
   }
 
   /** Read any user's log by globally unique identifier for idempotency checks. */

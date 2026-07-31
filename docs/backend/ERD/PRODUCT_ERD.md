@@ -72,40 +72,28 @@ product
     UNIQUE (category_id, lower(trim(name))) WHERE brand_id IS NULL
 
 product_package
-    id: uuid PK
+    id: int PK autoincrement
     product_id: uuid FK -> product.id NOT NULL
     unit_content_id: int FK -> unit_content.id NOT NULL
     package_type_id: int FK -> package_type.id NOT NULL
-    individual_package_type_id: int FK -> package_type.id NULL
-    units_per_package: int NOT NULL default 1
     archived_at: timestamp with time zone NULL
     created_at: timestamp with time zone NOT NULL
     updated_at: timestamp with time zone NOT NULL
 
-    CHECK (units_per_package > 0)
+    # unit_content_id always represents the complete package content.
+    UNIQUE (product_id, package_type_id, unit_content_id)
 
-    # A multi-package must identify the type of each individual unit. A single
-    # package derives its display label from package_type_id.
-    CHECK (
-        (units_per_package = 1 AND individual_package_type_id IS NULL) OR
-        (units_per_package > 1 AND individual_package_type_id IS NOT NULL)
-    )
+product_package_portion
+    product_package_id: int PK FK -> product_package.id ON DELETE CASCADE
+    name: text NOT NULL
+    unit_content_id: int FK -> unit_content.id NOT NULL
+    portions_per_package: int NULL
 
-    # Use separate partial indexes so nullable individual_package_type_id has
-    # deterministic duplicate semantics.
-    UNIQUE (
-        product_id,
-        package_type_id,
-        unit_content_id,
-        units_per_package,
-        individual_package_type_id
-    ) WHERE individual_package_type_id IS NOT NULL
-    UNIQUE (
-        product_id,
-        package_type_id,
-        unit_content_id,
-        units_per_package
-    ) WHERE individual_package_type_id IS NULL
+    # The portion amount is explicit and independent from complete package
+    # content. Rounded label values therefore do not have to multiply exactly
+    # to the complete package amount.
+    CHECK (length(trim(name)) > 0)
+    CHECK (portions_per_package IS NULL OR portions_per_package > 0)
 
 product_macro_profile
     product_id: uuid PK FK -> product.id
@@ -143,10 +131,11 @@ erDiagram
     CATEGORY ||--o{ PRODUCT : classifies
     PRODUCT ||--|{ PRODUCT_PACKAGE : offers
     PRODUCT ||--o| PRODUCT_MACRO_PROFILE : has
+    PRODUCT_PACKAGE ||--o| PRODUCT_PACKAGE_PORTION : defines
     PACKAGE_TYPE ||--o{ PRODUCT_PACKAGE : outer_type
-    PACKAGE_TYPE ||--o{ PRODUCT_PACKAGE : individual_type
     UNIT_TYPE ||--o{ UNIT_CONTENT : expresses
-    UNIT_CONTENT ||--o{ PRODUCT_PACKAGE : sizes
+    UNIT_CONTENT ||--o{ PRODUCT_PACKAGE : total_size
+    UNIT_CONTENT ||--o{ PRODUCT_PACKAGE_PORTION : portion_size
 ```
 
 Gedragsregels voor consumptietype, macroprofiel, archivering, selecteerbaarheid en cataloguscorrecties staan in [productcatalogus-domeinregels.md](../../domein/productcatalogus-domeinregels.md).

@@ -41,7 +41,7 @@ describe("package search behavior", () => {
   it("uses recents for zero characters, waits at one, trims two, and renders no-results", async () => {
     server.enqueueJson("GET", "/calorie-tracker/packages/search", [createPackageFixture({ productName: "Recent product" })]);
     server.enqueueJson("GET", "/calorie-tracker/packages/search?query=ab", []);
-    renderRoute(<LogForm mode={{ _tag: "Create" }} date="2024-02-29" type="all" />, "/logs/nieuw", "/logs/nieuw?date=2024-02-29&type=all");
+    renderRoute(<LogForm mode={{ _tag: "Create" }} date="2024-02-29" type="all" timezone="Europe/Amsterdam" />, "/logs/nieuw", "/logs/nieuw?date=2024-02-29&type=all");
 
     expect(await screen.findByRole("button", { name: /Recent product/ })).toBeInTheDocument();
     const search = screen.getByPlaceholderText("Zoek op product of merk");
@@ -63,7 +63,7 @@ describe("package search behavior", () => {
     server.enqueueJson("GET", "/calorie-tracker/packages/search?query=water", [
       createPackageFixture({ packageId: 2, productName: "Actueel water", consumptionType: "DRINK" }),
     ]);
-    renderRoute(<LogForm mode={{ _tag: "Create" }} date="2024-02-29" type="all" />, "/logs/nieuw", "/logs/nieuw?date=2024-02-29&type=all");
+    renderRoute(<LogForm mode={{ _tag: "Create" }} date="2024-02-29" type="all" timezone="Europe/Amsterdam" />, "/logs/nieuw", "/logs/nieuw?date=2024-02-29&type=all");
     const search = screen.getByPlaceholderText("Zoek op product of merk");
 
     await screen.findByText("Product niet gevonden");
@@ -101,6 +101,8 @@ describe("archived package edit unit state", () => {
     renderRoute(<EditLogRoute />, "/logs/:logId/bewerken", `/logs/${archivedLog.id}/bewerken?date=2024-02-29&type=all`);
 
     expect(await screen.findByText("Het huidige gearchiveerde product of de verpakking blijft beperkt bewerkbaar.")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Hoeveelheid" })).toHaveValue("3");
+    expect(screen.queryByRole("heading", { name: "Hoeveelheid" })).not.toBeInTheDocument();
     const unitSelect = screen.getByRole("combobox", { name: "Eenheid" });
     expect(unitSelect).toBeEnabled();
     expect(unitSelect).toHaveValue("INDIVIDUAL_UNIT:package");

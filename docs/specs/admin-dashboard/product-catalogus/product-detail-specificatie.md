@@ -138,9 +138,9 @@ Elke verpakkingrij toont minimaal:
 - verpakkingsafbeelding met productafbeelding en daarna placeholder als fallback;
 - status `Actief` of `Gearchiveerd`;
 - verpakkingstype;
-- inhoudshoeveelheid + inhoudseenheid, indien aanwezig;
-- aantal per verpakking;
-- individueel verpakkingstype bij multiverpakkingen;
+- volledige inhoudshoeveelheid + inhoudseenheid;
+- optionele portienaam en portiegrootte;
+- optioneel aantal porties of stuks per verpakking;
 - een duidelijke samenvatting;
 - link/tap naar verpakkingdetail.
 
@@ -151,7 +151,8 @@ fles 1,5 l
 ```
 
 ```text
-multipack 6 x blik 330 ml
+pak 88 g
+Per wafel: 4,9 g · 18 per verpakking
 ```
 
 Bij meerdere verpakkingen worden alle verpakkingen in deze lijst getoond. De actie `Verpakking toevoegen` staat bij deze sectie.
@@ -173,21 +174,21 @@ Read-only toont minimaal:
 Verpakking
 Status: Actief
 Afbeelding: <verpakkingsafbeelding, productafbeelding of placeholder>
-Type: fles
-Inhoud: 1,5 l
-Aantal per verpakking: 1
+Verpakkingstype: fles
+Volledige inhoud: 1,5 l
 Samenvatting: fles 1,5 l
 ```
 
-Bij multipack:
+Bij een verpakking met portie:
 
 ```text
 Verpakking
-Type: multipack
-Inhoud: 330 ml
-Aantal per verpakking: 6
-Individueel verpakkingstype: blik
-Samenvatting: multipack 6 x blik 330 ml
+Verpakkingstype: pak
+Volledige inhoud: 88 g
+Portie of stuk: wafel
+Portiegrootte: 4,9 g
+Aantal in verpakking: 18
+Samenvatting: pak 88 g (18 × 4,9 g per wafel)
 ```
 
 ## Product bewerken
@@ -246,9 +247,11 @@ Na succesvol toevoegen navigeert de gebruiker naar verpakkingdetail van de nieuw
 Verpakking bewerken gebruikt dezelfde velden en validatie als eerste verpakking bij product aanmaken:
 
 - verpakkingstype verplicht;
-- inhoud en inhoudseenheid consistent;
-- aantal per verpakking verplicht, standaard `1` bij toevoegen;
-- individueel verpakkingstype verplicht bij multiverpakkingen;
+- volledige inhoud en inhoudseenheid verplicht en consistent;
+- een optionele portie heeft een vrije naam, verplichte portiegrootte en verplichte inhoudseenheid;
+- het aantal porties of stuks is optioneel en, wanneer ingevuld, een positief geheel getal;
+- volledige inhoud en portiegrootte hebben dezelfde dimensie;
+- de som van porties is informatief en hoeft niet exact gelijk te zijn aan de volledige inhoud;
 - een optionele verpakkingsafbeelding;
 - de verpakking blijft compatibel met een eventueel productmacroprofiel;
 - dubbele verpakking onder hetzelfde product wordt geblokkeerd;
@@ -272,7 +275,7 @@ Na succesvol bewerken:
 
 De catalogus is de actuele bron van waarheid voor consumptielogs en voorraadregistraties. Gebruikte product- en verpakkingsdata mag worden gecorrigeerd, ook bij een typo of misclick.
 
-Bij een wijziging aan consumptietype, verpakkingstype, inhoud, inhoudseenheid of aantal per verpakking:
+Bij een wijziging aan consumptietype, verpakkingstype, volledige inhoud, portiegrootte, inhoudseenheid of aantal porties:
 
 - werken de nieuwe waarden na opslaan direct door naar gekoppelde domeinen;
 - wordt een wijziging geblokkeerd als deze niet compatibel is met het macroprofiel.
@@ -334,7 +337,7 @@ POST /products/:productId/packages/:packageId/archive
 POST /products/:productId/packages/:packageId/restore
 ```
 
-Het contract bevat de DTO's voor consumptietype, macroprofiel, rekenbare eenheden, multiverpakkingen, archivering en foutcodes.
+Het contract bevat de DTO's voor consumptietype, macroprofiel, rekenbare eenheden, volledige verpakkingsinhoud, optionele portiedefinities, archivering en foutcodes.
 
 ## Acceptatiecriteria
 
@@ -405,3 +408,10 @@ En anders een vaste placeholder.
 Gegeven dat een product- of verpakkingswijziging logs of voorraadregistraties beïnvloedt
 Dan gebruikt ieder gekoppeld domein na opslaan de gecorrigeerde catalogusdata
 En worden geen afhankelijkheidsaantallen vereist.
+
+### AC-11 - Portie naast volledige inhoud beheren
+
+Gegeven dat een verpakking een volledige inhoud en een portiedefinitie heeft
+Wanneer de beheerder verpakkingdetail opent of bewerkt
+Dan blijven volledige inhoud, portienaam, portiegrootte en optioneel aantal afzonderlijk zichtbaar en wijzigbaar
+En vervangt portiegrootte nooit de volledige verpakkingsinhoud.

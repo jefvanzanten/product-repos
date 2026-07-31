@@ -92,17 +92,23 @@ export const productPackage = sqliteTable("product_package", {
   productId: text("product_id").notNull().references(() => product.id),
   unitContentId: integer("unit_content_id").notNull().references(() => unitContent.id),
   packageTypeId: integer("package_type_id").notNull().references(() => packageType.id),
-  individualPackageTypeId: integer("individual_package_type_id").references(() => packageType.id),
-  unitsPerPackage: integer("units_per_package").notNull().default(1),
   archivedAt: text("archived_at"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [
-  check("product_package_units_positive", sql`${table.unitsPerPackage} > 0`),
-  check("product_package_individual_type_consistent", sql`(${table.unitsPerPackage} = 1 AND ${table.individualPackageTypeId} IS NULL) OR (${table.unitsPerPackage} > 1 AND ${table.individualPackageTypeId} IS NOT NULL)`),
-  uniqueIndex("product_package_with_individual_unique").on(table.productId, table.packageTypeId, table.unitContentId, table.unitsPerPackage, table.individualPackageTypeId).where(sql`${table.individualPackageTypeId} IS NOT NULL`),
-  uniqueIndex("product_package_without_individual_unique").on(table.productId, table.packageTypeId, table.unitContentId, table.unitsPerPackage).where(sql`${table.individualPackageTypeId} IS NULL`),
+  uniqueIndex("product_package_unique").on(table.productId, table.packageTypeId, table.unitContentId),
   index("product_package_product_idx").on(table.productId),
+]);
+
+/** Optional explicit portion metadata belonging to one product package. */
+export const productPackagePortion = sqliteTable("product_package_portion", {
+  productPackageId: integer("product_package_id").primaryKey().references(() => productPackage.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  unitContentId: integer("unit_content_id").notNull().references(() => unitContent.id),
+  portionsPerPackage: integer("portions_per_package"),
+}, (table) => [
+  check("product_package_portion_name_nonempty", sql`length(trim(${table.name})) > 0`),
+  check("product_package_portion_count_positive", sql`${table.portionsPerPackage} IS NULL OR ${table.portionsPerPackage} > 0`),
 ]);
 
 /** Optional current macro profile belonging to a product. */
@@ -138,6 +144,8 @@ export const unitContents = unitContent;
 export const packageTypes = packageType;
 /** Backward-compatible plural product-package alias. */
 export const productPackages = productPackage;
+/** Backward-compatible plural product-package-portion alias. */
+export const productPackagePortions = productPackagePortion;
 /** Backward-compatible plural macro-profile alias. */
 export const productMacroProfiles = productMacroProfile;
 /** Backward-compatible plural product alias. */

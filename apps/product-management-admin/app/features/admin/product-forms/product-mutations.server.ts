@@ -41,19 +41,33 @@ export async function submitCreateProductForm(
     brandId: brand.brandId,
     consumptionType: projection.value.consumptionType,
     macroProfile: projection.value.macroProfile,
-    package: {
-      amount: String(form.get("amount") ?? "").trim().replace(",", "."),
-      packageTypeId: Number(form.get("packageTypeId")),
-      individualPackageTypeId: parseOptionalPackageTypeId(form.get("individualPackageTypeId")),
-      unitTypeId: Number(form.get("unitTypeId")),
-      unitsPerPackage: Number(form.get("unitsPerPackage")),
-    },
+    package: readPackageForm(form),
   });
   return { ok: true, product };
 }
 
-/** Parse an optional package-type form field without turning an empty selection into zero. */
-function parseOptionalPackageTypeId(value: FormDataEntryValue | null): number | null {
+/** Parse total package content and a separately enabled optional portion. */
+function readPackageForm(form: FormData): CreateProductRequest["package"] {
+  return {
+    amount: normalizeDutchDecimal(form.get("amount")),
+    packageTypeId: Number(form.get("packageTypeId")),
+    unitTypeId: Number(form.get("unitTypeId")),
+    portion: String(form.get("portionEnabled") ?? "") !== "on" ? null : {
+      name: String(form.get("portionName") ?? "").trim(),
+      amount: normalizeDutchDecimal(form.get("portionAmount")),
+      unitTypeId: Number(form.get("portionUnitTypeId")),
+      portionsPerPackage: parseOptionalPositiveInteger(form.get("portionsPerPackage")),
+    },
+  };
+}
+
+/** Normalize one Dutch decimal form value for the JSON protocol. */
+function normalizeDutchDecimal(value: FormDataEntryValue | null): string {
+  return String(value ?? "").trim().replace(",", ".");
+}
+
+/** Parse an optional integer without turning an empty field into zero. */
+function parseOptionalPositiveInteger(value: FormDataEntryValue | null): number | null {
   const raw = String(value ?? "").trim();
   return raw.length === 0 ? null : Number(raw);
 }

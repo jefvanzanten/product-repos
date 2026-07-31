@@ -54,7 +54,7 @@ Opslaan maakt transactioneel één `product`, één eerste `product_package` en 
 - Producten of verpakkingen definitief verwijderen.
 - Archiveren tijdens de eerste aanmaak; een nieuw product start actief.
 - Apart merken- of categoriebeheer buiten de acties in dit formulier.
-- Een los extra model voor individuele eenheden buiten verpakkingstypes.
+- Meer dan één verschillende portiedefinitie per verpakking.
 
 ## Layout
 
@@ -84,9 +84,12 @@ Consumptietype
 
 Verpakking
 - verpakkingstype
-- individueel verpakkingstype bij multiverpakkingen
-- inhoud + inhoudseenheid
-- aantal per verpakking
+- volledige verpakkingsinhoud + inhoudseenheid
+- optionele portie of stuk
+  - vrije naam
+  - portiegrootte + inhoudseenheid
+  - optioneel aantal per verpakking
+  - informatieve som van porties wanneer het aantal is ingevuld
 - optionele verpakkingsafbeelding
 
 Voedingswaarden, standaard uit
@@ -205,11 +208,23 @@ Als de route wordt geopend met `brandId` of `categoryId`, worden deze alleen geb
 Verplichte velden:
 
 - `packageTypeId` - verpakkingstype;
-- `amount` - positieve decimal string;
-- `unitTypeId` - inhoudseenheid;
-- `unitsPerPackage` - positief geheel getal, standaard `1`.
+- `amount` - positieve decimal string voor de volledige verpakkingsinhoud;
+- `unitTypeId` - inhoudseenheid van de volledige verpakking;
+- `portion` - expliciet `null` wanneer geen portie of stuk wordt toegevoegd.
 
-Voor een multiverpakking met `unitsPerPackage > 1` is daarnaast `individualPackageTypeId` verplicht. Bij een enkelvoudige verpakking blijft `individualPackageTypeId` leeg.
+Een optionele `portion` bevat:
+
+- `name` - vrije, getrimde naam zoals `wafel`, `blikje` of `schep`;
+- `amount` - positieve decimal string voor één portie of stuk;
+- `unitTypeId` - inhoudseenheid van de portiegrootte;
+- `portionsPerPackage` - optioneel positief geheel getal of `null`.
+
+Contractregels:
+
+- volledige inhoud en portiegrootte worden afzonderlijk opgeslagen;
+- beide inhoudseenheden hebben dezelfde dimensie;
+- `portionsPerPackage × portion.amount` hoeft door afronding niet exact gelijk te zijn aan de volledige inhoud;
+- de vrije portienaam gebruikt geen `package_type`-referentie.
 
 De eerste verpakking heeft daarnaast een optionele afbeelding.
 
@@ -233,7 +248,7 @@ Het endpoint- en datamodel beschrijven voor deze slice:
 - macroprofiel, referentiebasis, voedingswaarden en bron van calorieën;
 - transactionele validatie van de compatibiliteit tussen macroprofiel en verpakking;
 - rekenbare inhoudseenheden;
-- multiverpakkingen via een individueel verpakkingstype.
+- een optionele portiedefinitie naast de expliciete volledige verpakkingsinhoud.
 
 Product- en verpakkingsafbeeldingen blijven conceptueel onderdeel van de UI-specificatie en vereisen nog een aparte contractuitbreiding.
 
@@ -343,3 +358,12 @@ Gegeven dat product, eerste verpakking en macroprofiel worden ingestuurd
 Wanneer één onderdeel ongeldig is
 Dan wordt geen van de onderdelen gedeeltelijk opgeslagen
 En blijven de ingevulde formulierwaarden behouden.
+
+### AC-13 - Volledige inhoud en optionele portie
+
+Gegeven dat een pak een volledige inhoud van `88 g` heeft
+En één wafel een expliciete portiegrootte van `4,9 g` heeft
+En het optionele aantal `18` is
+Wanneer de beheerder het product opslaat
+Dan blijven `88 g`, `4,9 g` en `18` afzonderlijk bewaard
+En toont de UI de informatieve som `88,2 g` zonder de volledige inhoud te overschrijven of opslaan te blokkeren.

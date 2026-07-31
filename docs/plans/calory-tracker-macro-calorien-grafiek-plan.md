@@ -1,5 +1,7 @@
 # Plan — macro- en calorieëngrafiek
 
+> Status: vervangen door [calory-tracker-figma-implementatieplan.md](./calory-tracker-figma-implementatieplan.md).
+
 Bron: `docs/specs/calory-tracker/dashboard/calorien-statestieken.md`.
 
 > Dit plan is opgesteld voor een eerdere, beperktere dashboardspecificatie. Bij uitvoering zijn de actuele specificatie, domeinregels, endpointcontracten en ERD's leidend; de implementatiestappen moeten daar eerst tegen worden herijkt.

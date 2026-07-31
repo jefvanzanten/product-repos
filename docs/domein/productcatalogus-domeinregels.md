@@ -20,8 +20,10 @@ Dit document bewaart gedeelde productcataloguskennis die door meerdere specs, en
 - Een product hoort bij één categorie en kan optioneel een merk hebben.
 - Een product heeft één of meer verpakkingen.
 - Zoek- en keuzestates tonen verpakkingen wanneer de keuze een concrete consumptie of voorraadregistratie nodig heeft; kale producten zijn daarvoor onvoldoende.
-- Een multiverpakking heeft een buitenste verpakkingstype, een individueel verpakkingstype en een aantal per verpakking.
-- Een enkelvoudige verpakking gebruikt geen apart individueel verpakkingstype.
+- Iedere verpakking bewaart de volledige verpakkingsinhoud, bijvoorbeeld `88 g`.
+- Een verpakking kan daarnaast één optionele portiedefinitie hebben met een vrije naam, een expliciete portiegrootte en een optioneel aantal porties of stuks per verpakking.
+- De volledige inhoud en portiegrootte zijn onafhankelijke cataloguswaarden: een afgeronde portiegrootte maal het aantal hoeft niet exact gelijk te zijn aan de volledige inhoud.
+- Als een portie bestaat, hebben volledige inhoud en portiegrootte dezelfde dimensie.
 
 ## Namen, duplicaten en decimalen
 

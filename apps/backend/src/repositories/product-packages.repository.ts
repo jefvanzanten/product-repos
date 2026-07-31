@@ -1,14 +1,14 @@
-import type { ProductPackageDto, ProductPackageRequest } from "@product-repos/contracts";
-import { and, eq, isNull, ne } from "drizzle-orm";
+import type { ProductPackageDto, ProductPackagePortionRequest, ProductPackageRequest } from "@product-repos/contracts";
+import { and, eq, ne } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import { db } from "../db";
-import { consumptionLog, packageType, product, productMacroProfile, productPackage, unitContent, unitType } from "../db/schema";
+import { consumptionLog, packageType, product, productMacroProfile, productPackage, productPackagePortion, unitContent, unitType } from "../db/schema";
 import { err, ok, type Result } from "../domain";
 import { requiredDimensionForReferenceBasis } from "../product-catalog/product-macro-profile";
 import { findPackageTypeById, findUnitTypeById } from "./units.repository";
 
 /** Minimal Drizzle executor used by package transactions and the default database. */
-export type ProductPackageExecutor = Pick<typeof db, "select" | "insert">;
+export type ProductPackageExecutor = Pick<typeof db, "select" | "insert" | "update" | "delete">;
 /** Raw package-type persistence row. */
 export type PackageTypeRow = typeof packageType.$inferSelect;
 /** Raw unit-type persistence row. */
@@ -17,14 +17,18 @@ export type UnitTypeRow = typeof unitType.$inferSelect;
 export type UnitContentRow = typeof unitContent.$inferSelect;
 /** Raw product-package persistence row. */
 export type ProductPackageRow = typeof productPackage.$inferSelect;
+/** Raw package-portion persistence row. */
+export type ProductPackagePortionRow = typeof productPackagePortion.$inferSelect;
 
 /** Joined persistence rows required to project a product package. */
 export type ProductPackageFullRow = {
   readonly productPackage: ProductPackageRow;
   readonly packageType: PackageTypeRow;
-  readonly individualPackageType: PackageTypeRow | null;
   readonly unitContent: UnitContentRow;
   readonly unitType: UnitTypeRow;
+  readonly portion: ProductPackagePortionRow | null;
+  readonly portionUnitContent: UnitContentRow | null;
+  readonly portionUnitType: UnitTypeRow | null;
 };
 
 /** Parsed values required to insert a product package. */
@@ -32,47 +36,36 @@ export type InsertProductPackageInput = {
   readonly productId: string;
   readonly unitContentId: number;
   readonly packageTypeId: number;
-  readonly individualPackageTypeId: number | null;
-  readonly unitsPerPackage: number;
 };
 
-/** Add a package when references, duplicates, and macro dimensions are valid. */
+/** Add a package when references, duplicates, portions, and macro dimensions are valid. */
 export function addProductPackage(productId: string, input: ProductPackageRequest): Result<ProductPackageDto & { readonly productId: string }> {
   if (!productExists(productId)) return err({ code: "PRODUCT_NOT_FOUND", message: "Product not found" });
 
   const references = findPackageReferences(input);
   if (!references.ok) return references;
-  if (!isPackageDimensionCompatible(productId, references.value.unitTypeRow.dimension)) return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Package unit dimension is incompatible with the macro profile" });
+  if (!isPackageDimensionCompatible(productId, references.value.unitTypeRow.dimension)) {
+    return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Package unit dimension is incompatible with the macro profile" });
+  }
 
   const created = db.transaction((tx) => {
-    const unitContentRow = findOrCreateUnitContent(tx, input.unitTypeId, input.amount);
-    const duplicate = tx.select().from(productPackage).where(packageDuplicatePredicate(productId, unitContentRow.id, input)).get();
-    if (duplicate) return { duplicate: true as const, unitContentRow, productPackageRow: duplicate };
+    const totalUnitContent = findOrCreateUnitContent(tx, input.unitTypeId, input.amount);
+    const duplicate = tx.select().from(productPackage).where(packageDuplicatePredicate(productId, totalUnitContent.id, input)).get();
+    if (duplicate) return { duplicate: true as const, packageId: duplicate.id };
 
-    return {
-      duplicate: false as const,
-      unitContentRow,
-      productPackageRow: insertProductPackage(tx, {
-        productId,
-        unitContentId: unitContentRow.id,
-        packageTypeId: input.packageTypeId,
-        individualPackageTypeId: input.individualPackageTypeId,
-        unitsPerPackage: input.unitsPerPackage,
-      }),
-    };
+    const packageRow = insertProductPackage(tx, {
+      productId,
+      unitContentId: totalUnitContent.id,
+      packageTypeId: input.packageTypeId,
+    });
+    persistProductPackagePortion(tx, packageRow.id, input.portion);
+    return { duplicate: false as const, packageId: packageRow.id };
   });
 
   if (created.duplicate) return err({ code: "PRODUCT_PACKAGE_ALREADY_EXISTS", message: "Product package already exists" });
-  return ok({
-    productId,
-    ...toProductPackageDto({
-      productPackage: created.productPackageRow,
-      packageType: references.value.packageTypeRow,
-      individualPackageType: references.value.individualPackageTypeRow,
-      unitContent: created.unitContentRow,
-      unitType: references.value.unitTypeRow,
-    }),
-  });
+  const fullRow = findProductPackageFullRow(productId, created.packageId);
+  if (fullRow === undefined) throw new Error("Created product package could not be projected");
+  return ok({ productId, ...toProductPackageDto(fullRow) });
 }
 
 /** Read one package belonging to a product. */
@@ -83,7 +76,7 @@ export function getProductPackage(productId: string, packageId: number): Result<
   return ok({ productId, ...toProductPackageDto(fullRow) });
 }
 
-/** Update a package when references, duplicates, and macro dimensions are valid. */
+/** Update a package when references, duplicates, portions, and macro dimensions are valid. */
 export function updateProductPackage(productId: string, packageId: number, input: ProductPackageRequest): Result<ProductPackageDto & { readonly productId: string }> {
   if (!productExists(productId)) return err({ code: "PRODUCT_NOT_FOUND", message: "Product not found" });
   const existingPackage = findProductPackageFullRow(productId, packageId);
@@ -91,43 +84,38 @@ export function updateProductPackage(productId: string, packageId: number, input
 
   const references = findPackageReferences(input);
   if (!references.ok) return references;
-  if (!isPackageDimensionCompatible(productId, references.value.unitTypeRow.dimension)) return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Package unit dimension is incompatible with the macro profile" });
-  if (existingPackage.unitType.dimension !== references.value.unitTypeRow.dimension && hasActiveExplicitContentLogs(packageId)) {
+  if (!isPackageDimensionCompatible(productId, references.value.unitTypeRow.dimension)) {
+    return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Package unit dimension is incompatible with the macro profile" });
+  }
+  if (existingPackage.unitType.dimension !== references.value.unitTypeRow.dimension && hasRetainedExplicitContentLogs(packageId)) {
     return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Package dimension cannot change while explicit content-unit logs reference it" });
+  }
+  if (input.portion === null && hasRetainedIndividualLogs(packageId)) {
+    return err({ code: "VALIDATION_ERROR", message: "Portion data cannot be removed while consumption logs reference it", fields: { portion: "Deze portie wordt gebruikt door consumptielogs." } });
   }
 
   const updated = db.transaction((tx) => {
-    const unitContentRow = findOrCreateUnitContent(tx, input.unitTypeId, input.amount);
+    const totalUnitContent = findOrCreateUnitContent(tx, input.unitTypeId, input.amount);
     const duplicate = tx.select().from(productPackage).where(and(
       ne(productPackage.id, packageId),
-      packageDuplicatePredicate(productId, unitContentRow.id, input),
+      packageDuplicatePredicate(productId, totalUnitContent.id, input),
     )).get();
-    if (duplicate) return { duplicate: true as const, unitContentRow, productPackageRow: duplicate };
+    if (duplicate) return { duplicate: true as const };
 
-    return {
-      duplicate: false as const,
-      unitContentRow,
-      productPackageRow: tx.update(productPackage).set({
-        packageTypeId: input.packageTypeId,
-        individualPackageTypeId: input.individualPackageTypeId,
-        unitContentId: unitContentRow.id,
-        unitsPerPackage: input.unitsPerPackage,
-        updatedAt: new Date().toISOString(),
-      }).where(eq(productPackage.id, packageId)).returning().get(),
-    };
+    tx.update(productPackage).set({
+      packageTypeId: input.packageTypeId,
+      unitContentId: totalUnitContent.id,
+      archivedAt: shouldActivateCorrectedLegacyPackage(existingPackage, input) ? null : existingPackage.productPackage.archivedAt,
+      updatedAt: new Date().toISOString(),
+    }).where(eq(productPackage.id, packageId)).run();
+    persistProductPackagePortion(tx, packageId, input.portion);
+    return { duplicate: false as const };
   });
 
   if (updated.duplicate) return err({ code: "PRODUCT_PACKAGE_ALREADY_EXISTS", message: "Product package already exists" });
-  return ok({
-    productId,
-    ...toProductPackageDto({
-      productPackage: updated.productPackageRow,
-      packageType: references.value.packageTypeRow,
-      individualPackageType: references.value.individualPackageTypeRow,
-      unitContent: updated.unitContentRow,
-      unitType: references.value.unitTypeRow,
-    }),
-  });
+  const fullRow = findProductPackageFullRow(productId, packageId);
+  if (fullRow === undefined) throw new Error("Updated product package could not be projected");
+  return ok({ productId, ...toProductPackageDto(fullRow) });
 }
 
 /** Find or create canonical unit content through the active executor. */
@@ -142,92 +130,151 @@ export function insertProductPackage(executor: ProductPackageExecutor, input: In
   return executor.insert(productPackage).values(input).returning().get();
 }
 
+/** Insert, replace, or remove the optional portion belonging to a package. */
+export function persistProductPackagePortion(
+  executor: ProductPackageExecutor,
+  productPackageId: number,
+  portion: ProductPackagePortionRequest | null,
+): void {
+  if (portion === null) {
+    executor.delete(productPackagePortion).where(eq(productPackagePortion.productPackageId, productPackageId)).run();
+    return;
+  }
+  const portionContent = findOrCreateUnitContent(executor, portion.unitTypeId, portion.amount);
+  executor.insert(productPackagePortion).values({
+    productPackageId,
+    name: portion.name,
+    unitContentId: portionContent.id,
+    portionsPerPackage: portion.portionsPerPackage,
+  }).onConflictDoUpdate({
+    target: productPackagePortion.productPackageId,
+    set: {
+      name: portion.name,
+      unitContentId: portionContent.id,
+      portionsPerPackage: portion.portionsPerPackage,
+    },
+  }).run();
+}
+
 /** Read all package relation rows for one product. */
 export function findProductPackageFullRows(productId: string): ProductPackageFullRow[] {
-  const individualPackageType = alias(packageType, "individual_package_type");
-  return db.select({ productPackage, packageType, individualPackageType, unitContent, unitType })
-    .from(productPackage)
-    .innerJoin(packageType, eq(productPackage.packageTypeId, packageType.id))
-    .leftJoin(individualPackageType, eq(productPackage.individualPackageTypeId, individualPackageType.id))
-    .innerJoin(unitContent, eq(productPackage.unitContentId, unitContent.id))
-    .innerJoin(unitType, eq(unitContent.unitTypeId, unitType.id))
-    .where(eq(productPackage.productId, productId))
-    .all();
+  return packageFullRowQuery().where(eq(productPackage.productId, productId)).all();
 }
 
 /** Read one package relation row for one product. */
 export function findProductPackageFullRow(productId: string, packageId: number): ProductPackageFullRow | undefined {
-  const individualPackageType = alias(packageType, "individual_package_type");
-  return db.select({ productPackage, packageType, individualPackageType, unitContent, unitType })
-    .from(productPackage)
-    .innerJoin(packageType, eq(productPackage.packageTypeId, packageType.id))
-    .leftJoin(individualPackageType, eq(productPackage.individualPackageTypeId, individualPackageType.id))
-    .innerJoin(unitContent, eq(productPackage.unitContentId, unitContent.id))
-    .innerJoin(unitType, eq(unitContent.unitTypeId, unitType.id))
-    .where(and(eq(productPackage.productId, productId), eq(productPackage.id, packageId)))
-    .get();
+  return packageFullRowQuery().where(and(eq(productPackage.productId, productId), eq(productPackage.id, packageId))).get();
 }
 
-/** Project package persistence rows into the public protocol shape. */
+/** Build the joined query used for package detail and list projections. */
+function packageFullRowQuery() {
+  const portionUnitContent = alias(unitContent, "portion_unit_content");
+  const portionUnitType = alias(unitType, "portion_unit_type");
+  return db.select({
+    productPackage,
+    packageType,
+    unitContent,
+    unitType,
+    portion: productPackagePortion,
+    portionUnitContent,
+    portionUnitType,
+  }).from(productPackage)
+    .innerJoin(packageType, eq(productPackage.packageTypeId, packageType.id))
+    .innerJoin(unitContent, eq(productPackage.unitContentId, unitContent.id))
+    .innerJoin(unitType, eq(unitContent.unitTypeId, unitType.id))
+    .leftJoin(productPackagePortion, eq(productPackage.id, productPackagePortion.productPackageId))
+    .leftJoin(portionUnitContent, eq(productPackagePortion.unitContentId, portionUnitContent.id))
+    .leftJoin(portionUnitType, eq(portionUnitContent.unitTypeId, portionUnitType.id));
+}
+
+/** Project product-package persistence rows into the public protocol shape. */
 export function toProductPackageDto(row: ProductPackageFullRow): ProductPackageDto {
+  const portion = row.portion === null || row.portionUnitContent === null || row.portionUnitType === null
+    ? null
+    : {
+        name: row.portion.name,
+        unitContent: {
+          id: row.portionUnitContent.id,
+          amount: String(row.portionUnitContent.amount),
+          unitType: toUnitTypeDto(row.portionUnitType),
+        },
+        portionsPerPackage: row.portion.portionsPerPackage,
+      };
   return {
     id: row.productPackage.id,
     packageType: { id: row.packageType.id, name: row.packageType.name },
-    individualPackageType: row.individualPackageType === null
-      ? null
-      : { id: row.individualPackageType.id, name: row.individualPackageType.name },
     unitContent: {
       id: row.unitContent.id,
       amount: String(row.unitContent.amount),
-      unitType: {
-        id: row.unitType.id,
-        name: row.unitType.name,
-        symbol: row.unitType.symbol,
-        dimension: row.unitType.dimension,
-        conversionToBase: String(row.unitType.conversionToBase),
-      },
+      unitType: toUnitTypeDto(row.unitType),
     },
-    unitsPerPackage: row.productPackage.unitsPerPackage,
-    summary: formatPackageSummary(row.productPackage, row.packageType, row.individualPackageType, row.unitContent, row.unitType),
+    portion,
+    summary: formatPackageSummary(row.productPackage, row.packageType, row.unitContent, row.unitType, portion),
   };
 }
 
-/** Resolve all package references without substituting the outer package type. */
+/** Project a unit-type row into the catalog protocol shape. */
+function toUnitTypeDto(row: UnitTypeRow) {
+  return {
+    id: row.id,
+    name: row.name,
+    symbol: row.symbol,
+    dimension: row.dimension,
+    conversionToBase: String(row.conversionToBase),
+  };
+}
+
+/** Resolve all package and optional portion references. */
 function findPackageReferences(input: ProductPackageRequest): Result<{
   readonly packageTypeRow: PackageTypeRow;
-  readonly individualPackageTypeRow: PackageTypeRow | null;
   readonly unitTypeRow: UnitTypeRow;
+  readonly portionUnitTypeRow: UnitTypeRow | null;
 }> {
   const unitTypeRow = findUnitTypeById(input.unitTypeId);
   const packageTypeRow = findPackageTypeById(input.packageTypeId);
-  const individualPackageTypeRow = input.individualPackageTypeId === null
-    ? null
-    : findPackageTypeById(input.individualPackageTypeId) ?? null;
-  if (!unitTypeRow || !packageTypeRow || (input.individualPackageTypeId !== null && individualPackageTypeRow === null)) {
+  const portionUnitTypeRow = input.portion === null ? null : findUnitTypeById(input.portion.unitTypeId) ?? null;
+  if (!unitTypeRow || !packageTypeRow || (input.portion !== null && portionUnitTypeRow === null)) {
     return err({ code: "REFERENCE_NOT_FOUND", message: "Reference not found" });
   }
-  return ok({ packageTypeRow, individualPackageTypeRow, unitTypeRow });
+  if (portionUnitTypeRow !== null && portionUnitTypeRow.dimension !== unitTypeRow.dimension) {
+    return err({
+      code: "UNIT_DIMENSION_INCOMPATIBLE",
+      message: "Portion and package content must use the same unit dimension",
+      fields: { "portion.unitTypeId": "Kies dezelfde soort eenheid als voor de volledige inhoud." },
+    });
+  }
+  return ok({ packageTypeRow, unitTypeRow, portionUnitTypeRow });
 }
 
-/** Build the duplicate predicate with deterministic nullable individual-type semantics. */
+/** Build the package identity predicate from outer type and total content. */
 function packageDuplicatePredicate(productId: string, unitContentId: number, input: ProductPackageRequest) {
   return and(
     eq(productPackage.productId, productId),
     eq(productPackage.packageTypeId, input.packageTypeId),
     eq(productPackage.unitContentId, unitContentId),
-    eq(productPackage.unitsPerPackage, input.unitsPerPackage),
-    input.individualPackageTypeId === null
-      ? isNull(productPackage.individualPackageTypeId)
-      : eq(productPackage.individualPackageTypeId, input.individualPackageTypeId),
   );
 }
 
-/** Determine whether active explicit-unit logs require a package's current dimension. */
-function hasActiveExplicitContentLogs(packageId: number): boolean {
+/** Determine whether a corrected quarantined legacy package can become selectable again. */
+function shouldActivateCorrectedLegacyPackage(existing: ProductPackageFullRow, input: ProductPackageRequest): boolean {
+  return existing.productPackage.archivedAt !== null
+    && existing.portion?.name.trim().toLocaleLowerCase("nl-NL") === "individueel type controleren"
+    && input.portion?.name.trim().toLocaleLowerCase("nl-NL") !== "individueel type controleren";
+}
+
+/** Determine whether a retained explicit content-unit log requires the package's current dimension. */
+function hasRetainedExplicitContentLogs(packageId: number): boolean {
   return db.select({ id: consumptionLog.id }).from(consumptionLog).where(and(
     eq(consumptionLog.productPackageId, packageId),
     eq(consumptionLog.inputMode, "CONTENT_UNIT"),
-    isNull(consumptionLog.deletedAt),
+  )).limit(1).get() !== undefined;
+}
+
+/** Determine whether retained individual-unit logs require current portion metadata. */
+function hasRetainedIndividualLogs(packageId: number): boolean {
+  return db.select({ id: consumptionLog.id }).from(consumptionLog).where(and(
+    eq(consumptionLog.productPackageId, packageId),
+    eq(consumptionLog.inputMode, "INDIVIDUAL_UNIT"),
   )).limit(1).get() !== undefined;
 }
 
@@ -242,16 +289,18 @@ function isPackageDimensionCompatible(productId: string, dimension: UnitTypeRow[
   return !profile || requiredDimensionForReferenceBasis(profile.referenceBasis) === dimension;
 }
 
-/** Format a product package summary for catalog display. */
+/** Format total package content and optional portion metadata for catalog display. */
 function formatPackageSummary(
-  productPackageRow: ProductPackageRow,
+  _productPackageRow: ProductPackageRow,
   packageTypeRow: PackageTypeRow,
-  individualPackageTypeRow: PackageTypeRow | null,
-  unitContentRow: UnitContentRow,
-  unitTypeRow: UnitTypeRow,
+  totalContentRow: UnitContentRow,
+  totalUnitTypeRow: UnitTypeRow,
+  portion: ProductPackageDto["portion"],
 ): string {
-  const amount = String(unitContentRow.amount);
-  if (productPackageRow.unitsPerPackage <= 1) return `${packageTypeRow.name} ${amount} ${unitTypeRow.name}`;
-  const individualName = individualPackageTypeRow?.name ?? "onbekende eenheid";
-  return `${packageTypeRow.name} (${productPackageRow.unitsPerPackage} ${individualName} x ${amount} ${unitTypeRow.name})`;
+  const total = `${packageTypeRow.name} ${String(totalContentRow.amount)} ${totalUnitTypeRow.name}`;
+  if (portion === null) return total;
+  const portionSize = `${portion.unitContent.amount} ${portion.unitContent.unitType.name} per ${portion.name}`;
+  return portion.portionsPerPackage === null
+    ? `${total} (${portionSize})`
+    : `${total} (${portion.portionsPerPackage} × ${portionSize})`;
 }

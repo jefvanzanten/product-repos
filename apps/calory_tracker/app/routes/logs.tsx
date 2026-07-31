@@ -7,11 +7,11 @@ import {
   addCalendarDays,
   canonicalizeTrackerUrl,
   formatLocalDate,
-  getBrowserTimezone,
   getTodayInTimezone,
   sortChronologically,
 } from "../calorie-tracker-domain";
 import { ConsumptionTypeBadge, DateControl, Icon, ProductImage, StatusPanel } from "../calorie-tracker-components";
+import { useBrowserTimezone } from "../use-browser-timezone";
 import styles from "./logs.module.css";
 
 type LogsViewState =
@@ -37,7 +37,8 @@ export function meta(): ReadonlyArray<{ readonly title: string }> {
 
 /** Render the canonical date/filter logbook and preserve contextual scroll state. */
 export default function LogsRoute(): ReactNode {
-  const timezone = getBrowserTimezone();
+  const resolvedTimezone = useBrowserTimezone();
+  const timezone = resolvedTimezone ?? "UTC";
   const today = getTodayInTimezone(timezone);
   const [parameters, setParameters] = useSearchParams();
   const canonical = canonicalizeTrackerUrl(parameters.get("date"), parameters.get("type"), today);
@@ -53,15 +54,24 @@ export default function LogsRoute(): ReactNode {
   }, []);
 
   useEffect(() => {
-    if (!canonical.requiresReplace) return;
+    if (resolvedTimezone === null || !canonical.requiresReplace) return;
     setParameters({ date, type }, { replace: true });
-  }, [canonical.requiresReplace, date, setParameters, type]);
+  }, [canonical.requiresReplace, date, resolvedTimezone, setParameters, type]);
 
   const logsQuery = useQuery({
     queryKey: ["calorie-tracker", "logs", date, type, timezone],
+    enabled: resolvedTimezone !== null,
     queryFn: ({ signal }) => getConsumptionLogs(date, type, { timezone, signal }),
   });
-  const viewState = deriveLogsViewState(logsQuery.data, type);
+  const needsUnfilteredCheck = type !== "all" && logsQuery.data?._tag === "Success" && logsQuery.data.value.items.length === 0;
+  const unfilteredQuery = useQuery({
+    queryKey: ["calorie-tracker", "logs", date, "all", timezone],
+    enabled: resolvedTimezone !== null && needsUnfilteredCheck,
+    queryFn: ({ signal }) => getConsumptionLogs(date, "all", { timezone, signal }),
+  });
+  const viewState = resolvedTimezone === null
+    ? { _tag: "Loading" as const }
+    : deriveLogsViewState(logsQuery.data, type, unfilteredQuery.data);
   const sortedItems = useMemo(
     () => viewState._tag === "Ready" ? sortChronologically(viewState.items) : [],
     [viewState],
@@ -173,15 +183,19 @@ export default function LogsRoute(): ReactNode {
   );
 }
 
-/** Derive all explicit logbook loading, failure, and empty states. */
+/** Derive all explicit logbook loading, failure, and semantically distinct empty states. */
 function deriveLogsViewState(
   outcome: Awaited<ReturnType<typeof getConsumptionLogs>> | undefined,
   filter: ConsumptionTypeFilter,
+  unfilteredOutcome: Awaited<ReturnType<typeof getConsumptionLogs>> | undefined,
 ): LogsViewState {
   if (outcome === undefined) return { _tag: "Loading" };
   if (outcome._tag === "Failure") return { _tag: "LoadFailed" };
-  if (outcome.value.items.length === 0) return filter === "all" ? { _tag: "EmptyDate" } : { _tag: "EmptyFilter" };
-  return { _tag: "Ready", items: outcome.value.items };
+  if (outcome.value.items.length > 0) return { _tag: "Ready", items: outcome.value.items };
+  if (filter === "all") return { _tag: "EmptyDate" };
+  if (unfilteredOutcome === undefined) return { _tag: "Loading" };
+  if (unfilteredOutcome._tag === "Failure") return { _tag: "LoadFailed" };
+  return unfilteredOutcome.value.items.length === 0 ? { _tag: "EmptyDate" } : { _tag: "EmptyFilter" };
 }
 
 /** Render one compact log item without calorie or macro totals. */
@@ -209,7 +223,7 @@ function LogItem({ item, contextSearch }: { readonly item: ConsumptionLog; reado
 /** Format the original input without replacing it by a derived quantity. */
 function formatOriginalQuantity(item: ConsumptionLog): string {
   if (item.inputMode === "CONTENT_UNIT") return `${item.quantity.replace(".", ",")} ${item.inputUnitType?.symbol ?? ""}`.trim();
-  if (item.inputMode === "INDIVIDUAL_UNIT") return `${item.quantity.replace(".", ",")} ${item.package.individualPackageType?.name.toLowerCase() ?? "eenheid"}`;
+  if (item.inputMode === "INDIVIDUAL_UNIT") return `${item.quantity.replace(".", ",")} ${item.package.portion?.name.toLowerCase() ?? "eenheid"}`;
   return `${item.quantity.replace(".", ",")} ${item.package.packageType.name.toLowerCase()}`;
 }
 

@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext, type ConsoleMessage, type Page, type TestInfo } from "@playwright/test";
+import { expect, test, type APIRequestContext, type ConsoleMessage, type Page, type Request, type Response, type TestInfo } from "@playwright/test";
 import {
   BACKEND_ORIGIN,
   CATALOG,
@@ -17,11 +17,19 @@ function appPath(path: string): string {
   return `/calory-tracker${path}`;
 }
 
+/** Determine whether an HTTP failure is an intentional private-log or concurrency outcome. */
+function isExpectedHttpFailure(status: number, url: string): boolean {
+  if (status !== 404 && status !== 409) return false;
+  return url.startsWith(`${BACKEND_ORIGIN}/calorie-tracker/logs/`);
+}
+
 /** Capture browser console errors while leaving ordinary diagnostic messages untouched. */
 function captureConsoleError(message: ConsoleMessage): void {
   if (message.type() !== "error") return;
   if (message.text().startsWith("Failed to fetch manifest patches TypeError: Failed to fetch")) return;
-  if (/^Failed to load resource: the server responded with a status of (?:404 \(Not Found\)|409 \(Conflict\))$/.test(message.text())) return;
+  const location = message.location().url;
+  const statusMatch = message.text().match(/status of (404|409)/);
+  if (statusMatch !== null && isExpectedHttpFailure(Number(statusMatch[1]), location)) return;
   const page = message.page();
   if (page === null) return;
   browserErrors.get(page)?.push(message.text());
@@ -32,6 +40,19 @@ function capturePageError(page: Page, error: Error): void {
   browserErrors.get(page)?.push(error.message);
 }
 
+/** Capture an unexpected failed HTTP response for one scenario. */
+function captureResponseFailure(page: Page, response: Response): void {
+  if (response.status() < 400 || isExpectedHttpFailure(response.status(), response.url())) return;
+  browserErrors.get(page)?.push(`Unexpected HTTP ${response.status()} for ${response.url()}`);
+}
+
+/** Capture a transport failure unless cancellation was an intentional stale-request abort. */
+function captureRequestFailure(page: Page, request: Request): void {
+  const failure = request.failure();
+  if (failure === null || failure.errorText.includes("ERR_ABORTED")) return;
+  browserErrors.get(page)?.push(`Request failed for ${request.url()}: ${failure.errorText}`);
+}
+
 /** Register browser-defect collection for one newly created Playwright page. */
 function registerBrowserDiagnostics(page: Page): void {
   browserErrors.set(page, []);
@@ -40,7 +61,17 @@ function registerBrowserDiagnostics(page: Page): void {
   function recordPageError(error: Error): void {
     capturePageError(page, error);
   }
+  /** Bind the owning page to a failed response callback. */
+  function recordResponseFailure(response: Response): void {
+    captureResponseFailure(page, response);
+  }
+  /** Bind the owning page to a transport-failure callback. */
+  function recordRequestFailure(request: Request): void {
+    captureRequestFailure(page, request);
+  }
   page.on("pageerror", recordPageError);
+  page.on("response", recordResponseFailure);
+  page.on("requestfailed", recordRequestFailure);
 }
 
 /** Reset the real temporary database to stable anonymous data before a scenario. */
@@ -182,7 +213,7 @@ test.describe("Calorie Tracker acceptance slice", function calorieTrackerAccepta
     const productResult = page.getByRole("button", { name: /Volkoren reep/ });
     await expect(productResult).toBeVisible();
     await productResult.click();
-    await page.getByLabel("Waarde").fill("0,5");
+    await page.getByLabel("Hoeveelheid").fill("0,5");
     await page.getByRole("button", { name: "Log opslaan" }).click();
     await expect(page).toHaveURL(new RegExp(`/logs\\?date=${date}&type=drink$`));
     await expect(page.getByRole("link", { name: /Volkoren reep/ })).toHaveCount(0);
@@ -219,12 +250,12 @@ test.describe("Calorie Tracker acceptance slice", function calorieTrackerAccepta
 
     const touch = await request.post(`${FIXTURE_ORIGIN}/touch-log`, { data: { id: LOGS.earlyFood } });
     expect(touch.ok()).toBe(true);
-    await page.getByLabel("Waarde").fill("2,5");
+    await page.getByLabel("Hoeveelheid").fill("2,5");
     await page.getByRole("button", { name: "Wijzigingen opslaan" }).click();
     await expect(page.getByRole("alert")).toContainText("intussen gewijzigd");
     await page.getByRole("button", { name: "Actuele data herladen" }).click();
     await expect(page.getByRole("dialog", { name: "Log bewerken" })).toBeVisible();
-    await page.getByLabel("Waarde").fill("2,5");
+    await page.getByLabel("Hoeveelheid").fill("2,5");
     await page.getByRole("button", { name: "Wijzigingen opslaan" }).click();
     await expect(page).toHaveURL(new RegExp(`/logs\\?date=${date}&type=food$`));
     await expect(page.getByRole("link", { name: /2,5 reep/ })).toBeVisible();

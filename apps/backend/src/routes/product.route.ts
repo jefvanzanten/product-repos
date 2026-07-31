@@ -1,4 +1,5 @@
 import { createProductRequestSchema, productPackageRequestSchema, updateProductRequestSchema } from "@product-repos/contracts";
+import type { ProductPackageRequest } from "@product-repos/contracts";
 import { Hono } from "hono";
 import { canonicalDecimal, positiveInt, trimRequired } from "../domain";
 import { browseProductCatalog, searchProductCatalog } from "../repositories/product-catalog.repository";
@@ -144,20 +145,31 @@ function parseRequiredPositiveInt(value: string | undefined): number | null {
   return Number.isInteger(parsed) && parsed >= 1 ? parsed : null;
 }
 
-/** Parse package decimals and counts for application use. */
-function parsePackageInput(input: { readonly packageTypeId: number; readonly individualPackageTypeId: number | null; readonly amount: string; readonly unitTypeId: number; readonly unitsPerPackage: number }) {
+/** Parse total package and optional portion values for application use. */
+function parsePackageInput(input: ProductPackageRequest) {
   const amount = canonicalDecimal(input.amount);
   if (!amount.ok) return amount;
-  const unitsPerPackage = positiveInt(input.unitsPerPackage, "unitsPerPackage");
-  if (!unitsPerPackage.ok) return unitsPerPackage;
+  if (input.portion === null) return { ok: true as const, value: { ...input, amount: amount.value } };
+
+  const portionName = trimRequired(input.portion.name, "portion.name");
+  if (!portionName.ok) return portionName;
+  const portionAmount = canonicalDecimal(input.portion.amount, "portion.amount");
+  if (!portionAmount.ok) return portionAmount;
+  const portionsPerPackage = input.portion.portionsPerPackage === null
+    ? { ok: true as const, value: null }
+    : positiveInt(input.portion.portionsPerPackage, "portion.portionsPerPackage");
+  if (!portionsPerPackage.ok) return portionsPerPackage;
   return {
     ok: true as const,
     value: {
-      packageTypeId: input.packageTypeId,
-      individualPackageTypeId: input.individualPackageTypeId,
+      ...input,
       amount: amount.value,
-      unitTypeId: input.unitTypeId,
-      unitsPerPackage: unitsPerPackage.value,
+      portion: {
+        ...input.portion,
+        name: portionName.value,
+        amount: portionAmount.value,
+        portionsPerPackage: portionsPerPackage.value,
+      },
     },
   };
 }

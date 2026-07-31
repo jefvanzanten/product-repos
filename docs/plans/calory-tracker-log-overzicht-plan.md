@@ -1,5 +1,7 @@
 # Implementatieplan — Figma-consumptielogboek
 
+> Status: vervangen door [calory-tracker-figma-implementatieplan.md](./calory-tracker-figma-implementatieplan.md).
+
 ## Bronnen
 
 - Figma-bestand `Calorie Tracker – Productcatalogus stijl`:

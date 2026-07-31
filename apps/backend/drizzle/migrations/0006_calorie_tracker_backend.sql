@@ -9,7 +9,7 @@ CREATE TABLE unit_type_aligned (
 );
 --> statement-breakpoint
 INSERT INTO unit_type_aligned (id, name, symbol, dimension, conversion_to_base)
-SELECT id, name, symbol, dimension, CAST(conversion_to_base AS TEXT) FROM unit_type;
+SELECT id, name, symbol, dimension, rtrim(rtrim(printf('%.15f', conversion_to_base), '0'), '.') FROM unit_type;
 --> statement-breakpoint
 DROP TABLE unit_type;
 --> statement-breakpoint
@@ -26,7 +26,7 @@ CREATE TABLE unit_content_aligned (
 );
 --> statement-breakpoint
 INSERT INTO unit_content_aligned (id, unit_type_id, amount)
-SELECT id, unit_type_id, CAST(amount AS TEXT) FROM unit_content;
+SELECT id, unit_type_id, rtrim(rtrim(printf('%.15f', amount), '0'), '.') FROM unit_content;
 --> statement-breakpoint
 DROP TABLE unit_content;
 --> statement-breakpoint
@@ -78,7 +78,8 @@ WHERE EXISTS (SELECT 1 FROM product_package WHERE units_per_package > 1)
 INSERT INTO product_package_aligned (id, product_id, unit_content_id, package_type_id, individual_package_type_id, units_per_package, archived_at, created_at, updated_at)
 SELECT id, product_id, unit_content_id, package_type_id,
   CASE WHEN units_per_package > 1 THEN (SELECT id FROM package_type WHERE lower(trim(name)) = lower('Individueel type controleren') LIMIT 1) ELSE NULL END,
-  units_per_package, NULL, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM product_package;
+  units_per_package, CASE WHEN units_per_package > 1 THEN strftime('%Y-%m-%dT%H:%M:%fZ', 'now') ELSE NULL END,
+  strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM product_package;
 --> statement-breakpoint
 DROP TABLE product_package;
 --> statement-breakpoint
@@ -109,7 +110,12 @@ CREATE TABLE product_macro_profile_aligned (
 );
 --> statement-breakpoint
 INSERT INTO product_macro_profile_aligned (product_id, reference_basis, calories_kcal, protein_g, carbohydrates_g, fat_g, calories_source, created_at, updated_at)
-SELECT product_id, reference_basis, CAST(calories_kcal AS TEXT), CAST(protein_g AS TEXT), CAST(carbohydrates_g AS TEXT), CAST(fat_g AS TEXT), calories_source, created_at, updated_at FROM product_macro_profile;
+SELECT product_id, reference_basis,
+  CASE WHEN calories_kcal IS NULL THEN NULL ELSE rtrim(rtrim(printf('%.15f', calories_kcal), '0'), '.') END,
+  CASE WHEN protein_g IS NULL THEN NULL ELSE rtrim(rtrim(printf('%.15f', protein_g), '0'), '.') END,
+  CASE WHEN carbohydrates_g IS NULL THEN NULL ELSE rtrim(rtrim(printf('%.15f', carbohydrates_g), '0'), '.') END,
+  CASE WHEN fat_g IS NULL THEN NULL ELSE rtrim(rtrim(printf('%.15f', fat_g), '0'), '.') END,
+  calories_source, created_at, updated_at FROM product_macro_profile;
 --> statement-breakpoint
 DROP TABLE product_macro_profile;
 --> statement-breakpoint

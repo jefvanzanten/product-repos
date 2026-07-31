@@ -164,5 +164,15 @@ describe("nutrition goals dialog", () => {
       fatG: null,
     });
     expect(await screen.findByRole("progressbar", { name: /Calorieën: 0%/ })).toHaveAttribute("aria-valuemax", "2200");
+
+    await userEvent.click(screen.getByRole("button", { name: "Doelen wijzigen" }));
+    const rememberedProtein = screen.getByRole("textbox", { name: "Eiwit doel" });
+    expect(rememberedProtein).toBeDisabled();
+    expect(rememberedProtein).toHaveValue("90");
+    const rememberedProteinToggle = screen.getAllByRole("checkbox")[1];
+    if (rememberedProteinToggle === undefined) throw new Error("Expected the remembered protein toggle");
+    await userEvent.click(rememberedProteinToggle);
+    expect(rememberedProtein).toBeEnabled();
+    expect(rememberedProtein).toHaveValue("90");
   });
 });

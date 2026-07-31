@@ -21,7 +21,11 @@ export function createNewProduct(input: CreateProductInput): Result<ProductCreat
   if (!profile.ok) return profile;
 
   const unitType = findUnitTypeById(input.package.unitTypeId);
-  if (!unitType) return err({ code: "REFERENCE_NOT_FOUND", message: "Unit type not found" });
+  const portionUnitType = input.package.portion === null ? null : findUnitTypeById(input.package.portion.unitTypeId);
+  if (!unitType || (input.package.portion !== null && portionUnitType === undefined)) return err({ code: "REFERENCE_NOT_FOUND", message: "Unit type not found" });
+  if (portionUnitType !== null && portionUnitType !== undefined && portionUnitType.dimension !== unitType.dimension) {
+    return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Portion and package content must use the same unit dimension" });
+  }
   const compatibility = checkMacroProfileDimensions(profile.value, [unitType.dimension]);
   if (!compatibility.ok) return compatibility;
 

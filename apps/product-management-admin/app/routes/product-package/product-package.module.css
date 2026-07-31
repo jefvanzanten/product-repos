@@ -43,22 +43,6 @@
   border-radius: 0.5rem;
 }
 
-.label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-  font-size: 0.875rem;
-  font-weight: 800;
-}
-
-.input {
-  height: 2.75rem;
-  padding: 0 0.75rem;
-  color: #020617;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.5rem;
-}
-
 .primaryButton,
 .primaryLink,
 .secondaryButton {

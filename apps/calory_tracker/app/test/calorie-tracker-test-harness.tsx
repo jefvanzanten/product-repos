@@ -164,11 +164,15 @@ export function createPackageFixture(options: PackageFixtureOptions = {}): Packa
     brand: { id: "10000000-0000-4000-8000-000000000001", name: "Testmerk" },
     consumptionType,
     packageType: { id: 1, name: "Pak" },
-    individualPackageType: { id: 2, name: "Cracker" },
     contentAmount: "250",
     contentUnit: createMassUnit(),
-    unitsPerPackage: 10,
-    summary: options.summary ?? "Pak (10 x 25 g)",
+    portion: {
+      name: "Cracker",
+      contentAmount: "25",
+      contentUnit: createMassUnit(),
+      portionsPerPackage: 10,
+    },
+    summary: options.summary ?? "Pak 250 g (10 × 25 g per cracker)",
     imageUrl: null,
   };
 }

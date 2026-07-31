@@ -2,8 +2,9 @@ import { useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams, useSearchParams } from "react-router";
 import { getConsumptionLog } from "../calorie-tracker-api";
-import { canonicalizeTrackerUrl, getBrowserTimezone, getTodayInTimezone } from "../calorie-tracker-domain";
+import { canonicalizeTrackerUrl, getTodayInTimezone } from "../calorie-tracker-domain";
 import { StatusPanel } from "../calorie-tracker-components";
+import { useBrowserTimezone } from "../use-browser-timezone";
 import { LogForm } from "./log-form";
 import LogsRoute from "./logs";
 import styles from "./log-route-modal.module.css";
@@ -16,18 +17,20 @@ export function meta(): ReadonlyArray<{ readonly title: string }> {
 /** Load parsed current log data before rendering the shared edit form. */
 export default function EditLogRoute(): ReactNode {
   const { logId = "" } = useParams();
-  const timezone = getBrowserTimezone();
+  const resolvedTimezone = useBrowserTimezone();
+  const timezone = resolvedTimezone ?? "UTC";
   const [parameters, setParameters] = useSearchParams();
   const canonical = canonicalizeTrackerUrl(parameters.get("date"), parameters.get("type"), getTodayInTimezone(timezone));
   const detailQuery = useQuery({
     queryKey: ["calorie-tracker", "log", logId],
+    enabled: resolvedTimezone !== null,
     queryFn: ({ signal }) => getConsumptionLog(logId, { timezone, signal }),
   });
 
   useEffect(() => {
-    if (!canonical.requiresReplace) return;
+    if (resolvedTimezone === null || !canonical.requiresReplace) return;
     setParameters(canonical.state, { replace: true });
-  }, [canonical, setParameters]);
+  }, [canonical, resolvedTimezone, setParameters]);
 
   const outcome = detailQuery.data;
   const detailHref = `/logs/${logId}?${new URLSearchParams(canonical.state)}`;
@@ -39,7 +42,7 @@ export default function EditLogRoute(): ReactNode {
   return (
     <>
       <div className={styles.backdrop} aria-hidden="true"><LogsRoute /></div>
-      <LogForm mode={{ _tag: "Edit", log: outcome.value }} date={canonical.state.date} type={canonical.state.type} />
+      <LogForm mode={{ _tag: "Edit", log: outcome.value }} date={canonical.state.date} type={canonical.state.type} timezone={outcome.value.timezone} />
     </>
   );
 }

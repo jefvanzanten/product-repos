@@ -21,7 +21,7 @@ function readCount(row: unknown): number {
   return count;
 }
 
-/** Exercise the production 0005-to-0006 migration over representative legacy package rows. */
+/** Exercise the production 0005-to-0007 migrations over representative legacy package rows. */
 function verifyLegacyMultiPackageMigration(): void {
   const tempDirectory = mkdtempSync(join(tmpdir(), "calorie-migration-test-"));
   const database = new Database(join(tempDirectory, "migration.sqlite"), { create: true });
@@ -50,20 +50,31 @@ function verifyLegacyMultiPackageMigration(): void {
         11, "00000000-0000-4000-8000-000000000001", 1, 2, 12,
         12, "00000000-0000-4000-8000-000000000002", 1, 2, 1,
       );
+    database.query("INSERT INTO product_macro_profile (product_id, reference_basis, calories_kcal, protein_g, carbohydrates_g, fat_g, calories_source) VALUES (?, 'PER_100_ML', ?, ?, NULL, NULL, 'MANUAL')")
+      .run("00000000-0000-4000-8000-000000000001", 330, 0.0000001);
 
     applyMigration(database, "0006_calorie_tracker_backend");
+    applyMigration(database, "0007_package_portions");
 
     const marker = database.query("SELECT id, name FROM package_type WHERE name = ?").get("Individueel type controleren");
     expect(marker).toEqual(expect.objectContaining({ name: "Individueel type controleren" }));
-    if (typeof marker !== "object" || marker === null || !("id" in marker)) throw new Error("Migration marker is missing its id");
-    const markerId = Reflect.get(marker, "id");
-    expect(typeof markerId).toBe("number");
-
-    expect(database.query("SELECT id, units_per_package, individual_package_type_id FROM product_package ORDER BY id").all()).toEqual([
-      { id: 10, units_per_package: 6, individual_package_type_id: markerId },
-      { id: 11, units_per_package: 12, individual_package_type_id: markerId },
-      { id: 12, units_per_package: 1, individual_package_type_id: null },
+    expect(database.query(`
+      SELECT pp.id, total.amount AS total_amount, portion.name AS portion_name,
+        individual.amount AS portion_amount, portion.portions_per_package, pp.archived_at IS NOT NULL AS archived
+      FROM product_package pp
+      INNER JOIN unit_content total ON total.id = pp.unit_content_id
+      LEFT JOIN product_package_portion portion ON portion.product_package_id = pp.id
+      LEFT JOIN unit_content individual ON individual.id = portion.unit_content_id
+      ORDER BY pp.id
+    `).all()).toEqual([
+      { id: 10, total_amount: "1980", portion_name: "Individueel type controleren", portion_amount: "330", portions_per_package: 6, archived: 1 },
+      { id: 11, total_amount: "3960", portion_name: "Individueel type controleren", portion_amount: "330", portions_per_package: 12, archived: 1 },
+      { id: 12, total_amount: "330", portion_name: null, portion_amount: null, portions_per_package: null, archived: 0 },
     ]);
+    expect(database.query("SELECT conversion_to_base FROM unit_type WHERE id = 1").get()).toEqual({ conversion_to_base: "1" });
+    expect(database.query("SELECT amount FROM unit_content WHERE id = 1").get()).toEqual({ amount: "330" });
+    expect(database.query("SELECT calories_kcal, protein_g FROM product_macro_profile WHERE product_id = ?").get("00000000-0000-4000-8000-000000000001"))
+      .toEqual({ calories_kcal: "330", protein_g: "0.0000001" });
     expect(readCount(database.query("SELECT count(*) AS count FROM package_type WHERE lower(trim(name)) = lower(?)").get("Individueel type controleren"))).toBe(1);
     expect(database.query("PRAGMA foreign_key_check").all()).toEqual([]);
   } finally {
@@ -72,6 +83,6 @@ function verifyLegacyMultiPackageMigration(): void {
   }
 }
 
-describe("Calorie Tracker migration 0005 to 0006", () => {
-  it("preserves legacy packages and maps every multi-package to one explicit correction marker", verifyLegacyMultiPackageMigration);
+describe("Calorie Tracker migrations 0005 to 0007", () => {
+  it("canonicalizes legacy decimals and separates total content from quarantined portion data", verifyLegacyMultiPackageMigration);
 });

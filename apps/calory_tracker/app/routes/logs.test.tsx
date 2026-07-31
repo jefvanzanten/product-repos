@@ -46,7 +46,9 @@ describe("logbook view states and filtering", () => {
 
   it("renders an empty filter with an accessible recovery action and one active chip", async () => {
     server.enqueueJson("GET", "/calorie-tracker/logs?date=2024-02-29&type=drink", createLogListFixture([], "drink"));
-    server.enqueueJson("GET", "/calorie-tracker/logs?date=2024-02-29&type=all", createLogListFixture([]));
+    const unfilteredLogs = createLogListFixture([createLogFixture({ productName: "Alleen voeding" })]);
+    server.enqueueJson("GET", "/calorie-tracker/logs?date=2024-02-29&type=all", unfilteredLogs);
+    server.enqueueJson("GET", "/calorie-tracker/logs?date=2024-02-29&type=all", unfilteredLogs);
     const { router } = renderRoute(<LogsRoute />, "/logs", "/logs?date=2024-02-29&type=drink");
 
     expect(await screen.findByText("Geen resultaten binnen dit filter")).toBeInTheDocument();

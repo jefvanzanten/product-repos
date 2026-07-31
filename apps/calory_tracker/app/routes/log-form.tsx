@@ -15,7 +15,6 @@ import {
   updateConsumptionLog,
 } from "../calorie-tracker-api";
 import {
-  getBrowserTimezone,
   getProductSearchMode,
   getTodayInTimezone,
   parseEditedConsumptionMoment,
@@ -40,14 +39,15 @@ export function LogForm({
   mode,
   date,
   type,
+  timezone,
 }: {
   readonly mode: LogFormMode;
   readonly date: string;
   readonly type: string;
+  readonly timezone: string;
 }): ReactNode {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const timezone = mode._tag === "Edit" ? mode.log.timezone : getBrowserTimezone();
   const initialPackage = mode._tag === "Edit" ? mode.log.package : null;
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -223,8 +223,7 @@ export function LogForm({
 
           {selectedPackage !== null && (
             <>
-              <h2 className={styles.quantityTitle}>Hoeveelheid</h2>
-              <label><span>Waarde</span><input inputMode="decimal" value={quantity} onChange={(event) => setQuantity(event.currentTarget.value)} /></label>
+              <label><span>Hoeveelheid</span><input inputMode="decimal" value={quantity} onChange={(event) => setQuantity(event.currentTarget.value)} /></label>
               <label><span>Eenheid</span><select value={unitKey ?? ""} onChange={(event) => setUnitKey(event.currentTarget.value)} disabled={!selectedOriginalArchived && (unitsQuery.isPending || unitsQuery.data?._tag === "Failure")}>
                 <option value="" disabled>Kies eenheid</option>
                 {availableUnits.map((unit) => <option key={createUnitKey(unit)} value={createUnitKey(unit)}>{unit.label}</option>)}
@@ -259,7 +258,7 @@ function createExistingUnit(log: ConsumptionLog): AvailableInputUnit {
   const label = log.inputMode === "CONTENT_UNIT"
     ? log.inputUnitType?.symbol ?? "Eenheid"
     : log.inputMode === "INDIVIDUAL_UNIT"
-      ? log.package.individualPackageType?.name ?? "Individuele eenheid"
+      ? log.package.portion?.name ?? "Individuele eenheid"
       : log.package.packageType.name;
   return { inputMode: log.inputMode, unitType: log.inputUnitType, label };
 }

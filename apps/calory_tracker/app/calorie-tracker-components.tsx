@@ -10,7 +10,7 @@ export function CalorieTrackerNavbar(): ReactNode {
   const parameters = new URLSearchParams(location.search);
   const date = parameters.get("date");
   const type = parameters.get("type") ?? "all";
-  const dateSearch = date === null ? "" : `?${new URLSearchParams({ date })}`;
+  const dateSearch = date === null ? "" : `?${new URLSearchParams({ date, type })}`;
   const logsSearch = date === null ? "" : `?${new URLSearchParams({ date, type })}`;
 
   return (

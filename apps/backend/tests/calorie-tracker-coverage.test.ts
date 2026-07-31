@@ -26,8 +26,12 @@ type CreateCatalogPackageInput = {
   readonly macroProfile?: MacroProfile | null;
   readonly amount: string;
   readonly unitTypeId: number;
-  readonly unitsPerPackage?: number;
-  readonly individualPackageTypeId?: number | null;
+  readonly portion?: {
+    readonly name: string;
+    readonly amount: string;
+    readonly unitTypeId: number;
+    readonly portionsPerPackage: number | null;
+  } | null;
 };
 
 /** Send JSON through one authenticated HTTP boundary. */
@@ -58,10 +62,9 @@ async function createCatalogPackage(input: CreateCatalogPackageInput): Promise<P
       macroProfile: input.macroProfile ?? null,
       package: {
         packageTypeId: testCatalog.packageTypeId,
-        individualPackageTypeId: input.individualPackageTypeId ?? null,
         amount: input.amount,
         unitTypeId: input.unitTypeId,
-        unitsPerPackage: input.unitsPerPackage ?? 1,
+        portion: input.portion ?? null,
       },
     }),
   });
@@ -100,29 +103,28 @@ async function readStatistics(date: string, timezone = "UTC") {
 }
 
 describe("Calorie Tracker backend coverage", () => {
-  it("converts package, individual, and content input and rejects an incompatible dimension", async () => {
+  it("keeps exact package content separate from rounded portion input and rejects an incompatible dimension", async () => {
     const created = await createCatalogPackage({
-      name: "Conversion sixpack",
-      consumptionType: "DRINK",
+      name: "Conversion waffle package",
+      consumptionType: "FOOD",
       macroProfile: {
-        referenceBasis: "PER_100_ML",
+        referenceBasis: "PER_100_G",
         caloriesKcal: "100",
         proteinG: "10",
         carbohydratesG: null,
         fatG: null,
         caloriesSource: "MANUAL",
       },
-      amount: "0.33",
-      unitTypeId: testCatalog.unitTypeId,
-      unitsPerPackage: 6,
-      individualPackageTypeId: testCatalog.individualPackageTypeId,
+      amount: "88",
+      unitTypeId: testCatalog.massUnitTypeId,
+      portion: { name: "wafel", amount: "4.9", unitTypeId: testCatalog.massUnitTypeId, portionsPerPackage: 18 },
     });
 
     const packageResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(created.package.id));
     expect(packageResponse.status).toBe(201);
     expect(consumptionLogSchema.parse(await packageResponse.json())).toMatchObject({
       derivedQuantityLabel: "1 fles",
-      macroValues: { caloriesKcal: "1980", proteinG: "198", carbohydratesG: null, fatG: null },
+      macroValues: { caloriesKcal: "88", proteinG: "8.8", carbohydratesG: null, fatG: null },
     });
 
     const individualResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(created.package.id, {
@@ -131,24 +133,37 @@ describe("Calorie Tracker backend coverage", () => {
     }));
     expect(individualResponse.status).toBe(201);
     expect(consumptionLogSchema.parse(await individualResponse.json())).toMatchObject({
-      derivedQuantityLabel: "3 blikje",
-      macroValues: { caloriesKcal: "990", proteinG: "99", carbohydratesG: null, fatG: null },
+      derivedQuantityLabel: "3 wafel",
+      macroValues: { caloriesKcal: "14.7", proteinG: "1.47", carbohydratesG: null, fatG: null },
     });
+
+    const removeReferencedPortion = await requestAsAdmin(`/products/${created.id}/packages/${created.package.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        packageTypeId: testCatalog.packageTypeId,
+        amount: "88",
+        unitTypeId: testCatalog.massUnitTypeId,
+        portion: null,
+      }),
+    });
+    expect(removeReferencedPortion.status).toBe(400);
+    expect(await removeReferencedPortion.json()).toMatchObject({ code: "VALIDATION_ERROR" });
 
     const contentResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(created.package.id, {
       quantity: "1.5",
       inputMode: "CONTENT_UNIT",
-      inputUnitTypeId: testCatalog.unitTypeId,
+      inputUnitTypeId: testCatalog.massUnitTypeId,
     }));
     expect(contentResponse.status).toBe(201);
     expect(consumptionLogSchema.parse(await contentResponse.json())).toMatchObject({
-      derivedQuantityLabel: "1.5 l",
-      macroValues: { caloriesKcal: "1500", proteinG: "150", carbohydratesG: null, fatG: null },
+      derivedQuantityLabel: "1.5 g",
+      macroValues: { caloriesKcal: "1.5", proteinG: "0.15", carbohydratesG: null, fatG: null },
     });
 
     const incompatibleResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(created.package.id, {
       inputMode: "CONTENT_UNIT",
-      inputUnitTypeId: testCatalog.massUnitTypeId,
+      inputUnitTypeId: testCatalog.unitTypeId,
     }));
     expect(incompatibleResponse.status).toBe(400);
     expect(await incompatibleResponse.json()).toMatchObject({ code: "REFERENCE_NOT_FOUND" });
@@ -271,10 +286,9 @@ describe("Calorie Tracker backend coverage", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         packageTypeId: testCatalog.packageTypeId,
-        individualPackageTypeId: null,
         amount: "250",
         unitTypeId: testCatalog.massUnitTypeId,
-        unitsPerPackage: 1,
+        portion: null,
       }),
     });
     expect(correctionResponse.status).toBe(200);
@@ -289,13 +303,14 @@ describe("Calorie Tracker backend coverage", () => {
     expect(consumptionLogSchema.parse(await retryAfterArchive.json()).package.packageArchived).toBe(true);
   });
 
-  it("blocks package dimension correction while an active explicit-content log depends on it", async () => {
+  it("blocks package dimension correction while a retained explicit-content log can be restored", async () => {
     const created = await createCatalogPackage({ name: "Dimension correction", amount: "1", unitTypeId: testCatalog.unitTypeId });
-    const logResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(created.package.id, {
+    const logBody = createLogBody(created.package.id, {
       inputMode: "CONTENT_UNIT",
       inputUnitTypeId: testCatalog.unitTypeId,
       consumedAt: "2026-04-10T12:00:00.000Z",
-    }));
+    });
+    const logResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", logBody);
     expect(logResponse.status).toBe(201);
 
     const correctionResponse = await requestAsAdmin(`/products/${created.id}/packages/${created.package.id}`, {
@@ -303,14 +318,27 @@ describe("Calorie Tracker backend coverage", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         packageTypeId: testCatalog.packageTypeId,
-        individualPackageTypeId: null,
         amount: "100",
         unitTypeId: testCatalog.massUnitTypeId,
-        unitsPerPackage: 1,
+        portion: null,
       }),
     });
     expect(correctionResponse.status).toBe(400);
     expect(await correctionResponse.json()).toMatchObject({ code: "UNIT_DIMENSION_INCOMPATIBLE" });
+
+    expect((await requestAsUser(`/calorie-tracker/logs/${logBody.id}`, { method: "DELETE" })).status).toBe(200);
+    const correctionDuringUndo = await requestAsAdmin(`/products/${created.id}/packages/${created.package.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        packageTypeId: testCatalog.packageTypeId,
+        amount: "100",
+        unitTypeId: testCatalog.massUnitTypeId,
+        portion: null,
+      }),
+    });
+    expect(correctionDuringUndo.status).toBe(400);
+    expect((await requestAsUser(`/calorie-tracker/logs/${logBody.id}/restore`, { method: "POST" })).status).toBe(200);
 
     const unchangedResponse = await requestAsAdmin(`/products/${created.id}/packages/${created.package.id}`);
     expect(unchangedResponse.status).toBe(200);

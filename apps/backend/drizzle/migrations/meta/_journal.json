@@ -50,6 +50,13 @@
       "when": 1785492000000,
       "tag": "0006_calorie_tracker_backend",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1785578400000,
+      "tag": "0007_package_portions",
+      "breakpoints": true
     }
   ]
 }

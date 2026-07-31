@@ -43,7 +43,7 @@ product_macro_profile
 consumption_log
     id: uuid PK
     user_id: uuid FK -> user.id NOT NULL
-    product_package_id: uuid FK -> product_package.id NOT NULL
+    product_package_id: int FK -> product_package.id NOT NULL
     quantity: decimal NOT NULL
     input_mode: enum(PACKAGE, INDIVIDUAL_UNIT, CONTENT_UNIT) NOT NULL
     input_unit_type_id: int FK -> unit_type.id NULL

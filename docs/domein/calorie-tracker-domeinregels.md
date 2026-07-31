@@ -31,8 +31,8 @@ Dit document bewaart gedeelde Calorie Tracker-domeinkennis die door dashboard, l
 
 ## Invoermodi en hoeveelheden
 
-- `PACKAGE` gebruikt de volledige actuele verpakkingsinhoud.
-- `INDIVIDUAL_UNIT` is alleen geldig voor een multiverpakking en gebruikt de actuele inhoud per individuele eenheid.
+- `PACKAGE` gebruikt de expliciete volledige actuele verpakkingsinhoud.
+- `INDIVIDUAL_UNIT` is alleen geldig wanneer de verpakking een portiedefinitie heeft en gebruikt de expliciete actuele portiegrootte, onafhankelijk van de volledige verpakkingsinhoud.
 - `CONTENT_UNIT` gebruikt een expliciete massa-, volume- of teleenheid.
 - `CONTENT_UNIT` moet dezelfde dimensie hebben als de verpakking en het macroprofiel.
 - Een log bevat exact één hoeveelheid en één invoermodus.
@@ -56,7 +56,8 @@ Dit document bewaart gedeelde Calorie Tracker-domeinkennis die door dashboard, l
 - Wanneer calorieën ontbreken, mogen ze alleen automatisch worden berekend wanneer eiwit, koolhydraten en vet alle drie aanwezig zijn.
 - Dagtotalen worden pas na optellen afgerond.
 - Persoonlijke doelen zijn actuele instellingen zonder historische versies.
-- Een nieuw of gewijzigd doel geldt direct voor het dashboard van vandaag.
+- Caloriestatistieken kunnen vandaag of één eerdere lokale kalenderdag tonen.
+- Een nieuw of gewijzigd doel geldt direct voor iedere daarna getoonde dagvergelijking, ook voor een eerdere geselecteerde datum.
 
 ## Mutaties, retries en bewaren
 

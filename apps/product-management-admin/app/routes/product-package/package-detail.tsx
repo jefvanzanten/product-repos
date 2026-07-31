@@ -7,12 +7,11 @@ import {
 } from "react-router";
 import { AdminForm as Form, AdminLink as Link } from "../../admin-source-context";
 import { requireAdministrator } from "../../auth.server";
+import { PackageContentFields } from "../../features/admin/product-forms/package-content-fields";
 import type {
   PackageDetailActionResult,
   PackageDetailLoaderData,
-  PackageTypeDto,
   ProductPackageWithProductId,
-  UnitTypeDto,
 } from "./product-package-route.types";
 import styles from "./product-package.module.css";
 import {
@@ -61,7 +60,7 @@ export default function PackageDetail(): React.ReactNode {
         {editing ? (
           <Form className={styles.form} method="post">
             {actionData?.errors?.form ? <p className={styles.formError}>{actionData.errors.form}</p> : null}
-            <PackageFields packageTypes={loaderData.packageTypes} unitTypes={loaderData.unitTypes} values={actionData?.values ?? packageToValues(packageDetail)} errors={actionData?.errors} />
+            <PackageContentFields errors={actionData?.errors} packageTypes={loaderData.packageTypes} unitTypes={loaderData.unitTypes} values={actionData?.values ?? packageToValues(packageDetail)} variant="light" />
             <div className={styles.actions}>
               <button className={styles.primaryButton} type="submit">Opslaan</button>
               <button className={styles.secondaryButton} type="button" onClick={() => setEditing(false)}>Annuleren</button>
@@ -71,10 +70,15 @@ export default function PackageDetail(): React.ReactNode {
           <section className={styles.form}>
             <h2 className={styles.sectionTitle}>Verpakking</h2>
             <dl className={styles.definitionList}>
-              <div><dt>Type</dt><dd>{packageDetail.packageType.name}</dd></div>
-              <div><dt>Individueel type</dt><dd>{packageDetail.individualPackageType?.name ?? "Niet van toepassing"}</dd></div>
-              <div><dt>Inhoud per individueel stuk</dt><dd>{packageDetail.unitContent.amount} {packageDetail.unitContent.unitType.name}</dd></div>
-              <div><dt>Aantal per verpakking</dt><dd>{packageDetail.unitsPerPackage}</dd></div>
+              <div><dt>Verpakkingstype</dt><dd>{packageDetail.packageType.name}</dd></div>
+              <div><dt>Volledige inhoud</dt><dd>{packageDetail.unitContent.amount} {packageDetail.unitContent.unitType.name}</dd></div>
+              {packageDetail.portion === null ? null : (
+                <>
+                  <div><dt>Portie of stuk</dt><dd>{packageDetail.portion.name}</dd></div>
+                  <div><dt>Portiegrootte</dt><dd>{packageDetail.portion.unitContent.amount} {packageDetail.portion.unitContent.unitType.name}</dd></div>
+                  <div><dt>Aantal in verpakking</dt><dd>{packageDetail.portion.portionsPerPackage ?? "Niet opgegeven"}</dd></div>
+                </>
+              )}
               <div><dt>Samenvatting</dt><dd>{packageDetail.summary}</dd></div>
             </dl>
             <button className={styles.secondaryButton} type="button" onClick={() => setEditing(true)}>Verpakking bewerken</button>
@@ -85,42 +89,15 @@ export default function PackageDetail(): React.ReactNode {
   );
 }
 
-function PackageFields({ errors, packageTypes, unitTypes, values }: { readonly errors?: Record<string, string>; readonly packageTypes: ReadonlyArray<PackageTypeDto>; readonly unitTypes: ReadonlyArray<UnitTypeDto>; readonly values: Record<string, string> }): React.ReactNode {
-  return (
-    <>
-      <label className={styles.label}>Verpakkingstype
-        <select className={styles.input} name="packageTypeId" defaultValue={values.packageTypeId ?? ""} required>
-          {packageTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-        </select>
-      </label>
-      <label className={styles.label}>Individueel verpakkingstype (verplicht bij meer dan één stuk)
-        <select className={styles.input} name="individualPackageTypeId" defaultValue={values.individualPackageTypeId ?? ""}>
-          <option value="">Geen (één stuk)</option>
-          {packageTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-        </select>
-      </label>
-      <label className={styles.label}>Inhoud per individueel stuk
-        <input className={styles.input} name="amount" defaultValue={values.amount ?? ""} />
-      </label>
-      {errors?.amount ? <p className={styles.formError}>{errors.amount}</p> : null}
-      <label className={styles.label}>Inhoudseenheid
-        <select className={styles.input} name="unitTypeId" defaultValue={values.unitTypeId ?? ""} required>
-          {unitTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-        </select>
-      </label>
-      <label className={styles.label}>Aantal per verpakking
-        <input className={styles.input} name="unitsPerPackage" type="number" defaultValue={values.unitsPerPackage ?? "1"} />
-      </label>
-    </>
-  );
-}
-
 function packageToValues(packageDetail: ProductPackageWithProductId): Record<string, string> {
   return {
     packageTypeId: String(packageDetail.packageType.id),
-    individualPackageTypeId: packageDetail.individualPackageType === null ? "" : String(packageDetail.individualPackageType.id),
     amount: packageDetail.unitContent.amount,
     unitTypeId: String(packageDetail.unitContent.unitType.id),
-    unitsPerPackage: String(packageDetail.unitsPerPackage),
+    portionEnabled: packageDetail.portion === null ? "" : "on",
+    portionName: packageDetail.portion?.name ?? "",
+    portionAmount: packageDetail.portion?.unitContent.amount ?? "",
+    portionUnitTypeId: packageDetail.portion === null ? "" : String(packageDetail.portion.unitContent.unitType.id),
+    portionsPerPackage: packageDetail.portion?.portionsPerPackage === null || packageDetail.portion === null ? "" : String(packageDetail.portion.portionsPerPackage),
   };
 }

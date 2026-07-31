@@ -87,10 +87,10 @@ Stuk 250 g
 ```text
 Frisdrank
 Merknaam
-Sixpack (6 x 330 ml)
+Sixpack 1.980 ml (6 × 330 ml per blikje)
 ```
 
-Enkelvoudige verpakkingen krijgen bij gelijkwaardige resultaten voorrang boven multiverpakkingen. Multiverpakkingen blijven selecteerbaar.
+Verpakkingen zonder portiedefinitie krijgen bij gelijkwaardige resultaten voorrang. Verpakkingen met portiedefinitie blijven selecteerbaar.
 
 Wanneer niets wordt gevonden, toont de flow uitsluitend:
 
@@ -122,10 +122,10 @@ Hoeveelheid [ waarde ] [ eenheid ]
 
 Mogelijke eenheden worden afgeleid van de verpakking:
 
-- volledige verpakking;
+- volledige verpakking op basis van de expliciete volledige verpakkingsinhoud;
 - massa-eenheid, bijvoorbeeld `g`;
 - volume-eenheid, bijvoorbeeld `ml`;
-- individuele eenheid binnen een multiverpakking, bijvoorbeeld `blikje`;
+- een expliciete portie of individueel stuk wanneer de verpakking die heeft, bijvoorbeeld `wafel` of `blikje`;
 - stuks of doses wanneer het product telbaar is.
 
 Voorbeeld voor `stuk 250 g`:
@@ -136,7 +136,7 @@ Voorbeeld voor `stuk 250 g`:
 150 g
 ```
 
-Voorbeeld voor `sixpack (6 x 330 ml)`:
+Voorbeeld voor `sixpack 1.980 ml (6 × 330 ml per blikje)`:
 
 ```text
 1 sixpack
@@ -166,11 +166,10 @@ De log bewaart de oorspronkelijke waarde en gekozen eenheid. De backend leidt de
 - De gebruiker keert terug naar de geselecteerde datum.
 - Het actieve filter blijft behouden.
 - De log wordt chronologisch geplaatst.
-- Het zichtbare aantal wordt bijgewerkt.
 - Een succesbevestiging wordt getoond.
 - Valt het nieuwe log buiten het actieve filter, dan blijft het filter actief en meldt de UI dat het log daardoor niet zichtbaar is.
 - Valt het log binnen het filter, dan scrolt de lijst naar het nieuwe log.
-- Caloriestatistieken voor vandaag worden ongeldig gemaakt en bij een volgend bezoek opnieuw opgehaald.
+- Caloriestatistieken voor de datum van het nieuwe log worden ongeldig gemaakt en bij een volgend bezoek opnieuw opgehaald.
 
 ## Acceptatiecriteria
 
@@ -198,6 +197,11 @@ En kan het kale product niet zonder verpakking worden gekozen.
 Gegeven dat een verpakking is geselecteerd
 Dan toont de eenheidskeuze uitsluitend eenheden die uit die verpakking kunnen worden afgeleid
 En kan de gebruiker één positieve hoeveelheid met één eenheid opslaan.
+
+Gegeven een pak met volledige inhoud `88 g` en een portie `wafel` van `4,9 g`
+Wanneer de gebruiker `3 wafels` opslaat
+Dan rekent de backend met `14,7 g`
+En blijft `1 pak` onafhankelijk gelijk aan `88 g`.
 
 ### AC-05 - Geen product gevonden
 

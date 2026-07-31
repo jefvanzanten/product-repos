@@ -34,7 +34,6 @@ const unitTypeId = readInsertedId(sqlite.query("INSERT INTO unit_type (name, sym
 const massUnitTypeId = readInsertedId(sqlite.query("INSERT INTO unit_type (name, symbol, dimension, conversion_to_base) VALUES (?, ?, ?, ?) RETURNING id").get("gram", "g", "MASS", 1));
 const countUnitTypeId = readInsertedId(sqlite.query("INSERT INTO unit_type (name, symbol, dimension, conversion_to_base) VALUES (?, ?, ?, ?) RETURNING id").get("stuk", "st", "COUNT", 1));
 const packageTypeId = readInsertedId(sqlite.query("INSERT INTO package_type (name) VALUES (?) RETURNING id").get("fles"));
-const individualPackageTypeId = readInsertedId(sqlite.query("INSERT INTO package_type (name) VALUES (?) RETURNING id").get("blikje"));
 sqlite.close();
 
 const appModule = await import("../src/app");
@@ -118,7 +117,6 @@ export const testCatalog = {
   massUnitTypeId,
   countUnitTypeId,
   packageTypeId,
-  individualPackageTypeId,
 } as const;
 
 process.once("exit", () => {

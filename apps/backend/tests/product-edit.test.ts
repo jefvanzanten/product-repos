@@ -23,7 +23,7 @@ async function createEditableProduct(): Promise<{ readonly id: string; readonly 
       brandId: testCatalog.brandId,
       consumptionType: "DRINK",
       macroProfile: null,
-      package: { packageTypeId: testCatalog.packageTypeId, individualPackageTypeId: null, amount: "1.5", unitTypeId: testCatalog.unitTypeId, unitsPerPackage: 1 },
+      package: { packageTypeId: testCatalog.packageTypeId, amount: "1.5", unitTypeId: testCatalog.unitTypeId, portion: null },
     }),
   });
   expect(response.status).toBe(201);

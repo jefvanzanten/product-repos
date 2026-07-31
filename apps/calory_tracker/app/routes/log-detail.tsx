@@ -3,8 +3,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import type { ConsumptionLog } from "@product-repos/contracts/calorie-tracker";
 import { deleteConsumptionLog, getConsumptionLog } from "../calorie-tracker-api";
-import { canonicalizeTrackerUrl, formatDecimal, formatLocalDate, getBrowserTimezone, getTodayInTimezone } from "../calorie-tracker-domain";
+import { canonicalizeTrackerUrl, formatDecimal, formatLocalDate, getTodayInTimezone } from "../calorie-tracker-domain";
 import { ConsumptionTypeBadge, Icon, ProductImage, StatusPanel } from "../calorie-tracker-components";
+import { useBrowserTimezone } from "../use-browser-timezone";
 import styles from "./log-detail.module.css";
 
 /** Return metadata for the refreshable consumption-log detail route. */
@@ -16,7 +17,8 @@ export function meta(): ReadonlyArray<{ readonly title: string }> {
 export default function LogDetailRoute(): ReactNode {
   const routeParameters = useParams();
   const logId = routeParameters.logId ?? "";
-  const timezone = getBrowserTimezone();
+  const resolvedTimezone = useBrowserTimezone();
+  const timezone = resolvedTimezone ?? "UTC";
   const today = getTodayInTimezone(timezone);
   const [parameters, setParameters] = useSearchParams();
   const canonical = canonicalizeTrackerUrl(parameters.get("date"), parameters.get("type"), today);
@@ -26,12 +28,13 @@ export default function LogDetailRoute(): ReactNode {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (!canonical.requiresReplace) return;
+    if (resolvedTimezone === null || !canonical.requiresReplace) return;
     setParameters(canonical.state, { replace: true });
-  }, [canonical, setParameters]);
+  }, [canonical, resolvedTimezone, setParameters]);
 
   const detailQuery = useQuery({
     queryKey: ["calorie-tracker", "log", logId],
+    enabled: resolvedTimezone !== null,
     queryFn: ({ signal }) => getConsumptionLog(logId, { timezone, signal }),
   });
   const contextSearch = `?${new URLSearchParams(canonical.state)}`;
@@ -125,6 +128,6 @@ function MacroValue({ label, value, unit, fractions }: { readonly label: string;
 function formatOriginalQuantity(log: ConsumptionLog): string {
   const quantity = log.quantity.replace(".", ",");
   if (log.inputMode === "CONTENT_UNIT") return `${quantity} ${log.inputUnitType?.symbol ?? ""}`.trim();
-  if (log.inputMode === "INDIVIDUAL_UNIT") return `${quantity} ${log.package.individualPackageType?.name.toLowerCase() ?? "eenheid"}`;
+  if (log.inputMode === "INDIVIDUAL_UNIT") return `${quantity} ${log.package.portion?.name.toLowerCase() ?? "eenheid"}`;
   return `${quantity} ${log.package.packageType.name.toLowerCase()}`;
 }

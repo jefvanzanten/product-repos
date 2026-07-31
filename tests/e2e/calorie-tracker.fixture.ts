@@ -116,7 +116,7 @@ function seedCatalog(sqlite: Database): void {
     productStatement.run("aaaaaaaa-0004-4000-8000-000000000004", "Archiefmix", brandId, "FOOD", null, catalogTimestamp, catalogTimestamp);
     productStatement.run("aaaaaaaa-0005-4000-8000-000000000005", "Privéproduct", brandId, "FOOD", null, catalogTimestamp, catalogTimestamp);
 
-    const packageStatement = sqlite.query("INSERT INTO product_package (id, product_id, unit_content_id, package_type_id, individual_package_type_id, units_per_package, archived_at, created_at, updated_at) VALUES (?, ?, ?, ?, NULL, 1, ?, ?, ?)");
+    const packageStatement = sqlite.query("INSERT INTO product_package (id, product_id, unit_content_id, package_type_id, archived_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
     packageStatement.run(CATALOG.foodPackageId, "aaaaaaaa-0001-4000-8000-000000000001", 101, 101, null, catalogTimestamp, catalogTimestamp);
     packageStatement.run(CATALOG.drinkPackageId, "aaaaaaaa-0002-4000-8000-000000000002", 102, 102, null, catalogTimestamp, catalogTimestamp);
     packageStatement.run(CATALOG.supplementPackageId, "aaaaaaaa-0003-4000-8000-000000000003", 103, 103, null, catalogTimestamp, catalogTimestamp);

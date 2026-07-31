@@ -16,6 +16,7 @@ import {
   ProductFormActions,
   ProductNameSection,
 } from "../../features/admin/product-forms/product-form-sections";
+import { PackageContentFields } from "../../features/admin/product-forms/package-content-fields";
 import type { CategoryTreeOption } from "../../features/admin/product-catalog/categoryTree";
 import { CategoryBreadcrumb } from "../product-catalog/category-breadcrumb";
 import type {
@@ -79,10 +80,12 @@ export default function NewProduct(): React.ReactNode {
         </Fieldset>
         <ConsumptionTypeSection error={actionData?.errors?.consumptionType} value={values.consumptionType} />
         <Fieldset title="Verpakking">
-          <select className={styles.select} name="packageTypeId" defaultValue={values.packageTypeId ?? ""} required><option value="">Verpakkingstype</option>{loaderData.packageTypes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
-          <select className={styles.select} name="individualPackageTypeId" defaultValue={values.individualPackageTypeId ?? ""}><option value="">Individueel verpakkingstype (alleen bij één stuk leeg)</option>{loaderData.packageTypes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
-          <div className={styles.packageGrid}><TextInput defaultValue={values.amount} error={actionData?.errors?.amount} label="Inhoud per individueel stuk" name="amount" placeholder="1,5" /><select className={`${styles.select} ${styles.selectAlignedEnd}`} name="unitTypeId" defaultValue={values.unitTypeId ?? ""} required><option value="">Eenheid</option>{loaderData.unitTypes.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></div>
-          <TextInput defaultValue={values.unitsPerPackage ?? "1"} error={actionData?.errors?.unitsPerPackage} label="Aantal per verpakking" name="unitsPerPackage" placeholder="1" type="number" />
+          <PackageContentFields
+            errors={actionData?.errors}
+            packageTypes={loaderData.packageTypes}
+            unitTypes={loaderData.unitTypes}
+            values={values}
+          />
         </Fieldset>
         <MacroProfileSection errors={actionData?.errors} profile={null} values={values} />
         <ProductFormActions busy={busy} />
@@ -211,8 +214,11 @@ function normalizeBrandName(value: string): string {
   return value.trim().toLowerCase();
 }
 
-function Fieldset({ children, title }: { children: React.ReactNode; title: string }) { return <fieldset className={styles.fieldset}><legend className={styles.fieldsetLegend}>{title}</legend>{children}</fieldset>; }
-function TextInput({ defaultValue, error, label, name, placeholder, type = "text" }: { defaultValue?: string; error?: string; label: string; name: string; placeholder?: string; type?: string }) { return <label className={styles.textLabel}>{label}<input className={styles.textInput} defaultValue={defaultValue} name={name} placeholder={placeholder} type={type} />{error ? <span className={styles.errorText}>{error}</span> : null}</label>; }
+/** Render one titled product-create field group. */
+function Fieldset({ children, title }: { children: React.ReactNode; title: string }): React.ReactNode {
+  return <fieldset className={styles.fieldset}><legend className={styles.fieldsetLegend}>{title}</legend>{children}</fieldset>;
+}
+
 type VisibleCategoryTreeOption = {
   readonly option: CategoryTreeOption;
   readonly originalIndex: number;

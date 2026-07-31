@@ -22,7 +22,7 @@ Calorie- en macrototalen horen bij Caloriestatistieken en staan niet in het logb
 - Met één actie teruggaan naar vandaag.
 - Filteren op consumptietype.
 - Datum en filter in de URL bewaren.
-- Het aantal zichtbare logs tonen.
+- De geselecteerde datum bij navigatie naar Caloriestatistieken behouden.
 - Alle logs van de selectie zonder paginering tonen.
 - Een logdetail openen.
 - Een nieuw log starten.
@@ -53,6 +53,7 @@ Regels:
 - Ongeldige parameters worden met `replace` door geldige parameters vervangen.
 - Datum en filter blijven behouden bij verversen, browsernavigatie, detail, toevoegen en bewerken.
 - Bij datumwissel blijft het actieve filter behouden.
+- De navbarlink naar Caloriestatistieken neemt dezelfde datum mee; de teruglink naar het logboek neemt die datum en het laatst geldige typefilter mee.
 - Toekomstige datums zijn niet selecteerbaar.
 
 ## Layout
@@ -64,9 +65,8 @@ De pagina toont in deze volgorde:
 1. aanklikbare datum;
 2. actie `Vandaag`;
 3. direct zichtbare filterchips;
-4. aantal zichtbare logs;
-5. verticaal scrollbare loglijst;
-6. primaire actie `Log toevoegen`.
+4. verticaal scrollbare loglijst;
+5. primaire actie `Log toevoegen`.
 
 Beschikbare chips:
 
@@ -92,12 +92,12 @@ De actie is geen tab en geen extra floating action button.
 - Een optionele knop voor de volgende dag is uitgeschakeld wanneer vandaag geselecteerd is.
 - Vorige- en volgendedagknoppen vervangen de date picker niet.
 
-## Filters en aantallen
+## Filters
 
 - `Alles` is standaard actief.
 - Maximaal één filter is actief.
 - De lijst wordt direct na een filterkeuze bijgewerkt.
-- Het getoonde aantal betreft uitsluitend de huidige datum en het actieve filter.
+- De pagina toont geen aparte teller voor het aantal zichtbare logs.
 - De pagina toont geen calorie-, macro- of micronutriënttotalen.
 
 ## Sortering en scrollgedrag
@@ -130,12 +130,12 @@ Stuk 250 g
 Voeding
 ```
 
-Voor een multiverpakking:
+Voor een verpakking met portiedefinitie:
 
 ```text
 20:15
 Frisdrank - Merknaam
-Sixpack (6 x 330 ml)
+Sixpack 1.980 ml (6 × 330 ml per blikje)
 1 sixpack
 Drinken
 ```
@@ -152,11 +152,13 @@ Calorieën en macro's staan niet in het compacte logitem. Het consumptietype wor
 
 ### Geen logs op datum
 
-De pagina toont een lege toestand en houdt `Log toevoegen` bereikbaar.
+Deze toestand geldt uitsluitend wanneer op de geselecteerde datum binnen `Alles` geen logs bestaan. De pagina toont een lege toestand en houdt `Log toevoegen` bereikbaar.
 
 ### Geen resultaten binnen filter
 
-De pagina meldt dat het actieve filter geen resultaten heeft en biedt `Alles tonen`.
+Deze toestand geldt wanneer het actieve typefilter geen resultaten heeft, terwijl op dezelfde datum binnen `Alles` wel één of meer logs bestaan. De pagina meldt dat het actieve filter geen resultaten heeft en biedt `Alles tonen`.
+
+Wanneer een gefilterde response leeg is, controleert de pagina daarom ook de ongefilterde datumcontext. Zo wordt een volledig lege datum niet als een leeg filter gepresenteerd.
 
 ### Laden en fouten
 
@@ -191,13 +193,22 @@ Gegeven dat een logitem zichtbaar is
 Dan toont het product-, verpakking-, hoeveelheid-, tijd- en typegegevens
 En geen calorieën of macro's.
 
-### AC-05 - Filteraantal
+### AC-05 - Typefilter
 
 Gegeven dat een typefilter actief is
-Dan toont het aantal uitsluitend de logs binnen die datum en dat filter.
+Dan toont de lijst uitsluitend logs binnen die datum en dat filter
+En blijft precies één filter actief.
 
 ### AC-06 - Toestanden
 
-Gegeven dat de selectie leeg is, laadt of niet kan worden opgehaald
-Dan toont de pagina de bijbehorende lege, laad- of fouttoestand
+Gegeven dat op de geselecteerde datum binnen `Alles` geen logs bestaan
+Dan toont de pagina `Geen logs op datum`
+En blijft `Log toevoegen` bereikbaar.
+
+Gegeven dat het actieve typefilter geen logs bevat maar op dezelfde datum binnen `Alles` wel logs bestaan
+Dan toont de pagina `Geen resultaten binnen filter`
+En biedt zij `Alles tonen`.
+
+Gegeven dat de selectie laadt of niet kan worden opgehaald
+Dan toont de pagina de bijbehorende laad- of fouttoestand
 En blijft een relevante herstelactie bereikbaar.

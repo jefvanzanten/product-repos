@@ -124,7 +124,8 @@ function PackagesReadOnly({ backUrl, product }: { readonly backUrl: string; read
       {product.packages.length === 0 ? <p className={styles.muted}>Geen verpakkingen gevonden voor dit product.</p> : product.packages.map((item) => (
         <Link key={item.id} className={styles.packageCard} to={`/product-catalogus/${product.id}/verpakkingen/${item.id}${contextSearch(backUrl)}`}>
           <strong>{item.summary}</strong>
-          <span>Aantal per verpakking: {item.unitsPerPackage}</span>
+          <span>Volledige inhoud: {item.unitContent.amount} {item.unitContent.unitType.symbol}</span>
+          {item.portion === null ? null : <span>Per {item.portion.name}: {item.portion.unitContent.amount} {item.portion.unitContent.unitType.symbol}{item.portion.portionsPerPackage === null ? "" : ` · ${item.portion.portionsPerPackage} per verpakking`}</span>}
         </Link>
       ))}
       <Link className={styles.primaryLink} to={`/product-catalogus/${product.id}/verpakkingen/nieuw${contextSearch(backUrl)}`}>Verpakking toevoegen</Link>

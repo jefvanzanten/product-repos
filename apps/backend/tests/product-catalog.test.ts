@@ -14,10 +14,10 @@ async function createTestProduct(name: string) {
       consumptionType: "DRINK",
       macroProfile: null,
       package: {
-        packageTypeId: testCatalog.packageTypeId, individualPackageTypeId: null,
+        packageTypeId: testCatalog.packageTypeId,
         amount: "1.5",
         unitTypeId: testCatalog.unitTypeId,
-        unitsPerPackage: 1,
+        portion: null,
       },
     }),
   });
@@ -57,25 +57,25 @@ describe("product catalog browsing", () => {
     expect(detail.packages[0]?.summary).toBe("fles 1.5 liter");
   });
 
-  it("persists explicit individual package types through package create and update routes", async () => {
+  it("persists total package content and optional portion data through create and update routes", async () => {
     const created = await createTestProduct(`Packages ${crypto.randomUUID()}`);
     const addResponse = await requestAsAdmin(`/products/${created.id}/packages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         packageTypeId: testCatalog.packageTypeId,
-        individualPackageTypeId: testCatalog.individualPackageTypeId,
-        amount: "330",
+        amount: "1980",
         unitTypeId: testCatalog.unitTypeId,
-        unitsPerPackage: 6,
+        portion: { name: "blikje", amount: "330", unitTypeId: testCatalog.unitTypeId, portionsPerPackage: 6 },
       }),
     });
     expect(addResponse.status).toBe(201);
 
     const detailAfterAdd = productDetailDtoSchema.parse(await (await requestAsAdmin(`/products/${created.id}`)).json());
-    const multiPackage = detailAfterAdd.packages.find((item) => item.unitsPerPackage === 6);
-    expect(multiPackage?.individualPackageType).toEqual({ id: testCatalog.individualPackageTypeId, name: "blikje" });
-    expect(multiPackage?.summary).toContain("6 blikje");
+    const multiPackage = detailAfterAdd.packages.find((item) => item.portion?.portionsPerPackage === 6);
+    expect(multiPackage?.unitContent.amount).toBe("1980");
+    expect(multiPackage?.portion).toMatchObject({ name: "blikje", unitContent: { amount: "330" }, portionsPerPackage: 6 });
+    expect(multiPackage?.summary).toContain("6 ×");
     if (multiPackage === undefined) throw new Error("Created multi-package was not returned by product detail");
 
     const updateResponse = await requestAsAdmin(`/products/${created.id}/packages/${multiPackage.id}`, {
@@ -83,15 +83,14 @@ describe("product catalog browsing", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         packageTypeId: testCatalog.packageTypeId,
-        individualPackageTypeId: null,
         amount: "330",
         unitTypeId: testCatalog.unitTypeId,
-        unitsPerPackage: 1,
+        portion: null,
       }),
     });
     expect(updateResponse.status).toBe(200);
     const detailAfterUpdate = productDetailDtoSchema.parse(await (await requestAsAdmin(`/products/${created.id}`)).json());
-    expect(detailAfterUpdate.packages.find((item) => item.id === multiPackage.id)?.individualPackageType).toBeNull();
+    expect(detailAfterUpdate.packages.find((item) => item.id === multiPackage.id)?.portion).toBeNull();
   });
 
   it("searches products, brands and categories", async () => {

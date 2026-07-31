@@ -273,14 +273,20 @@ MacroProfile:
   source: product_macro_profile
   fields: [referenceBasis, caloriesKcal, proteinG, carbohydratesG, fatG, caloriesSource]
 
+ProductPackagePortion:
+  source: product_package_portion + unit_content
+  fields:
+    - name
+    - unitContent: UnitContent
+    - portionsPerPackage: int|null
+
 ProductPackage:
-  source: product_package + package_type + unit_content
+  source: product_package + package_type + unit_content + optional product_package_portion
   fields:
     - id
     - packageType: PackageType
-    - individualPackageType: PackageType|null
-    - unitContent: UnitContent
-    - unitsPerPackage
+    - unitContent: UnitContent # volledige verpakkingsinhoud
+    - portion: ProductPackagePortion|null
     - archivedAt
     - summary: derived
 
@@ -340,8 +346,13 @@ UpdateProduct:
 
 UpsertProductPackage:
   packageTypeId: product_package.package_type_id
-  individualPackageTypeId: product_package.individual_package_type_id|null
-  amount: unit_content.amount
+  amount: unit_content.amount # volledige verpakkingsinhoud
   unitTypeId: unit_content.unit_type_id
-  unitsPerPackage: product_package.units_per_package
+  portion: ProductPackagePortionInput|null
+
+ProductPackagePortionInput:
+  name: product_package_portion.name
+  amount: unit_content.amount # expliciete portiegrootte
+  unitTypeId: unit_content.unit_type_id
+  portionsPerPackage: product_package_portion.portions_per_package|null
 ```

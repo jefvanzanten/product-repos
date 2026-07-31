@@ -1,7 +1,7 @@
 import { isAdministrator } from "@product-repos/auth-client/roles";
 import { BottomTabBar } from "@product-repos/shared/bottom-tab-bar";
 import type { ReactNode } from "react";
-import { NavLink, Outlet, useLoaderData, useLocation, type LoaderFunctionArgs } from "react-router";
+import { Link, Outlet, useLoaderData, useLocation, type LoaderFunctionArgs } from "react-router";
 import { CalorieTrackerNavbar } from "./calorie-tracker-components";
 import { requireUser } from "./auth.server";
 import styles from "./layout.module.css";
@@ -26,7 +26,7 @@ export default function BottomTabsLayout(): ReactNode {
       {showsTrackerNavbar && <CalorieTrackerNavbar />}
       <Outlet />
       <BottomTabBar>
-        <NavLink to="/">Calory Tracker</NavLink>
+        <Link to="/" aria-current="page">Calory Tracker</Link>
         {isAdmin && (
           <a href="/product-management-admin/product-catalogus?source=calory-tracker">
             Admin Dashboard

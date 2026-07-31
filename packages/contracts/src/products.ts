@@ -23,32 +23,21 @@ export const macroProfileSchema = z.object({
   caloriesSource: caloriesSourceSchema.nullable(),
 }).strict();
 
-/** Add the single- versus multi-package invariant to a package protocol value. */
-function addPackageTypeInvariant(
-  value: { readonly unitsPerPackage: number; readonly individualPackageTypeId: number | null },
-  context: z.RefinementCtx,
-  issuePath = "individualPackageTypeId",
-): void {
-  if (value.unitsPerPackage === 1 && value.individualPackageTypeId !== null) {
-    context.addIssue({ code: "custom", path: [issuePath], message: "Single packages cannot have an individual package type" });
-  }
-  if (value.unitsPerPackage > 1 && value.individualPackageTypeId === null) {
-    context.addIssue({ code: "custom", path: [issuePath], message: "Multi-packages require an individual package type" });
-  }
-}
+/** Optional portion definition returned with a product package. */
+export const productPackagePortionDtoSchema = z.object({
+  name: z.string(),
+  unitContent: unitContentDtoSchema,
+  portionsPerPackage: z.number().int().positive().nullable(),
+}).strict();
 
 /** Product package returned by the catalog API. */
 export const productPackageDtoSchema = z.object({
   id: z.number().int(),
   packageType: packageTypeDtoSchema,
-  individualPackageType: packageTypeDtoSchema.nullable(),
   unitContent: unitContentDtoSchema,
-  unitsPerPackage: z.number().int().positive(),
+  portion: productPackagePortionDtoSchema.nullable(),
   summary: z.string(),
-}).strict().superRefine((value, context) => addPackageTypeInvariant({
-  unitsPerPackage: value.unitsPerPackage,
-  individualPackageTypeId: value.individualPackageType?.id ?? null,
-}, context, "individualPackageType"));
+}).strict();
 
 /** Product creation response. */
 export const productCreatedDtoSchema = z.object({
@@ -117,14 +106,21 @@ export const catalogSearchResponseSchema = z.object({
   hasMore: z.object({ products: z.boolean(), brands: z.boolean(), categories: z.boolean() }).strict(),
 }).strict();
 
+/** Optional portion definition accepted with a package mutation. */
+export const productPackagePortionRequestSchema = z.object({
+  name: z.string(),
+  amount: z.string(),
+  unitTypeId: z.number().int().positive(),
+  portionsPerPackage: z.number().int().positive().nullable(),
+}).strict();
+
 /** Product package mutation request. */
 export const productPackageRequestSchema = z.object({
   packageTypeId: z.number().int().positive(),
-  individualPackageTypeId: z.number().int().positive().nullable(),
   amount: z.string(),
   unitTypeId: z.number().int().positive(),
-  unitsPerPackage: z.number().int().positive(),
-}).strict().superRefine(addPackageTypeInvariant);
+  portion: productPackagePortionRequestSchema.nullable(),
+}).strict();
 
 /** Product creation request. */
 export const createProductRequestSchema = z.object({
@@ -153,6 +149,8 @@ export type MacroReferenceBasis = z.infer<typeof macroReferenceBasisSchema>;
 export type CaloriesSource = z.infer<typeof caloriesSourceSchema>;
 /** Product macro profile protocol value. */
 export type MacroProfile = z.infer<typeof macroProfileSchema>;
+/** Optional package portion protocol value. */
+export type ProductPackagePortionDto = z.infer<typeof productPackagePortionDtoSchema>;
 /** Product package protocol value. */
 export type ProductPackageDto = z.infer<typeof productPackageDtoSchema>;
 /** Product creation protocol response. */
@@ -171,6 +169,8 @@ export type CatalogSearchResponse = z.infer<typeof catalogSearchResponseSchema>;
 export type CreateProductRequest = z.infer<typeof createProductRequestSchema>;
 /** Product update protocol request. */
 export type UpdateProductRequest = z.infer<typeof updateProductRequestSchema>;
+/** Optional package portion mutation protocol request. */
+export type ProductPackagePortionRequest = z.infer<typeof productPackagePortionRequestSchema>;
 /** Product package mutation protocol request. */
 export type ProductPackageRequest = z.infer<typeof productPackageRequestSchema>;
 

@@ -29,9 +29,12 @@ export type QuantityUnit = {
 export type QuantityPackage = {
   readonly contentAmount: string;
   readonly contentUnit: QuantityUnit;
-  readonly unitsPerPackage: number;
   readonly packageLabel: string;
-  readonly individualLabel: string | null;
+  readonly portion: {
+    readonly contentAmount: string;
+    readonly contentUnit: QuantityUnit;
+    readonly label: string;
+  } | null;
 };
 
 /** Original parsed consumption input. */
@@ -180,15 +183,14 @@ export function deriveConsumptionQuantity(
 
   if (input.inputMode === "PACKAGE") {
     if (input.inputUnit !== null) return invalidUnitSelection();
-    const individualBase = multiplyDecimals(packageValue.contentAmount, packageValue.contentUnit.conversionToBase);
-    const packageBase = multiplyDecimals(individualBase, String(packageValue.unitsPerPackage));
+    const packageBase = multiplyDecimals(packageValue.contentAmount, packageValue.contentUnit.conversionToBase);
     return succeed({ baseAmount: multiplyDecimals(quantity.value, packageBase), label: `${quantity.value} ${packageValue.packageLabel}` });
   }
 
   if (input.inputMode === "INDIVIDUAL_UNIT") {
-    if (input.inputUnit !== null || packageValue.unitsPerPackage <= 1 || packageValue.individualLabel === null) return invalidUnitSelection();
-    const individualBase = multiplyDecimals(packageValue.contentAmount, packageValue.contentUnit.conversionToBase);
-    return succeed({ baseAmount: multiplyDecimals(quantity.value, individualBase), label: `${quantity.value} ${packageValue.individualLabel}` });
+    if (input.inputUnit !== null || packageValue.portion === null) return invalidUnitSelection();
+    const portionBase = multiplyDecimals(packageValue.portion.contentAmount, packageValue.portion.contentUnit.conversionToBase);
+    return succeed({ baseAmount: multiplyDecimals(quantity.value, portionBase), label: `${quantity.value} ${packageValue.portion.label}` });
   }
 
   if (input.inputUnit === null || input.inputUnit.dimension !== packageValue.contentUnit.dimension) return invalidUnitSelection();

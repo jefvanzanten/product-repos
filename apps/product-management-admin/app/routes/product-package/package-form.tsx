@@ -6,11 +6,10 @@ import {
 } from "react-router";
 import { AdminForm as Form, AdminLink as Link } from "../../admin-source-context";
 import { requireAdministrator } from "../../auth.server";
+import { PackageContentFields } from "../../features/admin/product-forms/package-content-fields";
 import type {
   PackageFormActionResult,
   PackageFormLoaderData,
-  PackageTypeDto,
-  UnitTypeDto,
 } from "./product-package-route.types";
 import styles from "./product-package.module.css";
 import {
@@ -52,42 +51,10 @@ export default function PackageForm(): React.ReactNode {
       <section className={styles.card}>
         <Form className={styles.form} method="post">
           {actionData?.errors?.form ? <p className={styles.formError}>{actionData.errors.form}</p> : null}
-          <PackageFields packageTypes={loaderData.packageTypes} unitTypes={loaderData.unitTypes} values={values} errors={actionData?.errors} />
+          <PackageContentFields errors={actionData?.errors} packageTypes={loaderData.packageTypes} unitTypes={loaderData.unitTypes} values={values} variant="light" />
           <button className={styles.primaryButton} type="submit">Verpakking opslaan</button>
         </Form>
       </section>
     </main>
-  );
-}
-
-function PackageFields({ errors, packageTypes, unitTypes, values }: { readonly errors?: Record<string, string>; readonly packageTypes: ReadonlyArray<PackageTypeDto>; readonly unitTypes: ReadonlyArray<UnitTypeDto>; readonly values: Record<string, string> }): React.ReactNode {
-  return (
-    <>
-      <label className={styles.label}>Verpakkingstype
-        <select className={styles.input} name="packageTypeId" defaultValue={values.packageTypeId ?? ""} required>
-          <option value="">Kies verpakkingstype</option>
-          {packageTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-        </select>
-      </label>
-      <label className={styles.label}>Individueel verpakkingstype (verplicht bij meer dan één stuk)
-        <select className={styles.input} name="individualPackageTypeId" defaultValue={values.individualPackageTypeId ?? ""}>
-          <option value="">Geen (één stuk)</option>
-          {packageTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-        </select>
-      </label>
-      <label className={styles.label}>Inhoud per individueel stuk
-        <input className={styles.input} name="amount" defaultValue={values.amount ?? ""} placeholder="1,5" />
-      </label>
-      {errors?.amount ? <p className={styles.formError}>{errors.amount}</p> : null}
-      <label className={styles.label}>Inhoudseenheid
-        <select className={styles.input} name="unitTypeId" defaultValue={values.unitTypeId ?? ""} required>
-          <option value="">Kies eenheid</option>
-          {unitTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-        </select>
-      </label>
-      <label className={styles.label}>Aantal per verpakking
-        <input className={styles.input} name="unitsPerPackage" type="number" defaultValue={values.unitsPerPackage ?? "1"} />
-      </label>
-    </>
   );
 }

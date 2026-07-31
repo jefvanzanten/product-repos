@@ -99,7 +99,7 @@ Omdat geen snapshot wordt gebruikt:
 - De UI toont gedurende vijf seconden `Ongedaan maken`.
 - Daarna blijft het log dertig dagen technisch als verwijderd record bewaard en is het niet via de normale UI toegankelijk.
 - Na dertig dagen wordt het definitief gewist.
-- Ongedaan maken herstelt het log op de juiste chronologische positie en werkt het zichtbare aantal bij.
+- Ongedaan maken herstelt het log op de juiste chronologische positie.
 
 ## Acceptatiecriteria
 

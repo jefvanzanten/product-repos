@@ -1,18 +1,18 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
-import type { DailyStatistics, NutritionGoal, UpsertNutritionGoal } from "@product-repos/contracts/calorie-tracker";
+import type { ConsumptionTypeFilter, DailyStatistics, NutritionGoal, UpsertNutritionGoal } from "@product-repos/contracts/calorie-tracker";
 import { getDailyStatistics, putNutritionGoals } from "../calorie-tracker-api";
 import {
   canonicalizeTrackerUrl,
   deriveGoalProgress,
   formatDecimal,
   formatLocalDate,
-  getBrowserTimezone,
   getTodayInTimezone,
   parsePositiveDecimal,
 } from "../calorie-tracker-domain";
 import { DateControl, FocusDialog, Icon, StatusPanel } from "../calorie-tracker-components";
+import { useBrowserTimezone } from "../use-browser-timezone";
 import styles from "./statistics.module.css";
 
 type StatisticDefinition = {
@@ -35,6 +35,13 @@ const STATISTICS: ReadonlyArray<StatisticDefinition> = [
   { key: "fatG", label: "Vet", unit: "g", fractions: 1 },
 ];
 
+/** Build statistics URL state while retaining a filter only when it came from logbook context. */
+function createStatisticsParameters(date: string, type: ConsumptionTypeFilter, includeType: boolean): URLSearchParams {
+  const parameters = new URLSearchParams({ date });
+  if (includeType) parameters.set("type", type);
+  return parameters;
+}
+
 /** Return metadata for the Calorie Tracker statistics route. */
 export function meta(): ReadonlyArray<{ readonly title: string }> {
   return [{ title: "Caloriestatistieken | Calorie Tracker" }];
@@ -42,42 +49,51 @@ export function meta(): ReadonlyArray<{ readonly title: string }> {
 
 /** Render date-scoped calorie and macro statistics with optional personal goals. */
 export default function StatisticsRoute(): ReactNode {
-  const timezone = getBrowserTimezone();
+  const resolvedTimezone = useBrowserTimezone();
+  const timezone = resolvedTimezone ?? "UTC";
   const [parameters, setParameters] = useSearchParams();
   const today = getTodayInTimezone(timezone);
-  const canonical = canonicalizeTrackerUrl(parameters.get("date"), "all", today);
-  const date = canonical.state.date;
+  const carriesLogFilter = parameters.has("type");
+  const canonical = canonicalizeTrackerUrl(parameters.get("date"), parameters.get("type"), today);
+  const { date, type } = canonical.state;
+  const requiresStatisticsReplace = parameters.get("date") !== date || (carriesLogFilter && parameters.get("type") !== type);
+  const statisticsParameters = useMemo(
+    () => createStatisticsParameters(date, type, carriesLogFilter),
+    [carriesLogFilter, date, type],
+  );
   const [goalsOpen, setGoalsOpen] = useState(false);
+  const [lastSavedGoalDraft, setLastSavedGoalDraft] = useState<GoalDraft | null>(null);
 
   useEffect(() => {
-    if (!canonical.requiresReplace) return;
-    setParameters({ date }, { replace: true });
-  }, [canonical.requiresReplace, date, setParameters]);
+    if (resolvedTimezone === null || !requiresStatisticsReplace) return;
+    setParameters(statisticsParameters, { replace: true });
+  }, [requiresStatisticsReplace, resolvedTimezone, setParameters, statisticsParameters]);
 
   useEffect(() => {
-    if (date !== today) return;
+    if (resolvedTimezone === null || date !== today) return;
     const now = new Date();
     const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1);
-    const timer = window.setTimeout(() => setParameters({ date: getTodayInTimezone(timezone) }, { replace: true }), nextMidnight.getTime() - now.getTime());
+    const timer = window.setTimeout(() => setParameters(createStatisticsParameters(getTodayInTimezone(timezone), type, carriesLogFilter), { replace: true }), nextMidnight.getTime() - now.getTime());
     return () => window.clearTimeout(timer);
-  }, [date, setParameters, timezone, today]);
+  }, [carriesLogFilter, date, resolvedTimezone, setParameters, timezone, today, type]);
 
   const statisticsQuery = useQuery({
     queryKey: ["calorie-tracker", "statistics", date, timezone],
+    enabled: resolvedTimezone !== null,
     queryFn: ({ signal }) => getDailyStatistics(date, { timezone, signal }),
   });
-  const viewState = deriveStatisticsViewState(statisticsQuery.data, statisticsQuery.isPending);
+  const viewState = deriveStatisticsViewState(statisticsQuery.data, resolvedTimezone === null || statisticsQuery.isPending);
 
   return (
     <main className={styles.page}>
       <div className={styles.mobileDate}>
-        <DateControl date={date} today={today} onChange={(nextDate) => setParameters({ date: nextDate })} />
+        <DateControl date={date} today={today} onChange={(nextDate) => setParameters(createStatisticsParameters(nextDate, type, carriesLogFilter))} />
       </div>
       <header className={styles.header}>
         <div className={styles.headerDate}>
           <h1>{date === today ? "Vandaag" : formatLocalDate(date, "compact")}</h1>
           <p>{formatLocalDate(date)}{date === today ? " · vandaag" : ""}</p>
-          <input type="date" value={date} max={today} aria-label="Geselecteerde datum wijzigen" onChange={(event) => setParameters({ date: event.currentTarget.value })} />
+          <input type="date" value={date} max={today} aria-label="Geselecteerde datum wijzigen" onChange={(event) => setParameters(createStatisticsParameters(event.currentTarget.value, type, carriesLogFilter))} />
         </div>
         <button type="button" className="ct-primary" onClick={() => setGoalsOpen(true)}>
           {(viewState._tag === "Ready" || viewState._tag === "EmptyDay") && hasActiveGoals(viewState.data.goals) ? "Doelen wijzigen" : "Doelen instellen"}
@@ -102,7 +118,14 @@ export default function StatisticsRoute(): ReactNode {
       </section>
 
       {goalsOpen && (viewState._tag === "Ready" || viewState._tag === "EmptyDay") && (
-        <GoalsDialog goals={viewState.data.goals} date={date} timezone={timezone} onClose={() => setGoalsOpen(false)} />
+        <GoalsDialog
+          goals={viewState.data.goals}
+          lastSavedDraft={lastSavedGoalDraft}
+          date={date}
+          timezone={timezone}
+          onSaved={setLastSavedGoalDraft}
+          onClose={() => setGoalsOpen(false)}
+        />
       )}
     </main>
   );
@@ -220,17 +243,21 @@ type GoalDraft = {
 /** Render and persist the accessible optional-goals modal. */
 function GoalsDialog({
   goals,
+  lastSavedDraft,
   date,
   timezone,
+  onSaved,
   onClose,
 }: {
   readonly goals: NutritionGoal | null;
+  readonly lastSavedDraft: GoalDraft | null;
   readonly date: string;
   readonly timezone: string;
+  readonly onSaved: (draft: GoalDraft) => void;
   readonly onClose: () => void;
 }): ReactNode {
   const queryClient = useQueryClient();
-  const [draft, setDraft] = useState<GoalDraft>(() => createGoalDraft(goals));
+  const [draft, setDraft] = useState<GoalDraft>(() => createGoalDraft(goals, lastSavedDraft));
   const [error, setError] = useState<string | null>(null);
   const closeDialog = useCallback(() => onClose(), [onClose]);
   const mutation = useMutation({
@@ -251,6 +278,7 @@ function GoalsDialog({
       return;
     }
     await queryClient.invalidateQueries({ queryKey: ["calorie-tracker", "statistics", date, timezone] });
+    onSaved(draft);
     onClose();
   }
 
@@ -294,8 +322,8 @@ function GoalsDialog({
   );
 }
 
-/** Create an editable goals concept while retaining last disabled values. */
-function createGoalDraft(goals: NutritionGoal | null): GoalDraft {
+/** Create an editable goals concept while retaining values from the last successful save. */
+function createGoalDraft(goals: NutritionGoal | null, lastSavedDraft: GoalDraft | null): GoalDraft {
   return {
     enabled: {
       caloriesKcal: goals?.caloriesKcal !== null && goals?.caloriesKcal !== undefined,
@@ -304,10 +332,10 @@ function createGoalDraft(goals: NutritionGoal | null): GoalDraft {
       fatG: goals?.fatG !== null && goals?.fatG !== undefined,
     },
     values: {
-      caloriesKcal: goals?.caloriesKcal === null || goals?.caloriesKcal === undefined ? "" : String(goals.caloriesKcal),
-      proteinG: goals?.proteinG ?? "",
-      carbohydratesG: goals?.carbohydratesG ?? "",
-      fatG: goals?.fatG ?? "",
+      caloriesKcal: goals?.caloriesKcal === null || goals?.caloriesKcal === undefined ? lastSavedDraft?.values.caloriesKcal ?? "" : String(goals.caloriesKcal),
+      proteinG: goals?.proteinG ?? lastSavedDraft?.values.proteinG ?? "",
+      carbohydratesG: goals?.carbohydratesG ?? lastSavedDraft?.values.carbohydratesG ?? "",
+      fatG: goals?.fatG ?? lastSavedDraft?.values.fatG ?? "",
     },
   };
 }
