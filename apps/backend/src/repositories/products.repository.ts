@@ -72,6 +72,7 @@ export function updateProduct(input: UpdateProductPersistenceInput & { readonly 
       categoryId: input.categoryId,
       brandId: input.brandId,
       consumptionType: input.consumptionType,
+      updatedAt: new Date().toISOString(),
     }).where(eq(product.id, input.productId)).run();
     persistMacroProfile(tx, input.productId, input.macroProfile);
   });
@@ -91,7 +92,7 @@ export function createProduct(input: CreateProductPersistenceInput): Result<Prod
   if (duplicate) return err({ code: "PRODUCT_ALREADY_EXISTS", message: "Product already exists", existingProductId: duplicate.id });
 
   const created = db.transaction((tx) => {
-    const unitContentRow = findOrCreateUnitContent(tx, input.package.unitTypeId, Number(input.package.amount));
+    const unitContentRow = findOrCreateUnitContent(tx, input.package.unitTypeId, input.package.amount);
     const productRow = tx.insert(product).values({
       name: input.name,
       categoryId: input.categoryId,
@@ -153,10 +154,10 @@ function persistMacroProfile(executor: MacroProfileExecutor, productId: string, 
   const values = {
     productId,
     referenceBasis: profile.referenceBasis,
-    caloriesKcal: toStorageDecimal(profile.caloriesKcal),
-    proteinG: toStorageDecimal(profile.proteinG),
-    carbohydratesG: toStorageDecimal(profile.carbohydratesG),
-    fatG: toStorageDecimal(profile.fatG),
+    caloriesKcal: profile.caloriesKcal,
+    proteinG: profile.proteinG,
+    carbohydratesG: profile.carbohydratesG,
+    fatG: profile.fatG,
     caloriesSource: profile.caloriesSource,
   };
   executor.insert(productMacroProfile).values(values).onConflictDoUpdate({
@@ -203,12 +204,7 @@ function toMacroProfile(row: ProductMacroProfileRow | undefined): MacroProfile |
   };
 }
 
-/** Convert a canonical decimal protocol value to SQLite numeric storage. */
-function toStorageDecimal(value: string | null): number | null {
-  return value === null ? null : Number(value);
-}
-
-/** Convert a nullable SQLite numeric value to a canonical protocol string. */
-function toProtocolDecimal(value: number | null): string | null {
-  return value === null ? null : String(value);
+/** Preserve a nullable canonical decimal from SQLite text storage. */
+function toProtocolDecimal(value: string | null): string | null {
+  return value;
 }

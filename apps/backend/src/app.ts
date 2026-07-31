@@ -6,6 +6,7 @@ import { requireCatalogAccess } from "./auth/catalog-authorization.ts";
 import { brandRoutes } from "./routes/brands";
 import { healthRoutes } from "./routes/health";
 import { categoryRoutes } from "./routes/categories";
+import { calorieTrackerRoutes } from "./routes/calorie-tracker.ts";
 import { productRoutes } from "./routes/product.route";
 import { unitRoutes } from "./routes/units";
 
@@ -25,7 +26,7 @@ export function createApp() {
     "*",
     cors({
       origin: (origin) => (allowedOrigins.includes(origin) ? origin : null),
-      allowHeaders: ["Content-Type", "Authorization"],
+      allowHeaders: ["Content-Type", "Authorization", "X-Browser-Timezone"],
       allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       credentials: true,
     }),
@@ -50,6 +51,7 @@ export function createApp() {
   app.route("/", categoryRoutes());
   app.route("/", unitRoutes());
   app.route("/", productRoutes());
+  app.route("/", calorieTrackerRoutes());
 
   app.notFound((c) => {
     return c.json(

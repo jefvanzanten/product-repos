@@ -31,6 +31,7 @@ sqlite.close();
 const appModule = await import("../src/app");
 const dbModule = await import("../src/db/index");
 
+/** Real Hono application backed by the migrated temporary SQLite database. */
 export const app = appModule.createApp();
 
 /** Create a Better Auth test user and return its session cookie. */
@@ -68,6 +69,7 @@ function requestWithSession(
 
 const adminSessionCookie = await createTestUser("admin@example.test", "Test Admin");
 const userSessionCookie = await createTestUser("user@example.test", "Test User");
+const otherUserSessionCookie = await createTestUser("other-user@example.test", "Other Test User");
 dbModule.sqliteConnection
   .query("UPDATE user SET role = 'admin' WHERE email = ?")
   .run("admin@example.test");
@@ -82,6 +84,17 @@ export function requestAsUser(path: string, init: RequestInit = {}): Promise<Res
   return requestWithSession(userSessionCookie, path, init);
 }
 
+/** Send an API request authenticated as a second isolated regular test user. */
+export function requestAsOtherUser(path: string, init: RequestInit = {}): Promise<Response> {
+  return requestWithSession(otherUserSessionCookie, path, init);
+}
+
+/** Execute a parameterized mutation against the migrated route-integration SQLite database. */
+export function executeTestSql(sql: string, ...parameters: ReadonlyArray<string | number | null>): void {
+  dbModule.sqliteConnection.query(sql).run(...parameters);
+}
+
+/** Stable catalog references seeded into the route-integration database. */
 export const testCatalog = {
   categoryId,
   brandId,

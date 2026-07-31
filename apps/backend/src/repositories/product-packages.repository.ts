@@ -6,12 +6,18 @@ import { err, ok, type Result } from "../domain";
 import { requiredDimensionForReferenceBasis } from "../product-catalog/product-macro-profile";
 import { findPackageTypeById, findUnitTypeById } from "./units.repository";
 
+/** Minimal Drizzle executor used by package transactions and the default database. */
 export type ProductPackageExecutor = Pick<typeof db, "select" | "insert">;
+/** Raw package-type persistence row. */
 export type PackageTypeRow = typeof packageType.$inferSelect;
+/** Raw unit-type persistence row. */
 export type UnitTypeRow = typeof unitType.$inferSelect;
+/** Raw unit-content persistence row. */
 export type UnitContentRow = typeof unitContent.$inferSelect;
+/** Raw product-package persistence row. */
 export type ProductPackageRow = typeof productPackage.$inferSelect;
 
+/** Joined persistence rows required to project a product package. */
 export type ProductPackageFullRow = {
   readonly productPackage: ProductPackageRow;
   readonly packageType: PackageTypeRow;
@@ -19,6 +25,7 @@ export type ProductPackageFullRow = {
   readonly unitType: UnitTypeRow;
 };
 
+/** Parsed values required to insert a product package. */
 export type InsertProductPackageInput = {
   readonly productId: string;
   readonly unitContentId: number;
@@ -35,9 +42,8 @@ export function addProductPackage(productId: string, input: ProductPackageReques
   if (!unitTypeRow || !packageTypeRow) return err({ code: "REFERENCE_NOT_FOUND", message: "Reference not found" });
   if (!isPackageDimensionCompatible(productId, unitTypeRow.dimension)) return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Package unit dimension is incompatible with the macro profile" });
 
-  const amountNumber = Number(input.amount);
   const created = db.transaction((tx) => {
-    const unitContentRow = findOrCreateUnitContent(tx, input.unitTypeId, amountNumber);
+    const unitContentRow = findOrCreateUnitContent(tx, input.unitTypeId, input.amount);
 
     const duplicate = tx.select().from(productPackage).where(and(eq(productPackage.productId, productId), eq(productPackage.packageTypeId, input.packageTypeId), eq(productPackage.unitContentId, unitContentRow.id), eq(productPackage.unitsPerPackage, input.unitsPerPackage))).get();
     if (duplicate) return { duplicate: true as const, unitContentRow, productPackageRow: duplicate };
@@ -68,14 +74,19 @@ export function updateProductPackage(productId: string, packageId: number, input
   if (!unitTypeRow || !packageTypeRow) return err({ code: "REFERENCE_NOT_FOUND", message: "Reference not found" });
   if (!isPackageDimensionCompatible(productId, unitTypeRow.dimension)) return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Package unit dimension is incompatible with the macro profile" });
 
-  const amountNumber = Number(input.amount);
   const updated = db.transaction((tx) => {
-    const unitContentRow = findOrCreateUnitContent(tx, input.unitTypeId, amountNumber);
+    const unitContentRow = findOrCreateUnitContent(tx, input.unitTypeId, input.amount);
 
     const duplicate = tx.select().from(productPackage).where(sql`${productPackage.id} <> ${packageId} AND ${productPackage.productId} = ${productId} AND ${productPackage.packageTypeId} = ${input.packageTypeId} AND ${productPackage.unitContentId} = ${unitContentRow.id} AND ${productPackage.unitsPerPackage} = ${input.unitsPerPackage}`).get();
     if (duplicate) return { duplicate: true as const, unitContentRow, productPackageRow: duplicate };
 
-    return { duplicate: false as const, unitContentRow, productPackageRow: tx.update(productPackage).set({ packageTypeId: input.packageTypeId, unitContentId: unitContentRow.id, unitsPerPackage: input.unitsPerPackage }).where(eq(productPackage.id, packageId)).returning().get() };
+    return { duplicate: false as const, unitContentRow, productPackageRow: tx.update(productPackage).set({
+      packageTypeId: input.packageTypeId,
+      individualPackageTypeId: input.unitsPerPackage > 1 ? input.packageTypeId : null,
+      unitContentId: unitContentRow.id,
+      unitsPerPackage: input.unitsPerPackage,
+      updatedAt: new Date().toISOString(),
+    }).where(eq(productPackage.id, packageId)).returning().get() };
   });
 
   if (updated.duplicate) return err({ code: "PRODUCT_PACKAGE_ALREADY_EXISTS", message: "Product package already exists" });
@@ -83,7 +94,7 @@ export function updateProductPackage(productId: string, packageId: number, input
 }
 
 /** Find or create canonical unit content through the active executor. */
-export function findOrCreateUnitContent(executor: ProductPackageExecutor, unitTypeId: number, amount: number): UnitContentRow {
+export function findOrCreateUnitContent(executor: ProductPackageExecutor, unitTypeId: number, amount: string): UnitContentRow {
   const existing = executor.select().from(unitContent).where(and(eq(unitContent.unitTypeId, unitTypeId), eq(unitContent.amount, amount))).get();
   if (existing) return existing;
   return executor.insert(unitContent).values({ unitTypeId, amount }).returning().get();
@@ -91,7 +102,10 @@ export function findOrCreateUnitContent(executor: ProductPackageExecutor, unitTy
 
 /** Insert one product package through the active executor. */
 export function insertProductPackage(executor: ProductPackageExecutor, input: InsertProductPackageInput): ProductPackageRow {
-  return executor.insert(productPackage).values(input).returning().get();
+  return executor.insert(productPackage).values({
+    ...input,
+    individualPackageTypeId: input.unitsPerPackage > 1 ? input.packageTypeId : null,
+  }).returning().get();
 }
 
 /** Read all package relation rows for one product. */

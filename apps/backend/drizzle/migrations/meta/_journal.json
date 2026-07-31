@@ -43,6 +43,13 @@
       "when": 1785430800000,
       "tag": "0005_product_package_integer_ids",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1785492000000,
+      "tag": "0006_calorie_tracker_backend",
+      "breakpoints": true
     }
   ]
 }
