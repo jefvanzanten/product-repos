@@ -121,41 +121,37 @@ export function FocusDialog({
 
   useEffect(() => {
     openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const dialog = dialogRef.current;
-    const first = dialog?.querySelector<HTMLElement>("button, input, select, a[href]");
+    const first = dialogRef.current?.querySelector<HTMLElement>("button, input, select, a[href]");
     first?.focus();
+    return () => openerRef.current?.focus();
+  }, []);
 
-    /** Keep Tab focus in the dialog and close it with Escape. */
-    function handleKeyDown(event: KeyboardEvent): void {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onClose();
-        return;
-      }
-      if (event.key !== "Tab" || dialog === null) return;
-      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>("button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href]"));
-      const firstFocusable = focusable[0];
-      const lastFocusable = focusable[focusable.length - 1];
-      if (firstFocusable === undefined || lastFocusable === undefined) return;
-      if (event.shiftKey && document.activeElement === firstFocusable) {
-        event.preventDefault();
-        lastFocusable.focus();
-      } else if (!event.shiftKey && document.activeElement === lastFocusable) {
-        event.preventDefault();
-        firstFocusable.focus();
-      }
+  /** Keep keyboard focus in the dialog and close it with Escape. */
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>): void {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onClose();
+      return;
     }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      openerRef.current?.focus();
-    };
-  }, [onClose]);
+    const dialog = dialogRef.current;
+    if (event.key !== "Tab" || dialog === null) return;
+    const focusable = Array.from(dialog.querySelectorAll<HTMLElement>("button, input, select, a[href]"))
+      .filter((element) => !(element instanceof HTMLButtonElement || element instanceof HTMLInputElement || element instanceof HTMLSelectElement) || !element.disabled);
+    const firstFocusable = focusable[0];
+    const lastFocusable = focusable[focusable.length - 1];
+    if (firstFocusable === undefined || lastFocusable === undefined) return;
+    if (event.shiftKey && document.activeElement === firstFocusable) {
+      event.preventDefault();
+      lastFocusable.focus();
+    } else if (!event.shiftKey && document.activeElement === lastFocusable) {
+      event.preventDefault();
+      firstFocusable.focus();
+    }
+  }
 
   return (
     <div className={styles.scrim} onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={title} className={`${styles.dialog} ${className}`}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={title} className={`${styles.dialog} ${className}`} onKeyDown={handleKeyDown}>
         {children}
       </div>
     </div>

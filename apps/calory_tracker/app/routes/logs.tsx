@@ -44,13 +44,8 @@ export default function LogsRoute(): ReactNode {
   const { date, type } = canonical.state;
   const listRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
-  const [undo, setUndo] = useState<UndoNotice | null>(null);
-  const [liveMessage, setLiveMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    setUndo(readUndoNotice());
-    setLiveMessage(readSuccessMessage());
-  }, []);
+  const [undo, setUndo] = useState<UndoNotice | null>(readUndoNotice);
+  const [liveMessage, setLiveMessage] = useState<string | null>(readSuccessMessage);
 
   useEffect(() => {
     if (!canonical.requiresReplace) return;
@@ -92,12 +87,7 @@ export default function LogsRoute(): ReactNode {
 
   useEffect(() => {
     if (undo === null) return;
-    const remaining = undo.expiresAt - Date.now();
-    if (remaining <= 0) {
-      clearUndoNotice();
-      setUndo(null);
-      return;
-    }
+    const remaining = Math.max(0, undo.expiresAt - Date.now());
     const timer = window.setTimeout(() => {
       clearUndoNotice();
       setUndo(null);
@@ -146,7 +136,7 @@ export default function LogsRoute(): ReactNode {
           <button type="button" className={styles.dayButton} aria-label="Vorige dag" onClick={() => selectDate(addCalendarDays(date, -1))}><Icon name="back" /></button>
           <button type="button" className={styles.dayButton} aria-label="Volgende dag" disabled={date >= today} onClick={() => selectDate(addCalendarDays(date, 1))}><Icon name="chevron-right" /></button>
         </div>
-        <div className={styles.filterGroup} aria-label="Consumptietypefilter">
+        <div className={styles.filterGroup} role="group" aria-label="Consumptietypefilter">
           {FILTERS.map((filter) => (
             <button
               key={filter.value}
@@ -229,7 +219,7 @@ function readUndoNotice(): UndoNotice | null {
     const id = Reflect.get(value, "id");
     const expiresAt = Reflect.get(value, "expiresAt");
     return typeof id === "string" && typeof expiresAt === "number" && expiresAt > Date.now() ? { id, expiresAt } : null;
-  } catch (cause: unknown) {
+  } catch {
     return null;
   }
 }
