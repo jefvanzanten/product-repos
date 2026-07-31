@@ -73,15 +73,16 @@ export function LogForm({
     enabled: searchMode._tag !== "TooShort",
     queryFn: ({ signal }) => getLoggablePackages(searchMode._tag === "Search" ? searchMode.query : null, { timezone, signal }),
   });
+  const selectedOriginalPackage = mode._tag === "Edit" && shouldIncludeLegacyInputUnit(selectedPackage?.packageId ?? null, mode.log.package.packageId);
+  const selectedOriginalArchived = selectedOriginalPackage && mode._tag === "Edit" && (mode.log.package.productArchived || mode.log.package.packageArchived);
   const unitsQuery = useQuery({
     queryKey: ["calorie-tracker", "package-units", selectedPackage?.packageId],
-    enabled: selectedPackage !== null,
+    enabled: selectedPackage !== null && !selectedOriginalArchived,
     queryFn: ({ signal }) => selectedPackage === null
       ? Promise.resolve({ _tag: "Success" as const, value: [] })
       : getAvailableInputUnits(selectedPackage.packageId, { timezone, signal }),
   });
   const fetchedUnits = unitsQuery.data?._tag === "Success" ? unitsQuery.data.value : [];
-  const selectedOriginalPackage = mode._tag === "Edit" && shouldIncludeLegacyInputUnit(selectedPackage?.packageId ?? null, mode.log.package.packageId);
   const existingUnit = selectedOriginalPackage && mode._tag === "Edit" ? createExistingUnit(mode.log) : null;
   const includesExistingUnit = existingUnit === null || fetchedUnits.some((unit) => createUnitKey(unit) === createUnitKey(existingUnit));
   const availableUnits = existingUnit !== null && !includesExistingUnit ? [existingUnit, ...fetchedUnits] : fetchedUnits;
@@ -91,10 +92,10 @@ export function LogForm({
       if (unitKey !== null) setUnitKey(null);
       return;
     }
-    if (unitsQuery.data?._tag !== "Success" || availableUnits.length === 0) return;
+    if ((!selectedOriginalArchived && unitsQuery.data?._tag !== "Success") || availableUnits.length === 0) return;
     const nextUnitKey = selectInputUnitKey(unitKey, availableUnits.map(createUnitKey));
     if (nextUnitKey !== unitKey) setUnitKey(nextUnitKey);
-  }, [availableUnits, selectedPackage, unitKey, unitsQuery.data]);
+  }, [availableUnits, selectedOriginalArchived, selectedPackage, unitKey, unitsQuery.data]);
 
   const mutation = useMutation({
     mutationFn: async (input: FormMutationInput) => input._tag === "Create"
@@ -217,18 +218,18 @@ export function LogForm({
                 {selectedPackage?.packageId === productPackage.packageId ? <Icon name="check" /> : <Icon name="chevron-right" />}
               </button>
             ))}
-            {mode._tag === "Edit" && mode.log.package.packageArchived && <p>De huidige gearchiveerde verpakking blijft beperkt bewerkbaar.</p>}
+            {mode._tag === "Edit" && (mode.log.package.productArchived || mode.log.package.packageArchived) && <p>Het huidige gearchiveerde product of de verpakking blijft beperkt bewerkbaar.</p>}
           </section>
 
           {selectedPackage !== null && (
             <>
               <h2 className={styles.quantityTitle}>Hoeveelheid</h2>
               <label><span>Waarde</span><input inputMode="decimal" value={quantity} onChange={(event) => setQuantity(event.currentTarget.value)} /></label>
-              <label><span>Eenheid</span><select value={unitKey ?? ""} onChange={(event) => setUnitKey(event.currentTarget.value)} disabled={unitsQuery.isPending || unitsQuery.data?._tag === "Failure"}>
+              <label><span>Eenheid</span><select value={unitKey ?? ""} onChange={(event) => setUnitKey(event.currentTarget.value)} disabled={!selectedOriginalArchived && (unitsQuery.isPending || unitsQuery.data?._tag === "Failure")}>
                 <option value="" disabled>Kies eenheid</option>
                 {availableUnits.map((unit) => <option key={createUnitKey(unit)} value={createUnitKey(unit)}>{unit.label}</option>)}
               </select></label>
-              {unitsQuery.data?._tag === "Failure" && <div className={styles.error} role="alert">Eenheden laden lukt niet.<button type="button" onClick={() => void unitsQuery.refetch()}>Opnieuw proberen</button></div>}
+              {!selectedOriginalArchived && unitsQuery.data?._tag === "Failure" && <div className={styles.error} role="alert">Eenheden laden lukt niet.<button type="button" onClick={() => void unitsQuery.refetch()}>Opnieuw proberen</button></div>}
               <aside className={styles.typeNote}><ConsumptionTypeBadge type={selectedPackage.consumptionType} /><span>Type komt uit de productcatalogus</span></aside>
             </>
           )}

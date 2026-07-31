@@ -3,6 +3,7 @@ import {
   catalogSearchResponseSchema,
   productCreatedDtoSchema,
   productDetailDtoSchema,
+  productPackageDtoSchema,
 } from "@product-repos/contracts";
 import type { BrandDto, CatalogBrowseResponse, CatalogSearchResponse, CategoryDto, CreateProductRequest, PackageTypeDto, ProductCreatedDto, ProductDetailDto, ProductPackageDto, ProductPackageRequest, UnitTypeDto, UpdateProductRequest } from "@product-repos/contracts";
 
@@ -69,7 +70,7 @@ async function getProduct(productId: string, request: Request): Promise<ProductD
 
 /** Fetch package detail with the incoming session. */
 async function getProductPackage(productId: string, packageId: string, request: Request): Promise<ProductPackageWithProductId> {
-  return getJson<ProductPackageWithProductId>(`/products/${productId}/packages/${packageId}`, request);
+  return parseProductPackageWithProductId(await getJson<unknown>(`/products/${productId}/packages/${packageId}`, request));
 }
 
 /** Create a category with the incoming session. */
@@ -104,12 +105,34 @@ async function updateProduct(productId: string, input: UpdateProductRequest, req
 
 /** Add a product package with the incoming session. */
 async function addProductPackage(productId: string, input: ProductPackageRequest, request: Request): Promise<ProductPackageWithProductId> {
-  return postJson<ProductPackageWithProductId>(`/products/${productId}/packages`, input, request);
+  return parseProductPackageWithProductId(await postJson<unknown>(`/products/${productId}/packages`, input, request));
 }
 
 /** Update a product package with the incoming session. */
 async function updateProductPackage(productId: string, packageId: string, input: ProductPackageRequest, request: Request): Promise<ProductPackageWithProductId> {
-  return patchJson<ProductPackageWithProductId>(`/products/${productId}/packages/${packageId}`, input, request);
+  return parseProductPackageWithProductId(await patchJson<unknown>(`/products/${productId}/packages/${packageId}`, input, request));
+}
+
+/** Parse a package response including its route-level product identifier. */
+function parseProductPackageWithProductId(input: unknown): ProductPackageWithProductId {
+  const productId = readUnknownField(input, "productId");
+  if (typeof productId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(productId)) {
+    throw new Error("Product package response contains an invalid product identifier");
+  }
+  const value = productPackageDtoSchema.parse({
+    id: readUnknownField(input, "id"),
+    packageType: readUnknownField(input, "packageType"),
+    individualPackageType: readUnknownField(input, "individualPackageType"),
+    unitContent: readUnknownField(input, "unitContent"),
+    unitsPerPackage: readUnknownField(input, "unitsPerPackage"),
+    summary: readUnknownField(input, "summary"),
+  });
+  return { ...value, productId };
+}
+
+/** Read one field from an unknown protocol object without asserting its shape. */
+function readUnknownField(input: unknown, field: string): unknown {
+  return typeof input === "object" && input !== null ? Reflect.get(input, field) : undefined;
 }
 
 /** Map backend protocol errors to admin form errors. */

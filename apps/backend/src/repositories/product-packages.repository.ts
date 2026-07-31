@@ -2,7 +2,7 @@ import type { ProductPackageDto, ProductPackageRequest } from "@product-repos/co
 import { and, eq, isNull, ne } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import { db } from "../db";
-import { packageType, product, productMacroProfile, productPackage, unitContent, unitType } from "../db/schema";
+import { consumptionLog, packageType, product, productMacroProfile, productPackage, unitContent, unitType } from "../db/schema";
 import { err, ok, type Result } from "../domain";
 import { requiredDimensionForReferenceBasis } from "../product-catalog/product-macro-profile";
 import { findPackageTypeById, findUnitTypeById } from "./units.repository";
@@ -86,12 +86,15 @@ export function getProductPackage(productId: string, packageId: number): Result<
 /** Update a package when references, duplicates, and macro dimensions are valid. */
 export function updateProductPackage(productId: string, packageId: number, input: ProductPackageRequest): Result<ProductPackageDto & { readonly productId: string }> {
   if (!productExists(productId)) return err({ code: "PRODUCT_NOT_FOUND", message: "Product not found" });
-  const existingPackage = db.select().from(productPackage).where(and(eq(productPackage.id, packageId), eq(productPackage.productId, productId))).get();
+  const existingPackage = findProductPackageFullRow(productId, packageId);
   if (!existingPackage) return err({ code: "PRODUCT_PACKAGE_NOT_FOUND", message: "Product package not found" });
 
   const references = findPackageReferences(input);
   if (!references.ok) return references;
   if (!isPackageDimensionCompatible(productId, references.value.unitTypeRow.dimension)) return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Package unit dimension is incompatible with the macro profile" });
+  if (existingPackage.unitType.dimension !== references.value.unitTypeRow.dimension && hasActiveExplicitContentLogs(packageId)) {
+    return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Package dimension cannot change while explicit content-unit logs reference it" });
+  }
 
   const updated = db.transaction((tx) => {
     const unitContentRow = findOrCreateUnitContent(tx, input.unitTypeId, input.amount);
@@ -217,6 +220,15 @@ function packageDuplicatePredicate(productId: string, unitContentId: number, inp
       ? isNull(productPackage.individualPackageTypeId)
       : eq(productPackage.individualPackageTypeId, input.individualPackageTypeId),
   );
+}
+
+/** Determine whether active explicit-unit logs require a package's current dimension. */
+function hasActiveExplicitContentLogs(packageId: number): boolean {
+  return db.select({ id: consumptionLog.id }).from(consumptionLog).where(and(
+    eq(consumptionLog.productPackageId, packageId),
+    eq(consumptionLog.inputMode, "CONTENT_UNIT"),
+    isNull(consumptionLog.deletedAt),
+  )).limit(1).get() !== undefined;
 }
 
 /** Check whether a product exists before package operations. */

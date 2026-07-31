@@ -69,9 +69,16 @@ CREATE TABLE product_package_aligned (
   CHECK ((units_per_package = 1 AND individual_package_type_id IS NULL) OR (units_per_package > 1 AND individual_package_type_id IS NOT NULL))
 );
 --> statement-breakpoint
--- Intentionally fail the consistency check for legacy multi-packages instead of guessing that their outer package type is also their individual type. Such rows require an explicit data mapping before this migration runs.
+-- Legacy rows do not contain an individual package type. Preserve them with an explicit correction marker instead of guessing that the outer type is also the individual type.
+INSERT INTO package_type (name)
+SELECT 'Individueel type controleren'
+WHERE EXISTS (SELECT 1 FROM product_package WHERE units_per_package > 1)
+  AND NOT EXISTS (SELECT 1 FROM package_type WHERE lower(trim(name)) = lower('Individueel type controleren'));
+--> statement-breakpoint
 INSERT INTO product_package_aligned (id, product_id, unit_content_id, package_type_id, individual_package_type_id, units_per_package, archived_at, created_at, updated_at)
-SELECT id, product_id, unit_content_id, package_type_id, NULL, units_per_package, NULL, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM product_package;
+SELECT id, product_id, unit_content_id, package_type_id,
+  CASE WHEN units_per_package > 1 THEN (SELECT id FROM package_type WHERE lower(trim(name)) = lower('Individueel type controleren') LIMIT 1) ELSE NULL END,
+  units_per_package, NULL, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now') FROM product_package;
 --> statement-breakpoint
 DROP TABLE product_package;
 --> statement-breakpoint

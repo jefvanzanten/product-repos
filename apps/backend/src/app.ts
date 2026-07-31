@@ -67,11 +67,12 @@ export function createApp() {
     );
   });
 
-  app.onError((_error, context) => {
+  app.onError((error, context) => {
     const correlationId = crypto.randomUUID();
     console.error("Unhandled backend defect", {
       operation: `${context.req.method} ${new URL(context.req.url).pathname}`,
       errorTag: "INTERNAL_ERROR",
+      defectName: error.name || "UnknownError",
       correlationId,
     });
     const response: CalorieTrackerErrorResponse = {
