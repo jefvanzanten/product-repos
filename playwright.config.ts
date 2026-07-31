@@ -9,6 +9,7 @@ export default defineConfig({
   timeout: 45_000,
   expect: { timeout: 8_000 },
   outputDir: "test-results/e2e",
+  globalSetup: "./tests/e2e/calorie-tracker.global-setup.ts",
   reporter: [["list"]],
   use: {
     baseURL: APP_BASE_URL,

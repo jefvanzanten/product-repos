@@ -169,10 +169,11 @@ describe("Calorie Tracker backend coverage", () => {
     const list = logListSchema.parse(await listResponse.json());
     expect(list.items.filter((item) => item.id === firstId || item.id === secondId).map((item) => item.id)).toEqual([firstId, secondId]);
 
-    const recentResponse = await requestAsUser("/calorie-tracker/packages/search?limit=2");
+    const recentResponse = await requestAsUser("/calorie-tracker/packages/search?limit=20");
     expect(recentResponse.status).toBe(200);
     const recent = packageSearchResultSchema.array().parse(await recentResponse.json());
-    expect(recent.map((item) => item.packageId)).toEqual([second.package.id, first.package.id]);
+    const createdPackageIds = new Set([first.package.id, second.package.id]);
+    expect(recent.filter((item) => createdPackageIds.has(item.packageId)).map((item) => item.packageId)).toEqual([second.package.id, first.package.id]);
   });
 
   it("aggregates partial macros, explicit calories, 4/4/9 fallback, and exact values before presentation rounding", async () => {

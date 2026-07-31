@@ -106,13 +106,24 @@ export function StatusPanel({
 
 /** Return keyboard-focusable elements that are actually visible inside a dialog. */
 function getVisibleDialogControls(dialog: HTMLElement): ReadonlyArray<HTMLElement> {
-  const candidates = dialog.querySelectorAll<HTMLElement>("button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href]");
-  return Array.from(candidates).filter(isVisibleDialogControl);
+  const candidates = dialog.querySelectorAll<HTMLElement>("button, input, select, a[href]");
+  return Array.from(candidates).filter((element) => isEnabledDialogControl(element) && isVisibleDialogControl(element));
 }
 
-/** Determine whether a focus candidate participates in the rendered layout. */
+/** Determine whether a focus candidate accepts interaction. */
+function isEnabledDialogControl(element: HTMLElement): boolean {
+  return !(element instanceof HTMLButtonElement || element instanceof HTMLInputElement || element instanceof HTMLSelectElement) || !element.disabled;
+}
+
+/** Determine whether a focus candidate and its ancestors participate in the rendered layout. */
 function isVisibleDialogControl(element: HTMLElement): boolean {
-  return element.getClientRects().length > 0 && window.getComputedStyle(element).visibility !== "hidden";
+  let current: HTMLElement | null = element;
+  while (current !== null) {
+    const style = window.getComputedStyle(current);
+    if (style.display === "none" || style.visibility === "hidden") return false;
+    current = current.parentElement;
+  }
+  return true;
 }
 
 /** Focus-trapped modal surface with Escape handling and opener focus restoration. */
