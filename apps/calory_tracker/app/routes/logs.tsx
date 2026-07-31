@@ -44,8 +44,13 @@ export default function LogsRoute(): ReactNode {
   const { date, type } = canonical.state;
   const listRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
-  const [undo, setUndo] = useState<UndoNotice | null>(readUndoNotice);
-  const [liveMessage, setLiveMessage] = useState<string | null>(readSuccessMessage);
+  const [undo, setUndo] = useState<UndoNotice | null>(null);
+  const [liveMessage, setLiveMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setUndo(readUndoNotice());
+    setLiveMessage(readSuccessMessage());
+  }, []);
 
   useEffect(() => {
     if (!canonical.requiresReplace) return;
