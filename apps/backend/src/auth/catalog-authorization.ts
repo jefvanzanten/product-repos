@@ -32,10 +32,10 @@ export const requireCatalogAccess: MiddlewareHandler = async (context, next) => 
   let session: Awaited<ReturnType<typeof auth.api.getSession>>;
   try {
     session = await auth.api.getSession({ headers: context.req.raw.headers });
-  } catch (cause) {
+  } catch {
     console.error("Authentication store unavailable", {
       operation: "getSession",
-      cause,
+      errorTag: "AUTH_UNAVAILABLE",
     });
     return context.json(
       { code: "AUTH_UNAVAILABLE", message: "Authentication is temporarily unavailable" },

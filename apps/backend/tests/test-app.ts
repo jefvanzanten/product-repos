@@ -19,13 +19,22 @@ const testDb = drizzle(sqlite);
 const migrationsFolder = fileURLToPath(new URL("../drizzle/migrations", import.meta.url));
 migrate(testDb, { migrationsFolder });
 
-const categoryId = (sqlite.query("INSERT INTO category (name) VALUES (?) RETURNING id").get("Frisdrank") as { id: number }).id;
+/** Parse an inserted SQLite row identifier at the test persistence boundary. */
+function readInsertedId(row: unknown): number {
+  if (typeof row !== "object" || row === null || !("id" in row)) throw new Error("SQLite insert did not return an id");
+  const id = Reflect.get(row, "id");
+  if (typeof id !== "number" || !Number.isInteger(id) || id < 1) throw new Error("SQLite insert returned an invalid id");
+  return id;
+}
+
+const categoryId = readInsertedId(sqlite.query("INSERT INTO category (name) VALUES (?) RETURNING id").get("Frisdrank"));
 const brandId = crypto.randomUUID();
 sqlite.query("INSERT INTO brand (id, name) VALUES (?, ?)").run(brandId, "Testmerk");
-const unitTypeId = (sqlite.query("INSERT INTO unit_type (name, symbol, dimension, conversion_to_base) VALUES (?, ?, ?, ?) RETURNING id").get("liter", "l", "VOLUME", 1000) as { id: number }).id;
-const massUnitTypeId = (sqlite.query("INSERT INTO unit_type (name, symbol, dimension, conversion_to_base) VALUES (?, ?, ?, ?) RETURNING id").get("gram", "g", "MASS", 1) as { id: number }).id;
-const countUnitTypeId = (sqlite.query("INSERT INTO unit_type (name, symbol, dimension, conversion_to_base) VALUES (?, ?, ?, ?) RETURNING id").get("stuk", "st", "COUNT", 1) as { id: number }).id;
-const packageTypeId = (sqlite.query("INSERT INTO package_type (name) VALUES (?) RETURNING id").get("fles") as { id: number }).id;
+const unitTypeId = readInsertedId(sqlite.query("INSERT INTO unit_type (name, symbol, dimension, conversion_to_base) VALUES (?, ?, ?, ?) RETURNING id").get("liter", "l", "VOLUME", 1000));
+const massUnitTypeId = readInsertedId(sqlite.query("INSERT INTO unit_type (name, symbol, dimension, conversion_to_base) VALUES (?, ?, ?, ?) RETURNING id").get("gram", "g", "MASS", 1));
+const countUnitTypeId = readInsertedId(sqlite.query("INSERT INTO unit_type (name, symbol, dimension, conversion_to_base) VALUES (?, ?, ?, ?) RETURNING id").get("stuk", "st", "COUNT", 1));
+const packageTypeId = readInsertedId(sqlite.query("INSERT INTO package_type (name) VALUES (?) RETURNING id").get("fles"));
+const individualPackageTypeId = readInsertedId(sqlite.query("INSERT INTO package_type (name) VALUES (?) RETURNING id").get("blikje"));
 sqlite.close();
 
 const appModule = await import("../src/app");
@@ -33,6 +42,13 @@ const dbModule = await import("../src/db/index");
 
 /** Real Hono application backed by the migrated temporary SQLite database. */
 export const app = appModule.createApp();
+
+/** Raise a test-only defect so the real global error boundary can be exercised. */
+function throwTestDefect(): never {
+  throw new Error("sensitive persistence detail");
+}
+
+app.get("/__test/defect", throwTestDefect);
 
 /** Create a Better Auth test user and return its session cookie. */
 async function createTestUser(email: string, name: string): Promise<string> {
@@ -102,6 +118,7 @@ export const testCatalog = {
   massUnitTypeId,
   countUnitTypeId,
   packageTypeId,
+  individualPackageTypeId,
 } as const;
 
 process.once("exit", () => {

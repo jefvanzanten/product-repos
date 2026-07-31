@@ -41,6 +41,7 @@ export const calorieTrackerErrorCodeSchema = z.enum([
   "LOG_RESTORE_WINDOW_EXPIRED",
   "UNAUTHENTICATED",
   "AUTH_UNAVAILABLE",
+  "INTERNAL_ERROR",
 ]);
 
 /** Strict error response returned by Calorie Tracker routes. */

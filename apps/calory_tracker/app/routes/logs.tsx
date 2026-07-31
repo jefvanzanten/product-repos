@@ -72,8 +72,16 @@ export default function LogsRoute(): ReactNode {
     if (viewState._tag !== "Ready") return;
     const list = listRef.current;
     if (list === null) return;
-    const stored = window.sessionStorage.getItem(scrollKey);
-    list.scrollTop = stored === null ? list.scrollHeight : Number(stored);
+    const createdLogId = window.sessionStorage.getItem("calorie-tracker-created-log-id");
+    const createdItem = [...list.children].find((element) => element instanceof HTMLElement && element.dataset.logId === createdLogId);
+    if (createdLogId !== null && createdItem instanceof HTMLElement) {
+      createdItem.scrollIntoView({ block: "nearest" });
+      window.sessionStorage.setItem(scrollKey, String(list.scrollTop));
+      window.sessionStorage.removeItem("calorie-tracker-created-log-id");
+    } else {
+      const stored = window.sessionStorage.getItem(scrollKey);
+      list.scrollTop = stored === null ? list.scrollHeight : Number(stored);
+    }
     /** Persist list scroll for this canonical date/filter context. */
     function saveScroll(): void {
       window.sessionStorage.setItem(scrollKey, String(list?.scrollTop ?? 0));
@@ -186,7 +194,7 @@ function LogItem({ item, contextSearch }: { readonly item: ConsumptionLog; reado
   const brand = item.package.brand === null ? "" : ` · ${item.package.brand.name}`;
   const time = new Intl.DateTimeFormat("nl-NL", { hour: "2-digit", minute: "2-digit", timeZone: item.timezone }).format(new Date(item.consumedAt));
   return (
-    <Link className={styles.logItem} to={`/logs/${item.id}${contextSearch}`}>
+    <Link className={styles.logItem} data-log-id={item.id} to={`/logs/${item.id}${contextSearch}`}>
       <ProductImage type={item.package.consumptionType} imageUrl={item.package.imageUrl} />
       <span className={styles.itemCopy}>
         <time dateTime={item.consumedAt}>{time}</time>

@@ -23,14 +23,32 @@ export const macroProfileSchema = z.object({
   caloriesSource: caloriesSourceSchema.nullable(),
 }).strict();
 
+/** Add the single- versus multi-package invariant to a package protocol value. */
+function addPackageTypeInvariant(
+  value: { readonly unitsPerPackage: number; readonly individualPackageTypeId: number | null },
+  context: z.RefinementCtx,
+  issuePath = "individualPackageTypeId",
+): void {
+  if (value.unitsPerPackage === 1 && value.individualPackageTypeId !== null) {
+    context.addIssue({ code: "custom", path: [issuePath], message: "Single packages cannot have an individual package type" });
+  }
+  if (value.unitsPerPackage > 1 && value.individualPackageTypeId === null) {
+    context.addIssue({ code: "custom", path: [issuePath], message: "Multi-packages require an individual package type" });
+  }
+}
+
 /** Product package returned by the catalog API. */
 export const productPackageDtoSchema = z.object({
   id: z.number().int(),
   packageType: packageTypeDtoSchema,
+  individualPackageType: packageTypeDtoSchema.nullable(),
   unitContent: unitContentDtoSchema,
-  unitsPerPackage: z.number().int(),
+  unitsPerPackage: z.number().int().positive(),
   summary: z.string(),
-}).strict();
+}).strict().superRefine((value, context) => addPackageTypeInvariant({
+  unitsPerPackage: value.unitsPerPackage,
+  individualPackageTypeId: value.individualPackageType?.id ?? null,
+}, context, "individualPackageType"));
 
 /** Product creation response. */
 export const productCreatedDtoSchema = z.object({
@@ -101,11 +119,12 @@ export const catalogSearchResponseSchema = z.object({
 
 /** Product package mutation request. */
 export const productPackageRequestSchema = z.object({
-  packageTypeId: z.number().int(),
+  packageTypeId: z.number().int().positive(),
+  individualPackageTypeId: z.number().int().positive().nullable(),
   amount: z.string(),
-  unitTypeId: z.number().int(),
-  unitsPerPackage: z.number().int(),
-}).strict();
+  unitTypeId: z.number().int().positive(),
+  unitsPerPackage: z.number().int().positive(),
+}).strict().superRefine(addPackageTypeInvariant);
 
 /** Product creation request. */
 export const createProductRequestSchema = z.object({

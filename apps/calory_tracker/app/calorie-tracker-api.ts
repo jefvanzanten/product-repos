@@ -158,13 +158,7 @@ async function requestJson<T>(
   }
 
   const raw: unknown = await readUnknownJson(response);
-  if (!response.ok) {
-    const parsedError = calorieTrackerErrorResponseSchema.safeParse(raw);
-    const errorResponse = parsedError.success
-      ? parsedError.data
-      : { code: "VALIDATION_ERROR" as const, message: response.statusText || "Aanvraag mislukt." };
-    return { _tag: "Failure", error: { _tag: "HttpFailure", status: response.status, response: errorResponse } };
-  }
+  if (!response.ok) return classifyHttpErrorResponse(response.status, raw);
 
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
@@ -176,12 +170,24 @@ async function requestJson<T>(
   return { _tag: "Success", value: parsed.data };
 }
 
+/** Classify a non-success response without disguising malformed protocol data as validation. */
+export function classifyHttpErrorResponse(status: number, raw: unknown): ApiOutcome<never> {
+  const parsedError = calorieTrackerErrorResponseSchema.safeParse(raw);
+  if (!parsedError.success) {
+    return {
+      _tag: "Failure",
+      error: { _tag: "InvalidResponse", issues: parsedError.error.issues.map((issue) => issue.message) },
+    };
+  }
+  return { _tag: "Failure", error: { _tag: "HttpFailure", status, response: parsedError.data } };
+}
+
 /** Read a response body as unknown so no unparsed transport shape crosses the adapter. */
 async function readUnknownJson(response: Response): Promise<unknown> {
   try {
     const value: unknown = await response.json();
     return value;
-  } catch (cause: unknown) {
-    return { invalidJsonCause: cause instanceof Error ? cause.message : "Unknown JSON parse failure" };
+  } catch {
+    return null;
   }
 }

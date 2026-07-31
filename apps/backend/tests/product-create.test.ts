@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { catalogSearchResponseSchema, productCreatedDtoSchema, productDetailDtoSchema } from "@product-repos/contracts";
 import { requestAsAdmin, testCatalog } from "./test-app";
 
 /** Build a unique product name for the shared integration database. */
@@ -33,7 +34,7 @@ describe("product creation", () => {
       consumptionType: "FOOD",
       macroProfile: manualMacroProfile,
       package: {
-        packageTypeId: testCatalog.packageTypeId,
+        packageTypeId: testCatalog.packageTypeId, individualPackageTypeId: null,
         amount: "100",
         unitTypeId: testCatalog.massUnitTypeId,
         unitsPerPackage: 1,
@@ -41,12 +42,7 @@ describe("product creation", () => {
     });
 
     expect(response.status).toBe(201);
-    const created = await response.json() as {
-      id: string;
-      consumptionType: string;
-      macroProfile: typeof manualMacroProfile;
-      package: { unitContent: { amount: string; unitType: { id: number; symbol: string; dimension: string; conversionToBase: string } } };
-    };
+    const created = productCreatedDtoSchema.parse(await response.json());
     expect(created.consumptionType).toBe("FOOD");
     expect(created.macroProfile).toEqual(manualMacroProfile);
     expect(created.package.unitContent.amount).toBe("100");
@@ -54,10 +50,51 @@ describe("product creation", () => {
 
     const detailResponse = await requestAsAdmin(`/products/${created.id}`);
     expect(detailResponse.status).toBe(200);
-    const detail = await detailResponse.json() as { consumptionType: string; macroProfile: typeof manualMacroProfile; packages: unknown[] };
+    const detail = productDetailDtoSchema.parse(await detailResponse.json());
     expect(detail.consumptionType).toBe("FOOD");
     expect(detail.macroProfile).toEqual(manualMacroProfile);
     expect(detail.packages).toHaveLength(1);
+  });
+
+  it("requires and returns an explicit individual type only for multi-packages", async () => {
+    const multiPackageResponse = await createProduct({
+      name: uniqueProductName("Sixpack"),
+      categoryId: testCatalog.categoryId,
+      brandId: null,
+      consumptionType: "DRINK",
+      macroProfile: null,
+      package: {
+        packageTypeId: testCatalog.packageTypeId,
+        individualPackageTypeId: testCatalog.individualPackageTypeId,
+        amount: "330",
+        unitTypeId: testCatalog.unitTypeId,
+        unitsPerPackage: 6,
+      },
+    });
+    expect(multiPackageResponse.status).toBe(201);
+    const multiPackage = productCreatedDtoSchema.parse(await multiPackageResponse.json()).package;
+    expect(multiPackage.individualPackageType).toEqual({ id: testCatalog.individualPackageTypeId, name: "blikje" });
+    expect(multiPackage.summary).toContain("6 blikje");
+
+    const missingIndividualType = await createProduct({
+      name: uniqueProductName("Ongeldige multipack"),
+      categoryId: testCatalog.categoryId,
+      brandId: null,
+      consumptionType: "DRINK",
+      macroProfile: null,
+      package: { packageTypeId: testCatalog.packageTypeId, individualPackageTypeId: null, amount: "330", unitTypeId: testCatalog.unitTypeId, unitsPerPackage: 6 },
+    });
+    expect(missingIndividualType.status).toBe(400);
+
+    const unexpectedIndividualType = await createProduct({
+      name: uniqueProductName("Ongeldige single"),
+      categoryId: testCatalog.categoryId,
+      brandId: null,
+      consumptionType: "DRINK",
+      macroProfile: null,
+      package: { packageTypeId: testCatalog.packageTypeId, individualPackageTypeId: testCatalog.individualPackageTypeId, amount: "330", unitTypeId: testCatalog.unitTypeId, unitsPerPackage: 1 },
+    });
+    expect(unexpectedIndividualType.status).toBe(400);
   });
 
   it("creates a valid product without a macro profile", async () => {
@@ -67,7 +104,7 @@ describe("product creation", () => {
       brandId: null,
       consumptionType: "DRINK",
       macroProfile: null,
-      package: { packageTypeId: testCatalog.packageTypeId, amount: "1.5", unitTypeId: testCatalog.unitTypeId, unitsPerPackage: 1 },
+      package: { packageTypeId: testCatalog.packageTypeId, individualPackageTypeId: null, amount: "1.5", unitTypeId: testCatalog.unitTypeId, unitsPerPackage: 1 },
     });
     expect(response.status).toBe(201);
     expect(await response.json()).toMatchObject({ consumptionType: "DRINK", macroProfile: null });
@@ -87,7 +124,7 @@ describe("product creation", () => {
         fatG: "13.2",
         caloriesSource: null,
       },
-      package: { packageTypeId: testCatalog.packageTypeId, amount: "100", unitTypeId: testCatalog.massUnitTypeId, unitsPerPackage: 1 },
+      package: { packageTypeId: testCatalog.packageTypeId, individualPackageTypeId: null, amount: "100", unitTypeId: testCatalog.massUnitTypeId, unitsPerPackage: 1 },
     });
     expect(response.status).toBe(201);
     expect(await response.json()).toMatchObject({ macroProfile: { caloriesKcal: "220.4", caloriesSource: "AUTOMATIC" } });
@@ -101,13 +138,13 @@ describe("product creation", () => {
       brandId: null,
       consumptionType: "DRINK",
       macroProfile: { ...manualMacroProfile, referenceBasis: "PER_100_G" },
-      package: { packageTypeId: testCatalog.packageTypeId, amount: "1", unitTypeId: testCatalog.unitTypeId, unitsPerPackage: 1 },
+      package: { packageTypeId: testCatalog.packageTypeId, individualPackageTypeId: null, amount: "1", unitTypeId: testCatalog.unitTypeId, unitsPerPackage: 1 },
     });
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({ code: "UNIT_DIMENSION_INCOMPATIBLE" });
 
     const search = await requestAsAdmin(`/products/search?query=${encodeURIComponent(name)}`);
-    const searchBody = await search.json() as { products: Array<{ displayName: string }> };
+    const searchBody = catalogSearchResponseSchema.parse(await search.json());
     expect(searchBody.products.some((product) => product.displayName.includes(name))).toBe(false);
   });
 
@@ -125,7 +162,7 @@ describe("product creation", () => {
         fatG: null,
         caloriesSource: null,
       },
-      package: { packageTypeId: testCatalog.packageTypeId, amount: "100", unitTypeId: testCatalog.massUnitTypeId, unitsPerPackage: 1 },
+      package: { packageTypeId: testCatalog.packageTypeId, individualPackageTypeId: null, amount: "100", unitTypeId: testCatalog.massUnitTypeId, unitsPerPackage: 1 },
     });
     expect(response.status).toBe(409);
     expect(await response.json()).toMatchObject({ code: "PRODUCT_MACRO_PROFILE_INVALID" });

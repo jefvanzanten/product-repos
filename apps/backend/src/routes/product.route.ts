@@ -145,10 +145,19 @@ function parseRequiredPositiveInt(value: string | undefined): number | null {
 }
 
 /** Parse package decimals and counts for application use. */
-function parsePackageInput(input: { readonly packageTypeId: number; readonly amount: string; readonly unitTypeId: number; readonly unitsPerPackage: number }) {
+function parsePackageInput(input: { readonly packageTypeId: number; readonly individualPackageTypeId: number | null; readonly amount: string; readonly unitTypeId: number; readonly unitsPerPackage: number }) {
   const amount = canonicalDecimal(input.amount);
   if (!amount.ok) return amount;
   const unitsPerPackage = positiveInt(input.unitsPerPackage, "unitsPerPackage");
   if (!unitsPerPackage.ok) return unitsPerPackage;
-  return { ok: true as const, value: { packageTypeId: input.packageTypeId, amount: amount.value, unitTypeId: input.unitTypeId, unitsPerPackage: unitsPerPackage.value } };
+  return {
+    ok: true as const,
+    value: {
+      packageTypeId: input.packageTypeId,
+      individualPackageTypeId: input.individualPackageTypeId,
+      amount: amount.value,
+      unitTypeId: input.unitTypeId,
+      unitsPerPackage: unitsPerPackage.value,
+    },
+  };
 }

@@ -72,7 +72,8 @@ export default function PackageDetail(): React.ReactNode {
             <h2 className={styles.sectionTitle}>Verpakking</h2>
             <dl className={styles.definitionList}>
               <div><dt>Type</dt><dd>{packageDetail.packageType.name}</dd></div>
-              <div><dt>Inhoud</dt><dd>{packageDetail.unitContent.amount} {packageDetail.unitContent.unitType.name}</dd></div>
+              <div><dt>Individueel type</dt><dd>{packageDetail.individualPackageType?.name ?? "Niet van toepassing"}</dd></div>
+              <div><dt>Inhoud per individueel stuk</dt><dd>{packageDetail.unitContent.amount} {packageDetail.unitContent.unitType.name}</dd></div>
               <div><dt>Aantal per verpakking</dt><dd>{packageDetail.unitsPerPackage}</dd></div>
               <div><dt>Samenvatting</dt><dd>{packageDetail.summary}</dd></div>
             </dl>
@@ -92,7 +93,13 @@ function PackageFields({ errors, packageTypes, unitTypes, values }: { readonly e
           {packageTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
         </select>
       </label>
-      <label className={styles.label}>Inhoud
+      <label className={styles.label}>Individueel verpakkingstype (verplicht bij meer dan één stuk)
+        <select className={styles.input} name="individualPackageTypeId" defaultValue={values.individualPackageTypeId ?? ""}>
+          <option value="">Geen (één stuk)</option>
+          {packageTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+        </select>
+      </label>
+      <label className={styles.label}>Inhoud per individueel stuk
         <input className={styles.input} name="amount" defaultValue={values.amount ?? ""} />
       </label>
       {errors?.amount ? <p className={styles.formError}>{errors.amount}</p> : null}
@@ -111,6 +118,7 @@ function PackageFields({ errors, packageTypes, unitTypes, values }: { readonly e
 function packageToValues(packageDetail: ProductPackageWithProductId): Record<string, string> {
   return {
     packageTypeId: String(packageDetail.packageType.id),
+    individualPackageTypeId: packageDetail.individualPackageType === null ? "" : String(packageDetail.individualPackageType.id),
     amount: packageDetail.unitContent.amount,
     unitTypeId: String(packageDetail.unitContent.unitType.id),
     unitsPerPackage: String(packageDetail.unitsPerPackage),

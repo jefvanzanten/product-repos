@@ -1,3 +1,4 @@
+import type { CalorieTrackerErrorResponse } from "@product-repos/contracts/calorie-tracker";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -66,18 +67,19 @@ export function createApp() {
     );
   });
 
-  app.onError((err, c) => {
-    console.error(err);
-    const statusCode = (err as { status?: number }).status ?? 500;
-    return c.json(
-      {
-        error: {
-          message: err.message || "Internal Server Error",
-          statusCode,
-        },
-      },
-      statusCode as 500,
-    );
+  app.onError((_error, context) => {
+    const correlationId = crypto.randomUUID();
+    console.error("Unhandled backend defect", {
+      operation: `${context.req.method} ${new URL(context.req.url).pathname}`,
+      errorTag: "INTERNAL_ERROR",
+      correlationId,
+    });
+    const response: CalorieTrackerErrorResponse = {
+      code: "INTERNAL_ERROR",
+      message: "Internal server error",
+      fields: { correlationId },
+    };
+    return context.json(response, 500);
   });
 
   return app;

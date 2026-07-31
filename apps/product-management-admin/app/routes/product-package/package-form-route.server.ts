@@ -57,8 +57,10 @@ export async function handlePackageFormRouteAction({ params, request }: ActionFu
 
 /** Parse package form fields into an API request. */
 function readPackageForm(form: FormData) {
+  const individualPackageTypeId = String(form.get("individualPackageTypeId") ?? "").trim();
   return {
     packageTypeId: Number(form.get("packageTypeId")),
+    individualPackageTypeId: individualPackageTypeId.length === 0 ? null : Number(individualPackageTypeId),
     amount: String(form.get("amount") ?? "").trim().replace(",", "."),
     unitTypeId: Number(form.get("unitTypeId")),
     unitsPerPackage: Number(form.get("unitsPerPackage")),

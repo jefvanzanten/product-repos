@@ -118,18 +118,20 @@ export class CalorieTracker {
     return this.projectLog(row);
   }
 
-  /** Create one log idempotently after parsing package, unit, instant, and quantity invariants. */
+  /** Create one log idempotently after comparing stored request content before current catalog validation. */
   createLog(userId: string, timezone: string, input: CreateConsumptionLog): CalorieTrackerResult<CreateLogOutcome> {
-    const parsed = this.parseMutationInput(input, undefined);
-    if (!parsed.ok) return parsed;
     const existing = this.store.findLogById(input.id);
     if (existing !== undefined) {
       if (existing.userId !== userId) return failure("LOG_ALREADY_EXISTS", "A log with this id already exists");
-      if (existing.deletedAt !== null || !sameCreateContent(existing, { ...parsed.value, timezone })) return failure("LOG_CREATE_CONFLICT", "The log id was already used with different content");
+      const retryContent = parseCreateRequestContent(input, timezone);
+      if (!retryContent.ok) return retryContent;
+      if (existing.deletedAt !== null || !sameCreateContent(existing, retryContent.value)) return failure("LOG_CREATE_CONFLICT", "The log id was already used with different content");
       const projected = this.projectLog(existing);
       return projected.ok ? success({ state: "existing", log: projected.value }) : projected;
     }
 
+    const parsed = this.parseMutationInput(input, undefined);
+    if (!parsed.ok) return parsed;
     const now = this.clock.now().toISOString();
     const stored = this.store.insertLog({
       id: input.id,
@@ -385,6 +387,30 @@ function toQuantityPackage(row: CatalogPackageRecord) {
     packageLabel: row.packageTypeName,
     individualLabel: row.individualPackageTypeName,
   };
+}
+
+/** Canonicalize only the immutable create-request fields without consulting mutable catalog data. */
+function parseCreateRequestContent(
+  input: CreateConsumptionLog,
+  timezone: string,
+): CalorieTrackerResult<{
+  readonly productPackageId: number;
+  readonly quantity: string;
+  readonly inputMode: ConsumptionInputMode;
+  readonly inputUnitTypeId: number | null;
+  readonly consumedAt: string;
+  readonly timezone: string;
+}> {
+  const quantity = parsePositiveDecimal(input.quantity);
+  if (!quantity.ok) return { ok: false, error: quantity.error };
+  return success({
+    productPackageId: input.packageId,
+    quantity: quantity.value,
+    inputMode: input.inputMode,
+    inputUnitTypeId: input.inputUnitTypeId,
+    consumedAt: new Date(input.consumedAt).toISOString(),
+    timezone,
+  });
 }
 
 /** Compare canonical create content to persisted content for idempotent retries. */

@@ -69,7 +69,13 @@ function PackageFields({ errors, packageTypes, unitTypes, values }: { readonly e
           {packageTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
         </select>
       </label>
-      <label className={styles.label}>Inhoud
+      <label className={styles.label}>Individueel verpakkingstype (verplicht bij meer dan één stuk)
+        <select className={styles.input} name="individualPackageTypeId" defaultValue={values.individualPackageTypeId ?? ""}>
+          <option value="">Geen (één stuk)</option>
+          {packageTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+        </select>
+      </label>
+      <label className={styles.label}>Inhoud per individueel stuk
         <input className={styles.input} name="amount" defaultValue={values.amount ?? ""} placeholder="1,5" />
       </label>
       {errors?.amount ? <p className={styles.formError}>{errors.amount}</p> : null}

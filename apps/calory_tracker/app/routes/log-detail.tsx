@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import type { ConsumptionLog } from "@product-repos/contracts/calorie-tracker";
@@ -22,6 +22,8 @@ export default function LogDetailRoute(): ReactNode {
   const canonical = canonicalizeTrackerUrl(parameters.get("date"), parameters.get("type"), today);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!canonical.requiresReplace) return;
@@ -37,8 +39,14 @@ export default function LogDetailRoute(): ReactNode {
 
   /** Delete immediately and expose a session-scoped five-second restore capability. */
   async function handleDelete(): Promise<void> {
+    setDeleteError(null);
+    setDeleting(true);
     const result = await deleteConsumptionLog(logId, { timezone, signal: new AbortController().signal });
-    if (result._tag === "Failure") return;
+    if (result._tag === "Failure") {
+      setDeleting(false);
+      setDeleteError(result.error._tag === "HttpFailure" ? result.error.response.message : "Verwijderen lukt niet. Probeer opnieuw.");
+      return;
+    }
     const backendExpiry = new Date(result.value.restoreUntil).getTime();
     const expiresAt = Math.min(Date.now() + 5_000, backendExpiry);
     window.sessionStorage.setItem("calorie-tracker-undo", JSON.stringify({ id: logId, expiresAt }));
@@ -54,7 +62,7 @@ export default function LogDetailRoute(): ReactNode {
     return <DetailFrame backHref={`/logs${contextSearch}`}><StatusPanel title={notFound ? "Log niet gevonden" : "Log laden lukt niet"} message={notFound ? "Deze log is niet beschikbaar." : "Controleer je verbinding en probeer opnieuw."} action={!notFound && <button type="button" className="ct-secondary" onClick={() => void detailQuery.refetch()}>Opnieuw proberen</button>} /></DetailFrame>;
   }
 
-  return <DetailContent log={outcome.value} contextSearch={contextSearch} onDelete={() => void handleDelete()} />;
+  return <DetailContent log={outcome.value} contextSearch={contextSearch} deleteError={deleteError} deleting={deleting} onDelete={() => void handleDelete()} />;
 }
 
 /** Render the detail top bar around loading and failure states. */
@@ -68,7 +76,7 @@ function DetailFrame({ backHref, children }: { readonly backHref: string; readon
 }
 
 /** Render all current catalog and nutrition fields for a parsed log. */
-function DetailContent({ log, contextSearch, onDelete }: { readonly log: ConsumptionLog; readonly contextSearch: string; readonly onDelete: () => void }): ReactNode {
+function DetailContent({ log, contextSearch, deleteError, deleting, onDelete }: { readonly log: ConsumptionLog; readonly contextSearch: string; readonly deleteError: string | null; readonly deleting: boolean; readonly onDelete: () => void }): ReactNode {
   const brand = log.package.brand?.name;
   const archived = log.package.productArchived || log.package.packageArchived;
   const time = new Intl.DateTimeFormat("nl-NL", { hour: "2-digit", minute: "2-digit", timeZone: log.timezone }).format(new Date(log.consumedAt));
@@ -98,9 +106,10 @@ function DetailContent({ log, contextSearch, onDelete }: { readonly log: Consump
           <MacroValue label="Koolhydraten" value={log.macroValues?.carbohydratesG ?? null} unit="g" fractions={1} />
           <MacroValue label="Vet" value={log.macroValues?.fatG ?? null} unit="g" fractions={1} />
         </dl>
+        {deleteError !== null && <p role="alert">{deleteError}</p>}
         <div className={styles.actions}>
           <Link className="ct-secondary" to={`/logs/${log.id}/bewerken${contextSearch}`}><Icon name="edit" />Bewerken</Link>
-          <button type="button" className="ct-danger" onClick={onDelete}><Icon name="delete" />Verwijderen</button>
+          <button type="button" className="ct-danger" onClick={onDelete} disabled={deleting}><Icon name="delete" />{deleting ? "Verwijderen…" : "Verwijderen"}</button>
         </div>
       </section>
     </main>

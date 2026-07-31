@@ -44,11 +44,18 @@ export async function submitCreateProductForm(
     package: {
       amount: String(form.get("amount") ?? "").trim().replace(",", "."),
       packageTypeId: Number(form.get("packageTypeId")),
+      individualPackageTypeId: parseOptionalPackageTypeId(form.get("individualPackageTypeId")),
       unitTypeId: Number(form.get("unitTypeId")),
       unitsPerPackage: Number(form.get("unitsPerPackage")),
     },
   });
   return { ok: true, product };
+}
+
+/** Parse an optional package-type form field without turning an empty selection into zero. */
+function parseOptionalPackageTypeId(value: FormDataEntryValue | null): number | null {
+  const raw = String(value ?? "").trim();
+  return raw.length === 0 ? null : Number(raw);
 }
 
 /** Parse and submit a product edit form through the supplied application port. */

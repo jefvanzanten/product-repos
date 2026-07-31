@@ -86,7 +86,10 @@ export function createProduct(input: CreateProductPersistenceInput): Result<Prod
   const brandRow = input.brandId === null ? null : findBrandById(input.brandId) ?? null;
   const unitTypeRow = findUnitTypeById(input.package.unitTypeId);
   const packageTypeRow = findPackageTypeById(input.package.packageTypeId);
-  if (!categoryRow || (input.brandId !== null && !brandRow) || !unitTypeRow || !packageTypeRow) return err({ code: "REFERENCE_NOT_FOUND", message: "Reference not found" });
+  const individualPackageTypeRow = input.package.individualPackageTypeId === null
+    ? null
+    : findPackageTypeById(input.package.individualPackageTypeId) ?? null;
+  if (!categoryRow || (input.brandId !== null && !brandRow) || !unitTypeRow || !packageTypeRow || (input.package.individualPackageTypeId !== null && !individualPackageTypeRow)) return err({ code: "REFERENCE_NOT_FOUND", message: "Reference not found" });
 
   const duplicate = findDuplicateProduct(input.name, input.categoryId, input.brandId);
   if (duplicate) return err({ code: "PRODUCT_ALREADY_EXISTS", message: "Product already exists", existingProductId: duplicate.id });
@@ -103,6 +106,7 @@ export function createProduct(input: CreateProductPersistenceInput): Result<Prod
       productId: productRow.id,
       unitContentId: unitContentRow.id,
       packageTypeId: input.package.packageTypeId,
+      individualPackageTypeId: input.package.individualPackageTypeId,
       unitsPerPackage: input.package.unitsPerPackage,
     });
     persistMacroProfile(tx, productRow.id, input.macroProfile);
@@ -116,7 +120,7 @@ export function createProduct(input: CreateProductPersistenceInput): Result<Prod
     category: { id: categoryRow.id, name: categoryRow.name, parentId: categoryRow.parentId },
     brand: brandRow ? { id: brandRow.id, name: brandRow.name } : null,
     macroProfile: input.macroProfile,
-    package: toProductPackageDto({ productPackage: created.productPackageRow, packageType: packageTypeRow, unitContent: created.unitContentRow, unitType: unitTypeRow }),
+    package: toProductPackageDto({ productPackage: created.productPackageRow, packageType: packageTypeRow, individualPackageType: individualPackageTypeRow, unitContent: created.unitContentRow, unitType: unitTypeRow }),
   });
 }
 

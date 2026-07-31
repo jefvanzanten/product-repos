@@ -14,6 +14,7 @@ const category = { id: 34, name: "Drinken", parentId: null } as const;
 const productPackage = {
   id: 7,
   packageType: { id: 3, name: "fles" },
+  individualPackageType: null,
   unitContent: {
     id: 5,
     amount: "500",
@@ -72,8 +73,42 @@ describe("product create and edit mutations", () => {
       brandId,
       consumptionType: "DRINK",
       macroProfile: null,
-      package: { amount: "500", packageTypeId: 3, unitTypeId: 4, unitsPerPackage: 1 },
+      package: { amount: "500", packageTypeId: 3, individualPackageTypeId: null, unitTypeId: 4, unitsPerPackage: 1 },
     }]);
+  });
+
+  it("submits an explicit individual package type for a multi-package", async () => {
+    const form = createProductFormData();
+    form.set("individualPackageTypeId", "9");
+    form.set("unitsPerPackage", "6");
+    const submitted: CreateProductRequest[] = [];
+
+    /** Record and return a multi-package product. */
+    async function createProduct(input: CreateProductRequest): Promise<ProductCreatedDto> {
+      submitted.push(input);
+      return {
+        id: productId,
+        name: input.name,
+        consumptionType: input.consumptionType,
+        category,
+        brand: null,
+        macroProfile: null,
+        package: {
+          ...productPackage,
+          individualPackageType: { id: 9, name: "blikje" },
+          unitsPerPackage: 6,
+          summary: "sixpack (6 blikje x 500 milliliter)",
+        },
+      };
+    }
+
+    const result = await submitCreateProductForm(form, {
+      createBrand: rejectUnexpectedBrandCreation,
+      createProduct,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(submitted[0]?.package).toMatchObject({ individualPackageTypeId: 9, unitsPerPackage: 6 });
   });
 
   it("edits a product and adds nutritional values from mock form data", async () => {

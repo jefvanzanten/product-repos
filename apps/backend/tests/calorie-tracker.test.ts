@@ -1,5 +1,7 @@
 import { describe, expect, it } from "bun:test";
+import { productCreatedDtoSchema } from "@product-repos/contracts";
 import {
+  calorieTrackerErrorResponseSchema,
   consumptionLogSchema,
   dailyStatisticsSchema,
   deleteLogResultSchema,
@@ -37,7 +39,7 @@ async function createLoggablePackage(consumptionType: "FOOD" | "DRINK" | "SUPPLE
         caloriesSource: "MANUAL",
       },
       package: {
-        packageTypeId: testCatalog.packageTypeId,
+        packageTypeId: testCatalog.packageTypeId, individualPackageTypeId: null,
         amount: "100",
         unitTypeId: testCatalog.massUnitTypeId,
         unitsPerPackage: 1,
@@ -45,8 +47,7 @@ async function createLoggablePackage(consumptionType: "FOOD" | "DRINK" | "SUPPLE
     }),
   });
   expect(response.status).toBe(201);
-  const body = await response.json() as { readonly package: { readonly id: number } };
-  return body.package.id;
+  return productCreatedDtoSchema.parse(await response.json()).package.id;
 }
 
 /** Build a valid create request for a recently consumed UTC instant. */
@@ -62,6 +63,14 @@ function createLogBody(packageId: number, id = crypto.randomUUID()) {
 }
 
 describe("Calorie Tracker authenticated route integration", () => {
+  it("returns a strict generic response for an unexpected backend defect", async () => {
+    const response = await requestAsUser("/__test/defect");
+    expect(response.status).toBe(500);
+    const error = calorieTrackerErrorResponseSchema.parse(await response.json());
+    expect(error).toMatchObject({ code: "INTERNAL_ERROR", message: "Internal server error" });
+    expect(JSON.stringify(error)).not.toContain("sensitive persistence detail");
+  });
+
   it("requires a session and exposes package search and compatible input units", async () => {
     const unauthenticated = await app.request("/calorie-tracker/packages/search");
     expect(unauthenticated.status).toBe(401);
@@ -96,6 +105,14 @@ describe("Calorie Tracker authenticated route integration", () => {
     const retry = await requestJson("/calorie-tracker/logs", "POST", createBody);
     expect(retry.status).toBe(200);
     expect(consumptionLogSchema.parse(await retry.json()).id).toBe(created.id);
+
+    executeTestSql("UPDATE product_package SET archived_at = ? WHERE id = ?", new Date().toISOString(), packageId);
+    const retryAfterCatalogArchive = await requestJson("/calorie-tracker/logs", "POST", createBody);
+    expect(retryAfterCatalogArchive.status).toBe(200);
+    expect(consumptionLogSchema.parse(await retryAfterCatalogArchive.json())).toMatchObject({
+      id: created.id,
+      package: { packageArchived: true },
+    });
 
     const conflictingCreate = await requestJson("/calorie-tracker/logs", "POST", { ...createBody, quantity: "2" });
     expect(conflictingCreate.status).toBe(409);

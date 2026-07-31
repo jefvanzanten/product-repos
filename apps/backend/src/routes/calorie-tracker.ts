@@ -48,6 +48,7 @@ const errorStatus = {
   LOG_RESTORE_WINDOW_EXPIRED: 409,
   UNAUTHENTICATED: 401,
   AUTH_UNAVAILABLE: 503,
+  INTERNAL_ERROR: 500,
 } as const;
 
 /** Require a Better Auth session and expose only its user identifier to handlers. */
@@ -58,11 +59,10 @@ async function requireCalorieTrackerSession(
   let session: Awaited<ReturnType<typeof auth.api.getSession>>;
   try {
     session = await auth.api.getSession({ headers: context.req.raw.headers });
-  } catch (cause) {
+  } catch {
     console.error("Authentication store unavailable", {
       operation: "calorieTracker.getSession",
       errorTag: "AUTH_UNAVAILABLE",
-      cause,
     });
     return context.json({ code: "AUTH_UNAVAILABLE", message: "Authentication is temporarily unavailable" }, 503);
   }

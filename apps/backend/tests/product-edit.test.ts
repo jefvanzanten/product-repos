@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { productCreatedDtoSchema, productDetailDtoSchema } from "@product-repos/contracts";
 import { requestAsAdmin, testCatalog } from "./test-app";
 
 const volumeMacroProfile = {
@@ -22,11 +23,11 @@ async function createEditableProduct(): Promise<{ readonly id: string; readonly 
       brandId: testCatalog.brandId,
       consumptionType: "DRINK",
       macroProfile: null,
-      package: { packageTypeId: testCatalog.packageTypeId, amount: "1.5", unitTypeId: testCatalog.unitTypeId, unitsPerPackage: 1 },
+      package: { packageTypeId: testCatalog.packageTypeId, individualPackageTypeId: null, amount: "1.5", unitTypeId: testCatalog.unitTypeId, unitsPerPackage: 1 },
     }),
   });
   expect(response.status).toBe(201);
-  const created = await response.json() as { id: string };
+  const created = productCreatedDtoSchema.parse(await response.json());
   return { id: created.id, name };
 }
 
@@ -62,7 +63,7 @@ describe("product editing", () => {
 
     const detailResponse = await requestAsAdmin(`/products/${created.id}`);
     expect(detailResponse.status).toBe(200);
-    const detail = await detailResponse.json() as { name: string; consumptionType: string; macroProfile: typeof volumeMacroProfile; packages: unknown[] };
+    const detail = productDetailDtoSchema.parse(await detailResponse.json());
     expect(detail).toMatchObject({ name: updatedName, consumptionType: "SUPPLEMENT", macroProfile: volumeMacroProfile });
     expect(detail.packages).toHaveLength(1);
 
@@ -81,7 +82,7 @@ describe("product editing", () => {
 
     const removeResponse = await patchProduct(created.id, { ...updateRequest, macroProfile: null });
     expect(removeResponse.status).toBe(200);
-    const removed = await removeResponse.json() as { consumptionType: string; macroProfile: unknown; packages: unknown[] };
+    const removed = productDetailDtoSchema.parse(await removeResponse.json());
     expect(removed.consumptionType).toBe("SUPPLEMENT");
     expect(removed.macroProfile).toBeNull();
     expect(removed.packages).toHaveLength(1);

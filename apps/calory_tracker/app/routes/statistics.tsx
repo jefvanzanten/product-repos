@@ -80,7 +80,7 @@ export default function StatisticsRoute(): ReactNode {
           <input type="date" value={date} max={today} aria-label="Geselecteerde datum wijzigen" onChange={(event) => setParameters({ date: event.currentTarget.value })} />
         </div>
         <button type="button" className="ct-primary" onClick={() => setGoalsOpen(true)}>
-          {viewState._tag === "Ready" && hasActiveGoals(viewState.data.goals) ? "Doelen wijzigen" : "Doelen instellen"}
+          {(viewState._tag === "Ready" || viewState._tag === "EmptyDay") && hasActiveGoals(viewState.data.goals) ? "Doelen wijzigen" : "Doelen instellen"}
         </button>
       </header>
 
@@ -186,7 +186,17 @@ function StatisticCard({
         <span className={progress._tag === "AboveGoal" ? styles.dangerText : ""}>{formattedCurrent} / {formattedGoal} {definition.unit}</span>
       </div>
       {featured && <strong>{formattedCurrent} {definition.unit}</strong>}
-      <div className={styles.progress} aria-label={`${progress.percentage}% van het dagdoel`}>
+      <div
+        className={styles.progress}
+        role="progressbar"
+        aria-label={`${definition.label}: ${progress.percentage}% van het dagdoel`}
+        aria-valuemin={0}
+        aria-valuenow={Math.min(current, progress.goal)}
+        aria-valuemax={progress.goal}
+        aria-valuetext={progress._tag === "AboveGoal"
+          ? `${formattedCurrent} ${definition.unit}; ${formatNumber(progress.excess, definition.fractions)} ${definition.unit} boven doel`
+          : `${progress.percentage}% van het dagdoel`}
+      >
         <span className={styles.progressWithin} style={{ width: `${withinWidth}%` }} />
         {excessWidth > 0 && <span className={styles.progressExcess} style={{ width: `${excessWidth}%` }} />}
       </div>

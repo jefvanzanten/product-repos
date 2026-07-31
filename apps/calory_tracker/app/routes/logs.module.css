@@ -16,7 +16,7 @@
 .itemCopy b { font-size: 13px; font-weight: 500; }
 .itemMeta { display: grid; justify-items: end; gap: 4px; }
 .itemMeta em { color: var(--ct-muted); font-size: 10px; font-style: normal; }
-.stickyAction { position: fixed; right: 0; bottom: calc(56px + env(safe-area-inset-bottom)); left: 0; z-index: 35; width: min(100%, 430px); margin: auto; padding: 4px 16px 16px; background: var(--ct-surface); }
+.stickyAction { position: fixed; right: 0; bottom: calc(56px + env(safe-area-inset-bottom, 0px)); left: 0; z-index: 35; width: min(100%, 430px); margin: auto; padding: 4px 16px 16px; background: var(--ct-surface); }
 .stickyAction a { width: 100%; }
 .dayButton { display: grid; width: 36px; height: 46px; padding: 0; place-items: center; background: transparent; border: 0; }
 
@@ -27,7 +27,7 @@
 }
 
 @media (min-width: 520px) {
-  .stickyAction { bottom: calc(88px + env(safe-area-inset-bottom)); }
+  .stickyAction { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
 }
 
 @media (min-width: 760px) {

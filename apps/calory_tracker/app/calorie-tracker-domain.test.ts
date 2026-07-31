@@ -4,8 +4,11 @@ import {
   deriveGoalProgress,
   getProductSearchMode,
   isLocalDate,
+  parseEditedConsumptionMoment,
   parseLocalConsumptionMoment,
   parsePositiveDecimal,
+  selectInputUnitKey,
+  shouldIncludeLegacyInputUnit,
   sortChronologically,
 } from "./calorie-tracker-domain";
 
@@ -88,22 +91,46 @@ describe("goal progress", () => {
   });
 });
 
+describe("edit input units", () => {
+  it("includes a legacy unit only for the original package", () => {
+    expect(shouldIncludeLegacyInputUnit(12, 12)).toBe(true);
+    expect(shouldIncludeLegacyInputUnit(13, 12)).toBe(false);
+  });
+
+  it("resets an unavailable unit to the new package's first available unit", () => {
+    expect(selectInputUnitKey("CONTENT_UNIT:2", ["PACKAGE:package", "CONTENT_UNIT:3"])).toBe("PACKAGE:package");
+    expect(selectInputUnitKey("CONTENT_UNIT:3", ["PACKAGE:package", "CONTENT_UNIT:3"])).toBe("CONTENT_UNIT:3");
+  });
+});
+
 describe("local consumption moment", () => {
-  it("rejects a nonexistent DST spring-forward time", () => {
-    const originalTimezone = process.env.TZ;
-    process.env.TZ = "Europe/Amsterdam";
-    expect(parseLocalConsumptionMoment("2026-03-29", "02:30", new Date("2026-03-29T04:00:00Z"))).toEqual({ _tag: "Failure", error: { _tag: "InvalidMoment" } });
-    if (originalTimezone === undefined) delete process.env.TZ;
-    else process.env.TZ = originalTimezone;
+  it("rejects a nonexistent DST spring-forward time in the explicit timezone", () => {
+    expect(parseLocalConsumptionMoment("2026-03-29", "02:30", "Europe/Amsterdam", new Date("2026-03-29T04:00:00Z"))).toEqual({ _tag: "Failure", error: { _tag: "InvalidMoment" } });
+  });
+
+  it("rejects an ambiguous DST fall-back time instead of choosing an instant silently", () => {
+    expect(parseLocalConsumptionMoment("2026-10-25", "02:30", "Europe/Amsterdam", new Date("2026-10-25T04:00:00Z"))).toEqual({ _tag: "Failure", error: { _tag: "AmbiguousMoment" } });
   });
 
   it("rejects normalized invalid calendar moments", () => {
-    expect(parseLocalConsumptionMoment("2026-02-29", "12:00", new Date("2026-03-01T00:00:00Z"))._tag).toBe("Failure");
+    expect(parseLocalConsumptionMoment("2026-02-29", "12:00", "UTC", new Date("2026-03-01T00:00:00Z"))._tag).toBe("Failure");
   });
 
-  it("rejects future moments and accepts past moments", () => {
-    const now = new Date("2026-07-29T12:00:00");
-    expect(parseLocalConsumptionMoment("2026-07-29", "12:01", now)).toEqual({ _tag: "Failure", error: { _tag: "FutureMoment" } });
-    expect(parseLocalConsumptionMoment("2026-07-29", "11:59", now)._tag).toBe("Success");
+  it("resolves explicit timezone moments and rejects future instants", () => {
+    const now = new Date("2026-07-29T12:00:00Z");
+    expect(parseLocalConsumptionMoment("2026-07-29", "14:01", "Europe/Amsterdam", now)).toEqual({ _tag: "Failure", error: { _tag: "FutureMoment" } });
+    expect(parseLocalConsumptionMoment("2026-07-29", "13:59", "Europe/Amsterdam", now)).toEqual({ _tag: "Success", value: "2026-07-29T11:59:00.000Z" });
+  });
+
+  it("preserves the exact original instant when edit fields remain unchanged", () => {
+    const original = {
+      date: "2026-10-25",
+      time: "02:30",
+      consumedAt: "2026-10-25T00:30:42.000Z",
+    };
+    expect(parseEditedConsumptionMoment("2026-10-25", "02:30", "Europe/Amsterdam", original, new Date("2026-10-25T04:00:00Z"))).toEqual({
+      _tag: "Success",
+      value: original.consumedAt,
+    });
   });
 });
