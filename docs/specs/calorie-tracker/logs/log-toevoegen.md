@@ -5,7 +5,7 @@
 - Onderdeel: Calorie Tracker > logs
 - Route: `/logs/new?date=YYYY-MM-DD&type=<filter>`
 - Status: concept
-- Algemene spec: [calory-tracker-specificatie.md](../calory-tracker-specificatie.md)
+- Algemene spec: [calorie-tracker-specificatie.md](../calorie-tracker-specificatie.md)
 - Gerelateerde spec: [log-overzicht.md](./log-overzicht.md)
 
 ## Doel

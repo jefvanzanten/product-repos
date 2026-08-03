@@ -4,7 +4,7 @@
 
 - Onderdeel: gedeelde clientnavigatie
 - Hosts: Calorie Tracker, Inventory en Product Management Admin
-- Status: geïmplementeerd; productie-uitrol nog te bevestigen
+- Status: geïmplementeerd en uitgerold
 
 ## Doel
 
@@ -14,7 +14,7 @@ Calorie Tracker, Inventory en Product Management Admin gebruiken dezelfde bottom
 
 | Applicatie | Publiek basispad |
 | --- | --- |
-| Calorie Tracker | `/calory-tracker` |
+| Calorie Tracker | `/calorie-tracker` |
 | Inventory | `/inventory` |
 | Product Management Admin | `/product-management-admin` |
 
@@ -64,8 +64,8 @@ De drie basispaden worden door drie afzonderlijke frontenddeployments bediend. N
 
 | Label | Publieke bestemming | Zichtbaarheid |
 | --- | --- | --- |
-| `Calory Tracker` | `/calory-tracker` | Iedere ingelogde gebruiker |
-| `Admin Dashboard` | `/product-management-admin/product-catalogus?source=calory-tracker` | Alleen een ingelogde beheerder |
+| `Calorie Tracker` | `/calorie-tracker` | Iedere ingelogde gebruiker |
+| `Admin Dashboard` | `/product-management-admin/product-catalogus?source=calorie-tracker` | Alleen een ingelogde beheerder |
 
 De volledige Calorie Tracker staat achter authenticatie. Zichtbaarheid van `Admin Dashboard` vereist een expliciete beheerdersrol. `Caloriestatistieken` en `Consumptielogboek` zijn geen afzonderlijke bottom-tabs, maar zijn bereikbaar via de eigen navbar bovenaan de Calorie Tracker-pagina's.
 
@@ -83,14 +83,14 @@ De admin-bottom-tabbar is afhankelijk van de geldige `source`-context:
 | `source` | Terugkeerlabel | Terugkeerbestemming | Actieve adminbestemming |
 | --- | --- | --- | --- |
 | `inventory` | `Inventarisatie` | `/inventory` | `/product-management-admin/product-catalogus?source=inventory` |
-| `calory-tracker` | `Calory Tracker` | `/calory-tracker` | `/product-management-admin/product-catalogus?source=calory-tracker` |
+| `calorie-tracker` | `Calorie Tracker` | `/calorie-tracker` | `/product-management-admin/product-catalogus?source=calorie-tracker` |
 
 De terugkeertab is in de admin-app niet actief; de tab `Admin dashboard` is actief. De terugkeertab opent de bronapp op haar basisroute.
 
 ## Broncontext van het admin-dashboard
 
 - De queryparameter heet `source`.
-- Alleen `inventory` en `calory-tracker` zijn geldige waarden.
+- Alleen `inventory` en `calorie-tracker` zijn geldige waarden.
 - `source` identificeert uitsluitend de terugkeerbestemming en verleent geen toegang.
 - Een willekeurige URL of vrij `returnTo`-doel wordt niet als bron geaccepteerd.
 - Een geldige `source` blijft behouden in alle interne adminlinks, GET-formulieren, mutations, redirects en de loginflow.
@@ -103,7 +103,7 @@ De terugkeertab is in de admin-app niet actief; de tab `Admin dashboard` is acti
 
 ## Actieve status en navigatie
 
-- Binnen alle inhoudelijke Calorie Tracker-routes, waaronder Caloriestatistieken en Consumptielogboek, is `Calory Tracker` actief in de bottom-tabbar.
+- Binnen alle inhoudelijke Calorie Tracker-routes, waaronder Caloriestatistieken en Consumptielogboek, is `Calorie Tracker` actief in de bottom-tabbar.
 - Binnen Inventory markeert de basisroute uitsluitend `Inventarisatie` als actief.
 - De navbar bovenaan de Calorie Tracker-pagina's verzorgt de navigatie en actieve status voor `Caloriestatistieken` en `Consumptielogboek`.
 - Binnen Product Management Admin markeren alle inhoudelijke adminroutes `Admin dashboard` als actief.
@@ -139,8 +139,8 @@ En zijn de buitenste hoeken met 8 px afgerond.
 
 Gegeven dat een ingelogde beheerder de Calorie Tracker gebruikt
 Wanneer die `Admin Dashboard` opent
-Dan navigeert de browser naar `/product-management-admin/product-catalogus?source=calory-tracker`
-En toont de admin-bottom-tabbar `Calory Tracker` als terugkeertab naar `/calory-tracker`.
+Dan navigeert de browser naar `/product-management-admin/product-catalogus?source=calorie-tracker`
+En toont de admin-bottom-tabbar `Calorie Tracker` als terugkeertab naar `/calorie-tracker`.
 
 ### AC-05 — Inventory naar admin
 

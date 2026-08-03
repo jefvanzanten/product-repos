@@ -320,7 +320,7 @@ Stop wanneer pnpm `node_modules` wil verwijderen of opnieuw opbouwen en volg dan
 De eenmalige specsuite faalde tijdens het opstellen van dit plan al op twee niet aan dit plan gekoppelde ontbrekende coveragevermeldingen:
 
 - `docs/specs/admin-dashboard/product-catalogus/product-archiveren-specificatie.md`;
-- `docs/specs/calory-tracker/logs/log-detail-bewerken.md`.
+- `docs/specs/calorie-tracker/logs/log-detail-bewerken.md`.
 
 Dit plan introduceert geen nieuwe spec en veroorzaakt die failures niet. Los deze twee bestaande coveragegaps in hun eigen plannen/indexwijziging op voordat `corepack pnpm run test:specs` als groene eindvoorwaarde kan gelden.
 

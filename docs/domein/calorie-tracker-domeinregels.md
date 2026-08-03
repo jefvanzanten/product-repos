@@ -3,9 +3,9 @@
 ## Status
 
 - Type: gedeeld domeindocument
-- Algemene spec: [Calorie Tracker specificatie](../specs/calory-tracker/calory-tracker-specificatie.md)
-- Datamodel: [Calorie Tracker ERD](../backend/ERD/CALORY_TRACKER_ERD.md)
-- Backendcontract: [Calorie Tracker endpoints](../backend/Endpoints/CALORY_TRACKER_ENDPOINTS.md)
+- Algemene spec: [Calorie Tracker specificatie](../specs/calorie-tracker/calorie-tracker-specificatie.md)
+- Datamodel: [Calorie Tracker ERD](../backend/ERD/CALORIE_TRACKER_ERD.md)
+- Backendcontract: [Calorie Tracker endpoints](../backend/Endpoints/CALORIE_TRACKER_ENDPOINTS.md)
 - Gedeelde catalogusregels: [Productcatalogus domeinregels](./productcatalogus-domeinregels.md)
 
 ## Doel

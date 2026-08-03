@@ -10,8 +10,8 @@ De package-extractie en React Router-migratie uit dit plan vormen een gerealisee
 - `docs/specs/admin-dashboard/product-catalogus/productcatalogus-specificatie.md`
 - `docs/specs/admin-dashboard/product-catalogus/productcatalogus-browsen-specificatie.md`
 - `docs/specs/admin-dashboard/product-catalogus/product-aanmaken-specificatie.md`
-- `docs/specs/calory-tracker/dashboard/macro-calorien-grafiek.md`
-- `docs/specs/calory-tracker/logs/log-overzicht.md`
+- `docs/specs/calorie-tracker/dashboard/macro-calorien-grafiek.md`
+- `docs/specs/calorie-tracker/logs/log-overzicht.md`
 - bestaande code in `apps/inventory-admin_panel`, `apps/calory_tracker` en `packages/contracts`
 
 ## Doel

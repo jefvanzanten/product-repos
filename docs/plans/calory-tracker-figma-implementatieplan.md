@@ -42,11 +42,11 @@ Desktop:
 
 ### Specificaties en domeindocumenten
 
-- `docs/specs/calory-tracker/calory-tracker-specificatie.md`;
-- `docs/specs/calory-tracker/dashboard/calorien-statestieken.md`;
-- `docs/specs/calory-tracker/logs/log-overzicht.md`;
-- `docs/specs/calory-tracker/logs/log-toevoegen.md`;
-- `docs/specs/calory-tracker/logs/log-detail-bewerken.md`;
+- `docs/specs/calorie-tracker/calorie-tracker-specificatie.md`;
+- `docs/specs/calorie-tracker/dashboard/calorien-statestieken.md`;
+- `docs/specs/calorie-tracker/logs/log-overzicht.md`;
+- `docs/specs/calorie-tracker/logs/log-toevoegen.md`;
+- `docs/specs/calorie-tracker/logs/log-detail-bewerken.md`;
 - `docs/domein/calorie-tracker-domeinregels.md`;
 - `docs/domein/productcatalogus-domeinregels.md`;
 - `docs/specs/shared/bottom-tabbar-specificatie.md`.
@@ -55,9 +55,9 @@ Desktop:
 
 De benodigde documenten bestaan al:
 
-- `docs/backend/ERD/CALORY_TRACKER_ERD.md` bevat `consumption_log`, `user_nutrition_goal` en `product_macro_profile`;
+- `docs/backend/ERD/CALORIE_TRACKER_ERD.md` bevat `consumption_log`, `user_nutrition_goal` en `product_macro_profile`;
 - `docs/backend/ERD/PRODUCT_ERD.md` bevat producten, verpakkingen, eenheden, consumptietype, archivering en macroprofielen;
-- `docs/backend/Endpoints/CALORY_TRACKER_ENDPOINTS.md` bevat package search/input-units, CRUD en restore voor logs, statistieken en doelen.
+- `docs/backend/Endpoints/CALORIE_TRACKER_ENDPOINTS.md` bevat package search/input-units, CRUD en restore voor logs, statistieken en doelen.
 
 Er hoeft daarom geen nieuw ERD- of endpointdocument te worden aangemaakt. De documentatie is op de volgende punten uitgelijnd:
 

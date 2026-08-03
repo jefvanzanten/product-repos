@@ -17,11 +17,11 @@ Deze index koppelt elk specbestand onder `docs/specs/` aan een uitvoerbaar plan.
 | `docs/specs/inventory-client/voorraad-inzien-specificatie.md` | `docs/plans/inventory-voorraad-inzien-plan.md` | implementatieplan | nieuw; placeholder vervangen |
 | `docs/specs/inventory-client/voorraad-toevoegen-bottom-sheet-specificatie.md` | `docs/plans/inventory-voorraad-toevoegen-bottomsheet-plan.md` | implementatieplan | nieuw |
 | `docs/specs/shared/bottom-tabbar-specificatie.md` | `docs/plans/zelfstandige-app-deployments-en-admin-herkomst-plan.md` | wijzigingsplan | drie zelfstandige frontenddeployments en dynamische adminterugkeercontext gepland |
-| `docs/specs/calory-tracker/calory-tracker-specificatie.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | roadmap-/implementatieplan | specs, ERD en endpoints zijn uitgewerkt; actieve app bevat nog een placeholder en legacycode |
-| `docs/specs/calory-tracker/dashboard/calorien-statestieken.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw; geselecteerde dag, statistieken en doelenmodal ontbreken nog |
-| `docs/specs/calory-tracker/logs/log-overzicht.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw; bestaande UI is niet aan de actieve router gekoppeld |
-| `docs/specs/calory-tracker/logs/log-toevoegen.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw; bestaande legacy-modal gebruikt verouderde contracts |
-| `docs/specs/calory-tracker/logs/log-detail-bewerken.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw |
+| `docs/specs/calorie-tracker/calorie-tracker-specificatie.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | roadmap-/implementatieplan | specs, ERD en endpoints zijn uitgewerkt; actieve app bevat nog een placeholder en legacycode |
+| `docs/specs/calorie-tracker/dashboard/calorien-statestieken.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw; geselecteerde dag, statistieken en doelenmodal ontbreken nog |
+| `docs/specs/calorie-tracker/logs/log-overzicht.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw; bestaande UI is niet aan de actieve router gekoppeld |
+| `docs/specs/calorie-tracker/logs/log-toevoegen.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw; bestaande legacy-modal gebruikt verouderde contracts |
+| `docs/specs/calorie-tracker/logs/log-detail-bewerken.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw |
 | `docs/specs/workspace/doorlopende-vitest-specsuite-specificatie.md` | `docs/plans/doorlopende-vitest-specsuite-plan.md` | werkwijze | geimplementeerd |
 
 ## Routeconventie voor adminplannen

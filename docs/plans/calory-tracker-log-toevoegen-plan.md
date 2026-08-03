@@ -2,7 +2,7 @@
 
 > Status: vervangen door [calory-tracker-figma-implementatieplan.md](./calory-tracker-figma-implementatieplan.md).
 
-Bron: `docs/specs/calory-tracker/logs/log-toevoegen.md`.
+Bron: `docs/specs/calorie-tracker/logs/log-toevoegen.md`.
 
 ## Statusinschatting
 

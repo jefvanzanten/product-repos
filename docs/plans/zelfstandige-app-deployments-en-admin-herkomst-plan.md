@@ -7,13 +7,13 @@ Gepland. Dit plan vervangt voor de toekomstige applicatiestructuur het meervoudi
 ## Bronnen
 
 - `docs/specs/shared/bottom-tabbar-specificatie.md`
-- `docs/specs/calory-tracker/calory-tracker-specificatie.md`
+- `docs/specs/calorie-tracker/calorie-tracker-specificatie.md`
 - `docs/specs/inventory-client/inventory-client-specificatie.md`
 - `docs/specs/admin-dashboard/product-catalogus/productcatalogus-specificatie.md`
 - `docs/admin-dashboard/admin-dashboard-requirements.md`
 - `docs/admin-dashboard/product-requirements.md`
 - bestaande code in:
-  - `apps/calory_tracker`;
+  - `apps/calorie_tracker`;
   - `apps/inventory-admin_panel`;
   - `packages/admin-dashboard` als te migreren huidige bron;
   - `packages/auth-client`;
@@ -25,7 +25,7 @@ Gepland. Dit plan vervangt voor de toekomstige applicatiestructuur het meervoudi
 Maak drie afzonderlijk bouwbare en deploybare frontendapplicaties:
 
 ```text
-https://apps.jefvanzanten.dev/calory-tracker
+https://apps.jefvanzanten.dev/calorie-tracker
 https://apps.jefvanzanten.dev/inventory
 https://apps.jefvanzanten.dev/product-management-admin
 ```
@@ -38,7 +38,7 @@ De bestaande backend blijft een afzonderlijke gedeelde service en valt niet onde
 
 ### Applicatiegrenzen
 
-- `apps/calory_tracker` blijft de Calorie Tracker-app.
+- `apps/calorie_tracker` blijft de Calorie Tracker-app.
 - `apps/inventory-admin_panel` wordt na verwijdering van de adminroutes hernoemd naar `apps/inventory`.
 - `apps/product-management-admin` wordt eigenaar van de inhoudelijke adminpagina's, loaders, actions, server-adapters, featurecomponenten en page-owned componenten.
 - De huidige inhoud van `packages/admin-dashboard` verhuist zonder duplicatie naar `apps/product-management-admin`.
@@ -50,7 +50,7 @@ De bestaande backend blijft een afzonderlijke gedeelde service en valt niet onde
 
 ```text
 apps/
-  calory_tracker/
+  calorie_tracker/
   inventory/
   product-management-admin/
     app/
@@ -72,7 +72,7 @@ Er staat in de eindstructuur geen `packages/admin-dashboard`. Product Management
 
 | App | React Router-`basename` | Belangrijkste app-interne routes |
 | --- | --- | --- |
-| Calorie Tracker | `/calory-tracker` | `/`, `/logs`, `/login` |
+| Calorie Tracker | `/calorie-tracker` | `/`, `/logs`, `/login` |
 | Inventory | `/inventory` | `/`, `/login` |
 | Product Management Admin | `/product-management-admin` | `/`, `/login`, `/product-catalogus`, `/locations` |
 
@@ -83,13 +83,13 @@ De admin-root `/product-management-admin` stuurt na autorisatie door naar `/prod
 De broncontext is een gesloten verzameling:
 
 ```ts
-type AdminSource = "inventory" | "calory-tracker";
+type AdminSource = "inventory" | "calorie-tracker";
 ```
 
 | Bron | Admin-entry | Terugkeerlabel | Terugkeerdoel |
 | --- | --- | --- | --- |
 | Inventory | `/product-management-admin/product-catalogus?source=inventory` | `Inventarisatie` | `/inventory` |
-| Calorie Tracker | `/product-management-admin/product-catalogus?source=calory-tracker` | `Calory Tracker` | `/calory-tracker` |
+| Calorie Tracker | `/product-management-admin/product-catalogus?source=calorie-tracker` | `Calorie Tracker` | `/calorie-tracker` |
 
 Een vrije `returnTo`-URL, `Referer` of `history.back()` wordt niet als herkomstmechanisme gebruikt. `source` heeft uitsluitend navigatiebetekenis en nooit autorisatiebetekenis.
 
@@ -123,7 +123,7 @@ Een vrije `returnTo`-URL, `Referer` of `history.back()` wordt niet als herkomstm
 Maak per host een kleine pathmodule en maak in de admin-app of een passend gedeeld navigatiemodule:
 
 - de `AdminSource`-union;
-- een parser die alleen `inventory` en `calory-tracker` accepteert;
+- een parser die alleen `inventory` en `calorie-tracker` accepteert;
 - een uitputtende mapping van bron naar label en publiek basispad;
 - een helper die `source` samenvoegt met bestaande zoekparameters;
 - een helper voor basename-veilige serverredirects.
@@ -189,7 +189,7 @@ Laat de bovenste adminlayoutloader:
 De layout rendert:
 
 - bij `inventory`: `Inventarisatie` naar `/inventory` en een actieve `Admin dashboard`-tab;
-- bij `calory-tracker`: `Calory Tracker` naar `/calory-tracker` en een actieve `Admin dashboard`-tab;
+- bij `calorie-tracker`: `Calorie Tracker` naar `/calorie-tracker` en een actieve `Admin dashboard`-tab;
 - bij `null`: alleen de actieve `Admin dashboard`-tab.
 
 De terugkeerlink en cross-app adminlinks zijn gewone anchors. Interne adminlinks blijven React Router-links.
@@ -243,16 +243,16 @@ Voor de loginflow:
 Configureer:
 
 ```ts
-basename: "/calory-tracker"
+basename: "/calorie-tracker"
 ```
 
 Pas vervolgens aan:
 
-- verwijder de adminrouteboom uit `apps/calory_tracker/app/routes.ts`;
+- verwijder de adminrouteboom uit `apps/calorie_tracker/app/routes.ts`;
 - verwijder adminroutewrappers en de adminlayout;
 - verwijder `@product-repos/admin-dashboard` uit het appmanifest en Vite-config;
 - verwijder de Calorie Tracker-routewrappers die exports uit het package doorgeven;
-- laat de bottom-bar voor beheerders met een gewone anchor verwijzen naar `/product-management-admin/product-catalogus?source=calory-tracker`;
+- laat de bottom-bar voor beheerders met een gewone anchor verwijzen naar `/product-management-admin/product-catalogus?source=calorie-tracker`;
 - maak loaderredirects, loginredirects en browsernavigatie basename-veilig;
 - behoud de bestaande rolcontrole voor zichtbaarheid van de adminlink.
 
@@ -306,7 +306,7 @@ Controleer dat de gedeelde sessiecookie op verzoeken naar `apps.jefvanzanten.dev
 Maak drie Dockerfiles met de repository-root als buildcontext:
 
 ```text
-apps/calory_tracker/Dockerfile
+apps/calorie_tracker/Dockerfile
 apps/inventory/Dockerfile
 apps/product-management-admin/Dockerfile
 ```
@@ -334,7 +334,7 @@ Een wijziging aan een gedeeld package triggert alleen de consumerende apps. Admi
 Routeer met behoud van het publieke prefix:
 
 ```text
-/calory-tracker/*             -> calory-tracker-service
+/calorie-tracker/*             -> calorie-tracker-service
 /inventory/*                  -> inventory-service
 /product-management-admin/*   -> product-management-admin-service
 ```
@@ -344,7 +344,7 @@ Het prefix mag niet zonder overeenkomstige serverconfiguratie worden gestript, o
 Controleer directe deep links, waaronder:
 
 ```text
-/calory-tracker/logs
+/calorie-tracker/logs
 /inventory
 /product-management-admin/product-catalogus
 /product-management-admin/product-catalogus/<productId>
@@ -392,8 +392,8 @@ Voer alleen de relevante checks uit nadat de betreffende slice is gewijzigd:
 ```text
 corepack pnpm --filter product-management-admin typecheck
 corepack pnpm --filter product-management-admin build
-corepack pnpm --filter calory_tracker typecheck
-corepack pnpm --filter calory_tracker build
+corepack pnpm --filter calorie_tracker typecheck
+corepack pnpm --filter calorie_tracker build
 corepack pnpm --filter inventory typecheck
 corepack pnpm --filter inventory build
 ```
@@ -436,7 +436,7 @@ Stop wanneer pnpm een modules-purge- of recreateprompt toont en volg dan `docs/d
 - Calorie Tracker en Inventory bevatten geen inhoudelijke adminroutes of adminpackage-afhankelijkheid.
 - Beide clientapps tonen de adminlink uitsluitend aan beheerders en geven de juiste gesloten `source` mee.
 - De admin-bottom-tabbar toont bij `source=inventory` een terugkeerlink naar `/inventory`.
-- De admin-bottom-tabbar toont bij `source=calory-tracker` een terugkeerlink naar `/calory-tracker`.
+- De admin-bottom-tabbar toont bij `source=calorie-tracker` een terugkeerlink naar `/calorie-tracker`.
 - Een geldige bron blijft behouden bij interne navigatie, zoeken, mutations, redirects en login.
 - Een ongeldige of onbekende bron kan geen willekeurige terugkeerlink of autorisatie opleveren.
 - Een direct geopende admin-app zonder geldige actuele of bekende bron verzint geen terugkeerbestemming.

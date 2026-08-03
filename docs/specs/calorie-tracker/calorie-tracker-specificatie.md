@@ -19,14 +19,14 @@ De Calorie Tracker laat een ingelogde gebruiker consumpties registreren en de ca
 
 - [Calorie Tracker domeinregels](../../domein/calorie-tracker-domeinregels.md)
 - [Productcatalogus domeinregels](../../domein/productcatalogus-domeinregels.md)
-- [Calorie Tracker endpoints](../../backend/Endpoints/CALORY_TRACKER_ENDPOINTS.md)
-- [Calorie Tracker ERD](../../backend/ERD/CALORY_TRACKER_ERD.md)
+- [Calorie Tracker endpoints](../../backend/Endpoints/CALORIE_TRACKER_ENDPOINTS.md)
+- [Calorie Tracker ERD](../../backend/ERD/CALORIE_TRACKER_ERD.md)
 - [Product ERD](../../backend/ERD/PRODUCT_ERD.md)
 
 ## Implementatiestructuur
 
 - UI-componenten en routes staan samen met hun bijbehorende styles en tests in een eigen map wanneer meerdere bestanden bij hetzelfde onderdeel horen.
-- App-specifieke authenticatie-integratie staat onder `apps/calory_tracker/app/auth`.
+- App-specifieke authenticatie-integratie staat onder `apps/calorie_tracker/app/auth`.
 - Herbruikbare authenticatiecomponenten staan onder `packages/auth-client/src/components`.
 
 ## Gebruikers en autorisatie
@@ -45,7 +45,7 @@ De Calorie Tracker laat een ingelogde gebruiker consumpties registreren en de ca
 - Een browsersessie verloopt na 24 uur zonder succesvolle vernieuwing. Bij actief gebruik mag de backend de sessie maximaal eenmaal per uur vernieuwen.
 - De backend blijft de sessie op iedere beschermde API-aanvraag controleren; een eerder geladen frontendidentiteit is nooit zelfstandig voldoende.
 - De geopende applicatieshell controleert de actuele sessie opnieuw wanneer de app wordt hervat, het tabblad opnieuw focus krijgt of de verbinding terugkomt.
-- Een definitief ontbrekende, verlopen of ingetrokken sessie en een beschermde API-response met `401 UNAUTHENTICATED` leiden via een volledige browsernavigatie naar `/calory-tracker/login`.
+- Een definitief ontbrekende, verlopen of ingetrokken sessie en een beschermde API-response met `401 UNAUTHENTICATED` leiden via een volledige browsernavigatie naar `/calorie-tracker/login`.
 - De loginflow bewaart uitsluitend een gevalideerd app-intern terugkeerpad, zodat datum-, filter- en logcontext na succesvol inloggen kunnen worden hervat.
 - Gelijktijdige mislukte aanvragen veroorzaken maximaal één loginredirect.
 - Een netwerkfout of `503 AUTH_UNAVAILABLE` veroorzaakt geen uitlogactie; de gebruiker behoudt een herstelbare fouttoestand.
@@ -54,21 +54,21 @@ De Calorie Tracker laat een ingelogde gebruiker consumpties registreren en de ca
 
 De app gebruikt de [gedeelde applicatieshell met bottom-tabbar](../shared/bottom-tabbar-specificatie.md).
 
-De React Router-routes van deze app worden in productie onder het publieke basispad `/calory-tracker` gemount. De afwijkende historische spelling blijft bewust behouden om deployments, bookmarks en cookies niet in deze architectuurwijziging te migreren; de API-prefix blijft `/calorie-tracker`.
+De React Router-routes van deze app worden in productie onder het publieke basispad `/calorie-tracker` gemount. De frontendbasename, publieke deploymentroute en API-prefix gebruiken daarmee dezelfde spelling.
 
 | Bestemming | App-interne route | Publieke bestemming | Zichtbaarheid |
 | --- | --- | --- | --- |
-| Caloriestatistieken | `/?date=YYYY-MM-DD` | `/calory-tracker?date=YYYY-MM-DD` | Iedere ingelogde gebruiker |
-| Consumptielogboek | `/logs?date=YYYY-MM-DD&type=all` | `/calory-tracker/logs?date=YYYY-MM-DD&type=all` | Iedere ingelogde gebruiker |
-| Consumptielog toevoegen | `/logs/new?date=YYYY-MM-DD&type=all` | `/calory-tracker/logs/new?date=YYYY-MM-DD&type=all` | Iedere ingelogde gebruiker |
-| Consumptielog bewerken | `/logs/:logId/edit?date=YYYY-MM-DD&type=all` | `/calory-tracker/logs/:logId/edit?date=YYYY-MM-DD&type=all` | Iedere ingelogde gebruiker |
-| Product Management Admin | niet van toepassing | `/product-management-admin/product-catalogus?source=calory-tracker` | Alleen beheerders |
+| Caloriestatistieken | `/?date=YYYY-MM-DD` | `/calorie-tracker?date=YYYY-MM-DD` | Iedere ingelogde gebruiker |
+| Consumptielogboek | `/logs?date=YYYY-MM-DD&type=all` | `/calorie-tracker/logs?date=YYYY-MM-DD&type=all` | Iedere ingelogde gebruiker |
+| Consumptielog toevoegen | `/logs/new?date=YYYY-MM-DD&type=all` | `/calorie-tracker/logs/new?date=YYYY-MM-DD&type=all` | Iedere ingelogde gebruiker |
+| Consumptielog bewerken | `/logs/:logId/edit?date=YYYY-MM-DD&type=all` | `/calorie-tracker/logs/:logId/edit?date=YYYY-MM-DD&type=all` | Iedere ingelogde gebruiker |
+| Product Management Admin | niet van toepassing | `/product-management-admin/product-catalogus?source=calorie-tracker` | Alleen beheerders |
 
 App-interne technische routes gebruiken Engelse segmenten en de zichtbare labels blijven Nederlandstalig. De voormalige routes `/logs/nieuw` en `/logs/:logId/bewerken` redirecten permanent met behoud van queryparameters naar de canonieke routes. Deze compatibiliteitsroutes blijven minimaal één releasecyclus beschikbaar en worden pas in een afzonderlijk besluit verwijderd.
 
 Caloriestatistieken en Consumptielogboek delen de geselecteerde `date`-context. Navigatie via de Calorie Tracker-navbar neemt deze datum in beide richtingen mee; het typefilter bestaat alleen in het logboek. Op desktop staan de datumselector en navbar in de normale documentflow onder elkaar. De navbarlinks staan horizontaal gecentreerd en de navbar gebruikt `2em` bovenpadding en `1em` onderpadding.
 
-De adminbestemming is een gewone browserlink naar een andere deployment. Product Management Admin gebruikt `source=calory-tracker` om in zijn bottom-tabbar een terugkeertab naar `/calory-tracker` te tonen. De regels voor bronbehoud staan in de [gedeelde bottom-tabbar- en applicatieshellspecificatie](../shared/bottom-tabbar-specificatie.md).
+De adminbestemming is een gewone browserlink naar een andere deployment. Product Management Admin gebruikt `source=calorie-tracker` om in zijn bottom-tabbar een terugkeertab naar `/calorie-tracker` te tonen. De regels voor bronbehoud staan in de [gedeelde bottom-tabbar- en applicatieshellspecificatie](../shared/bottom-tabbar-specificatie.md).
 
 Er is voorlopig geen aparte instellingentab. Calorie- en macrodoelen worden vanuit Caloriestatistieken in een compacte modal beheerd, zonder eigen route.
 
@@ -138,7 +138,7 @@ En bewaart het log de gebruikte tijdzone.
 Gegeven dat een ingelogde beheerder de Calorie Tracker gebruikt
 Wanneer die Product Management Admin opent
 Dan verlaat de browser de Calorie Tracker-deployment
-En opent `/product-management-admin/product-catalogus?source=calory-tracker`
+En opent `/product-management-admin/product-catalogus?source=calorie-tracker`
 En bevat de Calorie Tracker zelf geen inhoudelijke adminroute.
 
 ### AC-06 - Gedeelde datumcontext

@@ -5,7 +5,7 @@ Documentatieregel: houd ERD's beperkt tot persistente tabellen, relaties en hard
 Domeinregels, UI-gedrag, endpointcontracten en rationale horen in specs of domeindocs; verwijs hier alleen kort wanneer dat nodig is.
 -->
 
-Dit document beschrijft de persistente structuur van de gedeelde productcatalogus. Domeinregels staan in [productcatalogus-domeinregels.md](../../domein/productcatalogus-domeinregels.md). Calorie Tracker-logs en persoonlijke doelen staan in [CALORY_TRACKER_ERD.md](./CALORY_TRACKER_ERD.md).
+Dit document beschrijft de persistente structuur van de gedeelde productcatalogus. Domeinregels staan in [productcatalogus-domeinregels.md](../../domein/productcatalogus-domeinregels.md). Calorie Tracker-logs en persoonlijke doelen staan in [CALORIE_TRACKER_ERD.md](./CALORIE_TRACKER_ERD.md).
 
 ```yaml
 brand

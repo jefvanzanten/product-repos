@@ -13,7 +13,7 @@ Dit plan vervangt voor de backend de structurele doelbeelden uit featureplannen 
 - `docs/domein/productcatalogus-domeinregels.md`;
 - `docs/domein/calorie-tracker-domeinregels.md`;
 - `docs/backend/Endpoints/ADMIN_DASHBOARD_ENDPOINTS.md`;
-- `docs/backend/Endpoints/CALORY_TRACKER_ENDPOINTS.md`;
+- `docs/backend/Endpoints/CALORIE_TRACKER_ENDPOINTS.md`;
 - `docs/plans/calory-tracker-architectuur-en-routes-verbeterplan.md`;
 - relevante repository- en serviceafspraken uit bestaande productcatalogusplannen.
 

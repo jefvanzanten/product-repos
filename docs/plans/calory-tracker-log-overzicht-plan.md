@@ -7,12 +7,12 @@
 - Figma-bestand `Calorie Tracker – Productcatalogus stijl`:
   - desktop: node `2:2` (`Desktop — Logboek`, 1440 × 1024);
   - mobiel: node `2:184` (`Mobile — Logboek`, 390 × 844).
-- Featurespecificatie: `docs/specs/calory-tracker/logs/log-overzicht.md`.
-- Algemene Calorie Tracker-specificatie: `docs/specs/calory-tracker/calory-tracker-specificatie.md`.
+- Featurespecificatie: `docs/specs/calorie-tracker/logs/log-overzicht.md`.
+- Algemene Calorie Tracker-specificatie: `docs/specs/calorie-tracker/calorie-tracker-specificatie.md`.
 - Gedeelde shell: `docs/specs/shared/bottom-tabbar-specificatie.md`.
 - Gerelateerde, maar afzonderlijke slices:
-  - `docs/specs/calory-tracker/logs/log-toevoegen.md`;
-  - `docs/specs/calory-tracker/logs/log-detail-bewerken.md`.
+  - `docs/specs/calorie-tracker/logs/log-toevoegen.md`;
+  - `docs/specs/calorie-tracker/logs/log-detail-bewerken.md`.
 
 ## Doel en afbakening
 
@@ -63,7 +63,7 @@ De logboekspecificatie vereist altijd het aantal zichtbare logs. Desktop-Figma t
 
 ### 4. Ontbrekend actueel domein- en datamodel
 
-`docs/backend/ERD/CALORY_TRACKER_ERD.md` verklaart dat er geen actueel nutritionmodel is, terwijl de nieuwe Calorie Tracker-specificaties concrete regels stellen voor gebruiker, tijdzone, consumptietype, beschikbaarheid, archivering en logs. De backend heeft die velden/tabellen nog niet. Daarnaast noemt `PRODUCT_ERD.md` een UUID voor `product_package.id`, terwijl schema en contracts momenteel een integer gebruiken.
+`docs/backend/ERD/CALORIE_TRACKER_ERD.md` verklaart dat er geen actueel nutritionmodel is, terwijl de nieuwe Calorie Tracker-specificaties concrete regels stellen voor gebruiker, tijdzone, consumptietype, beschikbaarheid, archivering en logs. De backend heeft die velden/tabellen nog niet. Daarnaast noemt `PRODUCT_ERD.md` een UUID voor `product_package.id`, terwijl schema en contracts momenteel een integer gebruiken.
 
 **Aanbeveling:** leg vóór migratie vast:
 

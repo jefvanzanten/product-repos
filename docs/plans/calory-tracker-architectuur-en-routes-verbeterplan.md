@@ -6,13 +6,13 @@ Uitgevoerd. De architectuur-, routeveiligheids-, projectie-, persistence- en lin
 
 ## Bronnen
 
-- `docs/specs/calory-tracker/calory-tracker-specificatie.md`
-- `docs/specs/calory-tracker/dashboard/calorien-statestieken.md`
-- `docs/specs/calory-tracker/logs/log-overzicht.md`
-- `docs/specs/calory-tracker/logs/log-toevoegen.md`
-- `docs/specs/calory-tracker/logs/log-detail-bewerken.md`
+- `docs/specs/calorie-tracker/calorie-tracker-specificatie.md`
+- `docs/specs/calorie-tracker/dashboard/calorien-statestieken.md`
+- `docs/specs/calorie-tracker/logs/log-overzicht.md`
+- `docs/specs/calorie-tracker/logs/log-toevoegen.md`
+- `docs/specs/calorie-tracker/logs/log-detail-bewerken.md`
 - `docs/domein/calorie-tracker-domeinregels.md`
-- `docs/backend/Endpoints/CALORY_TRACKER_ENDPOINTS.md`
+- `docs/backend/Endpoints/CALORIE_TRACKER_ENDPOINTS.md`
 - huidige frontend in `apps/calory_tracker/app`
 - huidige backend in `apps/backend/src/calorie-tracker` en `apps/backend/src/routes/calorie-tracker.ts`
 - gedeelde contracten in `packages/contracts/src/calorie-tracker.ts`

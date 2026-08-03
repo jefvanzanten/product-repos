@@ -5,7 +5,7 @@ Documentatieregel: houd endpointdocs als compacte contract-DSL: routes, auth, pa
 Domeinregels, UI-gedrag, datamodeluitleg, voorbeelden en rationale horen in specs, ERD's of domeindocs; verwijs hier alleen kort wanneer dat nodig is.
 -->
 
-Dit document beschrijft alleen het HTTP-contract. Opslagvelden staan in [CALORY_TRACKER_ERD.md](../ERD/CALORY_TRACKER_ERD.md). Gedeelde domeinregels staan in [calorie-tracker-domeinregels.md](../../domein/calorie-tracker-domeinregels.md). Catalogusregels staan in [productcatalogus-domeinregels.md](../../domein/productcatalogus-domeinregels.md).
+Dit document beschrijft alleen het HTTP-contract. Opslagvelden staan in [CALORIE_TRACKER_ERD.md](../ERD/CALORIE_TRACKER_ERD.md). Gedeelde domeinregels staan in [calorie-tracker-domeinregels.md](../../domein/calorie-tracker-domeinregels.md). Catalogusregels staan in [productcatalogus-domeinregels.md](../../domein/productcatalogus-domeinregels.md).
 
 ## Contractconventies
 

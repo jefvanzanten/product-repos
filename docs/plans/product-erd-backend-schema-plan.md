@@ -40,7 +40,7 @@ Buiten scope: nieuwe nutrition/calorie- of inventory-functionaliteit. Die ERD's 
    - Schema/migratie: `id integer autoincrement PK`.
 7. Niet-ERD-tabellen
    - `product_variant` en `product_sku` staan in `products.schema.ts`, maar niet in de leidende Product ERD.
-   - `calory-tracker.schema.ts` hangt nog aan `product_variant`, terwijl `CALORY_TRACKER_ERD.md` expliciet niet actueel is.
+   - `calory-tracker.schema.ts` hangt nog aan `product_variant`, terwijl `CALORIE_TRACKER_ERD.md` expliciet niet actueel is.
 8. Migrations versus schema
    - `0002_product_create_slice.sql` bevat al meerdere ERD-indexen die niet in `products.schema.ts` staan. Daardoor is er drift tussen Drizzle-schema en migratiestatus.
 

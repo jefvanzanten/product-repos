@@ -5,7 +5,7 @@
 - Onderdeel: Calorie Tracker > dashboard
 - Route: `/?date=YYYY-MM-DD`
 - Status: concept
-- Algemene spec: [calory-tracker-specificatie.md](../calory-tracker-specificatie.md)
+- Algemene spec: [calorie-tracker-specificatie.md](../calorie-tracker-specificatie.md)
 
 ## Doel
 

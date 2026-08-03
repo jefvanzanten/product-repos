@@ -21,7 +21,7 @@ Dit bestand is alleen een index. Gedrag staat per feature in losse specs, zodat 
 - Alle routes onder `/product-catalogus` vereisen een ingelogde gebruiker met de beheerdersrol.
 - Alleen ingelogd zijn is niet voldoende.
 - De beheerder krijgt via deze routes geen toegang tot persoonlijke consumptielogs of doelen van andere gebruikers.
-- De optionele queryparameter `source` bevat uitsluitend `inventory` of `calory-tracker` en bepaalt de terugkeertab van de admin-app.
+- De optionele queryparameter `source` bevat uitsluitend `inventory` of `calorie-tracker` en bepaalt de terugkeertab van de admin-app.
 - Iedere interne link, GET-formulieractie, mutation en redirect behoudt een geldige `source` naast featureparameters zoals `q`, `categoryId`, `brandId` en `status`.
 - Routevoorbeelden in de productcatalogusspecificaties laten `source` alleen voor leesbaarheid weg; wanneer de admin-app met een geldige broncontext is geopend, blijft die parameter wel aanwezig.
 
