@@ -9,8 +9,9 @@
     "lint": "corepack pnpm -r --if-present run lint",
     "typecheck": "corepack pnpm -r --if-present run typecheck",
     "test": "corepack pnpm -r --if-present run test",
-    "test:specs": "corepack pnpm --filter calory_tracker exec vitest --config ../../vitest.specs.config.ts --run",
-    "test:specs:watch": "corepack pnpm --filter calory_tracker exec vitest --config ../../vitest.specs.config.ts --watch --bail=1",
+    "test:e2e": "corepack pnpm --filter calory_tracker exec playwright test",
+    "test:specs": "corepack pnpm --filter calory_tracker exec vitest --config vitest.specs.config.ts --run",
+    "test:specs:watch": "corepack pnpm --filter calory_tracker exec vitest --config vitest.specs.config.ts --watch --bail=1",
     "backend:build": "corepack pnpm --filter @product-repos/backend build",
     "backend:dev": "corepack pnpm --filter @product-repos/backend dev",
     "backend:start": "corepack pnpm --filter @product-repos/backend start",
@@ -47,7 +48,6 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
     "typescript": "^5.7.2"
   }
 }

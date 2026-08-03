@@ -3,7 +3,7 @@
 ## Status
 
 - Onderdeel: Calorie Tracker > logs
-- Route: `/logs/nieuw?date=YYYY-MM-DD&type=<filter>`
+- Route: `/logs/new?date=YYYY-MM-DD&type=<filter>`
 - Status: concept
 - Algemene spec: [calory-tracker-specificatie.md](../calory-tracker-specificatie.md)
 - Gerelateerde spec: [log-overzicht.md](./log-overzicht.md)
@@ -38,7 +38,8 @@ De flow gebruikt een routegebonden modal:
 
 - mobiel: full-screen modal of full-screen sheet;
 - desktop: compacte modal;
-- verversen en browsernavigatie blijven werken via de route.
+- verversen en browsernavigatie blijven werken via de route;
+- het bestaande logboek blijft als één gemounte achtergrondinstantie behouden en is tijdens de modal inert en niet bedienbaar.
 
 Direct zichtbaar:
 
@@ -176,7 +177,7 @@ De log bewaart de oorspronkelijke waarde en gekozen eenheid. De backend leidt de
 ### AC-01 - Routegebonden flow
 
 Gegeven dat de gebruiker `Log toevoegen` kiest
-Dan opent `/logs/nieuw` op mobiel full-screen en op desktop als modal
+Dan opent `/logs/new` op mobiel full-screen en op desktop als modal
 En blijven datum en filter in de URL-context behouden.
 
 ### AC-02 - Product zoeken

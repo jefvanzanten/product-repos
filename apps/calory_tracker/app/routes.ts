@@ -1,12 +1,16 @@
 import { index, layout, route, type RouteConfig } from "@react-router/dev/routes";
+import { calorieTrackerRoutePatterns as paths } from "./routing/calorie-tracker-routes";
 
 export default [
-  route("login", "routes/login.tsx"),
-  layout("layout.tsx", [
-    index("routes/statistics.tsx"),
-    route("logs", "routes/logs.tsx"),
-    route("logs/nieuw", "routes/log-new.tsx"),
-    route("logs/:logId", "routes/log-detail.tsx"),
-    route("logs/:logId/bewerken", "routes/log-edit.tsx"),
+  route(paths.login, "routes/login/login.tsx"),
+  layout("layout/layout.tsx", [
+    index("routes/statistics/statistics.tsx"),
+    route(paths.logs, "routes/logs/logs-layout.tsx", [
+      route(paths.newLog, "routes/log-new/log-new.tsx"),
+      route(paths.legacyNewLog, "routes/logs/legacy-new-log-redirect.ts"),
+      route(paths.logDetail, "routes/log-detail/log-detail.tsx"),
+      route(paths.editLog, "routes/log-edit/log-edit.tsx"),
+      route(paths.legacyEditLog, "routes/log-edit/legacy-edit-log-redirect.ts"),
+    ]),
   ]),
 ] satisfies RouteConfig;

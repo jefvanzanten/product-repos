@@ -1,0 +1,19 @@
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.76);
+}
+
+.dialog {
+  width: min(100%, 640px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  color: var(--ct-ink);
+  background: var(--ct-surface);
+  border-radius: 18px;
+  box-shadow: var(--ct-shadow);
+}

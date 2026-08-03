@@ -9,7 +9,10 @@
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "lint": "eslint .",
-    "test": "vitest"
+    "test": "vitest",
+    "test:e2e": "playwright test",
+    "test:specs": "vitest --config vitest.specs.config.ts --run",
+    "test:specs:watch": "vitest --config vitest.specs.config.ts --watch --bail=1"
   },
   "dependencies": {
     "@product-repos/auth-client": "workspace:*",
@@ -25,6 +28,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@playwright/test": "^1.61.1",
     "@react-router/dev": "8.0.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

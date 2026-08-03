@@ -104,6 +104,12 @@ export const availableInputUnitSchema = z.object({
   label: z.string(),
 }).strict();
 
+/** Strict package-search result list returned by the HTTP boundary. */
+export const packageSearchResultsSchema = z.array(packageSearchResultSchema);
+
+/** Strict available-input-unit list returned by the HTTP boundary. */
+export const availableInputUnitsSchema = z.array(availableInputUnitSchema);
+
 /** Nullable nutrition values derived for a consumption or day. */
 export const macroValuesSchema = z.object({
   caloriesKcal: calorieTrackerDecimalSchema.nullable(),

@@ -2,6 +2,24 @@ import { describe, expect, it } from "bun:test";
 import { app, requestAsAdmin, requestAsUser } from "./test-app";
 
 describe("catalog authorization", () => {
+  it("issues browser sessions with the explicit 24-hour lifetime", async () => {
+    const response = await app.request("/api/auth/sign-up/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: "http://localhost:5173",
+      },
+      body: JSON.stringify({
+        email: "session-policy@example.test",
+        name: "Session Policy",
+        password: "test-password-1234",
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("set-cookie")).toContain("Max-Age=86400");
+  });
+
   it("rejects an unauthenticated catalog request", async () => {
     const response = await app.request("/products");
     expect(response.status).toBe(401);

@@ -5,8 +5,9 @@
   "type": "module",
   "exports": {
     ".": "./src/auth-client.ts",
-    "./login-page": "./src/login-page.tsx",
+    "./login-page": "./src/components/login-page/login-page.tsx",
     "./roles": "./src/roles.ts",
+    "./session-monitor": "./src/components/session-monitor/session-monitor.tsx",
     "./session.server": "./src/session.server.ts"
   },
   "scripts": {

@@ -1,3 +1,4 @@
+import { SessionMonitor } from "@product-repos/auth-client/session-monitor";
 import { BottomTabBar } from "@product-repos/shared/bottom-tab-bar";
 import type { ReactNode } from "react";
 import {
@@ -7,7 +8,9 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 import { isAdministrator } from "@product-repos/auth-client/roles";
+import { authClient } from "../../../app/auth-client";
 import { requireUser } from "../../../app/auth.server";
+import { INVENTORY_BASE_PATH, toInventoryPublicPath } from "../../../app/public-paths";
 import styles from "./layout.module.css";
 
 /** Load the authenticated user for the protected Inventory shell. */
@@ -26,6 +29,11 @@ export default function BottomTabsLayout(): ReactNode {
 
   return (
     <div className={styles.layout}>
+      <SessionMonitor
+        appBasePath={INVENTORY_BASE_PATH}
+        authClient={authClient}
+        loginPath={toInventoryPublicPath("/login")}
+      />
       <Outlet />
       <BottomTabBar>
         <NavLink to="/" end>

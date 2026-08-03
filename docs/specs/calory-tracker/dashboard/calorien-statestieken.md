@@ -48,7 +48,7 @@ Regels:
 
 ## Databron en berekening
 
-- De backend levert één aggregaat voor de gevraagde lokale kalenderdatum in de browsertijdzone die de client meestuurt.
+- De backend levert één aggregaat voor de gevraagde lokale kalenderdatum. De requestbrowsertijdzone valideert of die datum vandaag of eerder is; ieder bestaand log wordt blijvend ingedeeld volgens zijn opgeslagen browsertijdzone.
 - De frontend haalt niet alle logs op om zelf dagtotalen te berekenen.
 - Alleen aanwezige calorie- en macrowaarden dragen bij aan hun betreffende totaal.
 - Een log zonder macroprofiel draagt nergens aan bij en veroorzaakt geen waarschuwing of ontbrekende-data-aantal.

@@ -1,5 +1,6 @@
 import { reactRouter } from "@react-router/dev/vite";
 import { defineConfig, type Connect, type Plugin } from "vite";
+import { CALORY_TRACKER_BASE_PATH } from "./app/routing/calorie-tracker-routes";
 
 /** Redirect the slashless public app root before Vite's base-path middleware handles it. */
 function redirectAppRoot(basePath: string): Plugin {
@@ -67,9 +68,9 @@ function proxyCrossAppCriticalCss(publicBasePath: string, targetOrigin: string):
 }
 
 export default defineConfig({
-  base: "/calory-tracker/",
+  base: `${CALORY_TRACKER_BASE_PATH}/`,
   plugins: [
-    redirectAppRoot("/calory-tracker"),
+    redirectAppRoot(CALORY_TRACKER_BASE_PATH),
     proxyCrossAppCriticalCss("/product-management-admin", "http://127.0.0.1:5174"),
     proxyCrossAppCriticalCss("/inventory", "http://127.0.0.1:5175"),
     reactRouter(),

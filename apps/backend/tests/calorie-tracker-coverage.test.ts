@@ -16,6 +16,7 @@ import {
   requestAsOtherUser,
   requestAsUser,
   testCatalog,
+  testDatabase,
 } from "./test-app.ts";
 
 type AuthenticatedRequester = (path: string, init?: RequestInit) => Promise<Response>;
@@ -345,6 +346,27 @@ describe("Calorie Tracker backend coverage", () => {
     expect(await unchangedResponse.json()).toMatchObject({ unitContent: { unitType: { dimension: "VOLUME" } } });
   });
 
+  it("returns an invariant failure instead of a partial list when projection references are broken", async () => {
+    const created = await createCatalogPackage({ name: "Broken projection", amount: "100", unitTypeId: testCatalog.massUnitTypeId });
+    const body = createLogBody(created.package.id, { consumedAt: "2026-04-20T12:00:00.000Z" });
+    expect((await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", body)).status).toBe(201);
+
+    executeTestSql("PRAGMA foreign_keys = OFF");
+    executeTestSql("UPDATE consumption_log SET product_package_id = ? WHERE id = ?", 999_999, body.id);
+    try {
+      const response = await requestAsUser("/calorie-tracker/logs?date=2026-04-20&type=all", {
+        headers: { "X-Browser-Timezone": "UTC" },
+      });
+      expect(response.status).toBe(500);
+      const payload = await response.json();
+      expect(payload).toMatchObject({ code: "INTERNAL_ERROR", fields: { correlationId: expect.any(String) } });
+      expect(payload).not.toHaveProperty("items");
+    } finally {
+      executeTestSql("UPDATE consumption_log SET product_package_id = ? WHERE id = ?", created.package.id, body.id);
+      executeTestSql("PRAGMA foreign_keys = ON");
+    }
+  });
+
   it("physically cleans only logs deleted for at least thirty days without adding a public route", async () => {
     const created = await createCatalogPackage({ name: "Cleanup retention", amount: "100", unitTypeId: testCatalog.massUnitTypeId });
     const expiredBody = createLogBody(created.package.id, { consumedAt: "2026-05-01T12:00:00.000Z" });
@@ -356,15 +378,20 @@ describe("Calorie Tracker backend coverage", () => {
     executeTestSql("UPDATE consumption_log SET deleted_at = ?, updated_at = ? WHERE id = ?", "2026-07-01T12:00:00.000Z", "2026-07-01T12:00:00.000Z", expiredBody.id);
     executeTestSql("UPDATE consumption_log SET deleted_at = ?, updated_at = ? WHERE id = ?", "2026-07-02T12:00:00.001Z", "2026-07-02T12:00:00.001Z", retainedBody.id);
 
-    const [{ CalorieTracker }, { DrizzleCalorieTracker }] = await Promise.all([
-      import("../src/calorie-tracker/calorie-tracker.ts"),
-      import("../src/calorie-tracker/drizzle-calorie-tracker.ts"),
+    const [{ createConsumptionLogService }, { createDrizzleConsumptionLogRepository }, { createDrizzleConsumptionCatalogReader }] = await Promise.all([
+      import("../src/modules/calorie-tracker/services/consumption-log.service.ts"),
+      import("../src/modules/calorie-tracker/repositories/drizzle-consumption-log.repository.ts"),
+      import("../src/modules/catalog/repositories/drizzle-consumption-catalog-reader.ts"),
     ]);
     const fixedClock = {
       /** Return the deterministic cleanup instant. */
       now: () => new Date("2026-07-31T12:00:00.000Z"),
     };
-    const cleanup = new CalorieTracker(new DrizzleCalorieTracker(), fixedClock).cleanupDeletedLogs();
+    const cleanup = createConsumptionLogService({
+      logRepository: createDrizzleConsumptionLogRepository(testDatabase),
+      catalogReader: createDrizzleConsumptionCatalogReader(testDatabase),
+      clock: fixedClock,
+    }).cleanupDeletedLogs();
     expect(cleanup).toEqual({
       ok: true,
       value: { deletedCount: 1, cutoffInclusive: "2026-07-01T12:00:00.000Z" },

@@ -5,15 +5,11 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createBackendRuntime, type BackendRuntime } from "../src/composition.ts";
+import { loadBackendConfig } from "../src/config.ts";
 
 const tempDir = mkdtempSync(join(tmpdir(), "backend-api-test-"));
 const databasePath = join(tempDir, "sqlite.db");
-process.env.DATABASE_URL = databasePath;
-process.env.NODE_ENV = "test";
-process.env.AUTH_DISABLE_SIGN_UP = "false";
-process.env.AUTH_TRUSTED_ORIGINS = "http://localhost:5173";
-process.env.BETTER_AUTH_SECRET = "test-only-better-auth-secret-at-least-32-chars";
-
 const sqlite = new Database(databasePath, { create: true });
 const testDb = drizzle(sqlite);
 const migrationsFolder = fileURLToPath(new URL("../drizzle/migrations", import.meta.url));
@@ -36,11 +32,30 @@ const countUnitTypeId = readInsertedId(sqlite.query("INSERT INTO unit_type (name
 const packageTypeId = readInsertedId(sqlite.query("INSERT INTO package_type (name) VALUES (?) RETURNING id").get("fles"));
 sqlite.close();
 
-const appModule = await import("../src/app");
-const dbModule = await import("../src/db/index");
+/** Compose the migrated temporary backend and own its complete test cleanup. */
+function createBackendTestRuntime(): BackendRuntime & { readonly cleanup: () => void } {
+  const backend = createBackendRuntime(loadBackendConfig({
+    NODE_ENV: "test",
+    DATABASE_URL: databasePath,
+    AUTH_DISABLE_SIGN_UP: "false",
+    AUTH_TRUSTED_ORIGINS: "http://localhost:5173",
+    BETTER_AUTH_SECRET: "test-only-better-auth-secret-at-least-32-chars",
+  }));
+  /** Close backend resources and remove the temporary database directory. */
+  function cleanup(): void {
+    backend.close();
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+  return { ...backend, cleanup };
+}
+
+const runtime = createBackendTestRuntime();
 
 /** Real Hono application backed by the migrated temporary SQLite database. */
-export const app = appModule.createApp();
+export const app = runtime.app;
+
+/** Injected Drizzle database used by focused repository integration checks. */
+export const testDatabase = runtime.resources.database;
 
 /** Raise a test-only defect so the real global error boundary can be exercised. */
 function throwTestDefect(): never {
@@ -85,7 +100,7 @@ function requestWithSession(
 const adminSessionCookie = await createTestUser("admin@example.test", "Test Admin");
 const userSessionCookie = await createTestUser("user@example.test", "Test User");
 const otherUserSessionCookie = await createTestUser("other-user@example.test", "Other Test User");
-dbModule.sqliteConnection
+runtime.resources.sqlite
   .query("UPDATE user SET role = 'admin' WHERE email = ?")
   .run("admin@example.test");
 
@@ -106,7 +121,7 @@ export function requestAsOtherUser(path: string, init: RequestInit = {}): Promis
 
 /** Execute a parameterized mutation against the migrated route-integration SQLite database. */
 export function executeTestSql(sql: string, ...parameters: ReadonlyArray<string | number | null>): void {
-  dbModule.sqliteConnection.query(sql).run(...parameters);
+  runtime.resources.sqlite.query(sql).run(...parameters);
 }
 
 /** Stable catalog references seeded into the route-integration database. */
@@ -119,7 +134,4 @@ export const testCatalog = {
   packageTypeId,
 } as const;
 
-process.once("exit", () => {
-  dbModule.closeDatabase();
-  rmSync(tempDir, { recursive: true, force: true });
-});
+process.once("exit", runtime.cleanup);

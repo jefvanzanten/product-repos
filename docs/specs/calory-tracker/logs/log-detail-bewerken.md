@@ -5,7 +5,7 @@
 - Onderdeel: Calorie Tracker > logs
 - Routes:
   - `/logs/:logId?date=YYYY-MM-DD&type=<filter>`
-  - `/logs/:logId/bewerken?date=YYYY-MM-DD&type=<filter>`
+  - `/logs/:logId/edit?date=YYYY-MM-DD&type=<filter>`
 - Status: concept
 - Algemene spec: [calory-tracker-specificatie.md](../calory-tracker-specificatie.md)
 - Gerelateerde spec: [log-overzicht.md](./log-overzicht.md)
@@ -17,6 +17,7 @@ De gebruiker kan een eigen consumptielog volledig bekijken, een invoerfout corri
 ## Presentatie en navigatie
 
 - Detail en bewerken hebben een eigen route en ondersteunen verversen, deep-linking en browsernavigatie.
+- Tijdens bewerken blijft op de achtergrond exact één logboekinstantie gemount; die achtergrond is inert en niet bedienbaar.
 - Mobiel toont de route als full-screen weergave.
 - Desktop mag dezelfde route als modal of zijpaneel tonen.
 - De oorspronkelijke logboekdatum en het actieve filter blijven in de queryparameters behouden.

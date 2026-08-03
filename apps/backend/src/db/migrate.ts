@@ -1,11 +1,11 @@
-import { Database } from "bun:sqlite";
-import { drizzle } from "drizzle-orm/bun-sqlite";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
+import { loadBackendConfig } from "../config.ts";
+import { createDatabase } from "./index.ts";
 
-const dbPath = process.env.DATABASE_URL || "./db/sqlite.db";
-const sqlite = new Database(dbPath, { create: true });
-const db = drizzle(sqlite);
-
-migrate(db, { migrationsFolder: "./drizzle/migrations" });
-console.log("Migraties succesvol uitgevoerd.");
-sqlite.close();
+const resources = createDatabase(loadBackendConfig(process.env));
+try {
+  migrate(resources.database, { migrationsFolder: "./drizzle/migrations" });
+  console.log("Migraties succesvol uitgevoerd.");
+} finally {
+  resources.close();
+}

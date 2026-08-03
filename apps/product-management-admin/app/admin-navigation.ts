@@ -1,3 +1,5 @@
+import { toPublicAppPath } from "@product-repos/shared/public-app-path";
+
 /** Public basename used by Product Management Admin. */
 export const ADMIN_BASE_PATH = "/product-management-admin";
 
@@ -80,8 +82,7 @@ export function withAdminSource(target: string, source: AdminSource | null): str
  * @returns The path prefixed with the public admin basename.
  */
 export function toAdminPublicPath(internalPath: string): string {
-  const normalizedPath = internalPath === "/" ? "" : `/${internalPath.replace(/^\/+/, "")}`;
-  return `${ADMIN_BASE_PATH}${normalizedPath}`;
+  return toPublicAppPath(ADMIN_BASE_PATH, internalPath);
 }
 
 /**

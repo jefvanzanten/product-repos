@@ -1,3 +1,5 @@
+import { toPublicAppPath } from "@product-repos/shared/public-app-path";
+
 /** Public basename used by the Inventory deployment. */
 export const INVENTORY_BASE_PATH = "/inventory";
 
@@ -20,6 +22,18 @@ export function toInventoryRedirectPath(internalPath: string): string {
  * @returns The path prefixed with the public Inventory basename.
  */
 export function toInventoryPublicPath(internalPath: string): string {
-  const normalizedPath = internalPath === "/" ? "" : `/${internalPath.replace(/^\/+/, "")}`;
-  return `${INVENTORY_BASE_PATH}${normalizedPath}`;
+  return toPublicAppPath(INVENTORY_BASE_PATH, internalPath);
+}
+
+/**
+ * Parse an untrusted post-login Inventory destination.
+ *
+ * @param input - Untrusted `returnTo` query input.
+ * @returns The supported Inventory root with retained query context, or `/`.
+ */
+export function parseInventoryReturnPath(input: string | null | undefined): string {
+  if (!input || !input.startsWith("/") || input.startsWith("//")) return "/";
+  const candidate = new URL(input, "https://inventory.internal");
+  if (candidate.origin !== "https://inventory.internal" || candidate.pathname !== "/") return "/";
+  return `${candidate.pathname}${candidate.search}${candidate.hash}`;
 }

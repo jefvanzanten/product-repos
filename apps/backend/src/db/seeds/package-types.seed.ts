@@ -1,4 +1,4 @@
-import { db } from "../index.ts";
+import type { BackendDatabase } from "../index.ts";
 import { packageType } from "../schema.ts";
 
 const commonPackageTypes = [
@@ -17,8 +17,8 @@ const commonPackageTypes = [
 ].map((name) => ({ name }));
 
 /** Seed the reference package types used by the product catalog form. */
-export async function seedPackageTypes(): Promise<number> {
-  await db.insert(packageType).values(commonPackageTypes).onConflictDoNothing();
+export async function seedPackageTypes(database: BackendDatabase): Promise<number> {
+  await database.insert(packageType).values(commonPackageTypes).onConflictDoNothing();
 
   return commonPackageTypes.length;
 }

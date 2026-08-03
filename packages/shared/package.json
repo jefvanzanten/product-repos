@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./bottom-tab-bar": "./components/bottom-tab-bar/bottom-tab-bar.tsx"
+    "./bottom-tab-bar": "./components/bottom-tab-bar/bottom-tab-bar.tsx",
+    "./public-app-path": "./routing/public-app-path.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json"

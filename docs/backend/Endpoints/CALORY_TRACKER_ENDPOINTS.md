@@ -36,6 +36,8 @@ domain: ../../domein/calorie-tracker-domeinregels.md
   - LOG_CREATE_CONFLICT
   - LOG_UPDATE_CONFLICT
   - LOG_RESTORE_WINDOW_EXPIRED
+500:
+  - INTERNAL_ERROR # onverwachte invariantbreuk; fields.correlationId beschikbaar
 ```
 
 ## Endpoints
@@ -96,7 +98,7 @@ GET /calorie-tracker/logs/:logId:
   errors:
     404: [LOG_NOT_FOUND]
 
-PATCH /calorie-tracker/logs/:logId:
+PUT /calorie-tracker/logs/:logId:
   headers: [X-Browser-Timezone]
   params:
     logId: consumption_log.id
@@ -107,6 +109,8 @@ PATCH /calorie-tracker/logs/:logId:
     400: [VALIDATION_ERROR]
     404: [LOG_NOT_FOUND, PRODUCT_PACKAGE_NOT_FOUND]
     409: [PRODUCT_PACKAGE_ARCHIVED, LOG_UPDATE_CONFLICT]
+  compatibility:
+    PATCH: tijdelijke alias met hetzelfde volledige bodycontract; minimaal één releasecyclus
 
 DELETE /calorie-tracker/logs/:logId:
   params:

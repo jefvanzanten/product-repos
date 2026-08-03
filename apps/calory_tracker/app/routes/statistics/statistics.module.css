@@ -1,0 +1,59 @@
+.page { min-height: calc(100dvh - 120px); color: var(--ct-ink); }
+.panel { width: min(100%, 430px); min-height: calc(100dvh - 139px); margin: 0 auto; padding: 18px 16px 80px; background: var(--ct-surface); }
+.panelActions { display: flex; justify-content: flex-end; min-height: 40px; margin-bottom: 12px; }
+.panelActions button { display: grid; width: 40px; height: 40px; padding: 0; place-items: center; background: #fff; border: 1px solid var(--ct-border); border-radius: 8px; }
+.statisticsGrid { display: grid; gap: 12px; }
+.macros { display: grid; gap: 12px; }
+.statCard { display: grid; gap: 8px; padding: 14px 16px; background: #fff; border: 1px solid var(--ct-border); border-radius: 10px; box-shadow: var(--ct-shadow); }
+.statCard.featured { gap: 9px; min-height: 170px; padding: 18px 16px; }
+.statCard h2, .statCard p { margin: 0; }
+.statCard h2 { font-size: 14px; }
+.statCard.featured h2 { font-size: 16px; }
+.statCard > strong { font-size: 30px; line-height: 1.1; }
+.statCard > p { color: var(--ct-muted); font-size: 12px; }
+.statCard > b { color: var(--ct-primary-dark); font-size: 15px; }
+.statHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.statHeader span { color: var(--ct-muted); font-size: 13px; font-weight: 600; }
+.progress { display: flex; width: 100%; height: 10px; overflow: hidden; background: var(--ct-track); border-radius: 999px; }
+.featured .progress { height: 12px; }
+.progressWithin { display: block; height: 100%; background: var(--ct-primary); }
+.progressExcess { display: block; height: 100%; background: var(--ct-danger); }
+.dangerText { color: var(--ct-danger) !important; }
+.dayStatus { display: none; }
+.skeleton { min-height: 490px; padding: 30px; color: var(--ct-muted); background: linear-gradient(100deg, #fff 30%, #f0f3f7 50%, #fff 70%); background-size: 200% 100%; border: 1px solid var(--ct-border); border-radius: 10px; animation: shimmer 1.2s infinite linear; }
+
+.goalsForm { display: grid; gap: 14px; padding: 12px; }
+.goalsForm header { padding: 16px 16px 0; background: #fff; border: 1px solid var(--ct-border); border-bottom: 0; border-radius: 10px 10px 0 0; }
+.goalsForm header h2 { margin: 0; font-size: 19px; }
+.goalsForm header p { margin: 12px 0 0; color: var(--ct-muted); font-size: 13px; }
+.goalRow { display: grid; grid-template-columns: minmax(130px, 140px) 1fr; align-items: center; gap: 12px; padding: 0 16px; }
+.switchLabel { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 700; }
+.switchLabel input { width: 42px; height: 24px; margin: 0; accent-color: var(--ct-primary); }
+.goalInput { display: grid; grid-template-columns: 1fr auto; align-items: center; min-height: 44px; padding: 0 12px; background: #fff; border: 1px solid var(--ct-border); border-radius: 8px; }
+.goalInput:has(input:disabled) { color: #8790a3; background: #e9edf4; }
+.goalInput input { width: 100%; min-width: 0; color: inherit; background: transparent; border: 0; outline: 0; }
+.goalInput b { color: var(--ct-muted); font-size: 13px; }
+.formError { margin: 0 16px; color: var(--ct-danger); font-size: 13px; }
+.goalsForm footer { display: grid; grid-template-columns: 116px 1fr; gap: 10px; padding: 0 16px 16px; }
+
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+@media (min-width: 760px) {
+  .page { width: min(calc(100% - 48px), 1208px); margin: 0 auto; }
+  .panel { width: 100%; max-width: 1208px; min-height: 600px; padding: 28px; border-radius: 12px; box-shadow: var(--ct-shadow); }
+  .statisticsGrid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.03fr); gap: 20px; }
+  .statCard.featured { min-height: 320px; padding: 28px; align-content: center; gap: 18px; }
+  .statCard.featured h2 { font-size: 20px; }
+  .statCard.featured > strong { font-size: 34px; }
+  .macros { gap: 12px; }
+  .statCard { min-height: 98px; }
+  .dayStatus { grid-column: 1 / -1; display: grid; gap: 6px; padding: 18px 20px; background: #fff; border: 1px solid var(--ct-border); border-radius: 10px; box-shadow: var(--ct-shadow); }
+  .dayStatus span { color: var(--ct-muted); font-size: 13px; }
+  .goalsForm { gap: 18px; padding: 22px 24px; background: #fff; border: 1px solid var(--ct-border); border-radius: 10px; }
+  .goalsForm header { padding: 0; border: 0; }
+  .goalRow { grid-template-columns: 180px 1fr; padding: 0; }
+  .formError { margin: 0; }
+  .goalsForm footer { grid-template-columns: 150px 220px; justify-content: end; padding: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }

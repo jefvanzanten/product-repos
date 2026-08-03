@@ -1,37 +1,27 @@
-import { createApp } from './app';
-import { closeDatabase } from './db/index';
+import { createBackendRuntime } from "./composition.ts";
+import { loadBackendConfig } from "./config.ts";
 
-const PORT = parseInt(process.env.PORT || '3000', 10);
-const HOST = process.env.HOST || '0.0.0.0';
-
-const app = createApp();
-
+const config = loadBackendConfig(process.env);
+const runtime = createBackendRuntime(config);
 let server: ReturnType<typeof Bun.serve>;
 
 try {
-  server = Bun.serve({
-    port: PORT,
-    hostname: HOST,
-    fetch: app.fetch,
-  });
-  console.log(`Server running at http://${HOST}:${PORT}`);
-} catch (err) {
-  console.error('Failed to start server:', err);
+  server = Bun.serve({ port: config.port, hostname: config.host, fetch: runtime.app.fetch });
+  console.log(`Server running at http://${config.host}:${config.port}`);
+} catch (error: unknown) {
+  runtime.close();
+  console.error("Failed to start server", { causeName: error instanceof Error ? error.name : "UnknownError" });
   process.exit(1);
 }
 
-/** Stop the HTTP server and close database resources for a process signal. */
-const shutdown = async (signal: string): Promise<void> => {
+/** Stop the HTTP server and close owned resources for a process signal. */
+async function shutdown(signal: string): Promise<void> {
   console.log(`Received ${signal}, shutting down gracefully...`);
   await server.stop();
-  closeDatabase();
-  console.log('Server closed successfully');
+  runtime.close();
+  console.log("Server closed successfully");
   process.exit(0);
-};
+}
 
-process.on('SIGINT', () => {
-  void shutdown('SIGINT');
-});
-process.on('SIGTERM', () => {
-  void shutdown('SIGTERM');
-});
+process.on("SIGINT", () => { void shutdown("SIGINT"); });
+process.on("SIGTERM", () => { void shutdown("SIGTERM"); });

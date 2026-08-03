@@ -1,0 +1,26 @@
+.statusPanel {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-height: 180px;
+  padding: 36px 20px;
+  color: var(--ct-ink);
+  text-align: center;
+  background: #fff;
+  border: 1px solid var(--ct-border);
+  border-radius: 10px;
+}
+
+.statusPanel h2,
+.statusPanel p {
+  margin: 0;
+}
+
+.statusPanel h2 {
+  font-size: 18px;
+}
+
+.statusPanel p {
+  color: var(--ct-muted);
+  font-size: 13px;
+}

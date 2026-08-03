@@ -1,3 +1,4 @@
+import { SessionMonitor } from "@product-repos/auth-client/session-monitor";
 import { data, Outlet, useLoaderData, type LoaderFunctionArgs } from "react-router";
 import { AdminBottomTabs } from "./admin-bottom-tabs";
 import {
@@ -5,6 +6,8 @@ import {
   AdminSourceProvider,
 } from "./admin-source-context";
 import { resolveAdminSource } from "./admin-source.server";
+import { ADMIN_BASE_PATH, toAdminPublicPath, withAdminSource } from "./admin-navigation";
+import { authClient } from "./auth-client";
 import { requireAdministrator } from "./auth.server";
 import styles from "./layout.module.css";
 
@@ -28,6 +31,11 @@ export default function AdminLayout(): React.ReactNode {
 
   return (
     <AdminSourceProvider source={source}>
+      <SessionMonitor
+        appBasePath={ADMIN_BASE_PATH}
+        authClient={authClient}
+        loginPath={toAdminPublicPath(withAdminSource("/login", source))}
+      />
       <div className={styles.layout}>
         <div className={styles.dashboardFrame}>
           <nav className={styles.navbar} aria-label="Adminnavigatie">

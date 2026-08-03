@@ -58,7 +58,7 @@ Regels:
 
 ## Layout
 
-Het logboek rendert binnen de [gedeelde applicatieshell met bottom-tabbar](../../shared/bottom-tabbar-specificatie.md).
+Het logboek rendert binnen de [gedeelde applicatieshell met bottom-tabbar](../../shared/bottom-tabbar-specificatie.md). Op desktop gebruikt het logboek dezelfde headeropbouw als Caloriestatistieken: de datumselector en de gecentreerde Calorie Tracker-navbar staan in de normale documentflow onder elkaar.
 
 De pagina toont in deze volgorde:
 
@@ -81,7 +81,7 @@ Op smalle schermen mogen chips horizontaal scrollen.
 
 Op mobiel staat een vaste brede knop direct boven de bottom-tabbar. De knop bedekt geen logs en de lijst reserveert voldoende onderruimte.
 
-Op desktop staat de primaire actie in de paginaheader.
+Op desktop staat de primaire actie rechts bovenaan het logboekpaneel, onder de gedeelde datumheader en navbar.
 
 De actie is geen tab en geen extra floating action button.
 

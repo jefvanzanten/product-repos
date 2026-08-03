@@ -1,4 +1,4 @@
-import { db } from "../index.ts";
+import type { BackendDatabase } from "../index.ts";
 import { unitType } from "../schema.ts";
 
 const commonUnitTypes: Array<typeof unitType.$inferInsert> = [
@@ -11,7 +11,7 @@ const commonUnitTypes: Array<typeof unitType.$inferInsert> = [
 ];
 
 /** Seed the reference unit types used by the product catalog form. */
-export async function seedUnitTypes(): Promise<number> {
-  await db.insert(unitType).values(commonUnitTypes).onConflictDoNothing();
+export async function seedUnitTypes(database: BackendDatabase): Promise<number> {
+  await database.insert(unitType).values(commonUnitTypes).onConflictDoNothing();
   return commonUnitTypes.length;
 }

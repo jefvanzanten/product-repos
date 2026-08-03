@@ -135,12 +135,12 @@ describe("Calorie Tracker authenticated route integration", () => {
     expect(await archivedInputChange.json()).toMatchObject({ code: "PRODUCT_PACKAGE_ARCHIVED" });
 
     executeTestSql("UPDATE product_package SET archived_at = NULL WHERE id = ?", packageId);
-    const update = await requestJson(`/calorie-tracker/logs/${created.id}`, "PATCH", updateBody);
+    const update = await requestJson(`/calorie-tracker/logs/${created.id}`, "PUT", updateBody);
     expect(update.status).toBe(200);
     const updated = consumptionLogSchema.parse(await update.json());
     expect(updated.quantity).toBe("2");
 
-    const staleUpdate = await requestJson(`/calorie-tracker/logs/${created.id}`, "PATCH", updateBody);
+    const staleUpdate = await requestJson(`/calorie-tracker/logs/${created.id}`, "PUT", updateBody);
     expect(staleUpdate.status).toBe(409);
     expect(await staleUpdate.json()).toMatchObject({ code: "LOG_UPDATE_CONFLICT" });
 
