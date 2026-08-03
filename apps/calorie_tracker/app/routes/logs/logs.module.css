@@ -15,7 +15,7 @@
 .itemMeta { display: grid; justify-self: start; justify-items: start; gap: 4px; }
 .itemMeta em { color: var(--ct-muted); font-size: 10px; font-style: normal; }
 .itemChevron { display: grid; grid-column: 5; grid-row: 1 / 3; place-items: center; }
-.stickyAction { position: fixed; right: 0; bottom: calc(56px + env(safe-area-inset-bottom, 0px)); left: 0; z-index: 35; width: min(100%, 430px); margin: auto; padding: 4px 16px 16px; background: var(--ct-surface); }
+.stickyAction { position: fixed; right: 0; bottom: calc(56px + env(safe-area-inset-bottom, 0px)); left: 0; z-index: 35; width: min(100%, 430px); margin: auto; padding: 1em 16px 16px; background: var(--ct-surface); }
 .stickyAction a { width: 100%; }
 @media (max-width: 380px) {
   .logItem { grid-template-columns: 54px minmax(0, 1fr) auto auto 20px; column-gap: 8px; }
