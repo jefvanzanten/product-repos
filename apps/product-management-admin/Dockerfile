@@ -6,39 +6,39 @@ WORKDIR /repo
 
 FROM base AS development-dependencies
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/calory_tracker/package.json apps/calory_tracker/package.json
+COPY apps/product-management-admin/package.json apps/product-management-admin/package.json
 COPY packages/auth-client/package.json packages/auth-client/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
 COPY packages/shared/package.json packages/shared/package.json
-RUN corepack pnpm install --filter calory_tracker... --frozen-lockfile
+RUN corepack pnpm install --filter product-management-admin... --frozen-lockfile
 
 FROM base AS production-dependencies
 ENV NODE_ENV="production"
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/calory_tracker/package.json apps/calory_tracker/package.json
+COPY apps/product-management-admin/package.json apps/product-management-admin/package.json
 COPY packages/auth-client/package.json packages/auth-client/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
 COPY packages/shared/package.json packages/shared/package.json
-RUN corepack pnpm install --filter calory_tracker... --prod --frozen-lockfile
+RUN corepack pnpm install --filter product-management-admin... --prod --frozen-lockfile
 
 FROM development-dependencies AS build
 ARG VITE_API_URL=https://api.jefvanzanten.dev
 ENV VITE_API_URL="$VITE_API_URL"
-COPY apps/calory_tracker apps/calory_tracker
+COPY apps/product-management-admin apps/product-management-admin
 COPY packages/auth-client packages/auth-client
 COPY packages/contracts packages/contracts
 COPY packages/shared packages/shared
-RUN corepack pnpm --filter calory_tracker build
+RUN corepack pnpm --filter product-management-admin build
 
 FROM base AS runtime
 ENV NODE_ENV="production"
 ENV HOST="0.0.0.0"
 ENV PORT="3000"
 COPY --from=production-dependencies /repo/node_modules /repo/node_modules
-COPY --from=production-dependencies /repo/apps/calory_tracker/node_modules /repo/apps/calory_tracker/node_modules
-COPY --from=build /repo/apps/calory_tracker/package.json /repo/apps/calory_tracker/package.json
-COPY --from=build /repo/apps/calory_tracker/build /repo/apps/calory_tracker/build
-WORKDIR /repo/apps/calory_tracker
+COPY --from=production-dependencies /repo/apps/product-management-admin/node_modules /repo/apps/product-management-admin/node_modules
+COPY --from=build /repo/apps/product-management-admin/package.json /repo/apps/product-management-admin/package.json
+COPY --from=build /repo/apps/product-management-admin/build /repo/apps/product-management-admin/build
+WORKDIR /repo/apps/product-management-admin
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 CMD node -e "fetch('http://127.0.0.1:3000/calory-tracker/login').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))"
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 CMD node -e "fetch('http://127.0.0.1:3000/product-management-admin/login').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))"
 CMD ["node", "./node_modules/@react-router/serve/bin.cjs", "./build/server/index.js"]
