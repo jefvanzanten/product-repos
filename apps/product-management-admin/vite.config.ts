@@ -70,7 +70,7 @@ export default defineConfig({
   base: "/product-management-admin/",
   plugins: [
     redirectAppRoot("/product-management-admin"),
-    proxyCrossAppCriticalCss("/calory-tracker", "http://127.0.0.1:5173"),
+    proxyCrossAppCriticalCss("/calorie-tracker", "http://127.0.0.1:5173"),
     proxyCrossAppCriticalCss("/inventory", "http://127.0.0.1:5175"),
     reactRouter(),
   ],
@@ -78,7 +78,7 @@ export default defineConfig({
     port: 5174,
     strictPort: true,
     proxy: {
-      "/calory-tracker": {
+      "/calorie-tracker": {
         target: "http://127.0.0.1:5173",
         ws: true,
       },

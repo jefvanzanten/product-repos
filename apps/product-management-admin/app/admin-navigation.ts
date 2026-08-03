@@ -4,14 +4,14 @@ import { toPublicAppPath } from "@product-repos/shared/public-app-path";
 export const ADMIN_BASE_PATH = "/product-management-admin";
 
 /** A validated application from which Product Management Admin was opened. */
-export type AdminSource = "inventory" | "calory-tracker";
+export type AdminSource = "inventory" | "calorie-tracker";
 
 /** Navigation details belonging to a validated admin source. */
 export type AdminSourceDetails = {
   /** Label rendered in the admin bottom tab bar. */
   readonly label: string;
   /** Closed, public destination used to return to the source application. */
-  readonly publicPath: "/inventory" | "/calory-tracker";
+  readonly publicPath: "/inventory" | "/calorie-tracker";
 };
 
 const sourceDetails: Readonly<Record<AdminSource, AdminSourceDetails>> = {
@@ -19,9 +19,9 @@ const sourceDetails: Readonly<Record<AdminSource, AdminSourceDetails>> = {
     label: "Inventarisatie",
     publicPath: "/inventory",
   },
-  "calory-tracker": {
-    label: "Calory Tracker",
-    publicPath: "/calory-tracker",
+  "calorie-tracker": {
+    label: "Calorie Tracker",
+    publicPath: "/calorie-tracker",
   },
 };
 
@@ -38,7 +38,7 @@ const safeReturnPathPatterns: ReadonlyArray<RegExp> = [
  * @returns The parsed source, or `null` for unknown input.
  */
 export function parseAdminSource(input: string | null | undefined): AdminSource | null {
-  return input === "inventory" || input === "calory-tracker" ? input : null;
+  return input === "inventory" || input === "calorie-tracker" ? input : null;
 }
 
 /**

@@ -62,7 +62,7 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  apps/calory_tracker:
+  apps/calorie_tracker:
     dependencies:
       '@product-repos/auth-client':
         specifier: workspace:*
