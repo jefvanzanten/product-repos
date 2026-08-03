@@ -1,73 +1,79 @@
-# React + TypeScript + Vite
+# Calorie Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Een zelfstandige, server-side gerenderde React Router-app voor het registreren van consumpties en het vergelijken van calorie- en macrototalen met persoonlijke doelen.
 
-Currently, two official plugins are available:
+## Functionaliteit
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- caloriestatistieken voor een geselecteerde kalenderdag;
+- persoonlijke calorie- en macrodoelen;
+- consumptielogboek met filters voor voeding, drinken en supplementen;
+- consumpties toevoegen, bekijken, bewerken, verwijderen en herstellen;
+- zoeken in actieve productverpakkingen uit de gedeelde catalogus;
+- beheerderslink naar de zelfstandige Product Management Admin-app.
 
-## React Compiler
+Iedere gebruiker ziet uitsluitend de eigen logs en doelen. De productcatalogus blijft de actuele bron voor product-, verpakkings- en voedingsgegevens.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Routes
 
-## Expanding the ESLint configuration
+Productie: <https://apps.jefvanzanten.dev/calorie-tracker>
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+De React Router-`basename` is `/calorie-tracker`.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+| Publieke route | Doel |
+| --- | --- |
+| `/calorie-tracker` | Dagstatistieken |
+| `/calorie-tracker/logs` | Consumptielogboek |
+| `/calorie-tracker/logs/new` | Consumptie toevoegen |
+| `/calorie-tracker/logs/:logId` | Logdetail |
+| `/calorie-tracker/logs/:logId/edit` | Consumptie bewerken |
+| `/calorie-tracker/login` | Inloggen |
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Beheerders openen Product Management Admin via `/product-management-admin/product-catalogus?source=calorie-tracker`.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Lokale ontwikkeling
+
+De lokale app gebruikt standaard de lokale backend op `http://localhost:3000`. Lokale ontwikkeling en productiegegevens blijven gescheiden.
+
+```bash
+corepack pnpm --filter @product-repos/backend dev
+corepack pnpm --filter calorie_tracker dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open daarna <http://localhost:5173/calorie-tracker>.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Relevante lokale configuratie staat in `apps/calorie_tracker/.env`. Gebruik `apps/calorie_tracker/.env.example` als uitgangspunt en commit geen nieuwe geheimen.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Verificatie
+
+```bash
+corepack pnpm --filter calorie_tracker typecheck
+corepack pnpm --filter calorie_tracker test -- --run
+corepack pnpm --filter calorie_tracker build
+corepack pnpm --filter calorie_tracker exec playwright test
 ```
+
+De app gebruikt gedeelde authenticatie uit `packages/auth-client`, API-contracten uit `packages/contracts` en de applicatieshell uit `packages/shared`.
+
+## Specificaties
+
+- [Algemene Calorie Tracker-specificatie](../../docs/specs/calorie-tracker/calorie-tracker-specificatie.md)
+- [Dashboard en caloriestatistieken](../../docs/specs/calorie-tracker/dashboard/calorien-statestieken.md)
+- [Consumptielogboek](../../docs/specs/calorie-tracker/logs/log-overzicht.md)
+- [Consumptielog toevoegen](../../docs/specs/calorie-tracker/logs/log-toevoegen.md)
+- [Logdetail en bewerken](../../docs/specs/calorie-tracker/logs/log-detail-bewerken.md)
+
+## Deployment
+
+Coolify bouwt vanuit de repository-root met:
+
+```text
+apps/calorie_tracker/Dockerfile
+```
+
+De resource kijkt uitsluitend naar wijzigingen in:
+
+- `apps/calorie_tracker/**`;
+- `packages/auth-client/**`;
+- `packages/contracts/**`;
+- `packages/shared/**`;
+- gedeelde workspace- en buildbestanden.
