@@ -203,6 +203,35 @@ GET /products/:productId/packages/:packageId:
   errors:
     404: [PRODUCT_NOT_FOUND, PRODUCT_PACKAGE_NOT_FOUND]
 
+POST /products/:productId/packages/:packageId/image:
+  contentType: multipart/form-data
+  params:
+    productId: product.id
+    packageId: product_package.id
+  body:
+    image: PNG|JPEG|WebP # maximaal 5 MB; signatuur, structuur en afmetingen worden server-side gevalideerd
+  returns:
+    201: { imageUrl: string }
+  errors:
+    400: [VALIDATION_ERROR]
+    404: [PRODUCT_NOT_FOUND, PRODUCT_PACKAGE_NOT_FOUND]
+
+DELETE /products/:productId/packages/:packageId/image:
+  body:
+    imageUrl: string # alleen voor rollback van een nog niet gekoppelde upload
+  returns:
+    204: empty
+  errors:
+    400: [VALIDATION_ERROR]
+    404: [PRODUCT_NOT_FOUND, PRODUCT_PACKAGE_NOT_FOUND]
+
+GET /package-images/:fileName:
+  auth: public
+  returns:
+    200: immutable image bytes
+  errors:
+    404: [IMAGE_NOT_FOUND]
+
 PATCH /products/:productId/packages/:packageId:
   params:
     productId: product.id
@@ -284,6 +313,7 @@ ProductPackage:
   source: product_package + package_type + unit_content + optional product_package_portion
   fields:
     - id
+    - imageUrl: product_package.image_url|null
     - packageType: PackageType
     - unitContent: UnitContent # volledige verpakkingsinhoud
     - portion: ProductPackagePortion|null
@@ -346,6 +376,7 @@ UpdateProduct:
 
 UpsertProductPackage:
   packageTypeId: product_package.package_type_id
+  imageUrl?: product_package.image_url|null
   amount: unit_content.amount # volledige verpakkingsinhoud
   unitTypeId: unit_content.unit_type_id
   portion: ProductPackagePortionInput|null

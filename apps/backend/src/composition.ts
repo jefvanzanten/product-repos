@@ -20,6 +20,7 @@ import { createDrizzleConsumptionCatalogReader } from "./modules/catalog/reposit
 import { catalogRoutes } from "./modules/catalog/routes/catalog.routes.ts";
 import { createCatalogQueryService } from "./modules/catalog/services/catalog-query.service.ts";
 import { createCatalogReferenceService } from "./modules/catalog/services/catalog-reference.service.ts";
+import { createPackageImageService } from "./modules/catalog/services/package-image.service.ts";
 import { createCatalogProductRouteService, createProductService } from "./modules/catalog/services/products.service.ts";
 import { healthRoutes } from "./modules/health/health.routes.ts";
 import { createHealthService } from "./modules/health/health.service.ts";
@@ -48,6 +49,7 @@ export function createBackendRuntime(config: BackendConfig): BackendRuntime {
   const productService = createProductService({ products, referenceData });
   const catalogQueries = createCatalogQueryService({ brands, categories, packages, products });
   const productRouteService = createCatalogProductRouteService(productService, packages, catalogQueries);
+  const packageImages = createPackageImageService(config.databasePath, config.auth.baseUrl);
 
   const catalogReader = createDrizzleConsumptionCatalogReader(database);
   const logRepository = createDrizzleConsumptionLogRepository(database);
@@ -58,7 +60,7 @@ export function createBackendRuntime(config: BackendConfig): BackendRuntime {
   const app = createApp({
     config,
     authHandler: (request) => auth.handler(request),
-    catalogRoutes: catalogRoutes({ authorization: createCatalogAuthorization(sessionResolver), references, products: productRouteService }),
+    catalogRoutes: catalogRoutes({ authorization: createCatalogAuthorization(sessionResolver), packageImages, references, products: productRouteService }),
     calorieTrackerRoutes: calorieTrackerRoutes({ consumptionLogs, nutritionSummary, packageSelection, sessionResolver }),
     healthRoutes: healthRoutes(createHealthService(createDatabaseReadinessProbe(database))),
   });

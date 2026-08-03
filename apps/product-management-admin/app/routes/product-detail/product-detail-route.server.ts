@@ -12,6 +12,8 @@ import {
 } from "../../api/admin-dashboard-api.server";
 import type {
   ProductDetailActionResult,
+  ProductDetailDto,
+  ProductDetailEditIntent,
   ProductDetailLoaderData,
 } from "./product-detail.types";
 
@@ -44,17 +46,53 @@ export async function loadProductDetailRoute({ params, request }: LoaderFunction
  */
 export async function handleProductDetailRouteAction({ params, request }: ActionFunctionArgs): Promise<ProductDetailActionResult> {
   const form = await request.formData();
+  const intent = form.get("intent") === "nutrition" ? "nutrition" : "product";
   const values = preserveProductFormValues(form);
   try {
-    const submission = await submitUpdateProductForm(String(params.productId), form, {
+    const productId = String(params.productId);
+    enforceCompartmentBoundary(form, intent, await getProduct(productId, request));
+    const submission = await submitUpdateProductForm(productId, form, {
       createBrand: (input) => createBrand(input, request),
       updateProduct: (productId, input) => updateProduct(productId, input, request),
     });
-    if (!submission.ok) return { errors: submission.errors, values };
-    return { ok: true, product: submission.product };
+    if (!submission.ok) return { intent, errors: submission.errors, values };
+    return { intent, ok: true, product: submission.product };
   } catch (error) {
-    return { errors: mapApiError(error), values };
+    return { intent, errors: mapApiError(error), values };
   }
+}
+
+/**
+ * Prevent one edit compartment from changing fields owned by another compartment.
+ *
+ * @param form - Submitted compartment form, mutated with canonical retained values.
+ * @param intent - Compartment that owns the submitted mutation.
+ * @param product - Current persisted product used to protect other fields.
+ * @returns Nothing.
+ */
+function enforceCompartmentBoundary(form: FormData, intent: ProductDetailEditIntent, product: ProductDetailDto): void {
+  if (intent === "nutrition") {
+    form.set("categoryId", String(product.category.id));
+    form.set("productName", product.name);
+    form.set("brandId", product.brand?.id ?? "");
+    form.delete("brandName");
+    form.set("consumptionType", product.consumptionType);
+    return;
+  }
+
+  const profile = product.macroProfile;
+  if (profile === null) {
+    form.delete("macroEnabled");
+    return;
+  }
+  form.set("macroEnabled", "on");
+  form.set("referenceBasis", profile.referenceBasis);
+  form.set("caloriesKcal", profile.caloriesKcal ?? "");
+  form.set("proteinG", profile.proteinG ?? "");
+  form.set("carbohydratesG", profile.carbohydratesG ?? "");
+  form.set("fatG", profile.fatG ?? "");
+  form.set("caloriesSource", profile.caloriesSource ?? "");
+  form.set("caloriesChanged", "false");
 }
 
 /**

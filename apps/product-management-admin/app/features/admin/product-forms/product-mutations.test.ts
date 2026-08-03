@@ -13,6 +13,7 @@ const brandId = "22222222-2222-4222-8222-222222222222";
 const category = { id: 34, name: "Drinken", parentId: null } as const;
 const productPackage = {
   id: 7,
+  imageUrl: null,
   packageType: { id: 3, name: "fles" },
   unitContent: {
     id: 5,
@@ -71,7 +72,7 @@ describe("product create and edit mutations", () => {
       brandId,
       consumptionType: "DRINK",
       macroProfile: null,
-      package: { amount: "500", packageTypeId: 3, unitTypeId: 4, portion: null },
+      package: { amount: "500", imageUrl: null, packageTypeId: 3, unitTypeId: 4, portion: null },
     }]);
   });
 
@@ -116,6 +117,7 @@ describe("product create and edit mutations", () => {
     expect(result.ok).toBe(true);
     expect(submitted[0]?.package).toEqual({
       amount: "1980",
+      imageUrl: null,
       packageTypeId: 3,
       unitTypeId: 4,
       portion: { name: "blikje", amount: "330", unitTypeId: 4, portionsPerPackage: 6 },

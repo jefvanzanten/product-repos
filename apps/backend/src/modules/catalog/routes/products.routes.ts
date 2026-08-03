@@ -1,7 +1,9 @@
 import { createProductRequestSchema, productPackageRequestSchema, updateProductRequestSchema } from "@product-repos/contracts";
 import type { ProductPackageRequest } from "@product-repos/contracts";
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { canonicalDecimal, positiveInt, trimRequired } from "../domain/catalog-domain.ts";
+import type { PackageImageService } from "../services/package-image.service.ts";
 import type { CatalogProductRouteService } from "../services/products.service.ts";
 
 const status = {
@@ -20,9 +22,21 @@ const status = {
 } as const;
 
 /** Create the product catalog HTTP routes. */
-export function productRoutes(service: CatalogProductRouteService): Hono {
+export function productRoutes(service: CatalogProductRouteService, packageImages: PackageImageService): Hono {
   const { addProductPackage, browseProductCatalog, createNewProduct, getProductById, getProductPackage, searchProductCatalog, updateExistingProduct, updateProductPackage } = service;
   const router = new Hono();
+
+  router.get("/package-images/:fileName", async (c) => {
+    const storedImage = await packageImages.readImage(c.req.param("fileName"));
+    if (storedImage === null) return c.json({ code: "IMAGE_NOT_FOUND", message: "Image not found" }, 404);
+    return new Response(storedImage.file, {
+      headers: {
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Content-Type": storedImage.mediaType,
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  });
 
   router.get("/products/search", (c) => {
     return c.json(searchProductCatalog({
@@ -107,6 +121,40 @@ export function productRoutes(service: CatalogProductRouteService): Hono {
     return c.json(result.value);
   });
 
+  router.post(
+    "/products/:productId/packages/:packageId/image",
+    bodyLimit({
+      maxSize: 5 * 1024 * 1024 + 64 * 1024,
+      onError: (c) => c.json({ code: "VALIDATION_ERROR", message: "De afbeelding mag maximaal 5 MB zijn.", fields: { image: "De afbeelding mag maximaal 5 MB zijn." } }, 413),
+    }),
+    async (c) => {
+      const packageId = parseRequiredPositiveInt(c.req.param("packageId"));
+      if (packageId === null) return c.json({ code: "PRODUCT_PACKAGE_NOT_FOUND", message: "Product package not found" }, 404);
+      const existing = getProductPackage(c.req.param("productId"), packageId);
+      if (!existing.ok) return c.json(existing.error, status[existing.error.code]);
+
+      const body = await c.req.parseBody();
+      const image = body.image;
+      if (!(image instanceof File)) return c.json({ code: "VALIDATION_ERROR", message: "Kies een afbeelding.", fields: { image: "Kies een afbeelding." } }, 400);
+      const upload = await packageImages.storeImage(image);
+      if (!upload.ok) return c.json({ code: "VALIDATION_ERROR", message: upload.message, fields: { image: upload.message } }, 400);
+      return c.json({ imageUrl: upload.imageUrl }, 201);
+    },
+  );
+
+  router.delete("/products/:productId/packages/:packageId/image", async (c) => {
+    const packageId = parseRequiredPositiveInt(c.req.param("packageId"));
+    if (packageId === null) return c.json({ code: "PRODUCT_PACKAGE_NOT_FOUND", message: "Product package not found" }, 404);
+    const existing = getProductPackage(c.req.param("productId"), packageId);
+    if (!existing.ok) return c.json(existing.error, status[existing.error.code]);
+    const body = await c.req.json().catch(() => null) as { readonly imageUrl?: unknown } | null;
+    if (typeof body?.imageUrl !== "string" || body.imageUrl === existing.value.imageUrl) {
+      return c.json({ code: "VALIDATION_ERROR", message: "Image cleanup request is invalid" }, 400);
+    }
+    await packageImages.deleteImage(body.imageUrl);
+    return c.body(null, 204);
+  });
+
   router.patch("/products/:productId/packages/:packageId", async (c) => {
     const packageId = parseRequiredPositiveInt(c.req.param("packageId"));
     if (packageId === null) return c.json({ code: "PRODUCT_PACKAGE_NOT_FOUND", message: "Product package not found" }, 404);
@@ -114,9 +162,14 @@ export function productRoutes(service: CatalogProductRouteService): Hono {
     if (!parsed.success) return c.json({ code: "VALIDATION_ERROR", message: "Request is invalid" }, 400);
     const packageInput = parsePackageInput(parsed.data);
     if (!packageInput.ok) return c.json(packageInput.error, 400);
+    const existing = getProductPackage(c.req.param("productId"), packageId);
+    if (!existing.ok) return c.json(existing.error, status[existing.error.code]);
 
     const result = updateProductPackage(c.req.param("productId"), packageId, packageInput.value);
     if (!result.ok) return c.json(result.error, status[result.error.code]);
+    if (existing.value.imageUrl !== null && existing.value.imageUrl !== result.value.imageUrl) {
+      await packageImages.deleteImage(existing.value.imageUrl);
+    }
     return c.json(result.value);
   });
 

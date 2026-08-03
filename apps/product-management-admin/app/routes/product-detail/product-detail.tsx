@@ -19,6 +19,7 @@ import type {
   CategoryDto,
   ProductDetailActionResult,
   ProductDetailDto,
+  ProductDetailEditIntent,
   ProductDetailLoaderData,
 } from "./product-detail.types";
 import styles from "./product-detail.module.css";
@@ -48,30 +49,32 @@ export async function action(args: ActionFunctionArgs): Promise<ProductDetailAct
 export default function ProductDetail(): React.ReactNode {
   const actionData = useActionData<ProductDetailActionResult>();
   const loaderData = useLoaderData<ProductDetailLoaderData>();
-  const [editing, setEditing] = useState(false);
+  const [editMode, setEditMode] = useState<ProductDetailEditIntent | null>(null);
   const product = actionData?.product ?? (loaderData.found ? loaderData.product : null);
 
   useEffect(() => {
-    if (actionData?.ok) setEditing(false);
-    else if (actionData?.errors) setEditing(true);
+    if (actionData?.ok) setEditMode(null);
+    else if (actionData?.errors) setEditMode(actionData.intent);
   }, [actionData]);
 
   if (!loaderData.found || !product) return <NotFound backUrl={loaderData.backUrl} text="Product niet gevonden." />;
 
   return (
-    <main className={`${styles.page} ${editing ? styles.editingPage : ""}`}>
+    <main className={`${styles.page} ${editMode !== null ? styles.editingPage : ""}`}>
       <header className={styles.header}>
-        <h1 className={editing ? styles.editTitle : styles.title}>{editing ? "Product bewerken" : product.displayName}</h1>
-        {editing ? <p className={styles.intro}>Werk productgegevens en voedingswaarden inline bij.</p> : null}
+        <h1 className={editMode !== null ? styles.editTitle : styles.title}>{editTitle(editMode, product.displayName)}</h1>
+        {editMode !== null ? <p className={styles.intro}>{editMode === "product" ? "Pas alleen de productgegevens aan." : "Pas alleen de voedingswaarden aan."}</p> : null}
         <CategoryBreadcrumb path={product.categoryPath} />
       </header>
 
-      {editing ? (
-        <ProductEditForm errors={actionData?.errors} product={product} values={actionData?.values} categories={loaderData.categories} onCancel={() => setEditing(false)} />
+      {editMode === "product" ? (
+        <ProductDataEditForm errors={actionData?.intent === "product" ? actionData.errors : undefined} product={product} values={actionData?.intent === "product" ? actionData.values : undefined} categories={loaderData.categories} onCancel={() => setEditMode(null)} />
+      ) : editMode === "nutrition" ? (
+        <NutritionEditForm errors={actionData?.intent === "nutrition" ? actionData.errors : undefined} product={product} values={actionData?.intent === "nutrition" ? actionData.values : undefined} onCancel={() => setEditMode(null)} />
       ) : (
         <>
-          <ProductReadOnly product={product} onEdit={() => setEditing(true)} />
-          <MacroProfileReadOnly product={product} onEdit={() => setEditing(true)} />
+          <ProductReadOnly product={product} onEdit={() => setEditMode("product")} />
+          <MacroProfileReadOnly product={product} onEdit={() => setEditMode("nutrition")} />
           <PackagesReadOnly backUrl={loaderData.backUrl} product={product} />
         </>
       )}
@@ -91,7 +94,7 @@ function ProductReadOnly({ onEdit, product }: { readonly onEdit: () => void; rea
         <div><dt>Weergavenaam</dt><dd>{product.displayName}</dd></div>
         <div><dt>Consumptietype</dt><dd>{formatConsumptionType(product.consumptionType)}</dd></div>
       </dl>
-      <button className={styles.secondaryButton} type="button" onClick={onEdit}>Product bewerken</button>
+      <button className={styles.secondaryButton} type="button" onClick={onEdit}>Productgegevens bewerken</button>
     </section>
   );
 }
@@ -122,22 +125,32 @@ function PackagesReadOnly({ backUrl, product }: { readonly backUrl: string; read
     <section className={styles.card}>
       <h2 className={styles.sectionTitle}>Verpakkingen</h2>
       {product.packages.length === 0 ? <p className={styles.muted}>Geen verpakkingen gevonden voor dit product.</p> : product.packages.map((item) => (
-        <Link key={item.id} className={styles.packageCard} to={`/product-catalogus/${product.id}/verpakkingen/${item.id}${contextSearch(backUrl)}`}>
-          <strong>{item.summary}</strong>
-          <span>Volledige inhoud: {item.unitContent.amount} {item.unitContent.unitType.symbol}</span>
-          {item.portion === null ? null : <span>Per {item.portion.name}: {item.portion.unitContent.amount} {item.portion.unitContent.unitType.symbol}{item.portion.portionsPerPackage === null ? "" : ` · ${item.portion.portionsPerPackage} per verpakking`}</span>}
-        </Link>
+        <article key={item.id} className={styles.packageCard}>
+          {item.imageUrl ? <img className={styles.packageImage} src={item.imageUrl} alt={`Verpakking van ${product.displayName}`} /> : <div className={styles.packageImagePlaceholder} aria-label="Geen verpakkingsafbeelding">Geen afbeelding</div>}
+          <div className={styles.packageDetails}>
+            <strong>{item.summary}</strong>
+            <span>Volledige inhoud: {item.unitContent.amount} {item.unitContent.unitType.symbol}</span>
+            {item.portion === null ? null : <span>Per {item.portion.name}: {item.portion.unitContent.amount} {item.portion.unitContent.unitType.symbol}{item.portion.portionsPerPackage === null ? "" : ` · ${item.portion.portionsPerPackage} per verpakking`}</span>}
+            <Link className={styles.packageEditLink} to={`/product-catalogus/${product.id}/verpakkingen/${item.id}${contextSearch(backUrl)}`}>Verpakking bewerken</Link>
+          </div>
+        </article>
       ))}
       <Link className={styles.primaryLink} to={`/product-catalogus/${product.id}/verpakkingen/nieuw${contextSearch(backUrl)}`}>Verpakking toevoegen</Link>
     </section>
   );
 }
 
-/** Render the Figma-aligned inline product edit cards. */
-function ProductEditForm({ categories, errors, onCancel, product, values }: { readonly categories: ReadonlyArray<CategoryDto>; readonly errors?: Record<string, string>; readonly onCancel: () => void; readonly product: ProductDetailDto; readonly values?: Record<string, string> }): React.ReactNode {
+/**
+ * Render the isolated product-data edit form.
+ *
+ * @param props - Product data, reference data, validation state, and cancel handler.
+ * @returns Product-data edit form.
+ */
+function ProductDataEditForm({ categories, errors, onCancel, product, values }: { readonly categories: ReadonlyArray<CategoryDto>; readonly errors?: Record<string, string>; readonly onCancel: () => void; readonly product: ProductDetailDto; readonly values?: Record<string, string> }): React.ReactNode {
   const categoryOptions = useMemo(() => buildCategoryTreeOptions(categories), [categories]);
   return (
     <Form className={styles.editForm} method="post">
+      <input name="intent" type="hidden" value="product" />
       {errors?.form ? <p className={styles.formError}>{errors.form}</p> : null}
       <ProductFormCard title="Categorie">
         <label className={styles.label}><span>Bestaande categorie</span>
@@ -152,10 +165,39 @@ function ProductEditForm({ categories, errors, onCancel, product, values }: { re
         <input aria-label="Merk" className={styles.input} name="brandName" defaultValue={values?.brandName ?? product.brand?.name ?? ""} placeholder="Leeg laten voor geen merk" />
       </ProductFormCard>
       <ConsumptionTypeSection error={errors?.consumptionType} value={values?.consumptionType ?? product.consumptionType} />
+      <ProductFormActions onCancel={onCancel} />
+    </Form>
+  );
+}
+
+/**
+ * Render the isolated nutrition edit form while retaining product data unchanged.
+ *
+ * @param props - Product, validation state, retained values, and cancel handler.
+ * @returns Nutrition edit form.
+ */
+function NutritionEditForm({ errors, onCancel, product, values }: { readonly errors?: Record<string, string>; readonly onCancel: () => void; readonly product: ProductDetailDto; readonly values?: Record<string, string> }): React.ReactNode {
+  return (
+    <Form className={styles.editForm} method="post">
+      <input name="intent" type="hidden" value="nutrition" />
+      {errors?.form ? <p className={styles.formError}>{errors.form}</p> : null}
       <MacroProfileSection errors={errors} profile={product.macroProfile} values={values} />
       <ProductFormActions onCancel={onCancel} />
     </Form>
   );
+}
+
+/**
+ * Resolve the heading for the active product-detail compartment.
+ *
+ * @param mode - Active edit compartment, or null for read-only mode.
+ * @param displayName - Product display name used in read-only mode.
+ * @returns Page heading.
+ */
+function editTitle(mode: ProductDetailEditIntent | null, displayName: string): string {
+  if (mode === "product") return "Productgegevens bewerken";
+  if (mode === "nutrition") return "Voedingswaarden bewerken";
+  return displayName;
 }
 
 /** Render the interactive category breadcrumb. */

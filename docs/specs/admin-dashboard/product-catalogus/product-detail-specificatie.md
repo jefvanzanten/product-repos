@@ -29,7 +29,7 @@ Een beheerder kan een bestaand product openen, controleren en beheren. Productde
 | --- | --- |
 | `/product-catalogus/:productId` | Productdetail |
 | `/product-catalogus/:productId/verpakkingen/nieuw` | Verpakking toevoegen |
-| `/product-catalogus/:productId/verpakkingen/:packageId` | Verpakkingdetail |
+| `/product-catalogus/:productId/verpakkingen/:packageId` | Verpakking bewerken |
 
 ## Binnen scope
 
@@ -45,8 +45,8 @@ Een beheerder kan een bestaand product openen, controleren en beheren. Productde
 - Categorie inline aanmaken vanuit product bewerken.
 - Verpakkingenlijst tonen op productdetail.
 - Verpakking toevoegen via aparte route/pagina.
-- Verpakkingdetail bekijken via aparte route/pagina.
-- Verpakking en optionele verpakkingsafbeelding bewerken via expliciete bewerkmodus.
+- Verpakking direct bewerken via een aparte route/pagina, zonder tussenliggende read-only detailpagina.
+- Per verpakking een optionele PNG-, JPEG- of WebP-afbeelding uploaden.
 - Producten en verpakkingen archiveren en heractiveren.
 - Impact tonen wanneer een correctie gekoppelde consumptielogs of voorraadregistraties beïnvloedt.
 - Validatie- en duplicate-regels gelijk houden aan product aanmaken en eerste verpakking.
@@ -112,18 +112,19 @@ Productnaam: Chocoladevlokken
 Weergavenaam: Chocoladevlokken
 ```
 
-Product bewerken start met een potlood-icoon of editknop met toegankelijk label `Product bewerken`.
+Productgegevens bewerken start met een potlood-icoon of editknop met toegankelijk label `Productgegevens bewerken`.
 
-Bewerkmodus toont:
+De actie `Productgegevens bewerken` opent een afgeschermde bewerkmodus met uitsluitend:
 
 - categorie;
 - merk, inclusief leeg maken;
 - productnaam;
 - optionele productafbeelding;
 - consumptietype;
-- optioneel macroprofiel;
 - `Opslaan`;
 - `Annuleren`.
+
+Deze bewerkmodus kan het macroprofiel en de verpakkingen niet wijzigen. De voedingswaardenkaart heeft een eigen afgeschermde bewerkmodus.
 
 Productdetail toont productgegevens, voedingswaarden en verpakkingen als drie afzonderlijke witte kaarten met een radius van `8px` en een desktopbreedte van `672px`. Tussen de kaarten zit `24px` verticale ruimte.
 
@@ -142,7 +143,7 @@ Elke verpakkingrij toont minimaal:
 - optionele portienaam en portiegrootte;
 - optioneel aantal porties of stuks per verpakking;
 - een duidelijke samenvatting;
-- link/tap naar verpakkingdetail.
+- de expliciete actie `Verpakking bewerken` in de verpakkingrij, die direct naar de bewerkpagina gaat.
 
 Voorbeelden:
 
@@ -164,59 +165,49 @@ Geen verpakkingen gevonden voor dit product.
 [ Verpakking toevoegen ]
 ```
 
-### Verpakkingdetail - read-only
+### Verpakking bewerken
 
-Verpakkingdetail is eerst read-only. Bewerken start via een potlood-icoon of editknop met toegankelijk label `Verpakking bewerken`.
+De actie `Verpakking bewerken` in een verpakkingrij opent direct het bewerkformulier. Er is geen tussenliggende read-only verpakkingdetailpagina.
 
-Read-only toont minimaal:
+De pagina toont de bestaande verpakkingswaarden en een foto-uploadcomponent. De component:
 
-```text
-Verpakking
-Status: Actief
-Afbeelding: <verpakkingsafbeelding, productafbeelding of placeholder>
-Verpakkingstype: fles
-Volledige inhoud: 1,5 l
-Samenvatting: fles 1,5 l
-```
-
-Bij een verpakking met portie:
-
-```text
-Verpakking
-Verpakkingstype: pak
-Volledige inhoud: 88 g
-Portie of stuk: wafel
-Portiegrootte: 4,9 g
-Aantal in verpakking: 18
-Samenvatting: pak 88 g (18 × 4,9 g per wafel)
-```
+- accepteert uitsluitend PNG, JPEG en WebP;
+- toont vóór opslaan een lokale preview;
+- ondersteunt het verwijderen van de huidige verpakkingsafbeelding;
+- hanteert een maximale bestandsgrootte van 5 MB;
+- controleert op de server de werkelijke bestandsinhoud en vertrouwt niet alleen op extensie of browser-MIME-type.
 
 ## Product bewerken
 
 Productdetail schakelt op dezelfde pagina naar bewerkmodus. Er is geen aparte product-edit-route in MVP.
 
-De bewerkmodus gebruikt dezelfde afzonderlijke formulierkaarten als product aanmaken, in deze volgorde: `Categorie`, `Productnaam`, `Merk`, `Consumptietype` en `Voedingswaarden`. De desktopcontent is `650px` breed. Tussen de hoofdkaarten zit `42px` verticale ruimte; op smalle schermen stapelen radio- en macrovelden zonder horizontale overflow. De schakelaar voor voedingswaarden staat volledig binnen de formulierkaart, uitgelijnd in de rechterbovenhoek.
+De productgegevens-bewerkmodus gebruikt dezelfde afzonderlijke formulierkaarten als product aanmaken, in deze volgorde: `Categorie`, `Productnaam`, `Merk` en `Consumptietype`. Voedingswaarden zijn niet zichtbaar of wijzigbaar in deze modus. De desktopcontent is `650px` breed. Tussen de hoofdkaarten zit `42px` verticale ruimte; op smalle schermen stapelen radioselecties zonder horizontale overflow.
+
+De actie in de voedingswaardenkaart opent afzonderlijk `Voedingswaarden bewerken`. Alleen de optionele macroprofielschakelaar, referentiebasis en voedingswaarden zijn daar zichtbaar en wijzigbaar. Productgegevens en verpakkingen blijven bij deze mutatie ongewijzigd. De schakelaar staat volledig binnen de formulierkaart, uitgelijnd in de rechterbovenhoek.
 
 De acties staan onder de kaarten. Op desktop is `Annuleren` `180px` breed en vult `Wijzigingen opslaan` de resterende breedte. Op smalle schermen worden de acties over de volledige breedte gestapeld.
 
 Verpakkingen worden niet in product-bewerkmodus bewerkt. Verpakkingen hebben eigen routes en acties.
 
-### Validatie bij product bewerken
+### Validatie bij bewerken
 
-Product bewerken gebruikt dezelfde regels als product aanmaken, inclusief consumptietype, afbeeldingen en macroprofiel:
+Productgegevens bewerken gebruikt voor zijn eigen velden dezelfde regels als product aanmaken:
 
 - ieder product heeft exact één consumptietype;
-- een ingeschakeld macroprofiel heeft een expliciete basis en minimaal één voedingswaarde groter dan nul;
-- de macroprofielbasis blijft compatibel met alle verpakkingen;
-- een automatisch berekende caloriewaarde wordt bij gewijzigde macro's opnieuw berekend;
-- een handmatig gecorrigeerde caloriewaarde wordt bij gewijzigde macro's niet automatisch overschreven;
-- een ontbrekende afbeelding blokkeert opslaan niet;
+- een ontbrekende productafbeelding blokkeert opslaan niet;
 - categorie is verplicht;
 - productnaam is verplicht;
 - merk is optioneel;
 - merk en productnaam blijven gescheiden;
 - duplicaat product wordt geblokkeerd op dezelfde categorie, hetzelfde merk en dezelfde genormaliseerde productnaam;
 - bij bewerken telt het huidige product zelf niet als duplicaat.
+
+Voedingswaarden bewerken gebruikt afzonderlijk de macroprofielregels:
+
+- een ingeschakeld macroprofiel heeft een expliciete basis en minimaal één voedingswaarde groter dan nul;
+- de macroprofielbasis blijft compatibel met alle verpakkingen;
+- een automatisch berekende caloriewaarde wordt bij gewijzigde macro's opnieuw berekend;
+- een handmatig gecorrigeerde caloriewaarde wordt bij gewijzigde macro's niet automatisch overschreven.
 
 Bij validatiefouten:
 
@@ -240,7 +231,7 @@ Na succesvol opslaan:
 /product-catalogus/:productId/verpakkingen/nieuw
 ```
 
-Na succesvol toevoegen navigeert de gebruiker naar verpakkingdetail van de nieuwe verpakking.
+Na succesvol toevoegen navigeert de gebruiker naar de bewerkpagina van de nieuwe verpakking.
 
 ## Verpakking bewerken
 
@@ -252,7 +243,7 @@ Verpakking bewerken gebruikt dezelfde velden en validatie als eerste verpakking 
 - het aantal porties of stuks is optioneel en, wanneer ingevuld, een positief geheel getal;
 - volledige inhoud en portiegrootte hebben dezelfde dimensie;
 - de som van porties is informatief en hoeft niet exact gelijk te zijn aan de volledige inhoud;
-- een optionele verpakkingsafbeelding;
+- een optionele PNG-, JPEG- of WebP-verpakkingsafbeelding van maximaal 5 MB;
 - de verpakking blijft compatibel met een eventueel productmacroprofiel;
 - dubbele verpakking onder hetzelfde product wordt geblokkeerd;
 - bij bewerken telt de huidige verpakking zelf niet als duplicaat.
@@ -267,9 +258,8 @@ Bij validatiefouten:
 
 Na succesvol bewerken:
 
-- blijft de gebruiker op verpakkingdetail;
-- keert de pagina terug naar read-only mode;
-- toont de pagina de bijgewerkte verpakking.
+- keert de gebruiker terug naar productdetail;
+- toont de verpakkingrij de bijgewerkte verpakking en afbeelding.
 
 ## Cataloguscorrecties
 
@@ -284,19 +274,19 @@ Er worden geen afhankelijkheidsaantallen opgehaald of getoond. Er wordt geen pro
 
 ## Archiveren en heractiveren
 
-Productdetail en verpakkingdetail tonen afhankelijk van de status een archiveer- of herstelactie. Producten en verpakkingen worden nooit definitief verwijderd. Alle regels voor archiveren, herstellen en selecteerbaarheid staan in [product-archiveren-specificatie.md](./product-archiveren-specificatie.md).
+Productdetail en de verpakking-bewerkpagina tonen afhankelijk van de status een archiveer- of herstelactie. Producten en verpakkingen worden nooit definitief verwijderd. Alle regels voor archiveren, herstellen en selecteerbaarheid staan in [product-archiveren-specificatie.md](./product-archiveren-specificatie.md).
 
 ## Navigatie en fouttoestanden
 
 Op een bestaand productdetail vervalt de afzonderlijke link `Terug naar productcatalogus`. De interactieve categorie-breadcrumb onder de productnaam is de navigatie terug naar de catalogus. `Alle categorieën` opent de catalogusroot en een categorienaam opent die categorie in de categorieboom.
 
-Verpakkingdetail heeft een zichtbare link:
+De verpakking-bewerkpagina heeft een zichtbare link:
 
 ```text
 Terug naar product
 ```
 
-Verpakking toevoegen, verpakkingdetail en verpakking bewerken bewaren de product- en cataloguscontext waar dat logisch is, zodat de beheerder via productdetail terug kan naar dezelfde geopende categorie of merkcontext.
+Verpakking toevoegen en verpakking bewerken bewaren de product- en cataloguscontext waar dat logisch is, zodat de beheerder via productdetail terug kan naar dezelfde geopende categorie of merkcontext.
 
 Bij onbekend product toont productdetail binnen de admin-layout:
 
@@ -305,7 +295,7 @@ Product niet gevonden.
 [ Terug naar productcatalogus ]
 ```
 
-Bij verpakkingdetail:
+Bij de verpakking-bewerkpagina:
 
 - product niet gevonden:
 
@@ -354,9 +344,11 @@ En toont productdetail geen afzonderlijke link `Terug naar productcatalogus`.
 ### AC-02 - Product bewerken
 
 Gegeven dat een productdetail geopend is  
-Wanneer de beheerder `Product bewerken` kiest  
-Dan schakelt de pagina naar bewerkmodus  
-En kan de beheerder categorie, merk en productnaam aanpassen.
+Wanneer de beheerder `Productgegevens bewerken` kiest
+Dan schakelt de pagina naar de afgeschermde productgegevens-bewerkmodus
+En kan de beheerder categorie, merk, productnaam en consumptietype aanpassen
+
+En kan die bewerkmodus geen voedingswaarden of verpakkingen wijzigen.
 
 ### AC-03 - Product bewerken opslaan
 
@@ -370,7 +362,7 @@ En ziet de beheerder de bijgewerkte read-only gegevens.
 Gegeven dat een product verpakkingen heeft  
 Wanneer de beheerder productdetail opent  
 Dan ziet de beheerder alle verpakkingen in een aparte lijst  
-En kan elke verpakking worden geopend.
+En staat in iedere verpakkingrij de actie `Verpakking bewerken`.
 
 ### AC-05 - Verpakking toevoegen
 
@@ -380,21 +372,28 @@ Dan opent de aparte verpakking-aanmaakpagina voor dat product.
 
 ### AC-06 - Verpakking bewerken
 
-Gegeven dat verpakkingdetail geopend is  
-Wanneer de beheerder `Verpakking bewerken` kiest  
-Dan schakelt de pagina naar bewerkmodus  
+Gegeven dat productdetail geopend is
+Wanneer de beheerder `Verpakking bewerken` in een verpakkingrij kiest
+Dan opent direct de verpakking-bewerkpagina
+
+En kan de beheerder ook de optionele afbeelding van deze specifieke verpakking wijzigen
+
 En gelden dezelfde validatieregels als bij eerste verpakking.
 
 ### AC-07 - Geen definitief verwijderen
 
-Gegeven dat productdetail of verpakkingdetail geopend is  
+Gegeven dat productdetail of de verpakking-bewerkpagina geopend is
+
 Dan toont de UI geen actie om catalogusdata definitief te verwijderen
 En toont zij afhankelijk van de status een archiveer- of herstelactie.
 
 ### AC-08 - Macroprofiel beheren
 
 Gegeven dat productdetail geopend is
-Dan kan de beheerder een optioneel macroprofiel toevoegen, wijzigen of uitschakelen
+Wanneer de beheerder de actie in de voedingswaardenkaart kiest
+Dan opent de afgeschermde voedingswaarden-bewerkmodus
+En kan de beheerder een optioneel macroprofiel toevoegen, wijzigen of uitschakelen
+En kunnen productgegevens en verpakkingen vanuit die modus niet worden gewijzigd
 En blijft het profiel gekoppeld aan het product in plaats van een verpakking.
 
 ### AC-09 - Afbeeldingsfallback
@@ -412,6 +411,6 @@ En worden geen afhankelijkheidsaantallen vereist.
 ### AC-11 - Portie naast volledige inhoud beheren
 
 Gegeven dat een verpakking een volledige inhoud en een portiedefinitie heeft
-Wanneer de beheerder verpakkingdetail opent of bewerkt
+Wanneer de beheerder de verpakking-bewerkpagina opent
 Dan blijven volledige inhoud, portienaam, portiegrootte en optioneel aantal afzonderlijk zichtbaar en wijzigbaar
 En vervangt portiegrootte nooit de volledige verpakkingsinhoud.

@@ -40,7 +40,7 @@ export async function loadPackageFormRoute({ params, request }: LoaderFunctionAr
  * Add a package and redirect to its detail page.
  *
  * @param args - React Router action arguments.
- * @returns Form errors or a package-detail redirect.
+ * @returns Form errors or a package-edit redirect.
  */
 export async function handlePackageFormRouteAction({ params, request }: ActionFunctionArgs): Promise<PackageFormActionResult | Response> {
   const form = await request.formData();
@@ -58,8 +58,10 @@ export async function handlePackageFormRouteAction({ params, request }: ActionFu
 /** Parse total package content and a separately enabled optional portion. */
 function readPackageForm(form: FormData) {
   const portionsPerPackage = String(form.get("portionsPerPackage") ?? "").trim();
+  const imageUrl = String(form.get("imageUrl") ?? "").trim();
   return {
     packageTypeId: Number(form.get("packageTypeId")),
+    imageUrl: imageUrl.length === 0 ? null : imageUrl,
     amount: String(form.get("amount") ?? "").trim().replace(",", "."),
     unitTypeId: Number(form.get("unitTypeId")),
     portion: String(form.get("portionEnabled") ?? "") !== "on" ? null : {

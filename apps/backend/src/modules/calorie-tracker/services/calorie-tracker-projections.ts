@@ -123,7 +123,7 @@ export function toPackageSearchResult(row: CatalogPackageRecord): PackageSearchR
     },
     portion: toCalorieTrackerPortion(row),
     summary: packageSummary(row),
-    imageUrl: null,
+    imageUrl: row.packageImageUrl,
   };
 }
 

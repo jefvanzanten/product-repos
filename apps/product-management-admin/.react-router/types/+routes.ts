@@ -89,8 +89,8 @@ type RouteFiles = {
     id: "routes/product-package/package-form";
     page: "/product-catalogus/:productId/verpakkingen/nieuw";
   };
-  "routes/product-package/package-detail.tsx": {
-    id: "routes/product-package/package-detail";
+  "routes/product-package/package-edit.tsx": {
+    id: "routes/product-package/package-edit";
     page: "/product-catalogus/:productId/verpakkingen/:packageId";
   };
   "routes/product-detail/product-detail.tsx": {
@@ -113,7 +113,7 @@ type RouteModules = {
   "routes/product-catalog/edit-category": typeof import("./app/routes/product-catalog/edit-category.tsx");
   "routes/new-product/new-product": typeof import("./app/routes/new-product/new-product.tsx");
   "routes/product-package/package-form": typeof import("./app/routes/product-package/package-form.tsx");
-  "routes/product-package/package-detail": typeof import("./app/routes/product-package/package-detail.tsx");
+  "routes/product-package/package-edit": typeof import("./app/routes/product-package/package-edit.tsx");
   "routes/product-detail/product-detail": typeof import("./app/routes/product-detail/product-detail.tsx");
   "routes/locations": typeof import("./app/routes/locations.tsx");
 };

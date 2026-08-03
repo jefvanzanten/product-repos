@@ -64,6 +64,7 @@ describe("product catalog browsing", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         packageTypeId: testCatalog.packageTypeId,
+        imageUrl: "https://example.com/multipack.jpg",
         amount: "1980",
         unitTypeId: testCatalog.unitTypeId,
         portion: { name: "blikje", amount: "330", unitTypeId: testCatalog.unitTypeId, portionsPerPackage: 6 },
@@ -74,6 +75,7 @@ describe("product catalog browsing", () => {
     const detailAfterAdd = productDetailDtoSchema.parse(await (await requestAsAdmin(`/products/${created.id}`)).json());
     const multiPackage = detailAfterAdd.packages.find((item) => item.portion?.portionsPerPackage === 6);
     expect(multiPackage?.unitContent.amount).toBe("1980");
+    expect(multiPackage?.imageUrl).toBe("https://example.com/multipack.jpg");
     expect(multiPackage?.portion).toMatchObject({ name: "blikje", unitContent: { amount: "330" }, portionsPerPackage: 6 });
     expect(multiPackage?.summary).toContain("6 ×");
     if (multiPackage === undefined) throw new Error("Created multi-package was not returned by product detail");
@@ -83,6 +85,7 @@ describe("product catalog browsing", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         packageTypeId: testCatalog.packageTypeId,
+        imageUrl: "https://example.com/single-package.jpg",
         amount: "330",
         unitTypeId: testCatalog.unitTypeId,
         portion: null,
@@ -90,7 +93,34 @@ describe("product catalog browsing", () => {
     });
     expect(updateResponse.status).toBe(200);
     const detailAfterUpdate = productDetailDtoSchema.parse(await (await requestAsAdmin(`/products/${created.id}`)).json());
-    expect(detailAfterUpdate.packages.find((item) => item.id === multiPackage.id)?.portion).toBeNull();
+    const updatedPackage = detailAfterUpdate.packages.find((item) => item.id === multiPackage.id);
+    expect(updatedPackage?.portion).toBeNull();
+    expect(updatedPackage?.imageUrl).toBe("https://example.com/single-package.jpg");
+  });
+
+  it("validates and serves an uploaded package image", async () => {
+    const created = await createTestProduct(`Image ${crypto.randomUUID()}`);
+    const form = new FormData();
+    const validPng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
+    form.set("image", new File([validPng], "package.png", { type: "image/png" }));
+
+    const uploadResponse = await requestAsAdmin(`/products/${created.id}/packages/${created.package.id}/image`, { method: "POST", body: form });
+
+    expect(uploadResponse.status).toBe(201);
+    const upload = await uploadResponse.json() as { readonly imageUrl: string };
+    const imagePath = new URL(upload.imageUrl).pathname;
+    const imageResponse = await requestAsAdmin(imagePath);
+    expect(imageResponse.status).toBe(200);
+    expect(imageResponse.headers.get("content-type")).toBe("image/png");
+    expect(imageResponse.headers.get("x-content-type-options")).toBe("nosniff");
+
+    const cleanupResponse = await requestAsAdmin(`/products/${created.id}/packages/${created.package.id}/image`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageUrl: upload.imageUrl }),
+    });
+    expect(cleanupResponse.status).toBe(204);
+    expect((await requestAsAdmin(imagePath)).status).toBe(404);
   });
 
   it("searches products, brands and categories", async () => {

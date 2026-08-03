@@ -36,6 +36,7 @@ export type InsertProductPackageInput = {
   readonly productId: string;
   readonly unitContentId: number;
   readonly packageTypeId: number;
+  readonly imageUrl?: string | null;
 };
 
 /** Product-package persistence operations required by current catalog use cases. */
@@ -77,6 +78,7 @@ function addProductPackage(productId: string, input: ProductPackageRequest): Res
       productId,
       unitContentId: totalUnitContent.id,
       packageTypeId: input.packageTypeId,
+      imageUrl: input.imageUrl ?? null,
     });
     persistProductPackagePortion(tx, packageRow.id, input.portion);
     return { duplicate: false as const, packageId: packageRow.id };
@@ -125,6 +127,7 @@ function updateProductPackage(productId: string, packageId: number, input: Produ
     tx.update(productPackage).set({
       packageTypeId: input.packageTypeId,
       unitContentId: totalUnitContent.id,
+      imageUrl: input.imageUrl ?? null,
       archivedAt: shouldActivateCorrectedLegacyPackage(existingPackage, input) ? null : existingPackage.productPackage.archivedAt,
       updatedAt: new Date().toISOString(),
     }).where(eq(productPackage.id, packageId)).run();
@@ -222,6 +225,7 @@ function toProductPackageDto(row: ProductPackageFullRow): ProductPackageDto {
       };
   return {
     id: row.productPackage.id,
+    imageUrl: row.productPackage.imageUrl,
     packageType: { id: row.packageType.id, name: row.packageType.name },
     unitContent: {
       id: row.unitContent.id,

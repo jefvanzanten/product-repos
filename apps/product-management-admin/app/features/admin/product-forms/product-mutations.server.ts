@@ -50,6 +50,7 @@ export async function submitCreateProductForm(
 function readPackageForm(form: FormData): CreateProductRequest["package"] {
   return {
     amount: normalizeDutchDecimal(form.get("amount")),
+    imageUrl: readOptionalUrl(form.get("imageUrl")),
     packageTypeId: Number(form.get("packageTypeId")),
     unitTypeId: Number(form.get("unitTypeId")),
     portion: String(form.get("portionEnabled") ?? "") !== "on" ? null : {
@@ -64,6 +65,17 @@ function readPackageForm(form: FormData): CreateProductRequest["package"] {
 /** Normalize one Dutch decimal form value for the JSON protocol. */
 function normalizeDutchDecimal(value: FormDataEntryValue | null): string {
   return String(value ?? "").trim().replace(",", ".");
+}
+
+/**
+ * Convert an optional URL field to the nullable package-image protocol value.
+ *
+ * @param value - Raw form entry.
+ * @returns Trimmed URL or null when empty.
+ */
+function readOptionalUrl(value: FormDataEntryValue | null): string | null {
+  const raw = String(value ?? "").trim();
+  return raw.length === 0 ? null : raw;
 }
 
 /** Parse an optional integer without turning an empty field into zero. */

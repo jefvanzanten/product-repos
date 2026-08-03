@@ -27,8 +27,8 @@ export type PackageFormActionResult = {
   readonly values?: Record<string, string>;
 };
 
-/** Data loaded for the package-detail page. */
-export type PackageDetailLoaderData =
+/** Data loaded for the package-edit page. */
+export type PackageEditLoaderData =
   | {
       readonly found: true;
       readonly product: ProductDetailDto;
@@ -44,12 +44,10 @@ export type PackageDetailLoaderData =
       readonly context: string;
     };
 
-/** Result returned after attempting to update a package. */
-export type PackageDetailActionResult = {
-  readonly ok?: true;
-  readonly errors?: Record<string, string>;
-  readonly packageDetail?: ProductPackageWithProductId;
-  readonly values?: Record<string, string>;
+/** Validation state returned when updating a package fails. */
+export type PackageEditActionResult = {
+  readonly errors: Record<string, string>;
+  readonly values: Record<string, string>;
 };
 
 export type { PackageTypeDto, ProductDetailDto, UnitTypeDto };

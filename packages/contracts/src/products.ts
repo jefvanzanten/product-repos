@@ -33,6 +33,7 @@ export const productPackagePortionDtoSchema = z.object({
 /** Product package returned by the catalog API. */
 export const productPackageDtoSchema = z.object({
   id: z.number().int(),
+  imageUrl: z.string().url().nullable(),
   packageType: packageTypeDtoSchema,
   unitContent: unitContentDtoSchema,
   portion: productPackagePortionDtoSchema.nullable(),
@@ -117,6 +118,7 @@ export const productPackagePortionRequestSchema = z.object({
 /** Product package mutation request. */
 export const productPackageRequestSchema = z.object({
   packageTypeId: z.number().int().positive(),
+  imageUrl: z.string().url().nullable().optional(),
   amount: z.string(),
   unitTypeId: z.number().int().positive(),
   portion: productPackagePortionRequestSchema.nullable(),

@@ -105,15 +105,44 @@
 }
 
 .packageCard {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 14px;
   padding: 14px;
   color: #111425;
   font-size: 13px;
   border: 1px solid #d9deea;
   border-radius: 8px;
-  text-decoration: none;
+}
+
+.packageImage,
+.packageImagePlaceholder {
+  width: 88px;
+  height: 88px;
+  border-radius: 6px;
+}
+
+.packageImage {
+  object-fit: cover;
+}
+
+.packageImagePlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  color: #6b7280;
+  font-size: 11px;
+  text-align: center;
+  background: #f1f5f9;
+}
+
+.packageDetails {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
 }
 
 .packageCard strong {
@@ -123,6 +152,19 @@
 .packageCard span,
 .muted {
   color: #505466;
+}
+
+.packageEditLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  margin-top: 5px;
+  padding: 0 11px;
+  color: #111425;
+  font-weight: 700;
+  border: 1px solid #d9deea;
+  border-radius: 8px;
+  text-decoration: none;
 }
 
 .primaryButton,
@@ -214,5 +256,15 @@
 
   .editForm {
     gap: 24px;
+  }
+
+  .packageCard {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .packageImage,
+  .packageImagePlaceholder {
+    width: 64px;
+    height: 64px;
   }
 }

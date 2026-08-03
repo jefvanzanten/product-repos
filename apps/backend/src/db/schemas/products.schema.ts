@@ -92,6 +92,7 @@ export const productPackage = sqliteTable("product_package", {
   productId: text("product_id").notNull().references(() => product.id),
   unitContentId: integer("unit_content_id").notNull().references(() => unitContent.id),
   packageTypeId: integer("package_type_id").notNull().references(() => packageType.id),
+  imageUrl: text("image_url"),
   archivedAt: text("archived_at"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),

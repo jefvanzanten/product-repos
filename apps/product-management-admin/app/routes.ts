@@ -17,7 +17,7 @@ export default [
     ),
     route(
       "product-catalogus/:productId/verpakkingen/:packageId",
-      "routes/product-package/package-detail.tsx",
+      "routes/product-package/package-edit.tsx",
     ),
     route(
       "product-catalogus/:productId",

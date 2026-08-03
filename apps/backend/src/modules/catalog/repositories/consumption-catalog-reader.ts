@@ -1,6 +1,7 @@
 /** Joined catalog package projection exposed only for consumption use cases. */
 export type CatalogPackageRecord = {
   readonly packageId: number;
+  readonly packageImageUrl: string | null;
   readonly productId: string;
   readonly productName: string;
   readonly brandId: string | null;

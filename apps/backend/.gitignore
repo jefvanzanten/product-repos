@@ -12,6 +12,7 @@ dist/
 db/*.db
 db/*.db-shm
 db/*.db-wal
+db/package-images/
 
 # Logs
 logs/

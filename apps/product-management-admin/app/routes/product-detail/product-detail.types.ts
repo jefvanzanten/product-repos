@@ -10,8 +10,12 @@ export type ProductDetailLoaderData =
     }
   | { readonly found: false; readonly backUrl: string };
 
-/** Result returned after editing a product. */
+/** Product-detail compartment that submitted a mutation. */
+export type ProductDetailEditIntent = "product" | "nutrition";
+
+/** Result returned after editing a product compartment. */
 export type ProductDetailActionResult = {
+  readonly intent: ProductDetailEditIntent;
   readonly ok?: true;
   readonly errors?: Record<string, string>;
   readonly product?: ProductDetailDto;

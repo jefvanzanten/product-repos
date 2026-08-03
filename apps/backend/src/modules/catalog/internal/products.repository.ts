@@ -134,6 +134,7 @@ function createProduct(input: CreateProductPersistenceInput): Result<ProductCrea
       productId: productRow.id,
       unitContentId: totalUnitContentRow.id,
       packageTypeId: input.package.packageTypeId,
+      imageUrl: input.package.imageUrl ?? null,
     });
     persistProductPackagePortion(tx, productPackageRow.id, input.package.portion);
     persistMacroProfile(tx, productRow.id, input.macroProfile);

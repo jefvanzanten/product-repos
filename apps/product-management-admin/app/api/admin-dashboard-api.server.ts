@@ -108,6 +108,35 @@ async function addProductPackage(productId: string, input: ProductPackageRequest
   return parseProductPackageWithProductId(await postJson<unknown>(`/products/${productId}/packages`, input, request));
 }
 
+/**
+ * Upload one validated image for a product package with the incoming session.
+ *
+ * @param productId - Owning product identifier.
+ * @param packageId - Target package identifier.
+ * @param image - Image selected by the administrator.
+ * @param request - Incoming request carrying the administrator session.
+ * @returns Immutable URL of the stored image.
+ */
+async function uploadProductPackageImage(productId: string, packageId: string, image: File, request: Request): Promise<string> {
+  const form = new FormData();
+  form.set("image", image);
+  const result = await postFormData<{ readonly imageUrl: string }>(`/products/${productId}/packages/${packageId}/image`, form, request);
+  return result.imageUrl;
+}
+
+/**
+ * Remove an uploaded image that was not associated with its target package.
+ *
+ * @param productId - Owning product identifier.
+ * @param packageId - Target package identifier.
+ * @param imageUrl - URL returned by the preceding upload.
+ * @param request - Incoming request carrying the administrator session.
+ * @returns A promise that resolves after cleanup.
+ */
+async function cleanupProductPackageImage(productId: string, packageId: string, imageUrl: string, request: Request): Promise<void> {
+  await deleteJson(`/products/${productId}/packages/${packageId}/image`, request, { imageUrl });
+}
+
 /** Update a product package with the incoming session. */
 async function updateProductPackage(productId: string, packageId: string, input: ProductPackageRequest, request: Request): Promise<ProductPackageWithProductId> {
   return parseProductPackageWithProductId(await patchJson<unknown>(`/products/${productId}/packages/${packageId}`, input, request));
@@ -121,6 +150,7 @@ function parseProductPackageWithProductId(input: unknown): ProductPackageWithPro
   }
   const value = productPackageDtoSchema.parse({
     id: readUnknownField(input, "id"),
+    imageUrl: readUnknownField(input, "imageUrl"),
     packageType: readUnknownField(input, "packageType"),
     unitContent: readUnknownField(input, "unitContent"),
     portion: readUnknownField(input, "portion"),
@@ -189,6 +219,25 @@ async function postJson<T>(path: string, body: unknown, request: Request): Promi
   return response.json() as Promise<T>;
 }
 
+/**
+ * Perform an authenticated multipart POST request.
+ *
+ * @param path - Backend API path.
+ * @param body - Multipart request body.
+ * @param request - Incoming request carrying session headers.
+ * @returns Parsed backend response.
+ */
+async function postFormData<T>(path: string, body: FormData, request: Request): Promise<T> {
+  const response = await fetch(`${apiUrl}${path}`, {
+    method: "POST",
+    headers: createBackendHeaders(request),
+    body,
+    signal: request.signal,
+  });
+  if (!response.ok) throw new BackendApiError(response.status, await readApiError(response));
+  return response.json() as Promise<T>;
+}
+
 /** Perform an authenticated backend PATCH request. */
 async function patchJson<T>(path: string, body: unknown, request: Request): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, {
@@ -201,11 +250,19 @@ async function patchJson<T>(path: string, body: unknown, request: Request): Prom
   return response.json() as Promise<T>;
 }
 
-/** Perform an authenticated backend DELETE request. */
-async function deleteJson(path: string, request: Request): Promise<void> {
+/**
+ * Perform an authenticated backend DELETE request.
+ *
+ * @param path - Backend API path.
+ * @param request - Incoming request carrying session headers.
+ * @param body - Optional JSON request body.
+ * @returns A promise that resolves after a successful response.
+ */
+async function deleteJson(path: string, request: Request, body?: unknown): Promise<void> {
   const response = await fetch(`${apiUrl}${path}`, {
     method: "DELETE",
-    headers: createBackendHeaders(request),
+    headers: createBackendHeaders(request, body !== undefined),
+    body: body === undefined ? undefined : JSON.stringify(body),
     signal: request.signal,
   });
   if (!response.ok) throw new BackendApiError(response.status, await readApiError(response));
@@ -223,4 +280,4 @@ class BackendApiError extends Error {
 }
 
 export type { BrandDto, CategoryDto, FormErrors, PackageTypeDto, ProductCreatedDto, ProductDetailDto, ProductPackageDto, ProductPackageRequest, ProductPackageWithProductId, UnitTypeDto };
-export { addProductPackage, browseCatalog, createBrand, createCategory, createProduct, deleteCategory, getBrand, getBrands, getCategories, getPackageTypes, getProduct, getProductPackage, getUnitTypes, isNotFound, mapApiError, searchCatalog, updateCategory, updateProduct, updateProductPackage };
+export { addProductPackage, browseCatalog, cleanupProductPackageImage, createBrand, createCategory, createProduct, deleteCategory, getBrand, getBrands, getCategories, getPackageTypes, getProduct, getProductPackage, getUnitTypes, isNotFound, mapApiError, searchCatalog, updateCategory, updateProduct, updateProductPackage, uploadProductPackageImage };

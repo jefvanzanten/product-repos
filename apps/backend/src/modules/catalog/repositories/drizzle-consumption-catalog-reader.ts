@@ -88,6 +88,7 @@ export function createDrizzleConsumptionCatalogReader(db: BackendDatabase): Cons
     const portionUnit = alias(unitType, "portion_unit");
     let query = db.select({
       packageId: productPackage.id,
+      packageImageUrl: productPackage.imageUrl,
       productId: product.id,
       productName: product.name,
       brandId: brand.id,
@@ -146,6 +147,7 @@ export function createDrizzleConsumptionCatalogReader(db: BackendDatabase): Cons
 /** Convert one joined Drizzle row into the persistence-port package record. */
 function toCatalogPackageRecord(row: {
   readonly packageId: number;
+  readonly packageImageUrl: string | null;
   readonly productId: string;
   readonly productName: string;
   readonly brandId: string | null;
@@ -177,6 +179,7 @@ function toCatalogPackageRecord(row: {
 }): CatalogPackageRecord {
   return {
     packageId: row.packageId,
+    packageImageUrl: row.packageImageUrl,
     productId: row.productId,
     productName: row.productName,
     brandId: row.brandId,
