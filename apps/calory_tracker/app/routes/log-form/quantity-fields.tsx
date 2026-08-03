@@ -1,11 +1,13 @@
-import type { AvailableInputUnit, PackageSearchResult } from "@product-repos/contracts/calorie-tracker";
+import type { AvailableInputUnit } from "@product-repos/contracts/calorie-tracker";
 import type { ReactNode } from "react";
-import { ConsumptionTypeBadge } from "../../components/consumption-type-badge/consumption-type-badge";
 import styles from "./log-form.module.css";
 
-/** Render quantity, unit, and catalog-derived consumption-type inputs. */
+/**
+ * Render quantity and unit inputs.
+ * @param props - The quantity field values, state, and event handlers.
+ * @returns The quantity and unit form controls.
+ */
 export function QuantityFields({
-  selectedPackage,
   quantity,
   unitKey,
   availableUnits,
@@ -15,7 +17,6 @@ export function QuantityFields({
   onUnitChange,
   onRetryUnits,
 }: {
-  readonly selectedPackage: PackageSearchResult;
   readonly quantity: string;
   readonly unitKey: string | null;
   readonly availableUnits: ReadonlyArray<AvailableInputUnit>;
@@ -36,7 +37,6 @@ export function QuantityFields({
         </select>
       </label>
       {unitsFailed && <div className={styles.error} role="alert">Eenheden laden lukt niet.<button type="button" onClick={onRetryUnits}>Opnieuw proberen</button></div>}
-      <aside className={styles.typeNote}><ConsumptionTypeBadge type={selectedPackage.consumptionType} /><span>Type komt uit de productcatalogus</span></aside>
     </>
   );
 }

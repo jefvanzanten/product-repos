@@ -34,10 +34,15 @@ export function shouldIncludeLegacyInputUnit(selectedPackageId: number | null, o
   return selectedPackageId === originalPackageId;
 }
 
-/** Keep a valid unit key or choose the first unit after a package's units load. */
+/**
+ * Keep a valid unit key or prefer an individual portion after a package's units load.
+ * @param currentKey - The currently selected unit key.
+ * @param availableKeys - The unit keys available for the selected package.
+ * @returns The retained or preferred unit key, or null when no units are available.
+ */
 export function selectInputUnitKey(currentKey: string | null, availableKeys: ReadonlyArray<string>): string | null {
   if (currentKey !== null && availableKeys.includes(currentKey)) return currentKey;
-  return availableKeys[0] ?? null;
+  return availableKeys.find((key) => key.startsWith("INDIVIDUAL_UNIT:")) ?? availableKeys[0] ?? null;
 }
 
 /** Format a protocol decimal for Dutch UI, rounding only for presentation. */

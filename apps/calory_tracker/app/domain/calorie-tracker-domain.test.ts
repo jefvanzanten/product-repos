@@ -98,9 +98,10 @@ describe("edit input units", () => {
     expect(shouldIncludeLegacyInputUnit(13, 12)).toBe(false);
   });
 
-  it("resets an unavailable unit to the new package's first available unit", () => {
+  it("keeps a valid choice and otherwise prefers an individual portion", () => {
+    expect(selectInputUnitKey(null, ["PACKAGE:package", "CONTENT_UNIT:3", "INDIVIDUAL_UNIT:package"])).toBe("INDIVIDUAL_UNIT:package");
     expect(selectInputUnitKey("CONTENT_UNIT:2", ["PACKAGE:package", "CONTENT_UNIT:3"])).toBe("PACKAGE:package");
-    expect(selectInputUnitKey("CONTENT_UNIT:3", ["PACKAGE:package", "CONTENT_UNIT:3"])).toBe("CONTENT_UNIT:3");
+    expect(selectInputUnitKey("CONTENT_UNIT:3", ["PACKAGE:package", "INDIVIDUAL_UNIT:package", "CONTENT_UNIT:3"])).toBe("CONTENT_UNIT:3");
   });
 });
 

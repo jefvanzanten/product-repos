@@ -218,7 +218,7 @@ test.describe("Calorie Tracker acceptance slice", function calorieTrackerAccepta
     await expect(page).toHaveURL(new RegExp(`/logs\\?date=${date}&type=drink$`));
     await expect(page.getByRole("link", { name: /Volkoren reep/ })).toHaveCount(0);
     await page.getByRole("button", { name: "Alles" }).click();
-    await expect(page.getByRole("link", { name: /0,5 reep/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /0,5x/ })).toBeVisible();
 
     const createBody = {
       id: LOGS.idempotent,

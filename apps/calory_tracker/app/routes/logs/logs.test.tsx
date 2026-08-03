@@ -67,12 +67,16 @@ describe("logbook view states and filtering", () => {
       productName: "Late gearchiveerde drank",
       consumptionType: "DRINK",
       consumedAt: "2024-02-29T10:00:00.000Z",
+      quantity: "2",
+      inputMode: "PACKAGE",
       archived: true,
     });
     const earlyFood = createLogFixture({
       id: "20000000-0000-4000-8000-000000000003",
       productName: "Vroege cracker",
       consumedAt: "2024-02-29T07:00:00.000Z",
+      quantity: "1",
+      inputMode: "INDIVIDUAL_UNIT",
     });
     server.enqueueJson("GET", "/calorie-tracker/logs?date=2024-02-29&type=all", createLogListFixture([lateArchived, earlyFood]));
     server.enqueueJson("GET", "/calorie-tracker/logs?date=2024-02-29&type=food", createLogListFixture([earlyFood], "food"));
@@ -82,6 +86,9 @@ describe("logbook view states and filtering", () => {
     const items = [...container.querySelectorAll<HTMLElement>("[data-log-id]")];
     expect(items.map((item) => item.dataset.logId)).toEqual([earlyFood.id, lateArchived.id]);
     expect(screen.getByText("Gearchiveerd")).toBeInTheDocument();
+    expect(screen.getByText("1x cracker")).toBeInTheDocument();
+    expect(screen.getByText("2x pak")).toBeInTheDocument();
+    expect(container).not.toHaveTextContent("Pak 250 g (10 × 25 g per cracker)");
     expect(container).not.toHaveTextContent("120 kcal");
 
     const foodFilter = screen.getByRole("button", { name: "Voeding" });

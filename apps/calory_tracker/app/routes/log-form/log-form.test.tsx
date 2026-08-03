@@ -57,6 +57,23 @@ describe("package search behavior", () => {
     expect(server.matchingRequests("GET", "/calorie-tracker/packages/search?query=ab")).toHaveLength(1);
   });
 
+  it("prefers a portion unit and omits the catalog type note", async () => {
+    const supplement = createPackageFixture({ consumptionType: "SUPPLEMENT", productName: "Vitamine C" });
+    server.enqueueJson("GET", "/calorie-tracker/packages/search", [supplement]);
+    server.enqueueJson("GET", "/calorie-tracker/packages/1/input-units", [
+      createPackageUnitFixture("Volledige verpakking"),
+      { inputMode: "CONTENT_UNIT", unitType: supplement.contentUnit, label: "gram" },
+      { inputMode: "INDIVIDUAL_UNIT", unitType: null, label: "Tablet" },
+    ]);
+    renderRoute(<LogForm mode={{ _tag: "Create" }} date="2024-02-29" type="all" timezone="Europe/Amsterdam" />, "/logs/new", "/logs/new?date=2024-02-29&type=all");
+
+    await userEvent.click(await screen.findByRole("button", { name: /Vitamine C/ }));
+    const unitSelect = await screen.findByRole("combobox", { name: "Eenheid" });
+    await waitFor(() => expect(unitSelect).toHaveValue("INDIVIDUAL_UNIT:package"));
+    expect(screen.queryByText("Type komt uit de productcatalogus")).not.toBeInTheDocument();
+    expect(screen.queryByText("Supplement", { exact: true })).not.toBeInTheDocument();
+  });
+
   it("cancels an old debounced search and ignores its late response", async () => {
     server.enqueueJson("GET", "/calorie-tracker/packages/search", []);
     const stale = server.enqueueDeferred("GET", "/calorie-tracker/packages/search?query=cola");

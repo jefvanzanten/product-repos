@@ -221,7 +221,6 @@ export function LogForm({
 
           {selectedPackage !== null && (
             <QuantityFields
-              selectedPackage={selectedPackage}
               quantity={quantity}
               unitKey={unitKey}
               availableUnits={availableUnits}

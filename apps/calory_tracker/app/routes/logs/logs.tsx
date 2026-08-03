@@ -7,7 +7,6 @@ import { invalidateCalorieTrackerDate } from "../../api/calorie-tracker-api/calo
 import { calorieTrackerQueryKeys } from "../../api/calorie-tracker-api/calorie-tracker-query-keys";
 import { canonicalizeTrackerUrl } from "../../domain/consumption-types";
 import {
-  addCalendarDays,
   formatLocalDate,
   getTodayInTimezone,
   sortChronologically,
@@ -138,21 +137,11 @@ export default function LogsRoute(): ReactNode {
     ]);
   }
 
-  /** Replace only the selected date while preserving the active filter. */
-  function selectDate(nextDate: string): void {
-    setParameters({ date: nextDate, type });
-  }
-
   const routeState = { date, type };
   return (
     <main className={styles.page}>
       <section className={styles.panel}>
-        <div className={styles.controls}>
-          <button type="button" className="ct-secondary" onClick={() => selectDate(today)}>Vandaag</button>
-          <button type="button" className={styles.dayButton} aria-label="Vorige dag" onClick={() => selectDate(addCalendarDays(date, -1))}><Icon name="back" /></button>
-          <button type="button" className={styles.dayButton} aria-label="Volgende dag" disabled={date >= today} onClick={() => selectDate(addCalendarDays(date, 1))}><Icon name="chevron-right" /></button>
-          <Link className={`${styles.desktopAdd} ct-primary`} to={newLogPath(routeState)}><Icon name="add" />Log toevoegen</Link>
-        </div>
+        <Link className={`${styles.desktopAdd} ct-primary`} to={newLogPath(routeState)}><Icon name="add" />Log toevoegen</Link>
         <div className={styles.filterGroup} role="group" aria-label="Consumptietypefilter">
           {FILTERS.map((filter) => (
             <button
