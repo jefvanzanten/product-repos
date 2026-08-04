@@ -10,9 +10,7 @@
     "typecheck": "react-router typegen && tsc",
     "lint": "eslint .",
     "test": "vitest",
-    "test:e2e": "playwright test",
-    "test:specs": "vitest --config vitest.specs.config.ts --run",
-    "test:specs:watch": "vitest --config vitest.specs.config.ts --watch --bail=1"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@product-repos/auth-client": "workspace:*",

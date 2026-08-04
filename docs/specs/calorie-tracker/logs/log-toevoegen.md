@@ -107,6 +107,8 @@ De gebruiker kiest het type niet handmatig. Een geselecteerd catalogusproduct he
 - drinken;
 - supplement.
 
+Het type is al herkenbaar in het geselecteerde zoekresultaat. Na selectie toont het hoeveelheidsdeel daarom geen extra consumptietypebadge en geen uitleg zoals `Type komt uit de productcatalogus`.
+
 ## Hoeveelheid en eenheid
 
 Na productselectie toont de flow één samengestelde invoer:
@@ -128,6 +130,8 @@ Mogelijke eenheden worden afgeleid van de verpakking:
 - volume-eenheid, bijvoorbeeld `ml`;
 - een expliciete portie of individueel stuk wanneer de verpakking die heeft, bijvoorbeeld `wafel` of `blikje`;
 - stuks of doses wanneer het product telbaar is.
+
+Na het laden van de eenheden selecteert de UI standaard de expliciete portie of het individuele stuk wanneer die beschikbaar is. Zonder zo'n eenheid wordt de eerste beschikbare eenheid geselecteerd. Een reeds geldige keuze, bijvoorbeeld tijdens bewerken of na opnieuw laden, blijft behouden.
 
 Voorbeeld voor `stuk 250 g`:
 
@@ -197,6 +201,8 @@ En kan het kale product niet zonder verpakking worden gekozen.
 
 Gegeven dat een verpakking is geselecteerd
 Dan toont de eenheidskeuze uitsluitend eenheden die uit die verpakking kunnen worden afgeleid
+En wordt een expliciete portie of individueel stuk standaard geselecteerd wanneer die beschikbaar is
+En blijft een reeds geldige eenheidskeuze behouden
 En kan de gebruiker één positieve hoeveelheid met één eenheid opslaan.
 
 Gegeven een pak met volledige inhoud `88 g` en een portie `wafel` van `4,9 g`

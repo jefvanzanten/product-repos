@@ -40,6 +40,11 @@
       "types": "./src/calorie-tracker.ts",
       "import": "./src/calorie-tracker.ts",
       "default": "./src/calorie-tracker.ts"
+    },
+    "./inventory": {
+      "types": "./src/inventory.ts",
+      "import": "./src/inventory.ts",
+      "default": "./src/inventory.ts"
     }
   },
   "files": [

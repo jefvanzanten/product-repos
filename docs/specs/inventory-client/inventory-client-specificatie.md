@@ -8,6 +8,11 @@ Dit is de index voor de client/inventarisatiekant van de app. Dit is niet de adm
 | --- | --- | --- |
 | Voorraad inzien | [voorraad-inzien-specificatie.md](./voorraad-inzien-specificatie.md) | Gepland / te herwerken |
 | Voorraad toevoegen | [voorraad-toevoegen-bottom-sheet-specificatie.md](./voorraad-toevoegen-bottom-sheet-specificatie.md) | Gepland |
+| Voorraad aanpassen | [voorraad-aanpassen-specificatie.md](./voorraad-aanpassen-specificatie.md) | Gepland |
+
+## Rollen
+
+Iedere ingelogde gebruiker kan de voorraad inzien en doorzoeken. Alleen beheerders kunnen voorraad toevoegen en aanpassen; mutatie-endpoints weigeren niet-beheerders zelfstandig. Voorraad is gedeeld over alle ingelogde gebruikers. Product- en locatiebeheer blijft in Product Management Admin. De gedeelde locatieregels staan in [opbergplaatsen-domeinregels.md](../../domein/opbergplaatsen-domeinregels.md).
 
 ## Layout
 
@@ -26,7 +31,7 @@ De adminbestemming is voor een ingelogde beheerder een gewone browserlink naar e
 
 ## Richting
 
-De inventory client is bedoeld voor voorraad gebruiken en bijwerken. Catalogusbeheer blijft in Product Management Admin. Wanneer een product ontbreekt, verwijst de client naar de catalogus-aanmaakflow met `source=inventory` of een expliciet nog te specificeren snelle toevoegflow.
+De inventory client is bedoeld voor voorraad gebruiken en bijwerken. Voorraad is een geheel aantal gekozen verpakkingen per combinatie productverpakking + opbergplaats + houdbaarheidsdatum; opbergplaats is altijd verplicht. Catalogusbeheer blijft in Product Management Admin. Inventory toont geen cross-app links; wanneer een product of opbergplaats ontbreekt, ziet de gebruiker alleen een neutrale melding of een disabled toevoegflow.
 
 ## Overkoepelend acceptatiecriterium — zelfstandige adminnavigatie
 

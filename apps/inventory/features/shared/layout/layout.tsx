@@ -13,7 +13,17 @@ import { requireUser } from "../../../app/auth.server";
 import { INVENTORY_BASE_PATH, toInventoryPublicPath } from "../../../app/public-paths";
 import styles from "./layout.module.css";
 
-/** Load the authenticated user for the protected Inventory shell. */
+/** Auth-derived capabilities exposed to protected Inventory routes. */
+export type InventoryOutletContext = {
+  readonly isAdmin: boolean;
+};
+
+/**
+ * Load the authenticated user for the protected Inventory shell.
+ *
+ * @param args - React Router loader arguments containing the incoming request.
+ * @returns The authenticated user required by the protected shell.
+ */
 export async function loader({ request }: LoaderFunctionArgs) {
   return { user: await requireUser(request) };
 }
@@ -34,7 +44,7 @@ export default function BottomTabsLayout(): ReactNode {
         authClient={authClient}
         loginPath={toInventoryPublicPath("/login")}
       />
-      <Outlet />
+      <Outlet context={{ isAdmin } satisfies InventoryOutletContext} />
       <BottomTabBar>
         <NavLink to="/" end>
           Inventarisatie

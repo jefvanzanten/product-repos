@@ -18,21 +18,36 @@ export type BackendConfig = {
 };
 
 const developmentSecret = "development-only-better-auth-secret-change-me";
-const defaultOrigins = "http://localhost:5173,http://localhost:3001";
+const defaultOrigins = "http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:3001";
 
-/** Split a comma-separated value into non-empty entries. */
+/**
+ * Split a comma-separated value into non-empty entries.
+ *
+ * @param value - Comma-separated configuration value.
+ * @returns Trimmed non-empty entries.
+ */
 function parseList(value: string): ReadonlyArray<string> {
   return value.split(",").map((entry) => entry.trim()).filter((entry) => entry.length > 0);
 }
 
-/** Parse a valid TCP port or throw a configuration defect. */
+/**
+ * Parse a valid TCP port or throw a configuration defect.
+ *
+ * @param value - Optional configured port value.
+ * @returns A valid TCP port.
+ */
 function parsePort(value: string | undefined): number {
   const port = Number(value ?? "3000");
   if (!Number.isInteger(port) || port < 1 || port > 65_535) throw new Error("PORT must be an integer between 1 and 65535");
   return port;
 }
 
-/** Load and validate all environment values currently used by the backend runtime. */
+/**
+ * Load and validate all environment values currently used by the backend runtime.
+ *
+ * @param env - Environment values supplied to the backend.
+ * @returns Validated backend configuration.
+ */
 export function loadBackendConfig(env: BackendEnvironment): BackendConfig {
   const environment = env.NODE_ENV === "production" || env.NODE_ENV === "test" ? env.NODE_ENV : "development";
   const configuredSecret = env.BETTER_AUTH_SECRET?.trim();

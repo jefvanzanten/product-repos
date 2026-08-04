@@ -147,8 +147,8 @@ Regels:
 - `Alle categorieën` linkt naar `/product-catalogus` zonder catalogusqueryparameters; een geldige `source` blijft behouden.
 - Elke ancestorcategorie in de breadcrumb opent `/product-catalogus?categoryId=<categoryId>`.
 - Het laatste breadcrumbsegment toont de geopende categorie als huidige context.
-- Elke categoriekaart of -rij toont rechts binnen hetzelfde categorie-item een potloodicoon om de categorie te bewerken. Het potloodicoon heeft geen eigen kaart, outline of scheidingslijn.
-- Het potloodicoon opent `/product-catalogus/categorieen/<categoryId>/bewerken`; bij browsernavigatie wordt deze route direct zichtbaar in de browser-URL.
+- Elke categoriekaart of -rij toont rechts binnen hetzelfde categorie-item een beheerknop met potloodicoon. De knop heeft geen eigen kaart, outline of scheidingslijn.
+- De beheerknop opent het actiemenu met `Naam wijzigen` en `Verwijderen`; `Naam wijzigen` opent `/product-catalogus/categorieen/<categoryId>/bewerken`.
 - Directe subcategorieën staan onder de geopende categorierij en tonen alleen hun eigen naam.
 - Producten die direct aan de geopende categorie hangen, staan in de sectie `Producten` onder die categorie.
 - Producten uit onderliggende subcategorieën staan pas onder die subcategorie wanneer de beheerder die subcategorie opent.
@@ -292,11 +292,20 @@ Regels:
 - Na succesvol aanmaken sluit de modal, blijft de beheerder op de huidige categoriepagina en wordt de lijst met subcategorieën vernieuwd zodat de nieuwe subcategorie zichtbaar is.
 - De nieuwe subcategorie linkt naar `/product-catalogus?categoryId=<nieuwCategoryId>`.
 
-## Categorie bewerken vanuit de categorieboom
+## Categorie beheren vanuit de categorieboom
 
-Elke zichtbare categorie in de rootlijst en subcategorielijst heeft rechts binnen hetzelfde categorie-item een potloodicoon met een toegankelijke naam zoals `Categorie <naam> bewerken`. Het potloodicoon heeft geen eigen kaart, outline of scheidingslijn.
+Elke zichtbare categorie in de rootlijst en subcategorielijst heeft rechts binnen hetzelfde categorie-item een beheerknop met potloodicoon en de toegankelijke naam `Categorie <naam> beheren`. De knop heeft geen eigen kaart, outline of scheidingslijn.
 
-De bewerkactie opent een modal op de route:
+De beheerknop opent een compact actiemenu met:
+
+- `Naam wijzigen`;
+- `Verwijderen`.
+
+Het menu sluit bij een klik buiten het menu en bij `Escape`. De categorie zelf blijft afzonderlijk klikbaar om de categorieboom te openen of sluiten.
+
+### Naam wijzigen
+
+`Naam wijzigen` opent de modal op de route:
 
 ```text
 /product-catalogus/categorieen/<categoryId>/bewerken
@@ -304,7 +313,7 @@ De bewerkactie opent een modal op de route:
 
 Regels:
 
-- De route is direct zichtbaar/deelbaar wanneer de beheerder het potloodicoon gebruikt.
+- De route is direct zichtbaar en deelbaar.
 - De categorie-bewerken-modal uit Layout is voorgevuld met de huidige categorienaam.
 - `Annuleren` sluit de modal zonder wijziging en keert terug naar de lijst waarin de categorie stond: root voor rootcategorieën, of de parentcategorie voor subcategorieën.
 - Een lege of alleen uit whitespace bestaande naam kan niet worden opgeslagen.
@@ -312,6 +321,18 @@ Regels:
 - Bij een backendvalidatiefout of dubbele siblingnaam blijft de modal open en toont de UI de fout bij het veld of in de modal.
 - Eén klik op `Opslaan` verwerkt de wijziging. Na succesvol opslaan sluit de modal direct en wordt de beheerder teruggestuurd naar de bijbehorende categorielijst, waar de nieuwe naam zichtbaar is.
 - Hernoemen wijzigt alleen de categorienaam; parent, sortering, producten en subcategorieën blijven ongewijzigd.
+
+### Verwijderen
+
+`Verwijderen` gebruikt `DELETE /categories/:id`. De actie vraagt in deze versie geen extra bevestigingsdialoog.
+
+Regels:
+
+- De backend blokkeert verwijderen wanneer de categorie subcategorieën of producten bevat.
+- Een backendfout wordt als zichtbare formulierfout op de cataloguspagina getoond en laat de categorie bestaan.
+- Na succesvolle verwijdering verdwijnt de categorie uit de boom.
+- Na verwijdering van een subcategorie navigeert de beheerder naar de parentcategorie; na verwijdering van een rootcategorie naar de catalogusroot.
+- Een geldige `source`-context blijft bij deze redirect behouden.
 
 ## Productlimieten en meer laden
 
@@ -373,7 +394,7 @@ Wanneer deze URL direct wordt geopend:
 
 Productkaarten binnen een categoriecontext linken naar productdetail en bewaren de cataloguscontext. Terugnavigatie vanuit productdetail of verpakkingspagina's brengt de beheerder terug naar dezelfde browsecontext waar dat logisch is.
 
-Bij klikken op het potloodicoon voor categorie bewerken wordt de bewerkroute direct zichtbaar in de URL.
+Bij `Naam wijzigen` in het categorie-actiemenu wordt de bewerkroute direct zichtbaar in de URL.
 
 ## Benodigde backend/API
 
@@ -382,6 +403,7 @@ De browsepagina gebruikt de bestaande admin-dashboard endpoints:
 ```text
 GET /products?categoryId=<categoryId>&status=<active|archived>&limit=<limit>
 POST /categories
+DELETE /categories/:categoryId
 GET /product-catalogus/categorieen/<categoryId>/bewerken
 POST /product-catalogus/categorieen/<categoryId>/bewerken
 ```
@@ -512,12 +534,16 @@ Wanneer de naam leeg is of al bestaat als rootcategorie
 Dan blijft de modal open  
 En ziet de beheerder een duidelijke foutmelding.
 
-### AC-10 - Categorie bewerken vanuit categorieboom
+### AC-10 - Categorie beheren vanuit categorieboom
 
 Gegeven dat categorieën zichtbaar zijn in de categorieboom  
-Dan ziet de beheerder rechts in elk categorie-item een potloodicoon om te bewerken.
+Dan ziet de beheerder rechts in elk categorie-item een beheerknop met potloodicoon.
 
-Wanneer de beheerder het potloodicoon bij een categorie kiest  
+Wanneer de beheerder de knop bij een categorie kiest
+Dan opent een actiemenu met `Naam wijzigen` en `Verwijderen`
+En sluit dit menu bij `Escape` of een klik erbuiten.
+
+Wanneer de beheerder `Naam wijzigen` kiest
 Dan opent de route `/product-catalogus/categorieen/<categoryId>/bewerken`  
 En is deze route direct zichtbaar in de browser-URL  
 En ziet de beheerder een modal `Categorie bewerken` met het veld `Naam categorie` voorgevuld met de huidige naam.
@@ -531,6 +557,15 @@ En keert de beheerder terug naar de bijbehorende categorielijst waar de nieuwe n
 Wanneer de naam leeg is of al bestaat onder dezelfde parent/root  
 Dan blijft de modal open  
 En ziet de beheerder een duidelijke foutmelding.
+
+Wanneer de beheerder `Verwijderen` kiest voor een lege categorie
+Dan wordt de categorie verwijderd
+En navigeert de beheerder naar de parentcategorie of, voor een rootcategorie, naar de catalogusroot
+En blijft een geldige `source`-context behouden.
+
+Wanneer de categorie nog subcategorieën of producten bevat
+Dan blokkeert de backend de verwijdering
+En blijft de categorie zichtbaar.
 
 ### AC-11 - Gearchiveerde producten browsen
 

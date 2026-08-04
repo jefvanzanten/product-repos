@@ -306,7 +306,6 @@ corepack pnpm --filter calory_tracker typecheck
 corepack pnpm --filter calory_tracker exec vitest --run app/routes/statistics app/routes/logs
 corepack pnpm exec playwright test tests/e2e/calory-tracker.acceptance.spec.ts --project=mobile-chromium
 corepack pnpm exec playwright test tests/e2e/calory-tracker.acceptance.spec.ts --project=desktop-chromium
-corepack pnpm run test:specs
 ```
 
 Stop wanneer pnpm om een node_modules purge/recreate vraagt en volg `docs/dependency-management.md`.

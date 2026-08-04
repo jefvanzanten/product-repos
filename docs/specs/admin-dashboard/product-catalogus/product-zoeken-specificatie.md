@@ -212,9 +212,9 @@ Bij selectie van een categorieresultaat:
 - toont de pagina de gekozen categorie met klikbare breadcrumb, directe subcategorieën en directe producten wanneer die bestaan;
 - de primaire actie blijft `+ Product` en neemt de gekozen `categoryId` als context mee.
 
-Elke zichtbare categorie in categorieresultaten heeft rechts een potloodicoon met een toegankelijke naam zoals `Categorie <naam> bewerken`. De bewerkactie gebruikt dezelfde route en modalregels als categorie bewerken vanuit de categorieboom.
+Wanneer een categorieresultaat is geopend in de categorieboom, heeft iedere zichtbare categorie rechts dezelfde beheerknop met potloodicoon als in de browseflow. Het menu biedt `Naam wijzigen` en `Verwijderen`; naam wijzigen gebruikt dezelfde route en modalregels als categorie beheren vanuit de categorieboom.
 
-De volledige category-browse layout en categorie-bewerkenregels staan in [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md).
+De volledige category-browse layout en categoriebeheerregels staan in [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md).
 
 ### Geen zoekresultaten
 

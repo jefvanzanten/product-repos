@@ -1,3 +1,5 @@
-import type { storageRecords } from './schema';
+import type { inventoryItem, inventoryMutation, location } from './schema';
 
-export type CreateStorageRecordInput = typeof storageRecords.$inferInsert;
+export type CreateLocationInput = typeof location.$inferInsert;
+export type CreateInventoryItemInput = typeof inventoryItem.$inferInsert;
+export type CreateInventoryMutationInput = typeof inventoryMutation.$inferInsert;

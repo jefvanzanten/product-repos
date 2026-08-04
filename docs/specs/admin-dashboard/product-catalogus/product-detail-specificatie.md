@@ -3,7 +3,7 @@
 ## Status
 
 - Onderdeel: admin dashboard > productcatalogus
-- Status: productdetail, consumptietype en macroprofiel geïmplementeerd; afbeeldingen, overige Calorie Tracker-data en archiveren zijn concept
+- Status: productdetail, consumptietype, macroprofiel, gescheiden bewerkflows en verpakkingsafbeeldingen geïmplementeerd; productafbeeldingen en archiveren zijn concept
 - Hoort bij:
   - [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md)
   - [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md)
@@ -136,7 +136,7 @@ Productdetail toont een aparte sectie `Verpakkingen` onder de productgegevens.
 
 Elke verpakkingrij toont minimaal:
 
-- verpakkingsafbeelding met productafbeelding en daarna placeholder als fallback;
+- verpakkingsafbeelding of een vaste placeholder;
 - status `Actief` of `Gearchiveerd`;
 - verpakkingstype;
 - volledige inhoudshoeveelheid + inhoudseenheid;
@@ -321,6 +321,9 @@ PATCH /products/:productId
 GET /products/:productId/packages/:packageId
 POST /products/:productId/packages
 PATCH /products/:productId/packages/:packageId
+POST /products/:productId/packages/:packageId/image
+DELETE /products/:productId/packages/:packageId/image
+GET /package-images/:fileName
 POST /products/:productId/archive
 POST /products/:productId/restore
 POST /products/:productId/packages/:packageId/archive
@@ -398,9 +401,11 @@ En blijft het profiel gekoppeld aan het product in plaats van een verpakking.
 
 ### AC-09 - Afbeeldingsfallback
 
+Gegeven dat een verpakking een eigen afbeelding heeft
+Dan toont productdetail die verpakkingsafbeelding.
+
 Gegeven dat een verpakking geen eigen afbeelding heeft
-Dan toont detail de productafbeelding
-En anders een vaste placeholder.
+Dan toont productdetail een vaste placeholder.
 
 ### AC-10 - Cataloguscorrectie
 

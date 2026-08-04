@@ -50,11 +50,13 @@ De routes hieronder zijn app-intern. Het publieke basispad `/product-management-
 | --- | --- |
 | `/product-catalogus` | zoeken/browsen + toegang tot product aanmaken |
 | `/product-catalogus/nieuw` | product aanmaken |
-| `/locations` | opbergplaatsen beheren, buiten productcatalogus-specs |
+| `/locations` | [opbergplaatsen beheren](../specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-specificatie.md), buiten productcatalogus-specs |
 
 Een geldige `source`-queryparameter blijft tijdens navigatie binnen deze routes behouden volgens de [gedeelde bottom-tabbar- en applicatieshellspecificatie](../specs/shared/bottom-tabbar-specificatie.md).
 
 ## Backendbronnen
 
 - [Admin dashboard endpoints](../backend/Endpoints/ADMIN_DASHBOARD_ENDPOINTS.md)
+- [Locatie-endpoints](../backend/Endpoints/LOCATION_ENDPOINTS.md)
 - [Product ERD](../backend/ERD/PRODUCT_ERD.md)
+- [Storage/Inventory ERD](../backend/ERD/STORAGE_ERD.md)

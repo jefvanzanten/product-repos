@@ -1,0 +1,243 @@
+.group {
+  margin-bottom: 9px;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 76px;
+  padding: 14px 13px;
+  color: inherit;
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid #e0e5eb;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgb(20 30 40 / 5%);
+  cursor: pointer;
+}
+
+.groupHeader:focus-visible {
+  outline: 3px solid rgb(59 125 216 / 30%);
+  outline-offset: 2px;
+}
+
+.groupExpanded .groupHeader {
+  border-radius: 14px 14px 0 0;
+}
+
+.productImage,
+.imagePlaceholder {
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+}
+
+.productImage {
+  object-fit: cover;
+  background: #eef1f5;
+}
+
+.imagePlaceholder {
+  display: grid;
+  place-items: center;
+  color: #9ca5b1;
+  background: #eef1f5;
+  border: 1px solid #e0e5eb;
+}
+
+.imagePlaceholder svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.groupInfo {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.groupName,
+.groupMeta {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groupName {
+  color: #172033;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.brand {
+  font-weight: 500;
+}
+
+.groupMeta {
+  margin-top: 3px;
+  color: #687281;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.groupMeta strong {
+  color: #4b5665;
+  font-weight: 750;
+}
+
+.archived {
+  display: inline-block;
+  margin-top: 5px;
+  color: #7d5860;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.groupRight {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.locationCount {
+  color: #7a8492;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.chevron {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #7f8996;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 150ms ease;
+}
+
+.groupExpanded .chevron {
+  transform: rotate(90deg);
+}
+
+.batchList {
+  overflow: hidden;
+  background: #fafbfd;
+  border: 1px solid #e0e5eb;
+  border-top: 0;
+  border-radius: 0 0 14px 14px;
+}
+
+.batchRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 61px;
+  padding: 10px 16px 10px 70px;
+  border-top: 1px solid #edf0f4;
+}
+
+.batchRow:first-child {
+  border-top: 0;
+}
+
+.batchInfo {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  gap: 5px;
+}
+
+.locationPath {
+  width: 100%;
+  overflow: hidden;
+  color: #354052;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.batchQuantity {
+  flex: 0 0 auto;
+  min-width: 34px;
+  color: #263143;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.statusChip {
+  display: inline-block;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  border-radius: 999px;
+}
+
+.statusExpired,
+.statusToday {
+  color: #bd3540;
+  background: #fde7e8;
+}
+
+.statusSoon {
+  color: #b66a1c;
+  background: #fdf1e0;
+}
+
+.statusOk {
+  color: #596473;
+  background: #eef1f5;
+}
+
+.statusNone {
+  color: #7e8794;
+  background: #eef1f5;
+}
+
+@media (max-width: 560px) {
+  .groupHeader {
+    gap: 9px;
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .productImage,
+  .imagePlaceholder {
+    flex-basis: 42px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .groupRight .statusChip {
+    max-width: 94px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .batchRow {
+    padding-left: 61px;
+  }
+}
+
+@media (max-width: 390px) {
+  .batchRow {
+    padding-left: 14px;
+  }
+}

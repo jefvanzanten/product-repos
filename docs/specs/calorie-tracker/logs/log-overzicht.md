@@ -18,8 +18,7 @@ Calorie- en macrototalen horen bij Caloriestatistieken en staan niet in het logb
 
 ## Binnen scope
 
-- Vandaag of een eerdere datum selecteren.
-- Met één actie teruggaan naar vandaag.
+- Vandaag of een eerdere datum selecteren via de gedeelde datumselector.
 - Filteren op consumptietype.
 - Datum en filter in de URL bewaren.
 - De geselecteerde datum bij navigatie naar Caloriestatistieken behouden.
@@ -62,11 +61,12 @@ Het logboek rendert binnen de [gedeelde applicatieshell met bottom-tabbar](../..
 
 De pagina toont in deze volgorde:
 
-1. aanklikbare datum;
-2. actie `Vandaag`;
-3. direct zichtbare filterchips;
-4. verticaal scrollbare loglijst;
-5. primaire actie `Log toevoegen`.
+1. de gedeelde aanklikbare datumselector boven het logboekpaneel;
+2. direct zichtbare filterchips;
+3. verticaal scrollbare loglijst;
+4. primaire actie `Log toevoegen`.
+
+Het logboekpaneel toont geen tweede datumselector en geen losse acties voor `Vandaag`, vorige dag of volgende dag.
 
 Beschikbare chips:
 
@@ -79,7 +79,7 @@ Op smalle schermen mogen chips horizontaal scrollen.
 
 ### Actie Log toevoegen
 
-Op mobiel staat een vaste brede knop direct boven de bottom-tabbar. De knop bedekt geen logs en de lijst reserveert voldoende onderruimte.
+Op mobiel staat een vaste brede knop direct boven de bottom-tabbar. De actiebalk gebruikt `1em` bovenruimte en `16px` horizontale en onderruimte. De knop bedekt geen logs en de lijst reserveert voldoende onderruimte.
 
 Op desktop staat de primaire actie rechts bovenaan het logboekpaneel, onder de gedeelde datumheader en navbar.
 
@@ -87,10 +87,9 @@ De actie is geen tab en geen extra floating action button.
 
 ## Datumnavigatie
 
-- De date picker bevat een actie `Vandaag` of de pagina toont daarnaast een losse knop `Vandaag`.
-- De date picker schakelt toekomstige datums uit.
-- Een optionele knop voor de volgende dag is uitgeschakeld wanneer vandaag geselecteerd is.
-- Vorige- en volgendedagknoppen vervangen de date picker niet.
+- De gebruiker wijzigt de datum via de gedeelde datumselector boven de Calorie Tracker-navbar.
+- De datumselector schakelt toekomstige datums uit.
+- Het logboekpaneel herhaalt de datumactie niet met losse knoppen voor `Vandaag`, vorige dag of volgende dag.
 
 ## Filters
 
@@ -113,32 +112,32 @@ De actie is geen tab en geen extra floating action button.
 
 Ieder logitem toont uitsluitend:
 
-- productafbeelding of placeholder;
+- verpakkingsafbeelding of placeholder;
 - tijd;
 - actuele productnaam en merk;
-- actuele verpakkingsomschrijving;
-- oorspronkelijke geconsumeerde hoeveelheid en gekozen eenheid;
-- tekstueel consumptietype met herkenbare kleur.
+- oorspronkelijke geconsumeerde hoeveelheid als vermenigvuldiger met de gekozen eenheid;
+- tekstueel consumptietype met herkenbare kleur;
+- een chevron als aanwijzing dat het item geopend kan worden.
 
-Voorbeeld:
+De verpakkingsomschrijving, volledige verpakkingsinhoud en portiedefinitie worden niet herhaald in het compacte logitem. Deze informatie is niet nodig om de geregistreerde consumptie in de lijst te herkennen.
+
+Voorbeelden:
 
 ```text
 08:42
-Grillworst - Merknaam
-Stuk 250 g
-100 g
+Grillworst · Merknaam
+1x stuk
 Voeding
 ```
 
-Voor een verpakking met portiedefinitie:
-
 ```text
 20:15
-Frisdrank - Merknaam
-Sixpack 1.980 ml (6 × 330 ml per blikje)
-1 sixpack
+Frisdrank · Merknaam
+3x blikje
 Drinken
 ```
+
+Op desktop gebruikt elk item vaste kolommen voor afbeelding, tijd, product en merk, hoeveelheid en eenheid, consumptietype en chevron. Op mobiel gebruikt hetzelfde item twee compacte tekstregels naast de afbeelding, met de chevron in een vaste eindkolom. Lange product- en merknamen mogen de overige slots niet verschuiven.
 
 Calorieën en macro's staan niet in het compacte logitem. Het consumptietype wordt nooit uitsluitend met kleur gecommuniceerd.
 
@@ -190,8 +189,8 @@ En scrolt de eerste weergave naar de laatste zichtbare log.
 ### AC-04 - Compacte inhoud
 
 Gegeven dat een logitem zichtbaar is
-Dan toont het product-, verpakking-, hoeveelheid-, tijd- en typegegevens
-En geen calorieën of macro's.
+Dan toont het afbeelding-, product-, merk-, hoeveelheid-, eenheid-, tijd- en typegegevens in vaste responsieve slots
+En toont het geen verpakkingsomschrijving, calorieën of macro's.
 
 ### AC-05 - Typefilter
 

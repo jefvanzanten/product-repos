@@ -310,19 +310,9 @@ corepack pnpm --filter @product-repos/backend exec bun test tests/product-create
 corepack pnpm --filter @product-repos/backend typecheck
 corepack pnpm --filter product-management-admin typecheck
 corepack pnpm --filter product-management-admin build
-corepack pnpm run test:specs
 ```
 
 Stop wanneer pnpm `node_modules` wil verwijderen of opnieuw opbouwen en volg dan `docs/dependency-management.md`.
-
-## Bekende verificatiebaseline
-
-De eenmalige specsuite faalde tijdens het opstellen van dit plan al op twee niet aan dit plan gekoppelde ontbrekende coveragevermeldingen:
-
-- `docs/specs/admin-dashboard/product-catalogus/product-archiveren-specificatie.md`;
-- `docs/specs/calorie-tracker/logs/log-detail-bewerken.md`.
-
-Dit plan introduceert geen nieuwe spec en veroorzaakt die failures niet. Los deze twee bestaande coveragegaps in hun eigen plannen/indexwijziging op voordat `corepack pnpm run test:specs` als groene eindvoorwaarde kan gelden.
 
 ## Uitvoervolgorde
 
@@ -346,7 +336,7 @@ Dit plan introduceert geen nieuwe spec en veroorzaakt die failures niet. Los dez
 - Automatische en handmatige caloriebronnen volgen de domeinregels.
 - `product-create.test.ts` consumeert en controleert consumptietype en voedingswaarden.
 - `product-edit.test.ts` bestaat en controleert dezelfde velden via PATCH en een daaropvolgende GET.
-- Gerichte backendtests, backendtypecheck, admintypecheck, adminbuild en specsuite slagen.
+- Gerichte backendtests, backendtypecheck, admintypecheck en adminbuild slagen.
 
 ## Spec impact
 

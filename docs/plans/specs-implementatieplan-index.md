@@ -13,6 +13,7 @@ Deze index koppelt elk specbestand onder `docs/specs/` aan een uitvoerbaar plan.
 | `docs/specs/admin-dashboard/product-catalogus/product-zoeken-specificatie.md` | `docs/plans/admin-product-zoeken-plan.md` | wijzigings-/implementatieplan | cataloguszoekveld en merkzoeken deels aanwezig |
 | `docs/specs/admin-dashboard/product-catalogus/productcatalogus-browsen-specificatie.md` | `docs/plans/admin-productcatalogus-browsen-plan.md` | implementatieplan | nieuw op backend, frontend heeft alleen shell |
 | `docs/specs/admin-dashboard/product-catalogus/product-detail-specificatie.md` | `docs/plans/admin-product-detail-verpakkingen-plan.md` | implementatieplan | nieuw |
+| `docs/specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-specificatie.md` | `docs/plans/admin-opbergplaatsen-beheren-plan.md` | implementatieplan | huidige `/locations` is een niet-functionele placeholder |
 | `docs/specs/inventory-client/inventory-client-specificatie.md` | `docs/plans/inventory-client-roadmap-plan.md` | roadmap | index, huidige `/` is placeholderachtig |
 | `docs/specs/inventory-client/voorraad-inzien-specificatie.md` | `docs/plans/inventory-voorraad-inzien-plan.md` | implementatieplan | nieuw; placeholder vervangen |
 | `docs/specs/inventory-client/voorraad-toevoegen-bottom-sheet-specificatie.md` | `docs/plans/inventory-voorraad-toevoegen-bottomsheet-plan.md` | implementatieplan | nieuw |
@@ -22,7 +23,6 @@ Deze index koppelt elk specbestand onder `docs/specs/` aan een uitvoerbaar plan.
 | `docs/specs/calorie-tracker/logs/log-overzicht.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw; bestaande UI is niet aan de actieve router gekoppeld |
 | `docs/specs/calorie-tracker/logs/log-toevoegen.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw; bestaande legacy-modal gebruikt verouderde contracts |
 | `docs/specs/calorie-tracker/logs/log-detail-bewerken.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw |
-| `docs/specs/workspace/doorlopende-vitest-specsuite-specificatie.md` | `docs/plans/doorlopende-vitest-specsuite-plan.md` | werkwijze | geimplementeerd |
 
 ## Routeconventie voor adminplannen
 
@@ -37,22 +37,8 @@ Het historische `admin-dashboard-shared-package-calory-router-plan.md` behoudt d
 3. Implementeer minimale productdetail-read endpoints en route, zodat `Product aanmaken` naar detail kan redirecten.
 4. Maak `Product aanmaken` spec-compleet: context-prefill en redirect in plaats van aangemaakt-JSON tonen.
 5. Bouw cataloguszoeken en browsen samen, omdat ze dezelfde productrij-, categoriepad- en verpakkingssamenvatting-contracten delen.
-6. Bouw inventory backend/contracts eerst; vervang daarna de placeholder op `/` door voorraad inzien en bottomsheet toevoegen.
+6. Implementeer gedeeld opbergplaatsenbeheer en de actieve locatieboom volgens `docs/plans/admin-opbergplaatsen-beheren-plan.md`; rond daarna de Inventory-mutatiecontracts en toevoegflow af.
 7. Implementeer de Calorie Tracker in de fasen uit `docs/plans/calory-tracker-figma-implementatieplan.md`; de specs, ERD en endpoints zijn hiervoor inhoudelijk uitgewerkt.
-
-## Doorlopende specsuite
-
-Gebruik tijdens spec- en planwerk de Vitest-watchsuite:
-
-```text
-corepack pnpm run test:specs:watch
-```
-
-Deze suite bewaakt dat specs onder `docs/specs/` gekoppeld blijven aan plannen en dat featureplannen test- of verificatieafspraken bevatten. Voor een eenmalige run gebruik je:
-
-```text
-corepack pnpm run test:specs
-```
 
 ## Verificatie-afspraak
 

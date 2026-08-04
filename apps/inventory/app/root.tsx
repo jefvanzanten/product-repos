@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   isRouteErrorResponse,
   Links,
@@ -24,9 +26,15 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
-export function Layout({ children }: { children: React.ReactNode }) {
+/**
+ * Render the Dutch Inventory document shell.
+ *
+ * @param props - Document children rendered inside the shared HTML shell.
+ * @returns The Inventory HTML document.
+ */
+export function Layout({ children }: { readonly children: React.ReactNode }): React.ReactNode {
   return (
-    <html lang="en">
+    <html lang="nl">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -42,22 +50,37 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function App() {
-  return <Outlet />;
+/**
+ * Provide application-wide server-state caching and render the active route.
+ *
+ * @returns The application query provider and active route outlet.
+ */
+export default function App(): React.ReactNode {
+  const [queryClient] = useState(() => new QueryClient());
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Outlet />
+    </QueryClientProvider>
+  );
 }
 
-export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Oops!";
-  let details = "An unexpected error occurred.";
+/**
+ * Render route failures at the Inventory boundary.
+ *
+ * @param props - Route error captured by React Router.
+ * @returns The localized route failure page.
+ */
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps): React.ReactNode {
+  let message = "Er ging iets mis";
+  let details = "Er is een onverwachte fout opgetreden.";
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
-    details =
-      error.status === 404
-        ? "The requested page could not be found."
-        : error.statusText || details;
-  } else if (import.meta.env.DEV && error && error instanceof Error) {
+    message = error.status === 404 ? "Pagina niet gevonden" : "Routefout";
+    details = error.status === 404
+      ? "De gevraagde pagina kon niet worden gevonden."
+      : error.statusText || details;
+  } else if (import.meta.env.DEV && error instanceof Error) {
     details = error.message;
     stack = error.stack;
   }
@@ -66,11 +89,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     <main className={styles.errorPage}>
       <h1 className={styles.errorTitle}>{message}</h1>
       <p className={styles.errorDetails}>{details}</p>
-      {stack && (
-        <pre className={styles.errorStack}>
-          <code>{stack}</code>
-        </pre>
-      )}
+      {stack && <pre className={styles.errorStack}><code>{stack}</code></pre>}
     </main>
   );
 }

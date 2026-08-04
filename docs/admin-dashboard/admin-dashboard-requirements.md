@@ -45,6 +45,15 @@ Actuele admin productcatalogus-features:
 2. [Product zoeken](../specs/admin-dashboard/product-catalogus/product-zoeken-specificatie.md)
 3. [Browsbare productcatalogus](../specs/admin-dashboard/product-catalogus/productcatalogus-browsen-specificatie.md)
 
+## Opbergplaatsen
+
+- Beheerfeature: [opbergplaatsen-beheren-specificatie.md](../specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-specificatie.md)
+- Gedeelde domeinregels: [opbergplaatsen-domeinregels.md](../domein/opbergplaatsen-domeinregels.md)
+- Endpointcontract: [LOCATION_ENDPOINTS.md](../backend/Endpoints/LOCATION_ENDPOINTS.md)
+- Datamodel: [STORAGE_ERD.md](../backend/ERD/STORAGE_ERD.md)
+
+De huidige `/locations`-pagina is een niet-functionele placeholder. De geplande feature beheert één gedeelde hiërarchische locatieboom voor Inventory.
+
 ## Buiten admin
 
 Inventory/inventarisatie-client specs staan apart onder:

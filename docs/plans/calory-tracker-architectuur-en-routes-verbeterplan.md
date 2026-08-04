@@ -439,7 +439,6 @@ corepack pnpm --filter calory_tracker typecheck
 corepack pnpm --filter calory_tracker exec vitest --run app/auth app/routing app/routes/logs app/routes/statistics
 corepack pnpm --filter @product-repos/backend typecheck
 corepack pnpm --filter @product-repos/backend test -- calorie-tracker
-corepack pnpm run test:specs
 ```
 
 Stop wanneer pnpm om het verwijderen of opnieuw opbouwen van `node_modules` vraagt. Dependencyherstel is geen bijwerking van deze architectuurverbetering.

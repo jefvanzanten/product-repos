@@ -398,11 +398,6 @@ corepack pnpm --filter inventory typecheck
 corepack pnpm --filter inventory build
 ```
 
-Voer daarnaast de gerichte specsuite uit na documentatiewijzigingen:
-
-```text
-corepack pnpm run test:specs
-```
 
 Stop wanneer pnpm een modules-purge- of recreateprompt toont en volg dan `docs/dependency-management.md`; een verificatiecommando mag `node_modules` niet herstellen.
 

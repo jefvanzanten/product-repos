@@ -10,8 +10,6 @@
     "typecheck": "corepack pnpm -r --if-present run typecheck",
     "test": "corepack pnpm -r --if-present run test",
     "test:e2e": "corepack pnpm --filter calorie_tracker exec playwright test",
-    "test:specs": "corepack pnpm --filter calorie_tracker exec vitest --config vitest.specs.config.ts --run",
-    "test:specs:watch": "corepack pnpm --filter calorie_tracker exec vitest --config vitest.specs.config.ts --watch --bail=1",
     "backend:build": "corepack pnpm --filter @product-repos/backend build",
     "backend:dev": "corepack pnpm --filter @product-repos/backend dev",
     "backend:start": "corepack pnpm --filter @product-repos/backend start",

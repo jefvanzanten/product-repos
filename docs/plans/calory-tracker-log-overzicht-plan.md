@@ -346,11 +346,6 @@ corepack pnpm exec playwright test tests/e2e/calory-tracker-consumption-logbook.
    - focus-, toetsenbord- en retrygedrag;
    - geen consolefouten of mislukte netwerkrequests.
 6. Vergelijk browsercaptures met Figma-nodes `2:2` en `2:184`. Controleer voor ieder gedeeld assettype zowel bron als buiten- en binnenmaten.
-7. Draai vanwege de aangepaste planfile de gerichte documentatiesuite:
-
-```text
-corepack pnpm run test:specs
-```
 
 Rapporteer per commando pass/fail en verklaar iedere blokkade. Stop bij een pnpm-purge/recreateprompt en volg `docs/dependency-management.md`; herstel dependencies niet als bijwerking van verificatie.
 

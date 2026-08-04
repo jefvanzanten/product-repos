@@ -1,13 +1,24 @@
 import type { Route } from "./+types/inventory";
 import InventoryPage from "../../features/inventory/components/InventoryPage/InventoryPage";
 
-export function meta({}: Route.MetaArgs) {
+/**
+ * Describe the Inventory list route for the browser document.
+ *
+ * @param _args - React Router metadata arguments, unused by this static metadata.
+ * @returns Title and description metadata for the Inventory route.
+ */
+export function meta(_args: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "Inventarisatie" },
+    { name: "description", content: "Bekijk de actuele voorraad per product en locatie." },
   ];
 }
 
-export default function Inventory() {
+/**
+ * Render the authenticated Inventory read page.
+ *
+ * @returns The Inventory page component.
+ */
+export default function Inventory(): React.ReactNode {
   return <InventoryPage />;
 }

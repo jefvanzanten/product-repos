@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import type { BackendConfig } from "./config.ts";
 import type { CalorieTrackerEnvironment } from "./modules/calorie-tracker/routes/calorie-tracker.routes.ts";
+import type { InventoryEnvironment } from "./modules/inventory/routes/inventory.routes.ts";
 
 /** Already-composed dependencies mounted by the global HTTP shell. */
 export type AppDependencies = {
@@ -10,10 +11,16 @@ export type AppDependencies = {
   readonly authHandler: (request: Request) => Response | Promise<Response>;
   readonly catalogRoutes: Hono;
   readonly calorieTrackerRoutes: Hono<CalorieTrackerEnvironment>;
+  readonly inventoryRoutes: Hono<InventoryEnvironment>;
   readonly healthRoutes: Hono;
 };
 
-/** Create the global Hono shell around already-composed module routes. */
+/**
+ * Create the global Hono shell around already-composed module routes.
+ *
+ * @param dependencies - Configuration and composed route dependencies.
+ * @returns The complete backend Hono application.
+ */
 export function createApp(dependencies: AppDependencies): Hono {
   const app = new Hono();
   app.use("*", logger());
@@ -29,6 +36,7 @@ export function createApp(dependencies: AppDependencies): Hono {
   app.route("/", dependencies.healthRoutes);
   app.route("/", dependencies.catalogRoutes);
   app.route("/calorie-tracker", dependencies.calorieTrackerRoutes);
+  app.route("/", dependencies.inventoryRoutes);
 
   app.notFound((context) => context.json({ error: { message: "Route not found", statusCode: 404, path: new URL(context.req.url).pathname } }, 404));
   app.onError((error, context) => {

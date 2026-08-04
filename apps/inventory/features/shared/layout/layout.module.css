@@ -1,8 +1,10 @@
 .layout {
-  min-height: 100dvh;
+  height: 100dvh;
+  min-height: 0;
   padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
-  color: #020617;
-  background: #000000;
+  overflow: hidden;
+  color: #172033;
+  background: #11151c;
 }
 
 @media (min-width: 520px) {

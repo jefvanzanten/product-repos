@@ -53,6 +53,7 @@ Inventory gebruikt gedeelde authenticatie uit `packages/auth-client` en de appli
 - [Inventory-specificatie](../../docs/specs/inventory-client/inventory-client-specificatie.md)
 - [Voorraad inzien](../../docs/specs/inventory-client/voorraad-inzien-specificatie.md)
 - [Voorraad toevoegen](../../docs/specs/inventory-client/voorraad-toevoegen-bottom-sheet-specificatie.md)
+- [Opbergplaatsen-domeinregels](../../docs/domein/opbergplaatsen-domeinregels.md)
 - [Gedeelde bottom-tabbar](../../docs/specs/shared/bottom-tabbar-specificatie.md)
 
 ## Deployment
