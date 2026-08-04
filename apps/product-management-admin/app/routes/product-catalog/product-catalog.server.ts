@@ -1,4 +1,4 @@
-import { browseCatalog, createCategory, getCategories, mapApiError, searchCatalog, updateCategory } from "../../api/admin-dashboard-api.server";
+import { browseCatalog, createCategory, deleteCategory, getCategories, mapApiError, searchCatalog, updateCategory } from "../../api/admin-dashboard-api.server";
 import type { ActionResult, LoaderData } from "./product-catalog.types";
 
 /**
@@ -53,6 +53,16 @@ export async function handleProductCatalogAction(request: Request): Promise<Acti
       if (!Number.isInteger(categoryId) || categoryId < 1) return { errors: { form: "Categorie is ongeldig." } };
       if (!name) return { errors: { categoryName: "Vul een categorienaam in." } };
       return { ok: true, updatedCategory: await updateCategory({ id: categoryId, name }, request) };
+    }
+    if (intent === "deleteCategory") {
+      const categoryId = Number(form.get("categoryId"));
+      const parentIdRaw = String(form.get("parentId") ?? "");
+      const parentId = parentIdRaw ? Number(parentIdRaw) : null;
+      if (!Number.isInteger(categoryId) || categoryId < 1 || (parentId !== null && (!Number.isInteger(parentId) || parentId < 1))) {
+        return { errors: { form: "Categorie is ongeldig." } };
+      }
+      await deleteCategory(categoryId, request);
+      return { ok: true, deletedCategoryId: categoryId, deletedCategoryParentId: parentId };
     }
     return { errors: { form: "Onbekende actie." } };
   } catch (error) {

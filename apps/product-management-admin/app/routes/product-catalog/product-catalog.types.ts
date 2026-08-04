@@ -14,4 +14,11 @@ export type LoaderData = {
 };
 
 /** Category mutation result returned by the product catalog action. */
-export type ActionResult = { readonly ok?: true; readonly errors?: FormErrors; readonly createdCategory?: CategoryDto; readonly updatedCategory?: CategoryDto };
+export type ActionResult = {
+  readonly ok?: true;
+  readonly errors?: FormErrors;
+  readonly createdCategory?: CategoryDto;
+  readonly updatedCategory?: CategoryDto;
+  readonly deletedCategoryId?: number;
+  readonly deletedCategoryParentId?: number | null;
+};

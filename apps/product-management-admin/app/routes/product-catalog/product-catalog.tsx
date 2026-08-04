@@ -22,7 +22,7 @@ export async function loader(args: LoaderFunctionArgs): Promise<LoaderData> {
 }
 
 /** Handle protected product-catalog category mutations. */
-export async function action(args: ActionFunctionArgs): Promise<ActionResult> {
+export async function action(args: ActionFunctionArgs): Promise<ActionResult | Response> {
   await requireAdministrator(args.request);
   return handleProductCatalogRouteAction(args);
 }

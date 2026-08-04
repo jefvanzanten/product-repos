@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { AdminLink as Link } from "../../admin-source-context";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { AdminForm as Form, AdminLink as Link } from "../../admin-source-context";
 import type { CatalogBrowseResponse, CategoryDto } from "@product-repos/contracts";
 import actions from "./catalog-actions.module.css";
 import { EmptyState } from "./empty-state";
@@ -70,7 +70,7 @@ function CategoryTreeNode({ activeCategoryId, activePathIds, browse, node, onCre
 
   return (
     <div className={styles.treeNode}>
-      <CategoryRow category={node.category} depth={node.depth} hasChildren={node.children.length > 0} open={isOpen} />
+      <CategoryRow activeCategoryId={activeCategoryId} category={node.category} depth={node.depth} hasChildren={node.children.length > 0} open={isOpen} />
       {shouldShowChildren ? node.children.map((child) => (
         <CategoryTreeNode
           key={child.category.id}
@@ -113,21 +113,67 @@ function ActiveCategoryContent({ browse, depth, onCreateCategory }: { readonly b
   );
 }
 
-function CategoryRow({ category, depth, hasChildren, open }: { readonly category: CategoryDto; readonly depth: number; readonly hasChildren: boolean; readonly open: boolean }): React.ReactNode {
+/** Render a category row with a menu for rename and delete actions. */
+function CategoryRow({ activeCategoryId, category, depth, hasChildren, open }: { readonly activeCategoryId: number | null; readonly category: CategoryDto; readonly depth: number; readonly hasChildren: boolean; readonly open: boolean }): React.ReactNode {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const formAction = activeCategoryId === null ? "/product-catalogus" : `/product-catalogus?categoryId=${activeCategoryId}`;
   const target = open
     ? category.parentId
       ? `/product-catalogus?categoryId=${category.parentId}`
       : "/product-catalogus"
     : `/product-catalogus?categoryId=${category.id}`;
 
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    /** Close the menu when focus moves to another part of the page. */
+    const closeOnOutsideInteraction = (event: MouseEvent): void => {
+      if (event.target instanceof Node && !menuRef.current?.contains(event.target)) setMenuOpen(false);
+    };
+    /** Close the menu when the user presses Escape. */
+    const closeOnEscape = (event: KeyboardEvent): void => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+
+    document.addEventListener("mousedown", closeOnOutsideInteraction);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideInteraction);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [menuOpen]);
+
   return (
-    <div className={styles.categoryRow} style={{ marginLeft: `${depth}rem` }}>
+    <div className={`${styles.categoryRow} ${menuOpen ? styles.categoryRowMenuOpen : ""}`} style={{ marginLeft: `${depth}rem` }}>
       <Link className={styles.categoryLink} to={target}>
         <span className={`${styles.chevron} ${open ? styles.chevronOpen : ""}`} aria-hidden="true">▸</span>
         <span>{category.name}</span>
         {hasChildren ? <span className={styles.visuallyHidden}>heeft subcategorieën</span> : null}
       </Link>
-      <Link className={styles.editButton} aria-label={`Categorie ${category.name} bewerken`} to={`/product-catalogus/categorieen/${category.id}/bewerken`}><PencilIcon /></Link>
+      <div className={styles.categoryMenuContainer} ref={menuRef}>
+        <button
+          aria-expanded={menuOpen}
+          aria-haspopup="menu"
+          aria-label={`Categorie ${category.name} beheren`}
+          className={styles.editButton}
+          type="button"
+          onClick={() => setMenuOpen((current) => !current)}
+        >
+          <PencilIcon />
+        </button>
+        {menuOpen ? (
+          <div className={styles.categoryMenu} role="menu">
+            <Link className={styles.categoryMenuItem} role="menuitem" to={`/product-catalogus/categorieen/${category.id}/bewerken`}>Naam wijzigen</Link>
+            <Form action={formAction} method="post">
+              <input name="_action" type="hidden" value="deleteCategory" />
+              <input name="categoryId" type="hidden" value={category.id} />
+              <input name="parentId" type="hidden" value={category.parentId ?? ""} />
+              <button className={`${styles.categoryMenuItem} ${styles.deleteMenuItem}`} role="menuitem" type="submit">Verwijderen</button>
+            </Form>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
