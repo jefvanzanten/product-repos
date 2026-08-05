@@ -8,9 +8,9 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 import { isAdministrator } from "@product-repos/auth-client/roles";
-import { authClient } from "../../../app/auth-client";
-import { requireUser } from "../../../app/auth.server";
-import { INVENTORY_BASE_PATH, toInventoryPublicPath } from "../../../app/public-paths";
+import { authClient } from "../../auth-client";
+import { requireUser } from "../../auth.server";
+import { INVENTORY_BASE_PATH, toInventoryPublicPath } from "../../public-paths";
 import styles from "./layout.module.css";
 
 /** Auth-derived capabilities exposed to protected Inventory routes. */

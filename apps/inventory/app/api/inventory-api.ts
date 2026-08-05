@@ -5,7 +5,7 @@ import {
   type InventoryErrorResponse,
   type InventoryPage,
 } from "@product-repos/contracts/inventory";
-import { INVENTORY_BASE_PATH, toInventoryPublicPath } from "../../public-paths";
+import { INVENTORY_BASE_PATH, toInventoryPublicPath } from "../public-paths";
 
 /** Parsed success or classified Inventory API failure. */
 export type InventoryApiOutcome<T> =

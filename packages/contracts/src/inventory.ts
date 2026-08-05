@@ -31,6 +31,7 @@ export const inventoryItemRowSchema = z.object({
   id: z.string().uuid(),
   locationId: z.number().int().positive(),
   locationPath: z.string().min(1),
+  isLocationArchived: z.boolean(),
   expiryDate: inventoryExpiryDateSchema.nullable(),
   quantity: z.number().int().nonnegative(),
   version: z.number().int().nonnegative(),

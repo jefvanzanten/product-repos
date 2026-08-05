@@ -1,5 +1,5 @@
 import type { Route } from "./+types/inventory";
-import InventoryPage from "../../features/inventory/components/InventoryPage/InventoryPage";
+import InventoryPage from "../features/inventory/components/InventoryPage/InventoryPage";
 
 /**
  * Describe the Inventory list route for the browser document.

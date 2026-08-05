@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { useOutletContext } from "react-router";
-import type { InventoryOutletContext } from "../../../shared/layout/layout";
-import { useInventoryGroups } from "../../hooks/useInventoryGroups";
+import type { InventoryOutletContext } from "../../../../routes/layout/layout";
+import { useInventoryGroups } from "../../hooks/use-inventory-groups";
 import { InventoryGroupCard } from "./InventoryGroupCard";
 import styles from "./InventoryPage.module.css";
 
@@ -12,9 +12,8 @@ import styles from "./InventoryPage.module.css";
  */
 export default function InventoryPage(): ReactNode {
   const { isAdmin } = useOutletContext<InventoryOutletContext>();
-  const [searchInput, setSearchInput] = useState("");
   const [expandedPackages, setExpandedPackages] = useState<ReadonlySet<number>>(new Set());
-  const inventory = useInventoryGroups(searchInput);
+  const inventory = useInventoryGroups();
 
   /**
    * Expand or collapse one product-package group.
@@ -45,11 +44,11 @@ export default function InventoryPage(): ReactNode {
           </span>
           <input
             type="search"
-            value={searchInput}
+            value={inventory.searchInput}
             placeholder="Zoek in voorraad"
             autoComplete="off"
             maxLength={200}
-            onChange={(event) => setSearchInput(event.target.value)}
+            onChange={(event) => inventory.updateSearchInput(event.target.value)}
           />
         </label>
         {inventory.searchNeedsMoreInput && <p className={styles.searchHint}>Typ nog één teken om te zoeken.</p>}

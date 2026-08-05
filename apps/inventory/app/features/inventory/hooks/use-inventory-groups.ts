@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { InventoryProductGroup } from "@product-repos/contracts/inventory";
-import { getInventoryItems } from "../../../app/api/inventory-api/inventory-api";
-import { inventoryQueryKeys } from "../../../app/api/inventory-api/inventory-query-keys";
+import { getInventoryItems } from "../../../api/inventory-api";
+import { inventoryQueryKeys } from "../inventory-query-keys";
 
 /** Inventory query state exposed to the page component. */
 export type InventoryGroupsState = {
   readonly groups: ReadonlyArray<InventoryProductGroup>;
+  readonly searchInput: string;
   readonly requestQuery: string | null;
   readonly responseFailed: boolean;
   readonly searchNeedsMoreInput: boolean;
@@ -17,17 +18,25 @@ export type InventoryGroupsState = {
   readonly isFetchingNextPage: boolean;
   readonly retry: () => void;
   readonly loadNextPage: () => void;
+  readonly updateSearchInput: (value: string) => void;
 };
 
 /**
  * Load and combine paginated inventory groups for the debounced search input.
  *
- * @param searchInput - Current untrusted value from the inventory search field.
- * @returns Page-oriented query state and retry or pagination actions.
+ * @returns Page-oriented query state and search, retry, or pagination actions.
  */
-export function useInventoryGroups(searchInput: string): InventoryGroupsState {
+export function useInventoryGroups(): InventoryGroupsState {
+  const [searchInput, setSearchInput] = useState("");
+  const [requestQuery, setRequestQuery] = useState<string | null>(null);
+  const searchTimerRef = useRef<number | null>(null);
   const normalizedSearch = searchInput.trim();
-  const requestQuery = useDebouncedInventoryQuery(normalizedSearch);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current !== null) window.clearTimeout(searchTimerRef.current);
+    };
+  }, []);
   const inventoryQuery = useInfiniteQuery({
     queryKey: inventoryQueryKeys.items(requestQuery),
     initialPageParam: null as string | null,
@@ -43,6 +52,32 @@ export function useInventoryGroups(searchInput: string): InventoryGroupsState {
     () => pages.flatMap((page) => page._tag === "Success" ? page.value.groups : []),
     [pages],
   );
+
+  /**
+   * Update the visible search immediately and schedule its API query from the input event.
+   *
+   * @param value - Current untrusted search-field value.
+   * @returns Nothing.
+   */
+  function updateSearchInput(value: string): void {
+    const nextQuery = value.trim();
+    setSearchInput(value);
+
+    if (searchTimerRef.current !== null) {
+      window.clearTimeout(searchTimerRef.current);
+      searchTimerRef.current = null;
+    }
+
+    if (nextQuery.length < 2) {
+      setRequestQuery((currentQuery) => currentQuery === null ? currentQuery : null);
+      return;
+    }
+
+    searchTimerRef.current = window.setTimeout(() => {
+      searchTimerRef.current = null;
+      setRequestQuery((currentQuery) => currentQuery === nextQuery ? currentQuery : nextQuery);
+    }, 250);
+  }
 
   /**
    * Retry the current inventory query.
@@ -64,6 +99,7 @@ export function useInventoryGroups(searchInput: string): InventoryGroupsState {
 
   return {
     groups,
+    searchInput,
     requestQuery,
     responseFailed: inventoryQuery.isError || pages.some((page) => page._tag === "Failure"),
     searchNeedsMoreInput: normalizedSearch.length === 1,
@@ -74,26 +110,6 @@ export function useInventoryGroups(searchInput: string): InventoryGroupsState {
     isFetchingNextPage: inventoryQuery.isFetchingNextPage,
     retry,
     loadNextPage,
+    updateSearchInput,
   };
-}
-
-/**
- * Convert normalized search input into a debounced API query.
- *
- * @param normalizedSearch - Trimmed search input.
- * @returns A null query below two characters or the debounced search text.
- */
-function useDebouncedInventoryQuery(normalizedSearch: string): string | null {
-  const [requestQuery, setRequestQuery] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (normalizedSearch.length < 2) {
-      setRequestQuery(null);
-      return;
-    }
-    const timer = window.setTimeout(() => setRequestQuery(normalizedSearch), 250);
-    return () => window.clearTimeout(timer);
-  }, [normalizedSearch]);
-
-  return requestQuery;
 }

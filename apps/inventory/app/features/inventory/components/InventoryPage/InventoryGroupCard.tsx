@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import type { InventoryItemRow, InventoryProductGroup } from "@product-repos/contracts/inventory";
-import { expiryStatus, type ExpiryStatus, type ExpiryTone } from "../../inventory-expiry";
+import { expiryStatus, type ExpiryStatus, type ExpiryTone } from "../../utils/inventory-expiry";
 import styles from "./InventoryGroupCard.module.css";
 
 type InventoryGroupCardProps = {
@@ -95,6 +95,7 @@ function InventoryBatchRow({ item }: { readonly item: InventoryItemRow }): React
     <div className={styles.batchRow}>
       <span className={styles.batchInfo}>
         <span className={styles.locationPath}>{item.locationPath}</span>
+        {item.isLocationArchived && <span className={styles.locationArchived}>Gearchiveerde locatie</span>}
         <StatusChip status={expiryStatus(item.expiryDate)} />
       </span>
       <strong className={styles.batchQuantity}>{item.quantity}×</strong>
@@ -115,6 +116,6 @@ function StatusChip({ status }: { readonly status: ExpiryStatus }): ReactNode {
     soon: styles.statusSoon,
     ok: styles.statusOk,
     none: styles.statusNone,
-  } satisfies Record<ExpiryTone, string>;
-  return <span className={`${styles.statusChip} ${toneClass[status.tone]}`}>{status.label}</span>;
+  } satisfies Record<ExpiryTone, string | undefined>;
+  return <span className={`${styles.statusChip} ${toneClass[status.tone] ?? ""}`}>{status.label}</span>;
 }
