@@ -27,6 +27,9 @@ import { createHealthService } from "./modules/health/health.service.ts";
 import { createDrizzleInventoryRepository } from "./modules/inventory/repositories/drizzle-inventory.repository.ts";
 import { inventoryRoutes } from "./modules/inventory/routes/inventory.routes.ts";
 import { createInventoryQueryService } from "./modules/inventory/services/inventory-query.service.ts";
+import { createDrizzleLocationRepository } from "./modules/locations/repositories/drizzle-location.repository.ts";
+import { locationRoutes } from "./modules/locations/routes/location.routes.ts";
+import { createLocationService } from "./modules/locations/services/location.service.ts";
 
 /** Fully composed backend runtime and its owned resources. */
 export type BackendRuntime = {
@@ -67,12 +70,15 @@ export function createBackendRuntime(config: BackendConfig): BackendRuntime {
   const nutritionSummary = createNutritionSummaryService({ catalogReader, logRepository, goalRepository, clock: systemClock });
   const inventoryReader = createDrizzleInventoryRepository(database);
   const inventoryQueries = createInventoryQueryService(inventoryReader);
+  const locationStore = createDrizzleLocationRepository(database);
+  const locations = createLocationService(locationStore);
   const app = createApp({
     config,
     authHandler: (request) => auth.handler(request),
     catalogRoutes: catalogRoutes({ authorization: createCatalogAuthorization(sessionResolver), packageImages, references, products: productRouteService }),
     calorieTrackerRoutes: calorieTrackerRoutes({ consumptionLogs, nutritionSummary, packageSelection, sessionResolver }),
     inventoryRoutes: inventoryRoutes({ inventoryQueries, sessionResolver }),
+    locationRoutes: locationRoutes({ locations, sessionResolver }),
     healthRoutes: healthRoutes(createHealthService(createDatabaseReadinessProbe(database))),
   });
 

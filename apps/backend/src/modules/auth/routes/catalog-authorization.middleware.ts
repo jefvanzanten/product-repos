@@ -1,11 +1,7 @@
 import type { MiddlewareHandler } from "hono";
 import type { SessionResolver } from "../services/session-resolution.service.ts";
 import { reportAuthenticationStoreUnavailable } from "../services/session-resolution.service.ts";
-
-/** Determine whether a Better Auth role list contains the administrator role. */
-function hasAdminRole(role: string | null | undefined): boolean {
-  return role?.split(",").some((entry) => entry.trim() === "admin") ?? false;
-}
+import { hasAdminRole } from "../services/role.service.ts";
 
 /** Create catalog authorization mounted only on the catalog router. */
 export function createCatalogAuthorization(sessionResolver: SessionResolver): MiddlewareHandler {

@@ -86,7 +86,7 @@ export function createSessionResolver(auth: {
  */
 export function reportAuthenticationStoreUnavailable(
   error: AuthenticationStoreUnavailable,
-  boundary: "catalog" | "calorieTracker" | "inventory",
+  boundary: "catalog" | "calorieTracker" | "inventory" | "locations",
 ): string {
   const correlationId = crypto.randomUUID();
   console.error("Authentication store unavailable", {

@@ -64,7 +64,7 @@ export function createDrizzleInventoryRepository(database: BackendDatabase): Inv
    */
   function findAllLocations() {
     return database
-      .select({ id: location.id, parentId: location.parentId, name: location.name })
+      .select({ id: location.id, parentId: location.parentId, name: location.name, archivedAt: location.archivedAt })
       .from(location)
       .orderBy(asc(location.id))
       .all();

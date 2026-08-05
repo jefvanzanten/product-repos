@@ -40,7 +40,7 @@ function stockRow(overrides: Partial<InventoryStockRow>): InventoryStockRow {
  */
 function fakeReader(
   rows: ReadonlyArray<InventoryStockRow>,
-  locations: ReadonlyArray<InventoryLocationRow> = [{ id: 1, parentId: null, name: "Keuken" }],
+  locations: ReadonlyArray<InventoryLocationRow> = [{ id: 1, parentId: null, name: "Keuken", archivedAt: null }],
   categories: ReadonlyArray<InventoryCategoryRow> = [{ id: 1, parentId: null, name: "Zuivel" }],
 ): InventoryReader {
   return {
@@ -98,8 +98,8 @@ describe("inventory query service", () => {
           stockRow({ itemId: "cola", productPackageId: 11, productId: "p2", productName: "Cola", brandName: "Fizz", packageTypeName: "fles", contentAmount: "1.5" }),
         ],
         [
-          { id: 1, parentId: null, name: "Keuken" },
-          { id: 2, parentId: 1, name: "Koelkast" },
+          { id: 1, parentId: null, name: "Keuken", archivedAt: null },
+          { id: 2, parentId: 1, name: "Koelkast", archivedAt: null },
         ],
       ),
     );
@@ -129,9 +129,9 @@ describe("inventory query service", () => {
       fakeReader(
         [stockRow({ itemId: "milk", locationId: 3 })],
         [
-          { id: 1, parentId: null, name: "Keuken" },
-          { id: 2, parentId: 1, name: "Koelkast" },
-          { id: 3, parentId: 2, name: "Lade 1" },
+          { id: 1, parentId: null, name: "Keuken", archivedAt: null },
+          { id: 2, parentId: 1, name: "Koelkast", archivedAt: null },
+          { id: 3, parentId: 2, name: "Lade 1", archivedAt: null },
         ],
         [
           { id: 5, parentId: null, name: "Voeding" },

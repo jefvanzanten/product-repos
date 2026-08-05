@@ -1,5 +1,6 @@
 import type { InventoryPage, InventoryProductGroup } from "@product-repos/contracts/inventory";
 import type { InventoryReader, InventoryStockRow } from "../repositories/inventory-reader.ts";
+import { projectLocationMetadata, type LocationMetadata } from "../../locations/domain/location-domain.ts";
 
 /** Parsed list request accepted by the inventory query service. */
 export type InventoryListQuery = {
@@ -47,7 +48,8 @@ export function createInventoryQueryService(reader: InventoryReader): InventoryQ
    */
   function listInventory(input: InventoryListQuery): InventoryPage {
     const stockRows = reader.findStockRows();
-    const locationPaths = buildPathMap(reader.findAllLocations());
+    const locationMetadata = projectLocationMetadata(reader.findAllLocations());
+    const locationPaths = new Map([...locationMetadata].map(([id, value]) => [id, value.path]));
     const categoryPaths = buildPathMap(reader.findAllCategories());
     const searchable = input.query === null ? null : input.query.trim().toLowerCase();
 
@@ -74,7 +76,7 @@ export function createInventoryQueryService(reader: InventoryReader): InventoryQ
     }
 
     const matched = drafts.filter((draft) => matchesQuery(draft, locationPaths, searchable));
-    const groups = matched.map((draft) => toProductGroup(draft, locationPaths)).sort(compareGroups);
+    const groups = matched.map((draft) => toProductGroup(draft, locationMetadata)).sort(compareGroups);
     const page = groups.slice(input.offset, input.offset + input.limit);
     return { groups: page, nextCursor: input.offset + input.limit < groups.length ? String(input.offset + input.limit) : null };
   }
@@ -115,11 +117,12 @@ function matchesQuery(
  * @param locationPaths - Resolved location paths keyed by location identifier.
  * @returns A strict inventory product group.
  */
-function toProductGroup(draft: GroupDraft, locationPaths: ReadonlyMap<number, string>): InventoryProductGroup {
+function toProductGroup(draft: GroupDraft, locationMetadata: ReadonlyMap<number, LocationMetadata>): InventoryProductGroup {
   const items = [...draft.items].sort(compareBatches).map((row) => ({
     id: row.itemId,
     locationId: row.locationId,
-    locationPath: locationPaths.get(row.locationId) ?? "Onbekende locatie",
+    locationPath: locationMetadata.get(row.locationId)?.path ?? "Onbekende locatie",
+    isLocationArchived: locationMetadata.get(row.locationId)?.isEffectivelyArchived ?? false,
     expiryDate: row.expiryDate,
     quantity: row.quantity,
     version: row.version,

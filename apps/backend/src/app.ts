@@ -4,6 +4,7 @@ import { logger } from "hono/logger";
 import type { BackendConfig } from "./config.ts";
 import type { CalorieTrackerEnvironment } from "./modules/calorie-tracker/routes/calorie-tracker.routes.ts";
 import type { InventoryEnvironment } from "./modules/inventory/routes/inventory.routes.ts";
+import type { LocationEnvironment } from "./modules/locations/routes/location.routes.ts";
 
 /** Already-composed dependencies mounted by the global HTTP shell. */
 export type AppDependencies = {
@@ -12,6 +13,7 @@ export type AppDependencies = {
   readonly catalogRoutes: Hono;
   readonly calorieTrackerRoutes: Hono<CalorieTrackerEnvironment>;
   readonly inventoryRoutes: Hono<InventoryEnvironment>;
+  readonly locationRoutes: Hono<LocationEnvironment>;
   readonly healthRoutes: Hono;
 };
 
@@ -37,6 +39,7 @@ export function createApp(dependencies: AppDependencies): Hono {
   app.route("/", dependencies.catalogRoutes);
   app.route("/calorie-tracker", dependencies.calorieTrackerRoutes);
   app.route("/", dependencies.inventoryRoutes);
+  app.route("/", dependencies.locationRoutes);
 
   app.notFound((context) => context.json({ error: { message: "Route not found", statusCode: 404, path: new URL(context.req.url).pathname } }, 404));
   app.onError((error, context) => {

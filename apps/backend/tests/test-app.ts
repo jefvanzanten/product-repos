@@ -1,19 +1,20 @@
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
-import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createBackendRuntime, type BackendRuntime } from "../src/composition.ts";
 import { loadBackendConfig } from "../src/config.ts";
+import { runBackendMigrations } from "../src/db/run-migrations.ts";
 
 const tempDir = mkdtempSync(join(tmpdir(), "backend-api-test-"));
 const databasePath = join(tempDir, "sqlite.db");
 const sqlite = new Database(databasePath, { create: true });
+sqlite.exec("PRAGMA foreign_keys = ON");
 const testDb = drizzle(sqlite);
 const migrationsFolder = fileURLToPath(new URL("../drizzle/migrations", import.meta.url));
-migrate(testDb, { migrationsFolder });
+runBackendMigrations(sqlite, testDb, migrationsFolder);
 
 /** Parse an inserted SQLite row identifier at the test persistence boundary. */
 function readInsertedId(row: unknown): number {

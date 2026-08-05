@@ -29,6 +29,7 @@ export function createDatabase(config: Pick<BackendConfig, "databasePath">): Dat
   const resolvedPath = resolve(config.databasePath);
   mkdirSync(dirname(resolvedPath), { recursive: true });
   const sqlite = new Database(resolvedPath, { create: true });
+  sqlite.exec("PRAGMA foreign_keys = ON");
   let closed = false;
 
   /** Close this database resource at most once. */

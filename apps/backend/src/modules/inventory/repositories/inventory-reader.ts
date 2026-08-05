@@ -23,6 +23,7 @@ export type InventoryLocationRow = {
   readonly id: number;
   readonly parentId: number | null;
   readonly name: string;
+  readonly archivedAt: string | null;
 };
 
 /** Category tree node used to build root-to-category paths. */

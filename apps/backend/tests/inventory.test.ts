@@ -2,7 +2,8 @@ import { describe, expect, it } from "bun:test";
 import { productCreatedDtoSchema } from "@product-repos/contracts";
 import { inventoryPageSchema } from "@product-repos/contracts/inventory";
 import { inventoryItem, location } from "../src/db/schema.ts";
-import { app, requestAsAdmin, requestAsUser, testCatalog, testDatabase } from "./test-app";
+import { normalizeLocationName } from "../src/modules/locations/domain/location-domain.ts";
+import { app, executeTestSql, requestAsAdmin, requestAsUser, testCatalog, testDatabase } from "./test-app";
 
 /**
  * Create one active catalog package through the real admin route.
@@ -41,9 +42,11 @@ async function createInventoryPackage(productName: string): Promise<{ readonly p
  * @returns The generated location identifier.
  */
 function createLocation(name: string, parentId: number | null = null): number {
+  const normalized = normalizeLocationName(name);
+  if (!normalized.ok) throw new Error("Inventory test location name is invalid");
   const inserted = testDatabase
     .insert(location)
-    .values({ name, parentId })
+    .values({ name: normalized.value.name, normalizedName: normalized.value.normalizedName, parentId })
     .returning({ id: location.id })
     .get();
   if (inserted === undefined) throw new Error("Inventory test location was not created");
@@ -92,6 +95,8 @@ describe("Inventory authenticated route integration", () => {
         version: 2,
       },
     ]).run();
+    const archivedAt = new Date().toISOString();
+    executeTestSql("UPDATE location SET archived_at = ?, updated_at = ? WHERE id IN (?, ?)", archivedAt, archivedAt, rootLocationId, secondLocationId);
 
     const response = await requestAsUser(`/inventory-items?query=${encodeURIComponent(productName)}&limit=10`);
     expect(response.status).toBe(200);
@@ -112,6 +117,8 @@ describe("Inventory authenticated route integration", () => {
     });
     expect(group.items.map((item) => item.quantity)).toEqual([2, 3]);
     expect(group.items[0]!.locationPath).toContain("Koelkast");
+    expect(group.items[0]!.isLocationArchived).toBeTrue();
+    expect(group.items[1]!.isLocationArchived).toBeTrue();
     expect(group.items[1]!.expiryDate).toBeNull();
   });
 });
