@@ -8,6 +8,7 @@ FROM base AS development-dependencies
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/inventory/package.json apps/inventory/package.json
 COPY packages/auth-client/package.json packages/auth-client/package.json
+COPY packages/contracts/package.json packages/contracts/package.json
 COPY packages/shared/package.json packages/shared/package.json
 RUN corepack pnpm install --filter inventory... --frozen-lockfile
 
@@ -16,6 +17,7 @@ ENV NODE_ENV="production"
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/inventory/package.json apps/inventory/package.json
 COPY packages/auth-client/package.json packages/auth-client/package.json
+COPY packages/contracts/package.json packages/contracts/package.json
 COPY packages/shared/package.json packages/shared/package.json
 RUN corepack pnpm install --filter inventory... --prod --frozen-lockfile
 
@@ -24,6 +26,7 @@ ARG VITE_API_URL=https://api.jefvanzanten.dev
 ENV VITE_API_URL="$VITE_API_URL"
 COPY apps/inventory apps/inventory
 COPY packages/auth-client packages/auth-client
+COPY packages/contracts packages/contracts
 COPY packages/shared packages/shared
 RUN corepack pnpm --filter inventory build
 
