@@ -4,7 +4,7 @@ import {
   toAdminRedirectPath,
 } from "../../admin-navigation";
 import { handleProductCatalogAction, loadProductCatalog } from "./product-catalog.server";
-import type { ActionResult, LoaderData } from "./product-catalog.types";
+import type { ActionResult, LoaderData } from "../../features/product-catalog/types/product-catalog.types";
 
 /**
  * Load catalog data with the requested category open in edit mode.

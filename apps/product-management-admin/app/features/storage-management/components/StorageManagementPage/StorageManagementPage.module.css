@@ -1,0 +1,152 @@
+.page {
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: column;
+  min-height: 0;
+  padding-top: 16px;
+  padding-bottom: 1rem;
+  overflow: hidden;
+}
+
+.card {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: 1rem;
+  overflow: hidden;
+  color: #151515;
+  text-align: left;
+  background: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.description {
+  margin: 0.4rem 0 0;
+  color: #4d4d4d;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.primaryButton {
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: #209b7e;
+  border: 0;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.primaryButton:hover {
+  background: #1b876e;
+}
+
+.primaryButton:focus-visible,
+.filters a:focus-visible {
+  outline: 3px solid rgb(32 155 126 / 25%);
+  outline-offset: 2px;
+}
+
+.filters {
+  display: flex;
+  gap: 0.25rem;
+  margin: 1.25rem 0 1rem;
+  padding: 0.25rem;
+  background: #eef2f3;
+  border-radius: 0.5rem;
+}
+
+.filters a {
+  flex: 1 1 0;
+  padding: 0.55rem 0.75rem;
+  color: #55616f;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 0.35rem;
+}
+
+.filters .activeFilter {
+  color: #176e5a;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgb(20 30 40 / 8%);
+}
+
+.emptyState {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  min-height: 13rem;
+  padding: 1.5rem;
+  color: #596473;
+  text-align: center;
+  background: #f8fafb;
+  border: 1px dashed #ccd3dc;
+  border-radius: 0.6rem;
+}
+
+.emptyState h2 {
+  margin: 0;
+  color: #293446;
+  font-size: 1rem;
+}
+
+.emptyState p {
+  max-width: 28rem;
+  margin: 0.45rem 0 1rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.treeActions {
+  display: flex;
+  flex: 0 0 auto;
+  margin-top: 1rem;
+}
+
+.pageError {
+  padding: 0.75rem;
+  color: #9c2f39;
+  font-size: 0.8rem;
+  background: #fcebed;
+  border-radius: 0.4rem;
+}
+
+@media (max-width: 600px) {
+  .header {
+    flex-direction: column;
+  }
+
+  .header .primaryButton,
+  .treeActions .primaryButton {
+    width: 100%;
+  }
+
+  .card {
+    padding: 0.75rem;
+  }
+}

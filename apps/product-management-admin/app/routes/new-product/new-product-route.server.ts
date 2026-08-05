@@ -1,8 +1,8 @@
 import { redirect } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { parseAdminSourceFromSearch, toAdminRedirectPath } from "../../admin-navigation";
-import { preserveProductFormValues } from "../../features/admin/product-forms/product-form-data";
-import { submitCreateProductForm } from "../../features/admin/product-forms/product-mutations.server";
+import { preserveProductFormValues } from "../../features/product-catalog/server/product-form-data";
+import { submitCreateProductForm } from "../../features/product-catalog/server/product-mutations.server";
 import {
   createBrand,
   createCategory,
@@ -18,7 +18,7 @@ import {
 import type {
   NewProductActionResult,
   NewProductLoaderData,
-} from "./new-product.types";
+} from "../../features/product-catalog/types/new-product.types";
 
 /**
  * Load reference data for the new-product page.

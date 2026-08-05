@@ -9,8 +9,8 @@ import {
   handleEditCategoryRouteAction,
   loadEditCategoryRoute,
 } from "./edit-category-route.server";
-import { ProductCatalogPage } from "./product-catalog-page";
-import type { ActionResult, LoaderData } from "./product-catalog.types";
+import { ProductCatalogPage } from "../../features/product-catalog/pages/ProductCatalogPage/ProductCatalogPage";
+import type { ActionResult, LoaderData } from "../../features/product-catalog/types/product-catalog.types";
 
 export { meta } from "./product-catalog";
 

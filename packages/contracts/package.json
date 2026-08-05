@@ -45,6 +45,11 @@
       "types": "./src/inventory.ts",
       "import": "./src/inventory.ts",
       "default": "./src/inventory.ts"
+    },
+    "./locations": {
+      "types": "./src/locations.ts",
+      "import": "./src/locations.ts",
+      "default": "./src/locations.ts"
     }
   },
   "files": [

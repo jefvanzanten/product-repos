@@ -1,14 +1,22 @@
 import {
+  brandDtoSchema,
   catalogBrowseResponseSchema,
   catalogSearchResponseSchema,
+  categoryDtoSchema,
+  packageTypeDtoSchema,
   productCreatedDtoSchema,
   productDetailDtoSchema,
   productPackageDtoSchema,
+  unitTypeDtoSchema,
 } from "@product-repos/contracts";
 import type { BrandDto, CatalogBrowseResponse, CatalogSearchResponse, CategoryDto, CreateProductRequest, PackageTypeDto, ProductCreatedDto, ProductDetailDto, ProductPackageDto, ProductPackageRequest, UnitTypeDto, UpdateProductRequest } from "@product-repos/contracts";
+import { sendBackendRequest } from "./backend-api.server";
 
-const apiBaseUrl = process.env.API_URL ?? "http://localhost:3000";
-const apiUrl = apiBaseUrl.replace(/\/$/, "");
+const brandListSchema = brandDtoSchema.array();
+const categoryListSchema = categoryDtoSchema.array();
+const packageTypeListSchema = packageTypeDtoSchema.array();
+const productPackageImageResponseSchema = productPackageDtoSchema.pick({ imageUrl: true });
+const unitTypeListSchema = unitTypeDtoSchema.array();
 
 type ProductPackageWithProductId = ProductPackageDto & { readonly productId: string };
 
@@ -16,35 +24,34 @@ type ApiError = {
   code?: string;
   message?: string;
   fields?: Record<string, string>;
-  existingProductId?: string;
 };
 
 type FormErrors = Record<string, string>;
 
 /** Fetch catalog categories with the incoming session. */
 async function getCategories(request: Request): Promise<CategoryDto[]> {
-  return getJson<CategoryDto[]>("/categories", request);
+  return categoryListSchema.parse(await getJson("/categories", request));
 }
 
 /** Fetch brand suggestions with the incoming session. */
 async function getBrands(query: string, request: Request): Promise<BrandDto[]> {
   const params = new URLSearchParams({ query });
-  return getJson<BrandDto[]>(`/brands?${params.toString()}`, request);
+  return brandListSchema.parse(await getJson(`/brands?${params.toString()}`, request));
 }
 
 /** Fetch one brand with the incoming session. */
 async function getBrand(brandId: string, request: Request): Promise<BrandDto> {
-  return getJson<BrandDto>(`/brands/${brandId}`, request);
+  return brandDtoSchema.parse(await getJson(`/brands/${brandId}`, request));
 }
 
 /** Fetch unit types with the incoming session. */
 async function getUnitTypes(request: Request): Promise<UnitTypeDto[]> {
-  return getJson<UnitTypeDto[]>("/unit-types", request);
+  return unitTypeListSchema.parse(await getJson("/unit-types", request));
 }
 
 /** Fetch package types with the incoming session. */
 async function getPackageTypes(request: Request): Promise<PackageTypeDto[]> {
-  return getJson<PackageTypeDto[]>("/package-types", request);
+  return packageTypeListSchema.parse(await getJson("/package-types", request));
 }
 
 /** Browse the catalog with the incoming session. */
@@ -54,33 +61,33 @@ async function browseCatalog(input: { readonly categoryId?: string | null; reado
   if (input.brandId) params.set("brandId", input.brandId);
   if (input.limit) params.set("limit", String(input.limit));
   const query = params.toString();
-  return catalogBrowseResponseSchema.parse(await getJson<unknown>(`/products${query ? `?${query}` : ""}`, request));
+  return catalogBrowseResponseSchema.parse(await getJson(`/products${query ? `?${query}` : ""}`, request));
 }
 
 /** Search the catalog with the incoming session. */
 async function searchCatalog(query: string, request: Request): Promise<CatalogSearchResponse> {
   const params = new URLSearchParams({ query });
-  return catalogSearchResponseSchema.parse(await getJson<unknown>(`/products/search?${params.toString()}`, request));
+  return catalogSearchResponseSchema.parse(await getJson(`/products/search?${params.toString()}`, request));
 }
 
 /** Fetch product detail with the incoming session. */
 async function getProduct(productId: string, request: Request): Promise<ProductDetailDto> {
-  return productDetailDtoSchema.parse(await getJson<unknown>(`/products/${productId}`, request));
+  return productDetailDtoSchema.parse(await getJson(`/products/${productId}`, request));
 }
 
 /** Fetch package detail with the incoming session. */
 async function getProductPackage(productId: string, packageId: string, request: Request): Promise<ProductPackageWithProductId> {
-  return parseProductPackageWithProductId(await getJson<unknown>(`/products/${productId}/packages/${packageId}`, request));
+  return parseProductPackageWithProductId(await getJson(`/products/${productId}/packages/${packageId}`, request));
 }
 
 /** Create a category with the incoming session. */
 async function createCategory(input: { name: string; parentId: number | null }, request: Request): Promise<CategoryDto> {
-  return postJson<CategoryDto>("/categories", input, request);
+  return categoryDtoSchema.parse(await postJson("/categories", input, request));
 }
 
 /** Update a category with the incoming session. */
 async function updateCategory(input: { id: number; name: string }, request: Request): Promise<CategoryDto> {
-  return patchJson<CategoryDto>(`/categories/${input.id}`, { name: input.name }, request);
+  return categoryDtoSchema.parse(await patchJson(`/categories/${input.id}`, { name: input.name }, request));
 }
 
 /** Delete a category with the incoming session. */
@@ -90,22 +97,22 @@ async function deleteCategory(id: number, request: Request): Promise<void> {
 
 /** Create or resolve a brand with the incoming session. */
 async function createBrand(input: { name: string }, request: Request): Promise<BrandDto> {
-  return postJson<BrandDto>("/brands", input, request);
+  return brandDtoSchema.parse(await postJson("/brands", input, request));
 }
 
 /** Create a product with the incoming session. */
 async function createProduct(input: CreateProductRequest, request: Request): Promise<ProductCreatedDto> {
-  return productCreatedDtoSchema.parse(await postJson<unknown>("/products", input, request));
+  return productCreatedDtoSchema.parse(await postJson("/products", input, request));
 }
 
 /** Update a product with the incoming session. */
 async function updateProduct(productId: string, input: UpdateProductRequest, request: Request): Promise<ProductDetailDto> {
-  return productDetailDtoSchema.parse(await patchJson<unknown>(`/products/${productId}`, input, request));
+  return productDetailDtoSchema.parse(await patchJson(`/products/${productId}`, input, request));
 }
 
 /** Add a product package with the incoming session. */
 async function addProductPackage(productId: string, input: ProductPackageRequest, request: Request): Promise<ProductPackageWithProductId> {
-  return parseProductPackageWithProductId(await postJson<unknown>(`/products/${productId}/packages`, input, request));
+  return parseProductPackageWithProductId(await postJson(`/products/${productId}/packages`, input, request));
 }
 
 /**
@@ -120,7 +127,10 @@ async function addProductPackage(productId: string, input: ProductPackageRequest
 async function uploadProductPackageImage(productId: string, packageId: string, image: File, request: Request): Promise<string> {
   const form = new FormData();
   form.set("image", image);
-  const result = await postFormData<{ readonly imageUrl: string }>(`/products/${productId}/packages/${packageId}/image`, form, request);
+  const result = productPackageImageResponseSchema.parse(
+    await postFormData(`/products/${productId}/packages/${packageId}/image`, form, request),
+  );
+  if (result.imageUrl === null) throw new Error("Product package image response contains no image URL");
   return result.imageUrl;
 }
 
@@ -139,7 +149,7 @@ async function cleanupProductPackageImage(productId: string, packageId: string, 
 
 /** Update a product package with the incoming session. */
 async function updateProductPackage(productId: string, packageId: string, input: ProductPackageRequest, request: Request): Promise<ProductPackageWithProductId> {
-  return parseProductPackageWithProductId(await patchJson<unknown>(`/products/${productId}/packages/${packageId}`, input, request));
+  return parseProductPackageWithProductId(await patchJson(`/products/${productId}/packages/${packageId}`, input, request));
 }
 
 /** Parse a package response including its route-level product identifier. */
@@ -188,35 +198,14 @@ function isNotFound(error: unknown): boolean {
   return error instanceof BackendApiError && error.status === 404;
 }
 
-/** Create backend request headers while preserving the incoming authenticated session. */
-function createBackendHeaders(request: Request, includeJsonContentType = false): Headers {
-  const headers = new Headers();
-  const cookie = request.headers.get("cookie");
-  if (cookie) headers.set("cookie", cookie);
-  if (includeJsonContentType) headers.set("Content-Type", "application/json");
-  return headers;
-}
-
 /** Perform an authenticated backend GET request. */
-async function getJson<T>(path: string, request: Request): Promise<T> {
-  const response = await fetch(`${apiUrl}${path}`, {
-    headers: createBackendHeaders(request),
-    signal: request.signal,
-  });
-  if (!response.ok) throw new BackendApiError(response.status, await readApiError(response));
-  return response.json() as Promise<T>;
+async function getJson(path: string, request: Request): Promise<unknown> {
+  return readJsonResponse(await sendBackendRequest(path, request));
 }
 
 /** Perform an authenticated backend POST request. */
-async function postJson<T>(path: string, body: unknown, request: Request): Promise<T> {
-  const response = await fetch(`${apiUrl}${path}`, {
-    method: "POST",
-    headers: createBackendHeaders(request, true),
-    body: JSON.stringify(body),
-    signal: request.signal,
-  });
-  if (!response.ok) throw new BackendApiError(response.status, await readApiError(response));
-  return response.json() as Promise<T>;
+async function postJson(path: string, body: unknown, request: Request): Promise<unknown> {
+  return readJsonResponse(await sendBackendRequest(path, request, { method: "POST", body }));
 }
 
 /**
@@ -225,29 +214,15 @@ async function postJson<T>(path: string, body: unknown, request: Request): Promi
  * @param path - Backend API path.
  * @param body - Multipart request body.
  * @param request - Incoming request carrying session headers.
- * @returns Parsed backend response.
+ * @returns Untrusted backend response data for contract parsing.
  */
-async function postFormData<T>(path: string, body: FormData, request: Request): Promise<T> {
-  const response = await fetch(`${apiUrl}${path}`, {
-    method: "POST",
-    headers: createBackendHeaders(request),
-    body,
-    signal: request.signal,
-  });
-  if (!response.ok) throw new BackendApiError(response.status, await readApiError(response));
-  return response.json() as Promise<T>;
+async function postFormData(path: string, body: FormData, request: Request): Promise<unknown> {
+  return readJsonResponse(await sendBackendRequest(path, request, { method: "POST", body }));
 }
 
 /** Perform an authenticated backend PATCH request. */
-async function patchJson<T>(path: string, body: unknown, request: Request): Promise<T> {
-  const response = await fetch(`${apiUrl}${path}`, {
-    method: "PATCH",
-    headers: createBackendHeaders(request, true),
-    body: JSON.stringify(body),
-    signal: request.signal,
-  });
-  if (!response.ok) throw new BackendApiError(response.status, await readApiError(response));
-  return response.json() as Promise<T>;
+async function patchJson(path: string, body: unknown, request: Request): Promise<unknown> {
+  return readJsonResponse(await sendBackendRequest(path, request, { method: "PATCH", body }));
 }
 
 /**
@@ -259,18 +234,65 @@ async function patchJson<T>(path: string, body: unknown, request: Request): Prom
  * @returns A promise that resolves after a successful response.
  */
 async function deleteJson(path: string, request: Request, body?: unknown): Promise<void> {
-  const response = await fetch(`${apiUrl}${path}`, {
-    method: "DELETE",
-    headers: createBackendHeaders(request, body !== undefined),
-    body: body === undefined ? undefined : JSON.stringify(body),
-    signal: request.signal,
-  });
+  const response = await sendBackendRequest(path, request, { method: "DELETE", body });
   if (!response.ok) throw new BackendApiError(response.status, await readApiError(response));
 }
 
-/** Parse a backend error response into its safe protocol projection. */
+/**
+ * Check a backend response and return its untrusted JSON body.
+ *
+ * @param response - Raw backend response.
+ * @returns Untrusted JSON data for endpoint-specific contract parsing.
+ */
+async function readJsonResponse(response: Response): Promise<unknown> {
+  if (!response.ok) throw new BackendApiError(response.status, await readApiError(response));
+  const value: unknown = await response.json();
+  return value;
+}
+
+/**
+ * Parse a backend error response into its safe protocol projection.
+ *
+ * @param response - Failed backend response.
+ * @returns Sanitized error fields safe for application error mapping.
+ */
 async function readApiError(response: Response): Promise<ApiError> {
-  return response.json().then((value) => value as ApiError).catch(() => ({ message: response.statusText }));
+  const value: unknown = await response.json().catch(() => null);
+  if (typeof value !== "object" || value === null) return { message: response.statusText };
+
+  const code = readOptionalString(value, "code");
+  const message = readOptionalString(value, "message");
+  const fields = readStringRecord(Reflect.get(value, "fields"));
+  return {
+    ...(code === undefined ? {} : { code }),
+    ...(message === undefined ? {} : { message }),
+    ...(fields === undefined ? {} : { fields }),
+  };
+}
+
+/**
+ * Read an optional string field from an untrusted protocol object.
+ *
+ * @param input - Untrusted protocol object.
+ * @param field - Field to inspect.
+ * @returns String value or undefined.
+ */
+function readOptionalString(input: object, field: string): string | undefined {
+  const value: unknown = Reflect.get(input, field);
+  return typeof value === "string" ? value : undefined;
+}
+
+/**
+ * Parse an untrusted string record.
+ *
+ * @param input - Potential record value.
+ * @returns String-only record or undefined when malformed.
+ */
+function readStringRecord(input: unknown): Record<string, string> | undefined {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) return undefined;
+  const entries = Object.entries(input);
+  if (!entries.every((entry) => typeof entry[1] === "string")) return undefined;
+  return Object.fromEntries(entries) as Record<string, string>;
 }
 
 class BackendApiError extends Error {

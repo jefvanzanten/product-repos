@@ -12,7 +12,7 @@ import {
 import type {
   PackageFormActionResult,
   PackageFormLoaderData,
-} from "./product-package-route.types";
+} from "../../features/product-catalog/types/product-package.types";
 
 /**
  * Load product and reference data for the add-package page.

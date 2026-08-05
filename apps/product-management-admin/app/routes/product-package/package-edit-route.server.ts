@@ -14,7 +14,7 @@ import {
 import type {
   PackageEditActionResult,
   PackageEditLoaderData,
-} from "./product-package-route.types";
+} from "../../features/product-catalog/types/product-package.types";
 
 /**
  * Load a product package and edit reference data.

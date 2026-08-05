@@ -61,8 +61,8 @@ type RouteFiles = {
     id: "routes/login";
     page: "/login";
   };
-  "layout.tsx": {
-    id: "layout";
+  "routes/layout/layout.tsx": {
+    id: "routes/layout/layout";
     page: "/" | "/brand-lookup" | "/product-catalogus" | "/product-catalogus/categorieen/:categoryId/bewerken" | "/product-catalogus/nieuw" | "/product-catalogus/:productId/verpakkingen/nieuw" | "/product-catalogus/:productId/verpakkingen/:packageId" | "/product-catalogus/:productId" | "/locations";
   };
   "routes/index.tsx": {
@@ -106,7 +106,7 @@ type RouteFiles = {
 type RouteModules = {
   "root": typeof import("./app/root.tsx");
   "routes/login": typeof import("./app/routes/login.tsx");
-  "layout": typeof import("./app/layout.tsx");
+  "routes/layout/layout": typeof import("./app/routes/layout/layout.tsx");
   "routes/index": typeof import("./app/routes/index.tsx");
   "routes/brand-lookup": typeof import("./app/routes/brand-lookup.ts");
   "routes/product-catalog/product-catalog": typeof import("./app/routes/product-catalog/product-catalog.tsx");

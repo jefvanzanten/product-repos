@@ -1,5 +1,5 @@
 import { browseCatalog, createCategory, deleteCategory, getCategories, mapApiError, searchCatalog, updateCategory } from "../../api/admin-dashboard-api.server";
-import type { ActionResult, LoaderData } from "./product-catalog.types";
+import type { ActionResult, LoaderData } from "../../features/product-catalog/types/product-catalog.types";
 
 /**
  * Load the product catalog page data from a request.

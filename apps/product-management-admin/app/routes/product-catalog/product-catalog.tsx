@@ -9,11 +9,10 @@ import {
   handleProductCatalogRouteAction,
   loadProductCatalogRoute,
 } from "./product-catalog-route.server";
-import { ProductCatalogPage } from "./product-catalog-page";
-import type { ActionResult, LoaderData } from "./product-catalog.types";
+import { ProductCatalogPage } from "../../features/product-catalog/pages/ProductCatalogPage/ProductCatalogPage";
+import type { ActionResult, LoaderData } from "../../features/product-catalog/types/product-catalog.types";
 
-export type { ActionResult, LoaderData } from "./product-catalog.types";
-export { ProductCatalogPage } from "./product-catalog-page";
+export type { ActionResult, LoaderData } from "../../features/product-catalog/types/product-catalog.types";
 
 /** Load protected product-catalog browse and search data. */
 export async function loader(args: LoaderFunctionArgs): Promise<LoaderData> {

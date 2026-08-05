@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { parseAdminSourceFromSearch, withAdminSource } from "../../admin-navigation";
-import { preserveProductFormValues } from "../../features/admin/product-forms/product-form-data";
-import { submitUpdateProductForm } from "../../features/admin/product-forms/product-mutations.server";
+import { preserveProductFormValues } from "../../features/product-catalog/server/product-form-data";
+import { submitUpdateProductForm } from "../../features/product-catalog/server/product-mutations.server";
 import {
   createBrand,
   getCategories,
@@ -15,7 +15,7 @@ import type {
   ProductDetailDto,
   ProductDetailEditIntent,
   ProductDetailLoaderData,
-} from "./product-detail.types";
+} from "../../features/product-catalog/types/product-detail.types";
 
 /**
  * Load a product and its edit reference data.

@@ -9,7 +9,8 @@ De zelfstandige beheerapp voor de gedeelde productcatalogus. De app bevat de adm
 - verpakkingen en inhoudseenheden beheren;
 - PNG-, JPEG- en WebP-verpakkingsafbeeldingen uploaden;
 - consumptietype en voedingswaarden beheren;
-- producten en verpakkingen archiveren en herstellen volgens de featurespecificaties.
+- producten en verpakkingen archiveren en herstellen volgens de featurespecificaties;
+- hiërarchische opbergplaatsen aanmaken, hernoemen, verplaatsen, archiveren en herstellen.
 
 Alle inhoudelijke routes vereisen een ingelogde gebruiker met de beheerdersrol.
 
@@ -59,6 +60,8 @@ De app gebruikt gedeelde authenticatie uit `packages/auth-client`, API-contracte
 - [Productcatalogus browsen](../../docs/specs/admin-dashboard/product-catalogus/productcatalogus-browsen-specificatie.md)
 - [Productdetail en verpakkingen](../../docs/specs/admin-dashboard/product-catalogus/product-detail-specificatie.md)
 - [Producten en verpakkingen archiveren](../../docs/specs/admin-dashboard/product-catalogus/product-archiveren-specificatie.md)
+- [Opbergplaatsen beheren](../../docs/specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-specificatie.md)
+- [Opbergplaatsen-domeinregels](../../docs/domein/opbergplaatsen-domeinregels.md)
 
 ## Deployment
 
