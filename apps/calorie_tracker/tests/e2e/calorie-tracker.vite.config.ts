@@ -21,7 +21,6 @@ export default {
   optimizeDeps: {
     force: true,
     include: [
-      "@tanstack/react-query",
       "react",
       "react-dom",
       "react-dom/client",

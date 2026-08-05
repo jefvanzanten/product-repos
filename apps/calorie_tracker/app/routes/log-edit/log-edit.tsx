@@ -1,17 +1,8 @@
-import { useEffect, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Link, useParams, useSearchParams } from "react-router";
-import { getConsumptionLog } from "../../api/calorie-tracker-api/calorie-tracker-api";
-import { canonicalizeTrackerUrl } from "../../domain/consumption-types";
-import { getTodayInTimezone } from "../../domain/dates-and-timezones";
-import { StatusPanel } from "../../components/status-panel/status-panel";
-import { useBrowserTimezone } from "../../hooks/use-browser-timezone";
-import { LogForm } from "../log-form/log-form";
-import {
-  logDetailPath,
-  type CalorieTrackerRouteHandle,
-} from "../../routing/calorie-tracker-routes";
-import { calorieTrackerQueryKeys } from "../../api/calorie-tracker-api/calorie-tracker-query-keys";
+import { useLoaderData, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
+import { LogFormPage } from "../../features/consumption-logs/pages/log-form-page";
+import type { LogFormActionResult, LogFormLoaderData } from "../../features/consumption-logs/types/log-form.types";
+import type { CalorieTrackerRouteHandle } from "../../routing/calorie-tracker-routes";
+import { handleEditLogRouteAction, loadEditLogRoute } from "../log-form/log-form-route.server";
 
 /** Route metadata keeps one inert logbook mounted behind the edit overlay. */
 export const handle: CalorieTrackerRouteHandle = {
@@ -19,36 +10,40 @@ export const handle: CalorieTrackerRouteHandle = {
   logPresentation: "overlay",
 };
 
-/** Return metadata for the refreshable edit-log route. */
+/**
+ * Return metadata for the refreshable edit-log route.
+ *
+ * @returns The function result.
+ */
 export function meta(): ReadonlyArray<{ readonly title: string }> {
   return [{ title: "Log bewerken | Calorie Tracker" }];
 }
 
-/** Load parsed current log data before rendering the shared edit form. */
-export default function EditLogRoute(): ReactNode {
-  const { logId = "" } = useParams();
-  const resolvedTimezone = useBrowserTimezone();
-  const timezone = resolvedTimezone ?? "UTC";
-  const [parameters, setParameters] = useSearchParams();
-  const canonical = canonicalizeTrackerUrl(parameters.get("date"), parameters.get("type"), getTodayInTimezone(timezone));
-  const detailQuery = useQuery({
-    queryKey: calorieTrackerQueryKeys.log(logId),
-    enabled: resolvedTimezone !== null,
-    retry: false,
-    queryFn: ({ signal }) => getConsumptionLog(logId, { timezone, signal }),
-  });
+/**
+ * Load protected edit-log form dependencies.
+ *
+ * @param args - The args value.
+ * @returns The function result.
+ */
+export async function loader(args: LoaderFunctionArgs): Promise<LogFormLoaderData | Response> {
+  return loadEditLogRoute(args);
+}
 
-  useEffect(() => {
-    if (resolvedTimezone === null || !canonical.requiresReplace) return;
-    setParameters(canonical.state, { replace: true });
-  }, [canonical, resolvedTimezone, setParameters]);
+/**
+ * Update one protected consumption log.
+ *
+ * @param args - The args value.
+ * @returns The function result.
+ */
+export async function action(args: ActionFunctionArgs): Promise<LogFormActionResult> {
+  return handleEditLogRouteAction(args);
+}
 
-  const outcome = detailQuery.data;
-  const detailHref = logDetailPath(logId, canonical.state);
-  if (outcome === undefined) return <StatusPanel title="Log laden" message="De actuele gegevens worden opgehaald…" />;
-  if (outcome._tag === "Failure") {
-    const notFound = outcome.error._tag === "HttpFailure" && outcome.error.status === 404;
-    return <StatusPanel title={notFound ? "Log niet gevonden" : "Log laden lukt niet"} message={notFound ? "Deze log is niet beschikbaar." : "Probeer de log opnieuw te laden."} action={<Link className="ct-secondary" to={detailHref}>Terug</Link>} />;
-  }
-  return <LogForm mode={{ _tag: "Edit", log: outcome.value }} date={canonical.state.date} type={canonical.state.type} timezone={outcome.value.timezone} />;
+/**
+ * Render the edit-log feature page from route loader data.
+ *
+ * @returns The function result.
+ */
+export default function EditLogRoute(): React.ReactNode {
+  return <LogFormPage loaderData={useLoaderData<LogFormLoaderData>()} />;
 }

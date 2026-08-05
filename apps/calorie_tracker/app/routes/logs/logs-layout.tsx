@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
-import { Outlet, useMatches } from "react-router";
+import { Outlet, useLoaderData, useMatches, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
+import { LogbookPage } from "../../features/consumption-logs/pages/logbook-page/logbook-page";
+import type { LogbookActionResult, LogbookLoaderData } from "../../features/consumption-logs/types/logbook.types";
 import type { CalorieTrackerRouteHandle } from "../../routing/calorie-tracker-routes";
-import LogsRoute from "./logs";
+import { handleLogsRouteAction, loadLogsRoute } from "./logs-route.server";
 
 /** Route metadata keeps logbook shell behavior out of pathname checks. */
 export const handle: CalorieTrackerRouteHandle = {
@@ -10,8 +12,33 @@ export const handle: CalorieTrackerRouteHandle = {
   logPresentation: "list",
 };
 
-/** Keep one logbook instance mounted behind create and edit overlays. */
+/**
+ * Load protected canonical logbook data for the persistent route shell.
+ *
+ * @param args - The args value.
+ * @returns The function result.
+ */
+export async function loader(args: LoaderFunctionArgs): Promise<LogbookLoaderData | Response> {
+  return loadLogsRoute(args);
+}
+
+/**
+ * Handle protected logbook-level mutations.
+ *
+ * @param args - The args value.
+ * @returns The function result.
+ */
+export async function action(args: ActionFunctionArgs): Promise<LogbookActionResult> {
+  return handleLogsRouteAction(args);
+}
+
+/**
+ * Keep one loaded logbook instance mounted behind create and edit overlays.
+ *
+ * @returns The function result.
+ */
 export default function LogsLayout(): ReactNode {
+  const loaderData = useLoaderData<LogbookLoaderData>();
   const matches = useMatches();
   const presentation = [...matches]
     .reverse()
@@ -25,7 +52,7 @@ export default function LogsLayout(): ReactNode {
   return (
     <>
       <div inert={showsOverlay} aria-hidden={showsOverlay || undefined}>
-        <LogsRoute />
+        <LogbookPage loaderData={loaderData} />
       </div>
       {showsOverlay && <Outlet />}
     </>

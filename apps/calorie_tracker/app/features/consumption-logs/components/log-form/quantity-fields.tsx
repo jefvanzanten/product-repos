@@ -1,0 +1,43 @@
+import type { AvailableInputUnit } from "@product-repos/contracts/calorie-tracker";
+import type { ReactNode } from "react";
+import styles from "./log-form.module.css";
+import { createUnitKey } from "./log-form-units";
+
+/**
+ * Render quantity and unit inputs.
+ * @param props - The quantity field values, state, and event handlers.
+ * @returns The quantity and unit form controls.
+ */
+export function QuantityFields({
+  quantity,
+  unitKey,
+  availableUnits,
+  unitsDisabled,
+  unitsFailed,
+  onQuantityChange,
+  onUnitChange,
+  onRetryUnits,
+}: {
+  readonly quantity: string;
+  readonly unitKey: string | null;
+  readonly availableUnits: ReadonlyArray<AvailableInputUnit>;
+  readonly unitsDisabled: boolean;
+  readonly unitsFailed: boolean;
+  readonly onQuantityChange: (value: string) => void;
+  readonly onUnitChange: (value: string) => void;
+  readonly onRetryUnits: () => void;
+}): ReactNode {
+  return (
+    <>
+      <label><span>Hoeveelheid</span><input inputMode="decimal" value={quantity} onChange={(event) => onQuantityChange(event.currentTarget.value)} /></label>
+      <label>
+        <span>Eenheid</span>
+        <select value={unitKey ?? ""} onChange={(event) => onUnitChange(event.currentTarget.value)} disabled={unitsDisabled}>
+          <option value="" disabled>Kies eenheid</option>
+          {availableUnits.map((unit) => <option key={createUnitKey(unit)} value={createUnitKey(unit)}>{unit.label}</option>)}
+        </select>
+      </label>
+      {unitsFailed && <div className={styles.error} role="alert">Eenheden laden lukt niet.<button type="button" onClick={onRetryUnits}>Opnieuw proberen</button></div>}
+    </>
+  );
+}

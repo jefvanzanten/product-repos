@@ -54,6 +54,16 @@ corepack pnpm --filter calorie_tracker exec playwright test
 
 De app gebruikt gedeelde authenticatie uit `packages/auth-client`, API-contracten uit `packages/contracts` en de applicatieshell uit `packages/shared`.
 
+## Architectuur
+
+- `app/routes` bevat dunne React Router-routes, loaders, actions en routegebonden servercoördinatie;
+- `app/features` bevat pagina's, componenten, types en pure featurelogica;
+- `app/api` bevat uitsluitend server-side backend-adapters en contractvalidatie;
+- reads lopen via loaders en mutaties via actions of resource-routes;
+- de gevalideerde IANA-browsertijdzone wordt als HTTP-only cookie geregistreerd voordat tijdzoneafhankelijke loaders de backend aanroepen.
+
+React Router verzorgt loader-revalidatie na mutaties. Componenten roepen de backend niet rechtstreeks aan.
+
 ## Specificaties
 
 - [Algemene Calorie Tracker-specificatie](../../docs/specs/calorie-tracker/calorie-tracker-specificatie.md)

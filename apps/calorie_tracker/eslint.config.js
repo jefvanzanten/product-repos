@@ -26,8 +26,8 @@ export default defineConfig([
     rules: {
       // React Router intentionally throws Response objects from loaders and redirects.
       '@typescript-eslint/only-throw-error': 'off',
-      // Existing effects are migrated per feature rather than hidden in this lint activation.
-      'react-hooks/set-state-in-effect': 'off',
+      // Prevent cascading renders caused by synchronously copying values into local state.
+      'react-hooks/set-state-in-effect': 'error',
       // The fetch test seam intentionally forwards non-Error protocol rejection values.
       '@typescript-eslint/prefer-promise-reject-errors': 'off',
       'react-refresh/only-export-components': [

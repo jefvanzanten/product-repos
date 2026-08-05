@@ -1,10 +1,8 @@
-import { useEffect, type ReactNode } from "react";
-import { useSearchParams } from "react-router";
-import { canonicalizeTrackerUrl } from "../../domain/consumption-types";
-import { getTodayInTimezone } from "../../domain/dates-and-timezones";
-import { useBrowserTimezone } from "../../hooks/use-browser-timezone";
-import { LogForm } from "../log-form/log-form";
+import { useLoaderData, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
+import { LogFormPage } from "../../features/consumption-logs/pages/log-form-page";
+import type { LogFormActionResult, LogFormLoaderData } from "../../features/consumption-logs/types/log-form.types";
 import type { CalorieTrackerRouteHandle } from "../../routing/calorie-tracker-routes";
+import { handleNewLogRouteAction, loadNewLogRoute } from "../log-form/log-form-route.server";
 
 /** Route metadata keeps the mounted logbook inert behind this overlay. */
 export const handle: CalorieTrackerRouteHandle = {
@@ -12,24 +10,40 @@ export const handle: CalorieTrackerRouteHandle = {
   logPresentation: "overlay",
 };
 
-/** Return metadata for the route-bound create-log flow. */
+/**
+ * Return metadata for the route-bound create-log flow.
+ *
+ * @returns The function result.
+ */
 export function meta(): ReadonlyArray<{ readonly title: string }> {
   return [{ title: "Log toevoegen | Calorie Tracker" }];
 }
 
-/** Render a canonical, refreshable create form as mobile fullscreen or desktop modal. */
-export default function NewLogRoute(): ReactNode {
-  const [parameters, setParameters] = useSearchParams();
-  const timezone = useBrowserTimezone();
-  const today = getTodayInTimezone(timezone ?? "UTC");
-  const canonical = canonicalizeTrackerUrl(parameters.get("date"), parameters.get("type"), today);
+/**
+ * Load protected create-log form dependencies.
+ *
+ * @param args - The args value.
+ * @returns The function result.
+ */
+export async function loader(args: LoaderFunctionArgs): Promise<LogFormLoaderData | Response> {
+  return loadNewLogRoute(args);
+}
 
-  useEffect(() => {
-    if (timezone === null || !canonical.requiresReplace) return;
-    setParameters(canonical.state, { replace: true });
-  }, [canonical, setParameters, timezone]);
+/**
+ * Create one protected consumption log.
+ *
+ * @param args - The args value.
+ * @returns The function result.
+ */
+export async function action(args: ActionFunctionArgs): Promise<LogFormActionResult> {
+  return handleNewLogRouteAction(args);
+}
 
-  if (timezone === null) return null;
-
-  return <LogForm mode={{ _tag: "Create" }} date={canonical.state.date} type={canonical.state.type} timezone={timezone} />;
+/**
+ * Render the create-log feature page from route loader data.
+ *
+ * @returns The function result.
+ */
+export default function NewLogRoute(): React.ReactNode {
+  return <LogFormPage loaderData={useLoaderData<LogFormLoaderData>()} />;
 }

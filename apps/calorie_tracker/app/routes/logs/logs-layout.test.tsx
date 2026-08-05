@@ -1,22 +1,23 @@
 import { screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { renderRouteTree } from "../../test/calorie-tracker-test-harness";
 import LogsLayout, { handle as logsHandle } from "./logs-layout";
 
-vi.mock("./logs", () => ({
-  default: () => <main>Gemount logboek</main>,
-}));
-
-/** Render an overlay child inside the real nested logbook layout. */
+/**
+ * Render an overlay child inside the real nested logbook layout.
+ *
+ * @returns The function result.
+ */
 function Overlay(): React.ReactNode {
   return <section role="dialog">Log toevoegen</section>;
 }
 
 describe("nested logbook overlays", () => {
-  it("keeps exactly one inert logbook mounted behind an overlay", () => {
-    renderRouteTree([{
+  it("keeps exactly one inert logbook mounted behind an overlay", async () => {
+    const { container } = renderRouteTree([{
       path: "/logs",
       element: <LogsLayout />,
+      loader: () => ({ timezone: null, routeState: null, content: null, loadFailed: false }),
       handle: logsHandle,
       children: [{
         path: "new",
@@ -25,8 +26,10 @@ describe("nested logbook overlays", () => {
       }],
     }], "/logs/new?date=2026-07-29&type=all");
 
-    expect(screen.getAllByText("Gemount logboek")).toHaveLength(1);
-    expect(screen.getByText("Gemount logboek").parentElement).toHaveAttribute("inert");
+    expect(await screen.findByText("Logboek laden")).toBeInTheDocument();
+    const inertLogbook = container.querySelector("[inert]");
+    expect(inertLogbook).not.toBeNull();
+    expect(inertLogbook).toHaveTextContent("Logboek laden");
     expect(screen.getByRole("dialog", { name: "" })).toBeInTheDocument();
   });
 });

@@ -3,7 +3,10 @@ import { calorieTrackerRoutePatterns as paths } from "./routing/calorie-tracker-
 
 export default [
   route(paths.login, "routes/login/login.tsx"),
-  layout("layout/layout.tsx", [
+  route("timezone", "routes/timezone.ts"),
+  route("package-lookup", "routes/package-lookup/package-lookup.ts"),
+  route("package-input-units/:packageId", "routes/package-input-units/package-input-units.ts"),
+  layout("routes/layout/layout.tsx", [
     index("routes/statistics/statistics.tsx"),
     route(paths.logs, "routes/logs/logs-layout.tsx", [
       route(paths.newLog, "routes/log-new/log-new.tsx"),

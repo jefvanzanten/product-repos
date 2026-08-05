@@ -1,9 +1,42 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { getBrowserTimezone } from "../domain/dates-and-timezones";
 
-/** Resolve the browser timezone only after hydration so server and client markup stay identical. */
+/**
+ * Subscribe to the effectively immutable browser timezone snapshot.
+ *
+ * @returns The function result.
+ */
+function subscribeToBrowserTimezone(): () => void {
+  return () => undefined;
+}
+
+/**
+ * Return the browser timezone snapshot used after hydration.
+ *
+ * @returns The function result.
+ */
+function getBrowserTimezoneSnapshot(): string {
+  return getBrowserTimezone();
+}
+
+/**
+ * Return the deterministic timezone snapshot used by the server and during hydration.
+ *
+ * @returns The function result.
+ */
+function getServerTimezoneSnapshot(): null {
+  return null;
+}
+
+/**
+ * Resolve the browser timezone through React's hydration-safe external-store API.
+ *
+ * @returns The function result.
+ */
 export function useBrowserTimezone(): string | null {
-  const [timezone, setTimezone] = useState<string | null>(null);
-  useEffect(() => setTimezone(getBrowserTimezone()), []);
-  return timezone;
+  return useSyncExternalStore(
+    subscribeToBrowserTimezone,
+    getBrowserTimezoneSnapshot,
+    getServerTimezoneSnapshot,
+  );
 }

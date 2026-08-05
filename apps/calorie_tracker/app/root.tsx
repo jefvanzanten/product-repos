@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   isRouteErrorResponse,
   Links,
@@ -36,18 +34,12 @@ export function Layout({ children }: { readonly children: React.ReactNode }): Re
 }
 
 /**
- * Provide application-wide client state and render the active route.
+ * Render the active Calorie Tracker route.
  *
  * @returns The active Calorie Tracker route.
  */
 export default function App(): React.ReactNode {
-  const [queryClient] = useState(() => new QueryClient());
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Outlet />
-    </QueryClientProvider>
-  );
+  return <Outlet />;
 }
 
 /**
