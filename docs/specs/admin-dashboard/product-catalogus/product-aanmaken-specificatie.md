@@ -56,67 +56,11 @@ Opslaan maakt transactioneel één `product`, één eerste `product_package` en 
 - Apart merken- of categoriebeheer buiten de acties in dit formulier.
 - Meer dan één verschillende portiedefinitie per verpakking.
 
-## Layout
+## UI-specificatie
 
-```text
-Product aanmaken
-Vul categorie, merk, product, voedingswaarden en verpakking in.
+De schermopbouw, responsive layout en maatvoering staan in [product-aanmaken-ui-specificatie.md](./product-aanmaken-ui-specificatie.md).
 
-Alle categorieën > <volledig pad naar geselecteerde categorie>
-
-Categorie
-- bestaande categorieboom
-- hoofdcategorie toevoegen
-- subcategorie toevoegen
-- categorie verwijderen wanneer toegestaan
-
-Productnaam
-- productnaam
-- optionele productafbeelding
-
-Merk, optioneel
-- typ om merken te zoeken
-- bestaand merk kiezen
-- nieuw merk aanmaken
-
-Consumptietype
-- voeding, drinken of supplement
-
-Verpakking
-- verpakkingstype
-- volledige verpakkingsinhoud + inhoudseenheid
-- optionele portie of stuk
-  - vrije naam
-  - portiegrootte + inhoudseenheid
-  - optioneel aantal per verpakking
-  - informatieve som van porties wanneer het aantal is ingevuld
-- optionele verpakkingsafbeelding
-
-Voedingswaarden, standaard uit
-- macroprofiel toevoegen
-- referentiebasis
-- optionele calorieën, eiwit, koolhydraten en vet
-- voorlopige berekende calorieën wanneer mogelijk
-
-[ Product opslaan ]
-```
-
-Layoutregels:
-
-- De volledige breadcrumb staat buiten de categorieselector, direct onder de paginatitel en introductietekst en boven het productformulier.
-- De paginatitel, introductietekst en breadcrumb blijven vast zichtbaar. Alleen het productformulier eronder scrolt verticaal; de categorieboom behoudt daarnaast haar eigen interne scrollgebied.
-- De breadcrumb begint met `Alle categorieën` en toont daarna het volledige pad naar de geselecteerde categorie. Ieder segment opent de overeenkomstige categoriecontext in de browsbare productcatalogus. Zonder geselecteerde categorie toont de breadcrumb alleen `Alle categorieën`.
-- De breadcrumb wordt direct bijgewerkt wanneer de beheerder een andere categorie selecteert.
-- De categorieboom gebruikt voor categorierijen, inspringing en chevrons dezelfde visuele patronen als de categorieboom van de browsbare productcatalogus. Productspecifieke selecteer-, toevoeg- en verwijderacties blijven beschikbaar.
-- Bij een vooraf geselecteerde categorie via `categoryId` mag de categorieboom initieel alleen het pad naar die categorie openklappen en mogen andere, niet-bijbehorende categorieën ingeklapt blijven.
-- Bij een vooraf geselecteerde categorie scrolt de categorieboom na openen direct naar de geselecteerde categorierij, zodat deze zonder handmatig scrollen zichtbaar is.
-- De desktopcontent heeft een breedte van `650px`; onder deze breedte blijft de content vloeibaar.
-- Formulierkaarten hebben een radius van `18px`; invoervelden, selecties en radiotegels zijn `44px` hoog.
-- Tussen de hoofdkaarten zit afhankelijk van de Figma-sectie `40px` tot `42px` verticale ruimte.
-- Onder de desktopbreedte stapelen consumptietype-, referentiebasis- en macrovelden verticaal zonder horizontale overflow.
-- Het macroprofiel staat initieel uit. De ingeschakelde Figma-weergave beschrijft de uitgeklapte toestand na activering.
-- De schakelaar voor voedingswaarden staat volledig binnen de formulierkaart, uitgelijnd in de rechterbovenhoek.
-- De primaire knop `Product opslaan` gebruikt `1rem` verticale padding.
+De breadcrumb volgt functioneel de actuele categorieselectie: ieder segment opent de overeenkomstige cataloguscontext en de breadcrumb wordt direct bijgewerkt wanneer de beheerder een andere categorie selecteert. Productspecifieke selecteer-, toevoeg- en verwijderacties blijven in de categorieboom beschikbaar.
 
 ## Gedrag
 

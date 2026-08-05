@@ -9,7 +9,7 @@ Bronnen:
 - `docs/specs/inventory-client/voorraad-inzien-specificatie.md`
 - `docs/specs/inventory-client/voorraad-aanpassen-specificatie.md`
 
-Status: gepland.
+Status: uitgevoerd.
 
 ## Doel
 

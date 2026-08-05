@@ -4,13 +4,13 @@ Dit bestand is alleen een index. Gedrag staat per feature in losse specs, zodat 
 
 ## Actuele specs
 
-| Feature | Spec | Status |
-| --- | --- | --- |
-| Product aanmaken | [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md) | Huidige vertical slice |
-| Product zoeken | [product-zoeken-specificatie.md](./product-zoeken-specificatie.md) | Geimplementeerd |
-| Browsbare productcatalogus | [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md) | Geimplementeerd |
-| Productdetail en verpakkingen | [product-detail-specificatie.md](./product-detail-specificatie.md) | Geïmplementeerde basis; uitbreiding concept |
-| Producten en verpakkingen archiveren | [product-archiveren-specificatie.md](./product-archiveren-specificatie.md) | Concept |
+| Feature | Functionele spec | UI-specificatie | Status |
+| --- | --- | --- | --- |
+| Product aanmaken | [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md) | [product-aanmaken-ui-specificatie.md](./product-aanmaken-ui-specificatie.md) | Huidige vertical slice |
+| Product zoeken | [product-zoeken-specificatie.md](./product-zoeken-specificatie.md) | [product-zoeken-ui-specificatie.md](./product-zoeken-ui-specificatie.md) | Geimplementeerd |
+| Browsbare productcatalogus | [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md) | [productcatalogus-browsen-ui-specificatie.md](./productcatalogus-browsen-ui-specificatie.md) | Geimplementeerd |
+| Productdetail en verpakkingen | [product-detail-specificatie.md](./product-detail-specificatie.md) | [product-detail-ui-specificatie.md](./product-detail-ui-specificatie.md) | Geïmplementeerde basis; uitbreiding concept |
+| Producten en verpakkingen archiveren | [product-archiveren-specificatie.md](./product-archiveren-specificatie.md) | [product-archiveren-ui-specificatie.md](./product-archiveren-ui-specificatie.md) | Concept |
 
 ## Applicatie, routes en autorisatie
 
@@ -25,9 +25,9 @@ Dit bestand is alleen een index. Gedrag staat per feature in losse specs, zodat 
 - Iedere interne link, GET-formulieractie, mutation en redirect behoudt een geldige `source` naast featureparameters zoals `q`, `categoryId`, `brandId` en `status`.
 - Routevoorbeelden in de productcatalogusspecificaties laten `source` alleen voor leesbaarheid weg; wanneer de admin-app met een geldige broncontext is geopend, blijft die parameter wel aanwezig.
 
-## Layout
+## UI-specificaties
 
-Niet van toepassing: dit bestand is alleen een index. Layout-eisen staan in de `Layout`-sectie van de onderliggende feature-specs.
+Dit bestand is alleen een functionele index. Presentatie-eisen staan in de gekoppelde `*-ui-specificatie.md`-bestanden van de onderliggende features.
 
 ## Onderliggende documenten
 

@@ -5,7 +5,7 @@
 - Onderdeel: Product Management Admin > opbergplaatsen
 - App-interne route: `/locations`
 - Publieke route: `/product-management-admin/locations`
-- Status: gepland; de huidige pagina is een niet-functionele placeholder
+- Status: geïmplementeerd
 - Domeinregels: [opbergplaatsen-domeinregels.md](../../../domein/opbergplaatsen-domeinregels.md)
 - Backendcontract: [LOCATION_ENDPOINTS.md](../../../backend/Endpoints/LOCATION_ENDPOINTS.md)
 - Datamodel: [STORAGE_ERD.md](../../../backend/ERD/STORAGE_ERD.md)
@@ -43,46 +43,32 @@ Een beheerder kan de gedeelde opbergplaatsenboom volledig beheren, zodat Invento
 - Afhankelijkheidsaantallen of een archive-impactendpoint.
 - Voorraad op deze adminpagina tonen of muteren.
 
-## Paginaopzet
+## UI-specificatie
 
-```text
-Opbergplaatsen
-Beheer de plaatsen waar voorraad kan worden opgeslagen.
+De paginaopzet, boompresentatie, interne scrollzone, responsive dialogs en visuele actiepresentatie staan uitsluitend in [opbergplaatsen-beheren-ui-specificatie.md](./opbergplaatsen-beheren-ui-specificatie.md).
 
-[ Actief ] [ Gearchiveerd ]
+## Weergave- en route-state
 
-[ Hoofdlocatie toevoegen ]
-
-Keuken
-├─ Voorraadkast
-└─ Koelkast
-   ├─ Lade 1
-   └─ Lade 2
-
-<per regel: acties>
-```
-
-- `Actief` is de standaardweergave en gebruikt `GET /locations`.
-- `Gearchiveerd` gebruikt `GET /locations?status=archived`.
-- De actieve weergave toont uitsluitend effectief actieve locaties.
-- De archiefweergave begint per tak bij de locatie die de tak rechtstreeks inactiveerde en toont haar afstammelingen eronder.
-- Een gearchiveerde rootregel toont het volledige pad, zodat eventueel niet weergegeven actieve voorouders herkenbaar blijven.
-- De UI onderscheidt `zelf gearchiveerd` van `inactief via bovenliggende locatie`.
-- Kinderen zijn per niveau inklapbaar. Meerdere takken mogen tegelijk openstaan.
-- Locaties worden per niveau natuurlijk alfabetisch gesorteerd.
-- Op mobiel blijft de boom horizontaal bruikbaar zonder dat actiekoppen buiten de viewport vallen.
-- Een geldige `source`-queryparameter blijft tijdens laden, filteren, formulieracties en redirects behouden volgens de algemene adminregels.
+`Actief` is de standaardweergave en gebruikt `GET /locations`; `Gearchiveerd` gebruikt `GET /locations?status=archived`. De actieve weergave toont uitsluitend effectief actieve locaties. Een geldige `source`-queryparameter blijft tijdens laden, filteren, formulieracties en redirects behouden volgens de algemene adminregels.
 
 ## Acties in de actieve boom
 
-Boven de boom staat `Hoofdlocatie toevoegen`. Iedere actieve locatieregel biedt via een duidelijk actiemenu:
+De actieve weergave houdt de actie `Hoofdlocatie toevoegen` beschikbaar, zowel met als zonder bestaande actieve locaties. Iedere actieve locatie biedt:
 
 - `Sublocatie toevoegen`;
 - `Hernoemen`;
 - `Verplaatsen`;
 - `Archiveren`.
 
-De gekozen locatie en haar volledige pad zijn steeds zichtbaar in de bijbehorende dialog. Er is geen platte parentdropdown voor aanmaken.
+De gekozen locatie en haar volledige pad zijn steeds beschikbaar als context in de bijbehorende dialog. Er is geen vrije of platte parentkeuze bij het aanmaken van een sublocatie.
+
+## Actiemenugedrag
+
+- Een actiemenu opent zonder al een locatieactie uit te voeren.
+- Na keuze van een actie sluit het actiemenu voordat de bijbehorende flow start; dezelfde actie kan niet onbedoeld opnieuw vanuit een achtergebleven menu worden gestart.
+- Klikken buiten een geopend actiemenu sluit het menu zonder locatieactie.
+- `Escape` sluit een geopend actiemenu zonder locatieactie en brengt de focus terug naar de beheerknop van die locatie.
+- Per locatie zijn uitsluitend de acties beschikbaar die bij haar actieve of gearchiveerde status horen.
 
 ## Hoofdlocatie en sublocatie aanmaken
 
@@ -103,7 +89,7 @@ De gekozen locatie en haar volledige pad zijn steeds zichtbaar in de bijbehorend
 
 ## Verplaatsen
 
-- Verplaatsen opent een dialog met een inklapbare boomkiezer en de expliciete keuze `Hoofdniveau`.
+- De beheerder kan een effectief actieve locatie als nieuwe ouder kiezen of de locatie naar het expliciete hoofdniveau verplaatsen.
 - Alleen effectief actieve locaties zijn mogelijke ouders.
 - De locatie zelf, haar afstammelingen en haar huidige ouder zijn niet als geldige bestemming selecteerbaar.
 - Verplaatsen wijzigt de parentrelatie van de gekozen locatie; de volledige subboom beweegt mee.
@@ -129,13 +115,7 @@ Er is geen permanente verwijderactie.
 
 ## Gearchiveerde locaties bekijken en herstellen
 
-De archiefweergave toont per tak:
-
-```text
-Keuken › Koelkast                 [zelf gearchiveerd]
-├─ Lade 1                         [via Koelkast inactief]
-└─ Lade 2                         [via Koelkast inactief]
-```
+De archiefweergave onderscheidt rechtstreeks gearchiveerde locaties van locaties die uitsluitend via een voorouder effectief gearchiveerd zijn. De concrete boompresentatie staat in de UI-specificatie.
 
 - Een rechtstreeks gearchiveerde locatie kan worden hernoemd of hersteld.
 - Een uitsluitend via een voorouder inactieve locatie kan worden bekeken en hernoemd, maar niet afzonderlijk worden hersteld.
@@ -166,8 +146,9 @@ Keuken › Koelkast                 [zelf gearchiveerd]
 ## Toegankelijkheid
 
 - De boom, uitklapacties en actiemenu's zijn volledig met het toetsenbord bedienbaar.
+- Iedere beheerknop heeft een toegankelijke naam die de bijbehorende locatie identificeert.
 - Dialogs hebben een zichtbare titel, correcte dialogsemantiek, initiële focus en focusherstel na sluiten.
-- Escape sluit een niet-bezig formulier zonder wijzigingen op te slaan.
+- `Escape` sluit een geopend actiemenu of een niet-bezig formulier zonder wijzigingen op te slaan.
 - De archiefstatus wordt niet uitsluitend met kleur gecommuniceerd.
 - Tijdens opslaan zijn dubbele submits geblokkeerd en blijft de voortgang herkenbaar.
 
@@ -277,3 +258,16 @@ Dan biedt Product Management Admin geen actie of endpoint om haar permanent te v
 Gegeven dat een ingelogde gebruiker geen beheerder is  
 Dan krijgt die gebruiker geen toegang tot de locatiebeheerpagina  
 En weigeren alle locatiemutatie-endpoints de gebruiker zelfstandig.
+
+### AC-17 — Actiemenu voorspelbaar sluiten
+
+Gegeven dat een actiemenu van een locatie geopend is<br>
+Wanneer de beheerder een actie kiest, buiten het menu klikt of `Escape` gebruikt<br>
+Dan sluit het actiemenu<br>
+En start alleen bij een expliciet gekozen menuactie de bijbehorende locatieflow.
+
+### AC-18 — Hoofdlocatie kunnen blijven toevoegen
+
+Gegeven dat de actieve weergave geopend is<br>
+Dan blijft `Hoofdlocatie toevoegen` beschikbaar wanneer de boom leeg is én wanneer al actieve locaties bestaan<br>
+Maar verschijnt deze actie niet in de gearchiveerde weergave.

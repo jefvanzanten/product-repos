@@ -59,133 +59,43 @@ Een beheerder kan een bestaand product openen, controleren en beheren. Productde
 - Nieuwe verpakkingstypes of inhoudseenheden beheren via UI.
 - Aparte edit-route voor productgegevens.
 
-## Layout
+## UI-specificatie
 
-### Productdetail - read-only
+De read-only kaarten, breadcrumbs, verpakkingenlijst, responsive bewerkformulieren en niet-gevonden-toestanden staan in [product-detail-ui-specificatie.md](./product-detail-ui-specificatie.md).
 
-#### Header
+Productdetail toont functioneel de productgegevens, het optionele macroprofiel en alle verpakkingen. De categorie-breadcrumb begint met `Alle categorieën`; ieder segment opent de overeenkomstige categoriecontext met behoud van een geldige `source`. Productgegevens en voedingswaarden hebben afzonderlijke afgeschermde bewerkmodi. Iedere verpakkingrij opent direct de eigen bewerkpagina en biedt geen tussenliggende read-only verpakkingdetailpagina.
 
-De header toont:
+De foto-uploadcomponent accepteert uitsluitend PNG, JPEG en WebP, toont vóór opslaan een lokale preview, ondersteunt verwijderen en hanteert een maximale bestandsgrootte van 5 MB. De server controleert de werkelijke bestandsinhoud en vertrouwt niet alleen op extensie of browser-MIME-type.
 
-- weergavenaam als titel;
-- interactieve categorie-breadcrumb onder de titel.
+## Detailgegevens
 
-Voorbeeld:
+Productdetail toont minimaal:
 
-```text
-Coca-Cola Zero Sugar
-Alle categorieën > Voeding > Dranken > Frisdrank > Cola
-```
-
-Regels:
-
-- De breadcrumb begint met `Alle categorieën`.
-- De breadcrumb gebruikt `1.05rem` tekstgrootte met `1.5rem` regelhoogte, zodat deze consistent is met de productcatalogus-breadcrumb.
-- `Alle categorieën` linkt naar `/product-catalogus` zonder catalogusqueryparameters; een geldige `source` blijft behouden.
-- Elke categorie in de breadcrumb is afzonderlijk klikbaar en opent `/product-catalogus?categoryId=<categoryId>`.
-- Ook de huidige productcategorie is klikbaar.
-- Wanneer de beheerder via een categorielink teruggaat naar de catalogus, opent de catalogus de categorieboom met alle parentcategorieën uitgeklapt tot en met die categorie.
-- De productgegevenssectie mag de categorie daarnaast als volledig tekstpad tonen.
-
-#### Productgegevens
-
-De productgegevenssectie toont:
-
-```text
-Productgegevens
-Categorie: Voeding > Dranken > Frisdrank > Cola
-Merk: Coca-Cola
-Productnaam: Zero Sugar
-Weergavenaam: Coca-Cola Zero Sugar
-Status: Actief
-Consumptietype: Drinken
-Afbeelding: <afbeelding of placeholder>
-```
-
-Bij merkloos product:
-
-```text
-Productgegevens
-Categorie: Voeding > Snoep & chocolade > Chocolade
-Merk: -
-Productnaam: Chocoladevlokken
-Weergavenaam: Chocoladevlokken
-```
-
-Productgegevens bewerken start met een potlood-icoon of editknop met toegankelijk label `Productgegevens bewerken`.
-
-De actie `Productgegevens bewerken` opent een afgeschermde bewerkmodus met uitsluitend:
-
-- categorie;
-- merk, inclusief leeg maken;
-- productnaam;
-- optionele productafbeelding;
+- categorie en volledig categoriepad;
+- merk wanneer aanwezig;
+- productnaam en afgeleide weergavenaam;
+- actieve of gearchiveerde status;
 - consumptietype;
-- `Opslaan`;
-- `Annuleren`.
+- productafbeelding of fallback;
+- het optionele macroprofiel met referentiebasis en alle bekende waarden;
+- alle verpakkingen van het product.
 
-Deze bewerkmodus kan het macroprofiel en de verpakkingen niet wijzigen. De voedingswaardenkaart heeft een eigen afgeschermde bewerkmodus.
+Iedere verpakking toont minimaal:
 
-Productdetail toont productgegevens, voedingswaarden en verpakkingen als drie afzonderlijke witte kaarten met een radius van `8px` en een desktopbreedte van `672px`. Tussen de kaarten zit `24px` verticale ruimte.
-
-Het macroprofiel staat in de middelste kaart `Voedingswaarden`. Zonder profiel toont deze kaart `Geen macroprofiel toegevoegd.` en de actie `Macroprofiel toevoegen`. Met profiel toont de kaart de referentiebasis en alleen bekende waarden; een bekende nulwaarde blijft zichtbaar. De velden en validatie zijn gelijk aan [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md).
-
-### Verpakkingenlijst op productdetail
-
-Productdetail toont een aparte sectie `Verpakkingen` onder de productgegevens.
-
-Elke verpakkingrij toont minimaal:
-
-- verpakkingsafbeelding of een vaste placeholder;
-- status `Actief` of `Gearchiveerd`;
+- verpakkingsafbeelding of fallback;
+- actieve of gearchiveerde status;
 - verpakkingstype;
-- volledige inhoudshoeveelheid + inhoudseenheid;
-- optionele portienaam en portiegrootte;
-- optioneel aantal porties of stuks per verpakking;
-- een duidelijke samenvatting;
-- de expliciete actie `Verpakking bewerken` in de verpakkingrij, die direct naar de bewerkpagina gaat.
-
-Voorbeelden:
-
-```text
-fles 1,5 l
-```
-
-```text
-pak 88 g
-Per wafel: 4,9 g · 18 per verpakking
-```
-
-Bij meerdere verpakkingen worden alle verpakkingen in deze lijst getoond. De actie `Verpakking toevoegen` staat bij deze sectie.
-
-Als een product door oude of corrupte data geen verpakkingen heeft, toont de pagina:
-
-```text
-Geen verpakkingen gevonden voor dit product.
-[ Verpakking toevoegen ]
-```
-
-### Verpakking bewerken
-
-De actie `Verpakking bewerken` in een verpakkingrij opent direct het bewerkformulier. Er is geen tussenliggende read-only verpakkingdetailpagina.
-
-De pagina toont de bestaande verpakkingswaarden en een foto-uploadcomponent. De component:
-
-- accepteert uitsluitend PNG, JPEG en WebP;
-- toont vóór opslaan een lokale preview;
-- ondersteunt het verwijderen van de huidige verpakkingsafbeelding;
-- hanteert een maximale bestandsgrootte van 5 MB;
-- controleert op de server de werkelijke bestandsinhoud en vertrouwt niet alleen op extensie of browser-MIME-type.
+- volledige inhoud en inhoudseenheid;
+- optionele portienaam, portiegrootte en aantal per verpakking;
+- een bewerkactie die direct naar de verpakking-bewerkpagina gaat.
 
 ## Product bewerken
 
 Productdetail schakelt op dezelfde pagina naar bewerkmodus. Er is geen aparte product-edit-route in MVP.
 
-De productgegevens-bewerkmodus gebruikt dezelfde afzonderlijke formulierkaarten als product aanmaken, in deze volgorde: `Categorie`, `Productnaam`, `Merk` en `Consumptietype`. Voedingswaarden zijn niet zichtbaar of wijzigbaar in deze modus. De desktopcontent is `650px` breed. Tussen de hoofdkaarten zit `42px` verticale ruimte; op smalle schermen stapelen radioselecties zonder horizontale overflow.
+De productgegevens-bewerkmodus bevat uitsluitend categorie, productnaam, merk en consumptietype; voedingswaarden zijn daarin niet zichtbaar of wijzigbaar. De responsive kaart- en actieopbouw staat in de UI-specificatie.
 
-De actie in de voedingswaardenkaart opent afzonderlijk `Voedingswaarden bewerken`. Alleen de optionele macroprofielschakelaar, referentiebasis en voedingswaarden zijn daar zichtbaar en wijzigbaar. Productgegevens en verpakkingen blijven bij deze mutatie ongewijzigd. De schakelaar staat volledig binnen de formulierkaart, uitgelijnd in de rechterbovenhoek.
-
-De acties staan onder de kaarten. Op desktop is `Annuleren` `180px` breed en vult `Wijzigingen opslaan` de resterende breedte. Op smalle schermen worden de acties over de volledige breedte gestapeld.
+De actie in de voedingswaardenkaart opent afzonderlijk `Voedingswaarden bewerken`. Alleen de optionele macroprofielschakelaar, referentiebasis en voedingswaarden zijn daar zichtbaar en wijzigbaar. Productgegevens en verpakkingen blijven bij deze mutatie ongewijzigd.
 
 Verpakkingen worden niet in product-bewerkmodus bewerkt. Verpakkingen hebben eigen routes en acties.
 
@@ -280,36 +190,9 @@ Productdetail en de verpakking-bewerkpagina tonen afhankelijk van de status een 
 
 Op een bestaand productdetail vervalt de afzonderlijke link `Terug naar productcatalogus`. De interactieve categorie-breadcrumb onder de productnaam is de navigatie terug naar de catalogus. `Alle categorieën` opent de catalogusroot en een categorienaam opent die categorie in de categorieboom.
 
-De verpakking-bewerkpagina heeft een zichtbare link:
+De verpakking-bewerkpagina heeft een zichtbare terugactie naar het product. Verpakking toevoegen en verpakking bewerken bewaren de product- en cataloguscontext waar dat logisch is, zodat de beheerder via productdetail terug kan naar dezelfde geopende categorie of merkcontext.
 
-```text
-Terug naar product
-```
-
-Verpakking toevoegen en verpakking bewerken bewaren de product- en cataloguscontext waar dat logisch is, zodat de beheerder via productdetail terug kan naar dezelfde geopende categorie of merkcontext.
-
-Bij onbekend product toont productdetail binnen de admin-layout:
-
-```text
-Product niet gevonden.
-[ Terug naar productcatalogus ]
-```
-
-Bij de verpakking-bewerkpagina:
-
-- product niet gevonden:
-
-```text
-Product niet gevonden.
-[ Terug naar productcatalogus ]
-```
-
-- verpakking niet gevonden binnen bestaand product:
-
-```text
-Verpakking niet gevonden.
-[ Terug naar product ]
-```
+Bij een onbekend product of een onbekende verpakking toont de pagina de bijbehorende niet-gevonden-toestand uit de UI-specificatie met een relevante terugactie.
 
 ## Backend/API
 

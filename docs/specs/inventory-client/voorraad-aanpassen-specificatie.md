@@ -26,6 +26,10 @@ Een beheerder kan bestaande voorraadpartijen aanpassen: aantal wijzigen, partije
 - Producten, verpakkingen, locatie- of categorienamen bewerken; dat blijft in Product Management Admin.
 - Bulkacties op meerdere partijen tegelijk.
 
+## UI-specificatie
+
+De presentatie van mutatieacties, exacte voorraadstand, verplaatsen en datum wijzigen staat in [voorraad-aanpassen-ui-specificatie.md](./voorraad-aanpassen-ui-specificatie.md).
+
 ## Identiteit en semantiek
 
 - Een partij wordt uniek bepaald door **productverpakking + opbergplaats + houdbaarheidsdatum**; `geen datum` is een eigen waarde.
@@ -46,7 +50,7 @@ Een beheerder kan bestaande voorraadpartijen aanpassen: aantal wijzigen, partije
 ### Exacte voorraadstand instellen
 
 - Een invoerveld zet het aantal naar een exacte nieuwe waarde (minimaal 0).
-- De UI toont de huidige stand, bijvoorbeeld `Huidige voorraad: 5` en `Nieuwe voorraad: […]`.
+- De UI toont de huidige en nieuwe stand volgens de UI-specificatie.
 - Deze actie gebruikt een versienummer (optimistic locking): een verouderde versie wordt door de backend geweigerd.
 - Bij een versieconflict toont de app de actuele serverstand en vraagt opnieuw te proberen.
 

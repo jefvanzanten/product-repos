@@ -55,35 +55,11 @@ Regels:
 - De navbarlink naar Caloriestatistieken neemt dezelfde datum mee; de teruglink naar het logboek neemt die datum en het laatst geldige typefilter mee.
 - Toekomstige datums zijn niet selecteerbaar.
 
-## Layout
+## UI-specificatie
 
-Het logboek rendert binnen de [gedeelde applicatieshell met bottom-tabbar](../../shared/bottom-tabbar-specificatie.md). Op desktop gebruikt het logboek dezelfde headeropbouw als Caloriestatistieken: de datumselector en de gecentreerde Calorie Tracker-navbar staan in de normale documentflow onder elkaar.
+De responsive schermopbouw, filterpresentatie, primaire actie en logitemanatomie staan in [log-overzicht-ui-specificatie.md](./log-overzicht-ui-specificatie.md).
 
-De pagina toont in deze volgorde:
-
-1. de gedeelde aanklikbare datumselector boven het logboekpaneel;
-2. direct zichtbare filterchips;
-3. verticaal scrollbare loglijst;
-4. primaire actie `Log toevoegen`.
-
-Het logboekpaneel toont geen tweede datumselector en geen losse acties voor `Vandaag`, vorige dag of volgende dag.
-
-Beschikbare chips:
-
-- Alles;
-- Voeding;
-- Drinken;
-- Supplementen.
-
-Op smalle schermen mogen chips horizontaal scrollen.
-
-### Actie Log toevoegen
-
-Op mobiel staat een vaste brede knop direct boven de bottom-tabbar. De actiebalk gebruikt `1em` bovenruimte en `16px` horizontale en onderruimte. De knop bedekt geen logs en de lijst reserveert voldoende onderruimte.
-
-Op desktop staat de primaire actie rechts bovenaan het logboekpaneel, onder de gedeelde datumheader en navbar.
-
-De actie is geen tab en geen extra floating action button.
+De primaire actie blijft bereikbaar en mag geen logs bedekken. Het logboekpaneel bevat geen tweede datumselector of aanvullende dagknoppen.
 
 ## Datumnavigatie
 
@@ -108,38 +84,18 @@ De actie is geen tab en geen extra floating action button.
 - Na succesvol toevoegen van een log dat binnen het actieve filter valt, scrolt de lijst naar dat log.
 - Na filterwijziging, bewerken of terugkeer uit detail blijft de bestaande scrollpositie behouden.
 
-## Compact logitem
+## Inhoud van een compact logitem
 
-Ieder logitem toont uitsluitend:
+Ieder logitem toont:
 
 - verpakkingsafbeelding of placeholder;
 - tijd;
 - actuele productnaam en merk;
 - oorspronkelijke geconsumeerde hoeveelheid als vermenigvuldiger met de gekozen eenheid;
-- tekstueel consumptietype met herkenbare kleur;
-- een chevron als aanwijzing dat het item geopend kan worden.
+- tekstueel consumptietype;
+- een aanwijzing dat het item geopend kan worden.
 
-De verpakkingsomschrijving, volledige verpakkingsinhoud en portiedefinitie worden niet herhaald in het compacte logitem. Deze informatie is niet nodig om de geregistreerde consumptie in de lijst te herkennen.
-
-Voorbeelden:
-
-```text
-08:42
-Grillworst · Merknaam
-1x stuk
-Voeding
-```
-
-```text
-20:15
-Frisdrank · Merknaam
-3x blikje
-Drinken
-```
-
-Op desktop gebruikt elk item vaste kolommen voor afbeelding, tijd, product en merk, hoeveelheid en eenheid, consumptietype en chevron. Op mobiel gebruikt hetzelfde item twee compacte tekstregels naast de afbeelding, met de chevron in een vaste eindkolom. Lange product- en merknamen mogen de overige slots niet verschuiven.
-
-Calorieën en macro's staan niet in het compacte logitem. Het consumptietype wordt nooit uitsluitend met kleur gecommuniceerd.
+De verpakkingsomschrijving, volledige verpakkingsinhoud, portiedefinitie, calorieën en macro's staan niet in het compacte logitem. De responsive plaatsing staat in de UI-specificatie. Het consumptietype wordt nooit uitsluitend met kleur gecommuniceerd.
 
 ## Gearchiveerde catalogusdata
 

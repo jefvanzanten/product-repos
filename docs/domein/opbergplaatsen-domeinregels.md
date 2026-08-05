@@ -1,6 +1,6 @@
 # Domeinregels — opbergplaatsen
 
-Dit document is de gedeelde bron voor opbergplaatsen in Product Management Admin en Inventory. UI-gedrag staat in de [adminfeaturespecificatie](../specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-specificatie.md), HTTP-contracten in [LOCATION_ENDPOINTS.md](../backend/Endpoints/LOCATION_ENDPOINTS.md) en persistente velden in [STORAGE_ERD.md](../backend/ERD/STORAGE_ERD.md).
+Dit document is de gedeelde bron voor opbergplaatsen in Product Management Admin en Inventory. Functioneel beheergedrag staat in de [adminfeaturespecificatie](../specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-specificatie.md), de visuele uitwerking in de [UI-specificatie](../specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-ui-specificatie.md), HTTP-contracten in [LOCATION_ENDPOINTS.md](../backend/Endpoints/LOCATION_ENDPOINTS.md) en persistente velden in [STORAGE_ERD.md](../backend/ERD/STORAGE_ERD.md).
 
 ## Eigendom en gebruik
 

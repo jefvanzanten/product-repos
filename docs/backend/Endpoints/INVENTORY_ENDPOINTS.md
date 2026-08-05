@@ -215,6 +215,7 @@ InventoryItemRow:
     - id
     - locationId
     - locationPath: derived # volledig pad, bijvoorbeeld `Keuken › Koelkast › Lade 1`
+    - isLocationArchived: derived # true wanneer de locatie zelf of via een voorouder gearchiveerd is
     - expiryDate: inventory_item.expiry_date|null
     - quantity
     - version

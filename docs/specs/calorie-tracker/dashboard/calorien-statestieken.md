@@ -58,54 +58,11 @@ Regels:
 - Interne berekeningen behouden hogere precisie. De UI toont calorieën als gehele kcal en macro's met maximaal één decimaal.
 - Dagtotalen worden pas na optellen afgerond.
 
-## Layout
+## UI-specificatie
 
-Het dashboard rendert binnen de [gedeelde applicatieshell met bottom-tabbar](../../shared/bottom-tabbar-specificatie.md).
+De schermopbouw, totaalkaarten, voortgangsweergave en doelenmodal staan in [calorien-statestieken-ui-specificatie.md](./calorien-statestieken-ui-specificatie.md).
 
-De visuele volgorde is:
-
-1. aanklikbare geselecteerde datum;
-2. calorietotaal;
-3. eiwit;
-4. koolhydraten;
-5. vet;
-6. actie `Doelen instellen` of `Doelen wijzigen`.
-
-### Waarde zonder doel
-
-Een waarde zonder doel verschijnt als totaalkaart, bijvoorbeeld:
-
-```text
-Calorieën
-1.842 kcal op deze dag
-```
-
-```text
-Eiwit
-86,5 g op deze dag
-```
-
-### Waarde met doel
-
-Een waarde met doel verschijnt als horizontaal afgeronde voortgangsbalk met minimaal:
-
-- naam;
-- huidige waarde;
-- doel;
-- eenheid;
-- tekstuele voortgang of overschrijding;
-- `role="progressbar"` met een toegankelijke naam, minimum, actuele waarde, maximum en tekstuele waardebeschrijving.
-
-De balk toont het deel binnen het doel en, bij overschrijding, een afzonderlijk overschrijdingssegment. De visuele segmenten veranderen de tekstuele waarde of toegankelijke voortgangsinformatie niet.
-
-Ook zonder consumptielogs blijft een ingesteld doel zichtbaar met een huidige waarde van nul.
-
-Wanneer een doel wordt overschreden:
-
-- blijft het overschrijdende gedeelte zichtbaar;
-- krijgt alleen dat gedeelte een waarschuwende rode tint;
-- toont de component tekst zoals `125 kcal boven doel` of `12 g boven doel`;
-- communiceert de UI de toestand nooit uitsluitend met kleur.
+Een waarde met doel gebruikt `role="progressbar"` met een toegankelijke naam, minimum, actuele waarde, maximum en tekstuele waardebeschrijving. Overschrijding blijft tekstueel herkenbaar en wordt nooit uitsluitend met kleur gecommuniceerd.
 
 ## Doelen instellen en wijzigen
 
@@ -116,7 +73,7 @@ Ieder doel is afzonderlijk optioneel:
 - koolhydraten;
 - vet.
 
-Zonder doelen blijven alle dagtotalen zichtbaar. De actie `Doelen instellen` of `Doelen wijzigen` opent een compacte modal boven het statistiekenoverzicht. De URL verandert niet. De modal gebruikt op mobiel en desktop een scrim, houdt toetsenbordfocus binnen de modal en sluit via `Annuleren`, de sluitactie of `Escape` zonder wijzigingen op te slaan.
+Zonder doelen blijven alle dagtotalen zichtbaar. De actie `Doelen instellen` of `Doelen wijzigen` opent de modal uit de UI-specificatie. De URL verandert niet. De modal houdt toetsenbordfocus binnen de modal en sluit via `Annuleren`, de sluitactie of `Escape` zonder wijzigingen op te slaan.
 
 Het formulier in de modal:
 

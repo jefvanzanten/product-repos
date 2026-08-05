@@ -29,16 +29,9 @@ Deze spec beschrijft de algemene zoekregels, de cataloguszoekresultaten, het kli
 | Productresultaten zoeken | productcataloguspagina | Geimplementeerd |
 | Categorie zoeken | productcataloguspagina | Geimplementeerd |
 
-## Layout
+## UI-specificatie
 
-### Cataloguszoekveld
-
-```text
-[ Zoek product, merk of categorie ]
-
-Alle categorieën
-[ Categorie aanmaken ]
-```
+De presentatie van het zoekveld, de gegroepeerde resultaten en resultaatstates staat in [product-zoeken-ui-specificatie.md](./product-zoeken-ui-specificatie.md).
 
 ## Cataloguszoekveld
 
@@ -93,30 +86,9 @@ Regels:
 - Enter/form submit blijft werken voor keyboardgebruik en deelbare URL;
 - de URL gebruikt `q=<zoekterm>` zolang de gebruiker in tekstzoekmodus zit.
 
-## UI-resultaten op cataloguspagina
+## Zoekresultaten op cataloguspagina
 
-Zoekresultaten worden gegroepeerd onder:
-
-- `Producten`;
-- `Merken`;
-- `Categorieën`.
-
-Voorbeeld:
-
-```text
-Producten
-- Cola Zero Sugar
-  Merk: Coca-Cola
-  Categorie: Dranken > Frisdrank > Cola
-
-Merken
-- Coca-Cola
-  4 producten
-
-Categorieën
-- Dranken > Frisdrank > Cola
-  12 producten
-```
+Zoekresultaten worden semantisch gegroepeerd als producten, merken en categorieën. De visuele uitwerking staat in de UI-specificatie.
 
 Zoekresultaten krijgen per groep een eigen limiet:
 
@@ -146,11 +118,7 @@ Wanneer de productrij vanuit zoekresultaten wordt geopend, blijft de zoekcontext
 
 Klik op een merkresultaat opent een brand-result state op dezelfde cataloguspagina.
 
-Voorbeeld URL:
-
-```text
-/product-catalogus?brandId=<brandId>
-```
+De brand-result state gebruikt `/product-catalogus?brandId=<brandId>`.
 
 Bij selectie van een merkresultaat:
 
@@ -161,24 +129,7 @@ Bij selectie van een merkresultaat:
 
 ### Brand-result state
 
-De UI toont producten van het gekozen merk, gegroepeerd onder categorieheaders.
-
-Voorbeeld:
-
-```text
-[ Zoek product, merk of categorie ]
-
-Producten van Heinz
-
-Sauzen
-- Heinz Tomato Ketchup
-- Heinz Mayonaise
-
-Bonen
-- Heinz Baked Beans
-
-[ Product aanmaken voor Heinz ]
-```
+De UI toont producten van het gekozen merk, gegroepeerd onder categorieheaders. De opbouw van deze state staat in de UI-specificatie.
 
 Regels:
 
@@ -218,14 +169,7 @@ De volledige category-browse layout en categoriebeheerregels staan in [productca
 
 ### Geen zoekresultaten
 
-Wanneer zoeken niets oplevert:
-
-```text
-Geen resultaten gevonden voor "<zoekterm>".
-Pas je zoekterm aan of kies een categorie om een product aan te maken.
-```
-
-Er wordt geen product-aanmaakactie getoond, omdat een zoekterm geen expliciete categorie- of merkcontext is.
+Wanneer zoeken niets oplevert, toont de UI de geen-resultaten-toestand uit de UI-specificatie. Er wordt geen product-aanmaakactie getoond, omdat een zoekterm geen expliciete categorie- of merkcontext is.
 
 ### Resultaatselectie en URL-state
 

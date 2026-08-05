@@ -14,12 +14,14 @@
 
 De gebruiker kan een eigen consumptielog volledig bekijken, een invoerfout corrigeren of het log veilig verwijderen.
 
-## Presentatie en navigatie
+## UI-specificatie
+
+De responsive routepresentatie en detailopbouw staan in [log-detail-bewerken-ui-specificatie.md](./log-detail-bewerken-ui-specificatie.md).
+
+## Navigatie
 
 - Detail en bewerken hebben een eigen route en ondersteunen verversen, deep-linking en browsernavigatie.
 - Tijdens bewerken blijft op de achtergrond exact één logboekinstantie gemount; die achtergrond is inert en niet bedienbaar.
-- Mobiel toont de route als full-screen weergave.
-- Desktop mag dezelfde route als modal of zijpaneel tonen.
 - De oorspronkelijke logboekdatum en het actieve filter blijven in de queryparameters behouden.
 - Terugkeren uit detail herstelt de eerdere logboekcontext en scrollpositie.
 

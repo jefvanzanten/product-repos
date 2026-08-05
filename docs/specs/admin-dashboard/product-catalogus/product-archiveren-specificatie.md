@@ -31,6 +31,10 @@ Producten en verpakkingen worden nooit definitief verwijderd. Zij kunnen alleen 
 - Consumptielogs of voorraadregistraties cascade-verwijderen.
 - Een bewaartermijn voor gearchiveerde catalogusdata.
 
+## UI-specificatie
+
+De statuspresentatie, archiveer- en herstelacties en bevestigingen staan in [product-archiveren-ui-specificatie.md](./product-archiveren-ui-specificatie.md).
+
 ## Status en zoekbaarheid
 
 De catalogus kent minimaal deze statussen:
@@ -50,18 +54,13 @@ Gearchiveerde producten en verpakkingen:
 
 ## Product archiveren
 
-Productdetail bevat bij een actief product de actie `Product archiveren`.
-
-Voor opslaan toont de UI een eenvoudige bevestiging met:
-
-- productnaam;
-- uitleg dat alle verpakkingen uit actieve zoekresultaten verdwijnen.
+Productdetail biedt bij een actief product de archiveeractie en gebruikt daarvoor de bevestiging uit de UI-specificatie.
 
 Archiveren maakt het product en alle onderliggende verpakkingen niet-selecteerbaar. De eigen status van iedere verpakking blijft bewaard, zodat heractiveren van het product alleen verpakkingen terugbrengt die vóór productarchivering actief waren.
 
 ## Product heractiveren
 
-Bij een gearchiveerd product toont productdetail `Product heractiveren`.
+Bij een gearchiveerd product biedt productdetail de herstelactie uit de UI-specificatie.
 
 Na heractiveren:
 
@@ -71,22 +70,13 @@ Na heractiveren:
 
 ## Verpakking archiveren en heractiveren
 
-Verpakkingdetail bevat afhankelijk van de status:
-
-- `Verpakking archiveren`; of
-- `Verpakking heractiveren`.
-
-Voor archiveren mag de UI een eenvoudige bevestiging tonen. Bestaande relaties blijven werken.
+De verpakking-bewerkpagina biedt afhankelijk van de status een archiveer- of herstelactie volgens de UI-specificatie. Bestaande relaties blijven werken.
 
 Een verpakking kan alleen actief selecteerbaar worden wanneer ook het bovenliggende product actief is. Heractiveren onder een gearchiveerd product herstelt daarom alleen de eigen verpakkingsstatus; de verpakking blijft buiten actieve zoekresultaten totdat het product is hersteld.
 
 ## Gearchiveerde data beheren
 
-De productcatalogus biedt een zichtbaar statusfilter:
-
-```text
-[ Actief ] [ Gearchiveerd ]
-```
+De productcatalogus biedt het statusfilter uit de UI-specificatie.
 
 In de status `Gearchiveerd`:
 

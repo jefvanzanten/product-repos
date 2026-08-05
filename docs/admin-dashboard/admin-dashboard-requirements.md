@@ -2,12 +2,9 @@
 
 Dit bestand is een korte ingang naar de actuele admin-docs. Gedrag staat per feature in de specs.
 
-## Algemene layout
+## UI-specificatie
 
-- Op desktop staat de admin-dashboardcontent horizontaal en verticaal gecentreerd in de viewport.
-- Op kleinere schermen blijft de mobiele/top-aligned layout leidend, met een rand van ongeveer 1em rondom de admin-content.
-- De admin-navbar heeft bovenaan extra ademruimte binnen het dashboardframe.
-- De afstand tussen de admin-navbar en de eerste content, zoals de productcatalogus-zoekbalk, is compact zodat de zoekbalk visueel dichter onder de navigatie staat.
+De algemene appshellpresentatie van Product Management Admin staat in [admin-dashboard-ui-specificatie.md](../specs/admin-dashboard/admin-dashboard-ui-specificatie.md). Featurelayouts staan in de gekoppelde UI-specificaties onder `docs/specs/admin-dashboard/`.
 
 ## Zelfstandige applicatiestructuur
 
@@ -22,8 +19,8 @@ Dit bestand is een korte ingang naar de actuele admin-docs. Gedrag staat per fea
 - Een ingelogde gebruiker zonder beheerdersrol krijgt geen toegang tot inhoudelijke adminroutes.
 - De publieke productcatalogusroute is `/product-management-admin/product-catalogus`.
 - De publieke opbergplaatsenroute is `/product-management-admin/locations`.
-- De admin-app gebruikt de [gedeelde bottom-tabbar en applicatieshell](../specs/shared/bottom-tabbar-specificatie.md).
-- De bottom-tabbar blijft zichtbaar op inhoudelijke adminroutes. De admin-layout reserveert 64 px aan de onderzijde: 56 px voor de tabbar en 8 px tussenruimte.
+- De admin-app gebruikt de [gedeelde bottom-tabbar en applicatieshell](../specs/shared/bottom-tabbar-specificatie.md); de visuele uitwerking staat in de [bottom-tabbar-UI-specificatie](../specs/shared/bottom-tabbar-ui-specificatie.md).
+- De bottom-tabbar blijft zichtbaar op inhoudelijke adminroutes en de admin-layout reserveert de in de UI-specificatie vastgelegde onderruimte.
 
 ## Terugkeercontext
 
@@ -48,11 +45,12 @@ Actuele admin productcatalogus-features:
 ## Opbergplaatsen
 
 - Beheerfeature: [opbergplaatsen-beheren-specificatie.md](../specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-specificatie.md)
+- UI-specificatie: [opbergplaatsen-beheren-ui-specificatie.md](../specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-ui-specificatie.md)
 - Gedeelde domeinregels: [opbergplaatsen-domeinregels.md](../domein/opbergplaatsen-domeinregels.md)
 - Endpointcontract: [LOCATION_ENDPOINTS.md](../backend/Endpoints/LOCATION_ENDPOINTS.md)
 - Datamodel: [STORAGE_ERD.md](../backend/ERD/STORAGE_ERD.md)
 
-De huidige `/locations`-pagina is een niet-functionele placeholder. De geplande feature beheert één gedeelde hiërarchische locatieboom voor Inventory.
+De `/locations`-pagina beheert één gedeelde hiërarchische locatieboom voor Inventory, inclusief aanmaken, hernoemen, verplaatsen, archiveren en herstellen.
 
 ## Buiten admin
 

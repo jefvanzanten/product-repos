@@ -47,37 +47,11 @@ Een gebruiker kan in de inventory client snel zien welke voorraad er is, hoeveel
 - Verschillende verpakkingen van hetzelfde product zijn afzonderlijke voorraadregels en worden niet naar inhoud of naar elkaar omgerekend.
 - Het persistente datamodel staat in het [Storage/Inventory ERD](../../backend/ERD/STORAGE_ERD.md).
 
-## Layout
+## UI-specificatie
 
-```text
-Inventarisatie
+De schermopbouw, productregels en uitgeklapte partijregels staan in [voorraad-inzien-ui-specificatie.md](./voorraad-inzien-ui-specificatie.md).
 
-[ Zoek in voorraad ]
-
-<Productregel ingeklapt>
-  Product / merk
-  Verpakking
-  Totaal aantal verpakkingen
-  Vroegste houdbaarheidsstatus
-  Aantal partijen/locaties   [uitklapindicator]
-
-<Productregel uitgeklapt>
-  <Partijregel>
-    Volledig locatiepad
-    Houdbaarheidsdatum/statuslabel
-    Aantal verpakkingen
-    [beheerder: mutatieacties]
-
-[ + ] Voorraad toevoegen   (alleen beheerders)
-```
-
-- De lijst is productgericht, niet locatiegericht. De locatieboom wordt uitsluitend gebruikt bij het kiezen van een opbergplaats.
-- De hoofdregel per productverpakking toont het totale aantal verpakkingen over alle locaties en datums.
-- Uitklappen toont afzonderlijke partijregels per locatie + houdbaarheidsdatum, met het volledige locatiepad, bijvoorbeeld `Keuken › Koelkast › Lade 1`.
-- Meerdere productregels mogen tegelijk uitgeklapt zijn.
-- Mutatieacties (`+`, `−`, exact aanpassen, verplaatsen, datum wijzigen) staan alleen op uitgeklapte partijregels en alleen voor beheerders; hun gedrag staat in [voorraad-aanpassen-specificatie.md](./voorraad-aanpassen-specificatie.md).
-- De toevoegactie opent geen nieuwe pagina, maar de bottomsheet uit [voorraad-toevoegen-bottom-sheet-specificatie.md](./voorraad-toevoegen-bottom-sheet-specificatie.md).
-- De pagina rendert binnen de [gedeelde applicatieshell met bottom-tabbar](../shared/bottom-tabbar-specificatie.md). De tab `Inventarisatie` verwijst naar deze route.
+De lijst is productgericht, niet locatiegericht. De locatieboom wordt uitsluitend gebruikt bij het kiezen van een opbergplaats. Mutatieacties zijn alleen voor beheerders beschikbaar op concrete partijregels; hun gedrag staat in [voorraad-aanpassen-specificatie.md](./voorraad-aanpassen-specificatie.md). De toevoegactie opent de flow uit [voorraad-toevoegen-bottom-sheet-specificatie.md](./voorraad-toevoegen-bottom-sheet-specificatie.md) zonder een nieuwe pagina te openen.
 
 ## Sortering
 

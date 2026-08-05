@@ -44,228 +44,25 @@ Een beheerder kan door bestaande catalogusdata bladeren, rootcategorieën behere
 - Publicatiestatus naast actief/gearchiveerd.
 - Oude trapsgewijze productmanagement-flow.
 
-## Layout
+## UI-specificatie
 
-De admin-navigatie toont al dat de beheerder zich op `Productcatalogus` bevindt. De cataloguspagina rendert daarom geen extra paginakop `Productcatalogus` in de contentzone onder de navbar; de inhoud start compact onder de admin-navbar met de zoekbalk, de breadcrumb en daarna de contextuele browse-inhoud. De zoekbalk staat direct onder de navigatie met beperkte verticale tussenruimte.
+De paginaopbouw, categorieboom, productpresentatie, modals en lege states staan in [productcatalogus-browsen-ui-specificatie.md](./productcatalogus-browsen-ui-specificatie.md).
 
-De breadcrumb is leidend voor elke productcataloguspagina die een categoriecontext toont of de catalogusroot toont. De breadcrumb gebruikt `1.05rem` tekstgrootte met `1.5rem` regelhoogte, zodat deze zichtbaarer is dan standaardtekst maar niet als aparte paginatitel voelt.
+De catalogusroot toont geen platte productlijst en geen product-aanmaakactie. Een geopende categorie toont haar directe subcategorieën en directe producten en biedt de contextuele acties `+ Subcategorie` en `+ Product`.
 
-Alle schermopbouw, plaatsing, visuele volgorde en lege browse-states staan in deze sectie. Gedrag en backendregels staan in de latere secties.
+## Browsegedrag
 
-### Hoofdpagina zonder context
-
-Wanneer de beheerder `/product-catalogus` opent zonder query of context, toont de pagina de root van de catalogus.
-
-```text
-[ Zoek product, merk of categorie ]
-
-Alle categorieën
-- Dranken
-- Voeding
-- Huishouden
-
-[ Categorie aanmaken ]
-```
-
-Op de rootpagina wordt geen product-aanmaakactie getoond, omdat er nog geen expliciete categoriecontext is. De rootpagina toont wel de actie `Categorie aanmaken`; deze maakt een nieuwe rootcategorie. De rootpagina toont geen afzonderlijke titel `Alle categorieën` in de contentkaart; de breadcrumb met alleen `Alle categorieën` is de zichtbare context.
-
-De hoofdpagina toont geen platte lijst met alle producten. Browsen verloopt via categorieën. Producten kunnen pas vanuit een gekozen categorie of subcategorie worden aangemaakt.
-
-### Categorie-browse
-
-Wanneer de beheerder een categorie opent, toont de catalogus een openklapbare categorieboom. De geopende categorie blijft zichtbaar als rij in die boom. Direct onder die rij staat de inhoud die bij de geopende categorie hoort.
-
-De pagina toont boven de categorieboom:
-
-- de zoekbalk;
-- het statusfilter `Actief` of `Gearchiveerd`;
-- een klikbare breadcrumb met `Alle categorieën` en het categoriepad van root naar de geopende categorie.
-
-Een geopende categorie toont in deze volgorde:
-
-1. de categorierij zelf, met categorienaam en bewerkicoon;
-2. directe subcategorieën, als ingesprongen categorierijen onder de geopende categorie;
-3. directe producten, onder de sectietitel `Producten`, wanneer de categorie directe producten bevat;
-4. de acties `+ Subcategorie` en `+ Product`.
-
-Voorbeeld met subcategorieën en directe producten:
-
-```text
-[ Zoek product, merk of categorie ]
-
-Alle categorieën > Voeding > Tussendoortjes > Rijstwafels met smaak
-
-▸ Drinken
-▸ Drogisterij
-▸ Supplementen
-▾ Voeding
-  ▸ Brood en broodvervangers
-  ▸ Chips, zoutjes en noten
-  ▸ Chocolade
-  ▸ Salades en spreads
-  ▾ Tussendoortjes
-    ▸ Knabbelspek
-    ▾ Rijstwafels met smaak
-
-      Producten
-      - Snack a Jacks Rijstwafels met kaassmaak
-        Merk: Snack a Jacks
-        zak 23 gram
-
-      [ + Subcategorie ] [ + Product ]
-
-  ▸ Vleeswaren
-```
-
-Voorbeeld met subcategorieën en zonder directe producten:
-
-```text
-[ Zoek product, merk of categorie ]
-
-Alle categorieën > Voeding > Tussendoortjes
-
-▸ Drinken
-▸ Drogisterij
-▸ Supplementen
-▾ Voeding
-  ▸ Brood en broodvervangers
-  ▾ Tussendoortjes
-    ▸ Knabbelspek
-    ▸ Rijstwafels met smaak
-
-    [ + Subcategorie ] [ + Product ]
-```
-
-Regels:
-
-- De zoekbalk blijft zichtbaar in categorie-browse.
-- De adminnavigatie, zoekbalk en breadcrumb blijven op hun plek staan; alleen de categorieboom scrolt wanneer de browse-inhoud hoger is dan de beschikbare viewport.
-- Wanneer de beheerder een al geopende categorie in de categorieboom opnieuw kiest, klapt die categorie dicht; de catalogus opent dan de parentcategorie, of de rootcatalogus wanneer de gekozen categorie geen parent heeft.
-- De breadcrumb staat direct onder de zoekbalk en boven de categorieboom.
-- De breadcrumb gebruikt `1.05rem` tekstgrootte met `1.5rem` regelhoogte.
-- De breadcrumb begint altijd met `Alle categorieën` en toont daarna het categoriepad van root naar de geopende categorie.
-- `Alle categorieën` linkt naar `/product-catalogus` zonder catalogusqueryparameters; een geldige `source` blijft behouden.
-- Elke ancestorcategorie in de breadcrumb opent `/product-catalogus?categoryId=<categoryId>`.
-- Het laatste breadcrumbsegment toont de geopende categorie als huidige context.
-- Elke categoriekaart of -rij toont rechts binnen hetzelfde categorie-item een beheerknop met potloodicoon. De knop heeft geen eigen kaart, outline of scheidingslijn.
-- De beheerknop opent het actiemenu met `Naam wijzigen` en `Verwijderen`; `Naam wijzigen` opent `/product-catalogus/categorieen/<categoryId>/bewerken`.
-- Directe subcategorieën staan onder de geopende categorierij en tonen alleen hun eigen naam.
-- Producten die direct aan de geopende categorie hangen, staan in de sectie `Producten` onder die categorie.
-- Producten uit onderliggende subcategorieën staan pas onder die subcategorie wanneer de beheerder die subcategorie opent.
-- De inhoud onder een geopende categorie hoort visueel bij die categorie: subcategorieën, productsectie, productkaarten en actieknoppen volgen dezelfde boom-as en blijven binnen dezelfde breedte als de geopende categoriecontext.
-- De contextuele product-aanmaakactie gebruikt de korte knoptekst `+ Product`.
-- De categoriecontext voor product aanmaken blijft de geopende categorie en wordt via `categoryId` meegegeven.
-- Er is één primaire knop `+ Product`; daarnaast staat maximaal één secundaire knop `+ Subcategorie`.
-- `+ Subcategorie` en `+ Product` staan samen onder de inhoud van de geopende categorie.
-
-### Lege categorieën in browse
-
-De browsepagina is geen volledige categoriebeheerinterface, maar ondersteunt wel het aanmaken van directe subcategorieën vanuit een geopende categorie.
-
-Wanneer een geopende categorie geen directe producten heeft, maar wel subcategorieën, toont de geopende categorie haar directe subcategorieën, de actie `+ Subcategorie` en de contextuele product-aanmaakactie.
-
-Wanneer een geopende categorie geen directe producten en geen subcategorieën heeft:
-
-```text
-[ Zoek product, merk of categorie ]
-
-Alle categorieën > ... > <Naam huidige categorie>
-
-▾ <Naam huidige categorie>
-  Deze categorie is nu nog leeg.
-  Maak een nieuwe subcategorie of een product aan om hem te vullen.
-
-  [ + Subcategorie ] [ + Product ]
-```
-
-Deze lege categorietoestand wordt getoond wanneer de geopende categorie helemaal leeg is: geen directe subcategorieën en geen directe producten. Ook in deze lege categorietoestand gebruikt de product-aanmaakactie de huidige `categoryId` als prefillcontext. De actieknoppen staan samen binnen het lege-state-kaartje, onder de uitlegtekst en op dezelfde boom-as als de geopende categorie-inhoud.
-
-Directe subcategorieën van de geopende categorie worden getoond, ook wanneer ze nog geen producten in hun eigen subtree hebben. Dit is nodig zodat een beheerder feedback krijgt na subcategorie-aanmaak en verder kan navigeren om de catalogus op te bouwen.
-
-### Productrij of productkaart
-
-Elke concrete productrij of productkaart linkt naar productdetail:
-
-```text
-/product-catalogus/:productId
-```
-
-Wanneer de productrij vanuit een categoriecontext wordt geopend, blijft die browsecontext beschikbaar voor terugnavigatie naar de catalogus.
-
-Elke rij/kaart toont minimaal:
-
-- weergavenaam;
-- merk wanneer aanwezig;
-- korte verpakkingssamenvatting;
-- statuslabel wanneer `Gearchiveerd` actief is.
-
-Als producten binnen een geopende categorie staan, is het categoriepad al zichtbaar als context en hoeft dit niet in elke rij herhaald te worden. Productkaarten in een geopende categorie staan op dezelfde visuele as en binnen dezelfde breedte als de inhoud van die geopende categorie.
-
-Voorbeelden van verpakkingssamenvatting:
-
-```text
-fles 1,5 l
-blik 330 ml
-3 verpakkingen
-```
-
-### Lege rootcatalogus
-
-Wanneer er nog geen rootcategorieën zijn:
-
-```text
-Alle categorieën
-Er zijn geen categorieën gevonden.
-Maak je eerste categorie aan om de catalogus op te bouwen.
-[ Categorie aanmaken ]
-```
-
-De actie opent de rootcategorie-modal en maakt een categorie met `parentId: null`. De lege rootstate gebruikt dezelfde browse-inhoudszone met minimale hoogte, zodat de actie onder de inhoud blijft staan.
-
-### Modals
-
-Rootcategorie aanmaken:
-
-```text
-Nieuwe categorie maken
-
-[ Naam categorie ]
-
-[ Toevoegen ] [ Annuleren ]
-```
-
-Subcategorie aanmaken, bijvoorbeeld in `Brood en broodvervangers`:
-
-```text
-Nieuwe subcategorie maken in Brood en broodvervangers
-
-[ Naam subcategorie ]
-
-[ Toevoegen ] [ Annuleren ]
-```
-
-Categorie bewerken:
-
-```text
-Categorie bewerken
-
-[ Naam categorie ]
-
-[ Opslaan ] [ Annuleren ]
-```
-
-Modalregels:
-
-- Modals tonen geen extra uitlegtekst; alleen de modaltitel, het invoerveld en de acties zijn zichtbaar.
-- Invoervelden hebben een toegankelijke naam (`Naam categorie` of `Naam subcategorie`). Als het ontwerp visueel alleen een veld toont, mag het label visueel verborgen zijn.
-- `Toevoegen` of `Opslaan` is de bevestigingsactie.
-- `Annuleren` is de annuleeractie.
+- Wanneer de beheerder een al geopende categorie opnieuw kiest, klapt die categorie dicht en opent de catalogus de parentcategorie of, zonder parent, de rootcatalogus.
+- De breadcrumb begint met `Alle categorieën`. Dit segment opent `/product-catalogus` zonder catalogusqueryparameters; iedere ancestor opent `/product-catalogus?categoryId=<categoryId>`. Een geldige `source` blijft behouden.
+- Directe producten staan bij de geopende categorie. Producten uit een onderliggende subcategorie verschijnen pas wanneer die subcategorie wordt geopend.
+- Iedere productrij opent `/product-catalogus/:productId` en behoudt de browsecontext voor terugnavigatie.
+- Ook lege directe subcategorieën blijven zichtbaar, zodat de beheerder na aanmaken verder door de catalogus kan navigeren.
 
 ## Rootcategorie aanmaken vanuit de catalogusroot
 
 De actie `Categorie aanmaken` staat alleen op de rootpagina zonder geselecteerde categorie.
 
-De actie opent de rootcategorie-modal uit Layout.
+De actie opent de rootcategorie-modal uit de [UI-specificatie](./productcatalogus-browsen-ui-specificatie.md).
 
 Regels:
 
@@ -280,7 +77,7 @@ Regels:
 
 De actie `+ Subcategorie` staat in dezelfde actiezone als `+ Product` onder de geopende categorie.
 
-De actie opent de subcategorie-modal uit Layout.
+De actie opent de subcategorie-modal uit de UI-specificatie.
 
 Regels:
 
@@ -314,7 +111,7 @@ Het menu sluit bij een klik buiten het menu en bij `Escape`. De categorie zelf b
 Regels:
 
 - De route is direct zichtbaar en deelbaar.
-- De categorie-bewerken-modal uit Layout is voorgevuld met de huidige categorienaam.
+- De categorie-bewerken-modal uit de UI-specificatie is voorgevuld met de huidige categorienaam.
 - `Annuleren` sluit de modal zonder wijziging en keert terug naar de lijst waarin de categorie stond: root voor rootcategorieën, of de parentcategorie voor subcategorieën.
 - Een lege of alleen uit whitespace bestaande naam kan niet worden opgeslagen.
 - Een naam die al bestaat bij dezelfde parentcategorie/root blijft geblokkeerd.

@@ -32,21 +32,11 @@ De gebruiker kan snel een consumptie registreren door een bestaande actieve cata
 - Volledig offline opslaan en later synchroniseren.
 - Automatisch voorraad verminderen.
 
-## Presentatie
+## UI-specificatie
 
-De flow gebruikt een routegebonden modal:
+De responsive modalvorm, direct zichtbare velden, zoekresultaten en hoeveelheidsinvoer staan in [log-toevoegen-ui-specificatie.md](./log-toevoegen-ui-specificatie.md).
 
-- mobiel: full-screen modal of full-screen sheet;
-- desktop: compacte modal;
-- verversen en browsernavigatie blijven werken via de route;
-- het bestaande logboek blijft als één gemounte achtergrondinstantie behouden en is tijdens de modal inert en niet bedienbaar.
-
-Direct zichtbaar:
-
-- productzoekveld;
-- geselecteerde datum;
-- tijd;
-- sluiten of annuleren.
+De flow blijft routegebonden, zodat verversen en browsernavigatie werken. Het bestaande logboek blijft als één gemounte achtergrondinstantie behouden en is tijdens de modal inert en niet bedienbaar.
 
 De datum uit het logboek wordt vooraf ingevuld. Tijd is standaard de huidige lokale tijd. Datum en tijd blijven aanpasbaar, maar mogen samen geen toekomstig moment vormen.
 

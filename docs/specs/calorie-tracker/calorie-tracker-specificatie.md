@@ -8,12 +8,12 @@ De Calorie Tracker laat een ingelogde gebruiker consumpties registreren en de ca
 
 ## Actuele specs
 
-| Feature | Spec | Status |
-| --- | --- | --- |
-| Caloriestatistieken en doelen | [dashboard/calorien-statestieken.md](./dashboard/calorien-statestieken.md) | Concept |
-| Consumptielogboek | [logs/log-overzicht.md](./logs/log-overzicht.md) | Concept |
-| Consumptielog toevoegen | [logs/log-toevoegen.md](./logs/log-toevoegen.md) | Concept |
-| Logdetail, bewerken en verwijderen | [logs/log-detail-bewerken.md](./logs/log-detail-bewerken.md) | Concept |
+| Feature | Functionele spec | UI-specificatie | Status |
+| --- | --- | --- | --- |
+| Caloriestatistieken en doelen | [dashboard/calorien-statestieken.md](./dashboard/calorien-statestieken.md) | [dashboard/calorien-statestieken-ui-specificatie.md](./dashboard/calorien-statestieken-ui-specificatie.md) | Concept |
+| Consumptielogboek | [logs/log-overzicht.md](./logs/log-overzicht.md) | [logs/log-overzicht-ui-specificatie.md](./logs/log-overzicht-ui-specificatie.md) | Concept |
+| Consumptielog toevoegen | [logs/log-toevoegen.md](./logs/log-toevoegen.md) | [logs/log-toevoegen-ui-specificatie.md](./logs/log-toevoegen-ui-specificatie.md) | Concept |
+| Logdetail, bewerken en verwijderen | [logs/log-detail-bewerken.md](./logs/log-detail-bewerken.md) | [logs/log-detail-bewerken-ui-specificatie.md](./logs/log-detail-bewerken-ui-specificatie.md) | Concept |
 
 ## Onderliggende documenten
 
@@ -52,7 +52,7 @@ De Calorie Tracker laat een ingelogde gebruiker consumpties registreren en de ca
 
 ## Navigatie en routes
 
-De app gebruikt de [gedeelde applicatieshell met bottom-tabbar](../shared/bottom-tabbar-specificatie.md).
+De app gebruikt de [gedeelde applicatieshell met bottom-tabbar](../shared/bottom-tabbar-specificatie.md). De Calorie Tracker-specifieke presentatie staat in [calorie-tracker-ui-specificatie.md](./calorie-tracker-ui-specificatie.md); de gedeelde shellpresentatie staat in [bottom-tabbar-ui-specificatie.md](../shared/bottom-tabbar-ui-specificatie.md).
 
 De React Router-routes van deze app worden in productie onder het publieke basispad `/calorie-tracker` gemount. De frontendbasename, publieke deploymentroute en API-prefix gebruiken daarmee dezelfde spelling.
 
@@ -66,7 +66,7 @@ De React Router-routes van deze app worden in productie onder het publieke basis
 
 App-interne technische routes gebruiken Engelse segmenten en de zichtbare labels blijven Nederlandstalig. De voormalige routes `/logs/nieuw` en `/logs/:logId/bewerken` redirecten permanent met behoud van queryparameters naar de canonieke routes. Deze compatibiliteitsroutes blijven minimaal één releasecyclus beschikbaar en worden pas in een afzonderlijk besluit verwijderd.
 
-Caloriestatistieken en Consumptielogboek delen de geselecteerde `date`-context. Navigatie via de Calorie Tracker-navbar neemt deze datum in beide richtingen mee; het typefilter bestaat alleen in het logboek. Op desktop staan de datumselector en navbar in de normale documentflow onder elkaar. De navbarlinks staan horizontaal gecentreerd en de navbar gebruikt `2em` bovenpadding en `1em` onderpadding.
+Caloriestatistieken en Consumptielogboek delen de geselecteerde `date`-context. Navigatie via de Calorie Tracker-navbar neemt deze datum in beide richtingen mee; het typefilter bestaat alleen in het logboek. De opbouw van datumselector en navbar staat in de Calorie Tracker-UI-specificatie.
 
 De adminbestemming is een gewone browserlink naar een andere deployment. Product Management Admin gebruikt `source=calorie-tracker` om in zijn bottom-tabbar een terugkeertab naar `/calorie-tracker` te tonen. De regels voor bronbehoud staan in de [gedeelde bottom-tabbar- en applicatieshellspecificatie](../shared/bottom-tabbar-specificatie.md).
 

@@ -2,7 +2,7 @@
 
 ## Scope
 
-Deze index koppelt elk specbestand onder `docs/specs/` aan een uitvoerbaar plan. Feature-specs krijgen een implementatie- of wijzigingsplan. Spec-indexbestanden krijgen een roadmap-/sequencingplan. Lege of ondergespecificeerde specs krijgen eerst een specificatieplan, omdat de specs, requirements, ERD en endpointdocs de bron van waarheid zijn.
+Deze index koppelt de functionele specbestanden onder `docs/specs/` aan een uitvoerbaar plan. Feature-specs krijgen een implementatie- of wijzigingsplan. Spec-indexbestanden krijgen een roadmap-/sequencingplan. Gekoppelde UI-specificaties vallen onder hetzelfde plan als hun functionele feature en staan in een afzonderlijke UI-coveragetabel. Lege of ondergespecificeerde specs krijgen eerst een specificatieplan, omdat de specs, UI-specificaties, requirements, ERD en endpointdocs samen de bron van waarheid zijn.
 
 ## Coverage
 
@@ -13,7 +13,7 @@ Deze index koppelt elk specbestand onder `docs/specs/` aan een uitvoerbaar plan.
 | `docs/specs/admin-dashboard/product-catalogus/product-zoeken-specificatie.md` | `docs/plans/admin-product-zoeken-plan.md` | wijzigings-/implementatieplan | cataloguszoekveld en merkzoeken deels aanwezig |
 | `docs/specs/admin-dashboard/product-catalogus/productcatalogus-browsen-specificatie.md` | `docs/plans/admin-productcatalogus-browsen-plan.md` | implementatieplan | nieuw op backend, frontend heeft alleen shell |
 | `docs/specs/admin-dashboard/product-catalogus/product-detail-specificatie.md` | `docs/plans/admin-product-detail-verpakkingen-plan.md` | implementatieplan | nieuw |
-| `docs/specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-specificatie.md` | `docs/plans/admin-opbergplaatsen-beheren-plan.md` | implementatieplan | huidige `/locations` is een niet-functionele placeholder |
+| `docs/specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-specificatie.md` | `docs/plans/admin-opbergplaatsen-beheren-plan.md` | uitgevoerd implementatieplan | locatiebeheer en Inventory-archiefprojectie zijn geïmplementeerd |
 | `docs/specs/inventory-client/inventory-client-specificatie.md` | `docs/plans/inventory-client-roadmap-plan.md` | roadmap | index, huidige `/` is placeholderachtig |
 | `docs/specs/inventory-client/voorraad-inzien-specificatie.md` | `docs/plans/inventory-voorraad-inzien-plan.md` | implementatieplan | nieuw; placeholder vervangen |
 | `docs/specs/inventory-client/voorraad-toevoegen-bottom-sheet-specificatie.md` | `docs/plans/inventory-voorraad-toevoegen-bottomsheet-plan.md` | implementatieplan | nieuw |
@@ -23,6 +23,27 @@ Deze index koppelt elk specbestand onder `docs/specs/` aan een uitvoerbaar plan.
 | `docs/specs/calorie-tracker/logs/log-overzicht.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw; bestaande UI is niet aan de actieve router gekoppeld |
 | `docs/specs/calorie-tracker/logs/log-toevoegen.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw; bestaande legacy-modal gebruikt verouderde contracts |
 | `docs/specs/calorie-tracker/logs/log-detail-bewerken.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw |
+
+## UI-specificatiecoverage
+
+| UI-specificatie | Functionele ingang | Plan |
+| --- | --- | --- |
+| `docs/specs/admin-dashboard/admin-dashboard-ui-specificatie.md` | `docs/admin-dashboard/admin-dashboard-requirements.md` | `docs/plans/zelfstandige-app-deployments-en-admin-herkomst-plan.md` |
+| `docs/specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-ui-specificatie.md` | `docs/specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-specificatie.md` | `docs/plans/admin-opbergplaatsen-beheren-plan.md` |
+| `docs/specs/admin-dashboard/product-catalogus/product-aanmaken-ui-specificatie.md` | `docs/specs/admin-dashboard/product-catalogus/product-aanmaken-specificatie.md` | `docs/plans/admin-product-aanmaken-wijzigingsplan.md` |
+| `docs/specs/admin-dashboard/product-catalogus/product-zoeken-ui-specificatie.md` | `docs/specs/admin-dashboard/product-catalogus/product-zoeken-specificatie.md` | `docs/plans/admin-product-zoeken-plan.md` |
+| `docs/specs/admin-dashboard/product-catalogus/productcatalogus-browsen-ui-specificatie.md` | `docs/specs/admin-dashboard/product-catalogus/productcatalogus-browsen-specificatie.md` | `docs/plans/admin-productcatalogus-browsen-plan.md` |
+| `docs/specs/admin-dashboard/product-catalogus/product-detail-ui-specificatie.md` | `docs/specs/admin-dashboard/product-catalogus/product-detail-specificatie.md` | `docs/plans/admin-product-detail-verpakkingen-plan.md` |
+| `docs/specs/admin-dashboard/product-catalogus/product-archiveren-ui-specificatie.md` | `docs/specs/admin-dashboard/product-catalogus/product-archiveren-specificatie.md` | `docs/plans/admin-product-detail-verpakkingen-plan.md` |
+| `docs/specs/calorie-tracker/calorie-tracker-ui-specificatie.md` | `docs/specs/calorie-tracker/calorie-tracker-specificatie.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` |
+| `docs/specs/calorie-tracker/dashboard/calorien-statestieken-ui-specificatie.md` | `docs/specs/calorie-tracker/dashboard/calorien-statestieken.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` |
+| `docs/specs/calorie-tracker/logs/log-overzicht-ui-specificatie.md` | `docs/specs/calorie-tracker/logs/log-overzicht.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` |
+| `docs/specs/calorie-tracker/logs/log-toevoegen-ui-specificatie.md` | `docs/specs/calorie-tracker/logs/log-toevoegen.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` |
+| `docs/specs/calorie-tracker/logs/log-detail-bewerken-ui-specificatie.md` | `docs/specs/calorie-tracker/logs/log-detail-bewerken.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` |
+| `docs/specs/inventory-client/voorraad-inzien-ui-specificatie.md` | `docs/specs/inventory-client/voorraad-inzien-specificatie.md` | `docs/plans/inventory-voorraad-inzien-plan.md` |
+| `docs/specs/inventory-client/voorraad-aanpassen-ui-specificatie.md` | `docs/specs/inventory-client/voorraad-aanpassen-specificatie.md` | `docs/plans/inventory-client-roadmap-plan.md` |
+| `docs/specs/inventory-client/voorraad-toevoegen-bottom-sheet-ui-specificatie.md` | `docs/specs/inventory-client/voorraad-toevoegen-bottom-sheet-specificatie.md` | `docs/plans/inventory-voorraad-toevoegen-bottomsheet-plan.md` |
+| `docs/specs/shared/bottom-tabbar-ui-specificatie.md` | `docs/specs/shared/bottom-tabbar-specificatie.md` | `docs/plans/zelfstandige-app-deployments-en-admin-herkomst-plan.md` |
 
 ## Routeconventie voor adminplannen
 
@@ -37,7 +58,7 @@ Het historische `admin-dashboard-shared-package-calory-router-plan.md` behoudt d
 3. Implementeer minimale productdetail-read endpoints en route, zodat `Product aanmaken` naar detail kan redirecten.
 4. Maak `Product aanmaken` spec-compleet: context-prefill en redirect in plaats van aangemaakt-JSON tonen.
 5. Bouw cataloguszoeken en browsen samen, omdat ze dezelfde productrij-, categoriepad- en verpakkingssamenvatting-contracten delen.
-6. Implementeer gedeeld opbergplaatsenbeheer en de actieve locatieboom volgens `docs/plans/admin-opbergplaatsen-beheren-plan.md`; rond daarna de Inventory-mutatiecontracts en toevoegflow af.
+6. Rond na het uitgevoerde gedeelde opbergplaatsenbeheer de Inventory-mutatiecontracts en toevoegflow af.
 7. Implementeer de Calorie Tracker in de fasen uit `docs/plans/calory-tracker-figma-implementatieplan.md`; de specs, ERD en endpoints zijn hiervoor inhoudelijk uitgewerkt.
 
 ## Verificatie-afspraak

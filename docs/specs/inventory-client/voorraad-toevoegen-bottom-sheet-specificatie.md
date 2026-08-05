@@ -4,7 +4,7 @@
 
 - Onderdeel: inventory client
 - Opent vanaf route: `/`
-- UI-vorm: bottomsheet op mobiel, gecentreerde modal op bredere schermen; geen aparte pagina
+- UI-vorm: overlay zonder routewijziging volgens de [UI-specificatie](./voorraad-toevoegen-bottom-sheet-ui-specificatie.md); geen aparte pagina
 - Status: gepland
 
 ## Doel
@@ -31,35 +31,13 @@ Een beheerder kan vanaf de inventory-tab snel voorraad toevoegen zonder de pagin
 - Bulkvoorraad toevoegen.
 - Decimalen of inhoudseenheden; voorraad is altijd een geheel aantal verpakkingen.
 
-## Layout
+## UI-specificatie
 
-```text
-Bottomsheet: Voorraad toevoegen
-
-Product
-[ Zoek product of verpakking ]
-
-Gekozen product/verpakking
-<Productnaam>
-<Verpakking>
-
-Hoeveelheid
-[ aantal ]
-
-Opbergplaats
-[ kies opbergplaats ]
-
-Houdbaarheidsdatum (optioneel)
-[ datum ]
-
-[ Toevoegen ]
-[ Annuleren ]
-```
+De responsive sheet/modalvorm, schermopbouw en toetsenbordpresentatie staan in [voorraad-toevoegen-bottom-sheet-ui-specificatie.md](./voorraad-toevoegen-bottom-sheet-ui-specificatie.md).
 
 ## Gedrag
 
-- De bottomsheet opent bovenop de inventory-tab.
-- Op bredere schermen wordt dezelfde inhoud als gecentreerde modal getoond.
+- De flow opent als overlay bovenop de inventory-tab volgens de responsive vorm uit de UI-specificatie.
 - Sluiten via annuleren, backdrop of escape sluit direct en wist de invoer, zonder bevestigingsdialoog.
 - Na succesvol opslaan sluit de sheet en wordt de voorraadlijst bijgewerkt.
 - Fouten blijven in de sheet zichtbaar en wissen de invoer niet.
@@ -95,15 +73,7 @@ Locaties aanmaken gebeurt uitsluitend in Product Management Admin.
 
 ## Toetsenbordgedrag
 
-De sheet moet correct werken met het mobiele toetsenbord:
-
-- de sheet gebruikt de zichtbare/dynamische viewport;
-- bij het openen van het toetsenbord blijft het actieve veld boven het toetsenbord zichtbaar;
-- de sheetinhoud kan intern scrollen;
-- de actieknoppen blokkeren het actieve veld niet;
-- dit gedrag wordt op een echte mobiele viewport getest.
-
-Wanneer dit op ondersteunde mobiele browsers niet betrouwbaar werkt, wordt op mobiel overgeschakeld naar een full-screen dialog; functionaliteit gaat boven presentatie.
+De flow moet correct werken met het mobiele toetsenbord: het actieve veld blijft zichtbaar en bedienbaar en de acties blokkeren het veld niet. Dit gedrag wordt op een echte mobiele viewport getest. De toegestane presentatie en fallback staan in de UI-specificatie.
 
 ## Benodigde backend/API — nog te specificeren
 

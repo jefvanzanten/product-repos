@@ -4,19 +4,19 @@ Dit is de index voor de client/inventarisatiekant van de app. Dit is niet de adm
 
 ## Actuele specs
 
-| Feature | Spec | Status |
-| --- | --- | --- |
-| Voorraad inzien | [voorraad-inzien-specificatie.md](./voorraad-inzien-specificatie.md) | Gepland / te herwerken |
-| Voorraad toevoegen | [voorraad-toevoegen-bottom-sheet-specificatie.md](./voorraad-toevoegen-bottom-sheet-specificatie.md) | Gepland |
-| Voorraad aanpassen | [voorraad-aanpassen-specificatie.md](./voorraad-aanpassen-specificatie.md) | Gepland |
+| Feature | Functionele spec | UI-specificatie | Status |
+| --- | --- | --- | --- |
+| Voorraad inzien | [voorraad-inzien-specificatie.md](./voorraad-inzien-specificatie.md) | [voorraad-inzien-ui-specificatie.md](./voorraad-inzien-ui-specificatie.md) | Gepland / te herwerken |
+| Voorraad toevoegen | [voorraad-toevoegen-bottom-sheet-specificatie.md](./voorraad-toevoegen-bottom-sheet-specificatie.md) | [voorraad-toevoegen-bottom-sheet-ui-specificatie.md](./voorraad-toevoegen-bottom-sheet-ui-specificatie.md) | Gepland |
+| Voorraad aanpassen | [voorraad-aanpassen-specificatie.md](./voorraad-aanpassen-specificatie.md) | [voorraad-aanpassen-ui-specificatie.md](./voorraad-aanpassen-ui-specificatie.md) | Gepland |
 
 ## Rollen
 
 Iedere ingelogde gebruiker kan de voorraad inzien en doorzoeken. Alleen beheerders kunnen voorraad toevoegen en aanpassen; mutatie-endpoints weigeren niet-beheerders zelfstandig. Voorraad is gedeeld over alle ingelogde gebruikers. Product- en locatiebeheer blijft in Product Management Admin. De gedeelde locatieregels staan in [opbergplaatsen-domeinregels.md](../../domein/opbergplaatsen-domeinregels.md).
 
-## Layout
+## UI-specificaties
 
-Feature-inhoud staat in de `Layout`-sectie van de onderliggende specs. De overkoepelende navigatie volgt de [specificatie voor de gedeelde bottom-tabbar en applicatieshell](../shared/bottom-tabbar-specificatie.md).
+Featurepresentatie staat in de gekoppelde UI-specificaties van de onderliggende features. De overkoepelende navigatie volgt de [functionele specificatie](../shared/bottom-tabbar-specificatie.md) en [UI-specificatie](../shared/bottom-tabbar-ui-specificatie.md) voor de gedeelde bottom-tabbar en applicatieshell.
 
 ## Routes en adminnavigatie
 

@@ -5,7 +5,7 @@ Documentatieregel: houd endpointdocs als compacte contract-DSL: routes, auth, pa
 Domeinregels, UI-gedrag, datamodeluitleg, voorbeelden en rationale horen in specs, ERD's of domeindocs; verwijs hier alleen kort wanneer dat nodig is.
 -->
 
-Dit document beschrijft het gedeelde HTTP-contract voor de actieve locatieboom in Inventory en locatiebeheer in Product Management Admin. Domeinregels staan in [opbergplaatsen-domeinregels.md](../../domein/opbergplaatsen-domeinregels.md), beheer-UI in [opbergplaatsen-beheren-specificatie.md](../../specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-specificatie.md) en opslagvelden in [STORAGE_ERD.md](../ERD/STORAGE_ERD.md).
+Dit document beschrijft het gedeelde HTTP-contract voor de actieve locatieboom in Inventory en locatiebeheer in Product Management Admin. Domeinregels staan in [opbergplaatsen-domeinregels.md](../../domein/opbergplaatsen-domeinregels.md), functioneel beheergedrag in [opbergplaatsen-beheren-specificatie.md](../../specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-specificatie.md), de visuele uitwerking in [opbergplaatsen-beheren-ui-specificatie.md](../../specs/admin-dashboard/opbergplaatsen/opbergplaatsen-beheren-ui-specificatie.md) en opslagvelden in [STORAGE_ERD.md](../ERD/STORAGE_ERD.md).
 
 ## Contractconventies
 

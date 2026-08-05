@@ -22,8 +22,8 @@ location
     CHECK (length(name) BETWEEN 1 AND 100)
     CHECK (length(normalized_name) BETWEEN 1 AND 100)
     CHECK (parent_id IS NULL OR parent_id <> id)
-    UNIQUE (normalized_name) WHERE parent_id IS NULL
-    UNIQUE (parent_id, normalized_name) WHERE parent_id IS NOT NULL
+    UNIQUE location_root_normalized_name_unique (normalized_name) WHERE parent_id IS NULL
+    UNIQUE location_sibling_normalized_name_unique (parent_id, normalized_name) WHERE parent_id IS NOT NULL
 
 inventory_item
     id: uuid PK
