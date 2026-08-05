@@ -26,6 +26,25 @@ export const inventoryErrorResponseSchema = z.object({
   fields: z.record(z.string(), z.string()).optional(),
 }).strict();
 
+/** Active product package selectable while adding inventory. */
+export const inventoryPackageSearchResultSchema = z.object({
+  productId: z.string().uuid(),
+  productPackageId: z.number().int().positive(),
+  displayName: z.string().min(1),
+  brandName: z.string().nullable(),
+  packageSummary: z.string().min(1),
+  categoryPath: z.string(),
+  imageUrl: z.string().nullable(),
+}).strict();
+
+/** Strict request for creating or increasing one inventory batch. */
+export const addInventoryItemRequestSchema = z.object({
+  productPackageId: z.number().int().positive(),
+  quantity: z.number().int().positive(),
+  locationId: z.number().int().positive(),
+  expiryDate: inventoryExpiryDateSchema.nullable().default(null),
+}).strict();
+
 /** One stock batch of one product package at one location. */
 export const inventoryItemRowSchema = z.object({
   id: z.string().uuid(),
@@ -60,6 +79,8 @@ export const inventoryPageSchema = z.object({
 
 export type InventoryErrorCode = z.infer<typeof inventoryErrorCodeSchema>;
 export type InventoryErrorResponse = z.infer<typeof inventoryErrorResponseSchema>;
+export type InventoryPackageSearchResult = z.infer<typeof inventoryPackageSearchResultSchema>;
+export type AddInventoryItemRequest = z.infer<typeof addInventoryItemRequestSchema>;
 export type InventoryExpiryDate = z.infer<typeof inventoryExpiryDateSchema>;
 export type InventoryItemRow = z.infer<typeof inventoryItemRowSchema>;
 export type InventoryProductGroup = z.infer<typeof inventoryProductGroupSchema>;

@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { useOutletContext } from "react-router";
 import type { InventoryOutletContext } from "../../../../routes/layout/layout";
 import { useInventoryGroups } from "../../hooks/use-inventory-groups";
+import { AddInventoryDialog } from "../AddInventoryDialog/AddInventoryDialog";
 import { InventoryGroupCard } from "./InventoryGroupCard";
 import styles from "./InventoryPage.module.css";
 
@@ -13,6 +14,7 @@ import styles from "./InventoryPage.module.css";
 export default function InventoryPage(): ReactNode {
   const { isAdmin } = useOutletContext<InventoryOutletContext>();
   const [expandedPackages, setExpandedPackages] = useState<ReadonlySet<number>>(new Set());
+  const [addDialogIsOpen, setAddDialogIsOpen] = useState(false);
   const inventory = useInventoryGroups();
 
   /**
@@ -101,13 +103,14 @@ export default function InventoryPage(): ReactNode {
           <button
             className={styles.addButton}
             type="button"
-            disabled
-            title="Voorraad toevoegen wordt in de volgende stap aangesloten"
+            onClick={() => setAddDialogIsOpen(true)}
           >
             <span aria-hidden="true">+</span> Voorraad toevoegen
           </button>
         </footer>
       )}
+
+      {addDialogIsOpen && <AddInventoryDialog onClose={() => setAddDialogIsOpen(false)} />}
     </main>
   );
 }

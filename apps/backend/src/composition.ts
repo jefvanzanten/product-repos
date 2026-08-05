@@ -24,8 +24,10 @@ import { createPackageImageService } from "./modules/catalog/services/package-im
 import { createCatalogProductRouteService, createProductService } from "./modules/catalog/services/products.service.ts";
 import { healthRoutes } from "./modules/health/health.routes.ts";
 import { createHealthService } from "./modules/health/health.service.ts";
+import { createDrizzleInventoryMutationRepository } from "./modules/inventory/repositories/drizzle-inventory-mutation.repository.ts";
 import { createDrizzleInventoryRepository } from "./modules/inventory/repositories/drizzle-inventory.repository.ts";
 import { inventoryRoutes } from "./modules/inventory/routes/inventory.routes.ts";
+import { createInventoryMutationService } from "./modules/inventory/services/inventory-mutation.service.ts";
 import { createInventoryQueryService } from "./modules/inventory/services/inventory-query.service.ts";
 import { createDrizzleLocationRepository } from "./modules/locations/repositories/drizzle-location.repository.ts";
 import { locationRoutes } from "./modules/locations/routes/location.routes.ts";
@@ -70,6 +72,8 @@ export function createBackendRuntime(config: BackendConfig): BackendRuntime {
   const nutritionSummary = createNutritionSummaryService({ catalogReader, logRepository, goalRepository, clock: systemClock });
   const inventoryReader = createDrizzleInventoryRepository(database);
   const inventoryQueries = createInventoryQueryService(inventoryReader);
+  const inventoryMutationStore = createDrizzleInventoryMutationRepository(database);
+  const inventoryMutations = createInventoryMutationService(inventoryMutationStore);
   const locationStore = createDrizzleLocationRepository(database);
   const locations = createLocationService(locationStore);
   const app = createApp({
@@ -77,7 +81,7 @@ export function createBackendRuntime(config: BackendConfig): BackendRuntime {
     authHandler: (request) => auth.handler(request),
     catalogRoutes: catalogRoutes({ authorization: createCatalogAuthorization(sessionResolver), packageImages, references, products: productRouteService }),
     calorieTrackerRoutes: calorieTrackerRoutes({ consumptionLogs, nutritionSummary, packageSelection, sessionResolver }),
-    inventoryRoutes: inventoryRoutes({ inventoryQueries, sessionResolver }),
+    inventoryRoutes: inventoryRoutes({ inventoryQueries, inventoryMutations, sessionResolver }),
     locationRoutes: locationRoutes({ locations, sessionResolver }),
     healthRoutes: healthRoutes(createHealthService(createDatabaseReadinessProbe(database))),
   });

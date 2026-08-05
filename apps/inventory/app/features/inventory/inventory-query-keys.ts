@@ -7,4 +7,13 @@ export const inventoryQueryKeys = {
    * @returns The stable TanStack Query key.
    */
   items: (query: string | null) => ["inventory", "items", query] as const,
+  /** Stable key for the active shared location tree. */
+  locations: () => ["inventory", "locations"] as const,
+  /**
+   * Build the key for one package-selection search.
+   *
+   * @param query - Debounced product/package search.
+   * @returns The stable package search key.
+   */
+  packageSearch: (query: string) => ["inventory", "package-search", query] as const,
 } as const;

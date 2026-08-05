@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { createInventoryQueryService } from "./inventory-query.service.ts";
-import type { InventoryCategoryRow, InventoryLocationRow, InventoryReader, InventoryStockRow } from "../repositories/inventory-reader.ts";
+import type { InventoryCategoryRow, InventoryLocationRow, InventoryPackageRow, InventoryReader, InventoryStockRow } from "../repositories/inventory-reader.ts";
 
 /**
  * Build one joined stock row with sensible defaults for test scenarios.
@@ -42,9 +42,11 @@ function fakeReader(
   rows: ReadonlyArray<InventoryStockRow>,
   locations: ReadonlyArray<InventoryLocationRow> = [{ id: 1, parentId: null, name: "Keuken", archivedAt: null }],
   categories: ReadonlyArray<InventoryCategoryRow> = [{ id: 1, parentId: null, name: "Zuivel" }],
+  packages: ReadonlyArray<InventoryPackageRow> = [],
 ): InventoryReader {
   return {
     findStockRows: () => rows,
+    findActivePackageRows: () => packages,
     findAllLocations: () => locations,
     findAllCategories: () => categories,
   };
@@ -143,5 +145,32 @@ describe("inventory query service", () => {
     expect(group.items[0]!.locationPath).toBe("Keuken › Koelkast › Lade 1");
     expect(group.categoryPath).toBe("Voeding › Zuivel");
     expect(group.packageSummary).toBe("pak 1 liter");
+  });
+
+  test("searches active package choices by package description and category path", () => {
+    const packages: InventoryPackageRow[] = [{
+      productPackageId: 10,
+      productId: "00000000-0000-4000-8000-000000000001",
+      productName: "Melk halfvol",
+      brandName: "Zuivelboer",
+      packageTypeName: "pak",
+      contentAmount: "1",
+      contentUnitName: "liter",
+      packageImageUrl: null,
+      categoryId: 2,
+    }];
+    const service = createInventoryQueryService(fakeReader(
+      [],
+      undefined,
+      [
+        { id: 1, parentId: null, name: "Voeding" },
+        { id: 2, parentId: 1, name: "Zuivel" },
+      ],
+      packages,
+    ));
+
+    expect(service.searchPackages("1 liter", 20)).toHaveLength(1);
+    expect(service.searchPackages("voeding", 20)[0]?.categoryPath).toBe("Voeding › Zuivel");
+    expect(service.searchPackages("barcode", 20)).toHaveLength(0);
   });
 });

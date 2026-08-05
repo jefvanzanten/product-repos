@@ -1,7 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import { productCreatedDtoSchema } from "@product-repos/contracts";
-import { inventoryPageSchema } from "@product-repos/contracts/inventory";
-import { inventoryItem, location } from "../src/db/schema.ts";
+import { inventoryItemRowSchema, inventoryPackageSearchResultSchema, inventoryPageSchema } from "@product-repos/contracts/inventory";
+import { eq } from "drizzle-orm";
+import { inventoryItem, inventoryMutation, location } from "../src/db/schema.ts";
 import { normalizeLocationName } from "../src/modules/locations/domain/location-domain.ts";
 import { app, executeTestSql, requestAsAdmin, requestAsUser, testCatalog, testDatabase } from "./test-app";
 
@@ -68,6 +69,58 @@ describe("Inventory authenticated route integration", () => {
       code: "VALIDATION_ERROR",
       message: "Search query needs at least 2 characters",
     });
+  });
+
+  it("searches packages and atomically creates or increases stock for administrators", async () => {
+    const productName = `Toevoegproduct ${crypto.randomUUID()}`;
+    const created = await createInventoryPackage(productName);
+    const locationId = createLocation(`Voorraadkast ${crypto.randomUUID()}`);
+    const payload = {
+      productPackageId: created.packageId,
+      locationId,
+      quantity: 2,
+      expiryDate: "2026-09-10",
+    };
+
+    const searchResponse = await requestAsUser(`/inventory-items/packages/search?query=${encodeURIComponent(productName)}`);
+    expect(searchResponse.status).toBe(200);
+    const searchResults = inventoryPackageSearchResultSchema.array().parse(await searchResponse.json());
+    expect(searchResults[0]).toMatchObject({
+      productId: created.productId,
+      productPackageId: created.packageId,
+      displayName: productName,
+      packageSummary: "fles 2 liter",
+    });
+
+    const forbidden = await requestAsUser("/inventory-items", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    expect(forbidden.status).toBe(403);
+
+    const firstResponse = await requestAsAdmin("/inventory-items", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    expect(firstResponse.status).toBe(201);
+    expect(inventoryItemRowSchema.parse(await firstResponse.json())).toMatchObject({ quantity: 2, version: 0, locationId });
+
+    const secondResponse = await requestAsAdmin("/inventory-items", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...payload, quantity: 3 }),
+    });
+    expect(secondResponse.status).toBe(201);
+    const merged = inventoryItemRowSchema.parse(await secondResponse.json());
+    expect(merged).toMatchObject({ quantity: 5, version: 1, locationId });
+
+    const batches = testDatabase.select().from(inventoryItem).where(eq(inventoryItem.productPackageId, created.packageId)).all();
+    const mutations = testDatabase.select().from(inventoryMutation).where(eq(inventoryMutation.inventoryItemId, merged.id)).all();
+    expect(batches).toHaveLength(1);
+    expect(mutations.map((mutation) => mutation.quantityDelta)).toEqual([2, 3]);
+    expect(mutations.map((mutation) => mutation.resultingQuantity)).toEqual([2, 5]);
   });
 
   it("groups real stock and projects package, location, expiry, and image fields", async () => {

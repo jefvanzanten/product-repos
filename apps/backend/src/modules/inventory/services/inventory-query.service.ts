@@ -1,5 +1,5 @@
-import type { InventoryPage, InventoryProductGroup } from "@product-repos/contracts/inventory";
-import type { InventoryReader, InventoryStockRow } from "../repositories/inventory-reader.ts";
+import type { InventoryPackageSearchResult, InventoryPage, InventoryProductGroup } from "@product-repos/contracts/inventory";
+import type { InventoryPackageRow, InventoryReader, InventoryStockRow } from "../repositories/inventory-reader.ts";
 import { projectLocationMetadata, type LocationMetadata } from "../../locations/domain/location-domain.ts";
 
 /** Parsed list request accepted by the inventory query service. */
@@ -18,6 +18,14 @@ export type InventoryQueryService = {
    * @returns One page of matching inventory product groups.
    */
   readonly listInventory: (input: InventoryListQuery) => InventoryPage;
+  /**
+   * Search active catalog packages for inventory registration.
+   *
+   * @param query - Trimmed free-text query with at least two characters.
+   * @param limit - Maximum number of package results.
+   * @returns Matching package choices in deterministic order.
+   */
+  readonly searchPackages: (query: string, limit: number) => InventoryPackageSearchResult[];
 };
 
 /** Grouping key with derived presentation fields for one product package. */
@@ -81,7 +89,25 @@ export function createInventoryQueryService(reader: InventoryReader): InventoryQ
     return { groups: page, nextCursor: input.offset + input.limit < groups.length ? String(input.offset + input.limit) : null };
   }
 
-  return { listInventory };
+  /** Search active packages across all documented selection fields. */
+  function searchPackages(query: string, limit: number): InventoryPackageSearchResult[] {
+    const categoryPaths = buildPathMap(reader.findAllCategories());
+    const normalizedQuery = query.trim().toLocaleLowerCase("nl");
+    return reader.findActivePackageRows()
+      .filter((row) => packageMatchesQuery(row, categoryPaths.get(row.categoryId) ?? "", normalizedQuery))
+      .slice(0, limit)
+      .map((row) => ({
+        productId: row.productId,
+        productPackageId: row.productPackageId,
+        displayName: row.productName,
+        brandName: row.brandName,
+        packageSummary: formatPackageSummary(row),
+        categoryPath: categoryPaths.get(row.categoryId) ?? "",
+        imageUrl: row.packageImageUrl,
+      }));
+  }
+
+  return { listInventory, searchPackages };
 }
 
 /**
@@ -108,6 +134,21 @@ function matchesQuery(
     .join(" ")
     .toLowerCase();
   return haystack.includes(query);
+}
+
+/**
+ * Check one package choice against product, package, brand, and category text.
+ *
+ * @param row - Active package projection.
+ * @param categoryPath - Derived category path for the package.
+ * @param query - Normalized search query.
+ * @returns Whether the package matches the query.
+ */
+function packageMatchesQuery(row: InventoryPackageRow, categoryPath: string, query: string): boolean {
+  return [row.productName, row.brandName ?? "", formatPackageSummary(row), categoryPath]
+    .join(" ")
+    .toLocaleLowerCase("nl")
+    .includes(query);
 }
 
 /**
@@ -197,7 +238,7 @@ function earliestDate(rows: ReadonlyArray<InventoryStockRow>): string | null {
  * @param row - Joined stock row containing package presentation fields.
  * @returns The human-readable package summary.
  */
-function formatPackageSummary(row: InventoryStockRow): string {
+function formatPackageSummary(row: Pick<InventoryStockRow, "packageTypeName" | "contentAmount" | "contentUnitName">): string {
   return `${row.packageTypeName} ${row.contentAmount} ${row.contentUnitName}`;
 }
 

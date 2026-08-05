@@ -18,6 +18,19 @@ export type InventoryStockRow = {
   readonly categoryId: number;
 };
 
+/** Active package row exposed for Inventory product selection. */
+export type InventoryPackageRow = {
+  readonly productPackageId: number;
+  readonly productId: string;
+  readonly productName: string;
+  readonly brandName: string | null;
+  readonly packageTypeName: string;
+  readonly contentAmount: string;
+  readonly contentUnitName: string;
+  readonly packageImageUrl: string | null;
+  readonly categoryId: number;
+};
+
 /** Location tree node used to build root-to-location paths. */
 export type InventoryLocationRow = {
   readonly id: number;
@@ -41,6 +54,12 @@ export type InventoryReader = {
    * @returns Joined inventory stock rows.
    */
   readonly findStockRows: () => ReadonlyArray<InventoryStockRow>;
+  /**
+   * Read active catalog packages available for new inventory.
+   *
+   * @returns Active product-package rows with presentation fields.
+   */
+  readonly findActivePackageRows: () => ReadonlyArray<InventoryPackageRow>;
   /**
    * Read all locations, including archived ones, for path derivation.
    *

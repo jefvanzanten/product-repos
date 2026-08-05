@@ -1,4 +1,4 @@
-import { asc, eq, gt } from "drizzle-orm";
+import { and, asc, eq, gt, isNull } from "drizzle-orm";
 import type { BackendDatabase } from "../../../db/index.ts";
 import {
   brand,
@@ -57,6 +57,31 @@ export function createDrizzleInventoryRepository(database: BackendDatabase): Inv
       .all();
   }
 
+  /** Read active product packages available for new inventory. */
+  function findActivePackageRows() {
+    return database
+      .select({
+        productPackageId: productPackage.id,
+        productId: product.id,
+        productName: product.name,
+        brandName: brand.name,
+        packageTypeName: packageType.name,
+        contentAmount: unitContent.amount,
+        contentUnitName: unitType.name,
+        packageImageUrl: productPackage.imageUrl,
+        categoryId: product.categoryId,
+      })
+      .from(productPackage)
+      .innerJoin(product, eq(productPackage.productId, product.id))
+      .leftJoin(brand, eq(product.brandId, brand.id))
+      .innerJoin(packageType, eq(productPackage.packageTypeId, packageType.id))
+      .innerJoin(unitContent, eq(productPackage.unitContentId, unitContent.id))
+      .innerJoin(unitType, eq(unitContent.unitTypeId, unitType.id))
+      .where(and(isNull(product.archivedAt), isNull(productPackage.archivedAt)))
+      .orderBy(asc(product.name), asc(productPackage.id))
+      .all();
+  }
+
   /**
    * Read all locations, including archived ones, so batch paths stay resolvable.
    *
@@ -83,5 +108,5 @@ export function createDrizzleInventoryRepository(database: BackendDatabase): Inv
       .all();
   }
 
-  return { findStockRows, findAllLocations, findAllCategories };
+  return { findStockRows, findActivePackageRows, findAllLocations, findAllCategories };
 }

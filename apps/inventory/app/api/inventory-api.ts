@@ -1,10 +1,16 @@
 import { redirectToSessionLogin } from "@product-repos/auth-client/session-monitor";
 import {
   inventoryErrorResponseSchema,
+  inventoryItemRowSchema,
+  inventoryPackageSearchResultSchema,
   inventoryPageSchema,
+  type AddInventoryItemRequest,
   type InventoryErrorResponse,
+  type InventoryItemRow,
+  type InventoryPackageSearchResult,
   type InventoryPage,
 } from "@product-repos/contracts/inventory";
+import { locationTreeNodeSchema, type LocationTreeNode } from "@product-repos/contracts/locations";
 import { INVENTORY_BASE_PATH, toInventoryPublicPath } from "../public-paths";
 
 /** Parsed success or classified Inventory API failure. */
@@ -48,8 +54,50 @@ export async function getInventoryItems(request: InventoryListRequest): Promise<
   return requestJson(
     `/inventory-items?${search}`,
     inventoryPageSchema,
-    request.signal,
+    { method: "GET", signal: request.signal },
   );
+}
+
+/**
+ * Search active product packages for the add-inventory flow.
+ *
+ * @param query - Trimmed product search with at least two characters.
+ * @param signal - Optional request cancellation signal.
+ * @returns Parsed package choices or a classified API failure.
+ */
+export async function searchInventoryPackages(
+  query: string,
+  signal?: AbortSignal,
+): Promise<InventoryApiOutcome<InventoryPackageSearchResult[]>> {
+  const search = new URLSearchParams({ query, limit: "20" });
+  return requestJson(
+    `/inventory-items/packages/search?${search}`,
+    inventoryPackageSearchResultSchema.array(),
+    { method: "GET", signal },
+  );
+}
+
+/**
+ * Fetch the active location tree used by the Inventory location picker.
+ *
+ * @param signal - Optional request cancellation signal.
+ * @returns Parsed active locations or a classified API failure.
+ */
+export async function getActiveLocations(signal?: AbortSignal): Promise<InventoryApiOutcome<LocationTreeNode[]>> {
+  return requestJson("/locations", locationTreeNodeSchema.array(), { method: "GET", signal });
+}
+
+/**
+ * Create or increase one inventory batch.
+ *
+ * @param input - Validated add-inventory form values.
+ * @returns The resulting stock batch or a classified API failure.
+ */
+export async function addInventoryItem(input: AddInventoryItemRequest): Promise<InventoryApiOutcome<InventoryItemRow>> {
+  return requestJson("/inventory-items", inventoryItemRowSchema, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
 /**
@@ -57,24 +105,28 @@ export async function getInventoryItems(request: InventoryListRequest): Promise<
  *
  * @param path - Backend path relative to the configured API origin.
  * @param schema - Runtime parser for the expected success payload.
- * @param signal - Optional request cancellation signal.
+ * @param request - HTTP method, body, and optional cancellation signal.
  * @returns Parsed response data or a classified API failure.
  */
 async function requestJson<T>(
   path: string,
   schema: ProtocolSchema<T>,
-  signal: AbortSignal | undefined,
+  request: { readonly method: "GET" | "POST"; readonly body?: string; readonly signal?: AbortSignal },
 ): Promise<InventoryApiOutcome<T>> {
   let response: Response;
   try {
     response = await fetch(`${apiBaseUrl}${path}`, {
-      method: "GET",
+      method: request.method,
       credentials: "include",
-      headers: { "X-Browser-Timezone": resolveBrowserTimezone() },
-      signal,
+      headers: {
+        ...(request.body === undefined ? {} : { "Content-Type": "application/json" }),
+        "X-Browser-Timezone": resolveBrowserTimezone(),
+      },
+      body: request.body,
+      signal: request.signal,
     });
   } catch (cause: unknown) {
-    if (signal?.aborted || (cause instanceof DOMException && cause.name === "AbortError")) {
+    if (request.signal?.aborted || (cause instanceof DOMException && cause.name === "AbortError")) {
       return { _tag: "Failure", error: { _tag: "Aborted" } };
     }
     return { _tag: "Failure", error: { _tag: "NetworkFailure", cause } };
