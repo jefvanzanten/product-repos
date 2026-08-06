@@ -71,6 +71,20 @@ export function toCalorieTrackerPublicPath(internalPath: string): string {
   return toPublicAppPath(CALORIE_TRACKER_BASE_PATH, internalPath);
 }
 
+/**
+ * Remove the public basename from a Calorie Tracker request pathname.
+ *
+ * @param publicPathname - The public request pathname.
+ * @returns The app-internal pathname used by React Router redirects.
+ */
+export function toCalorieTrackerInternalPath(publicPathname: string): string {
+  if (publicPathname === CALORIE_TRACKER_BASE_PATH) return "/";
+  if (publicPathname.startsWith(`${CALORIE_TRACKER_BASE_PATH}/`)) {
+    return publicPathname.slice(CALORIE_TRACKER_BASE_PATH.length);
+  }
+  return "/";
+}
+
 /** Build canonical logbook query parameters in stable order. */
 function createLogbookSearch(state: LogbookRouteState): URLSearchParams {
   return new URLSearchParams({ date: state.date, type: state.type });

@@ -4,6 +4,7 @@ import { requireUser } from "../../auth/auth.server";
 import { canonicalizeTrackerUrl } from "../../domain/consumption-types";
 import { getTodayInTimezone, sortChronologically } from "../../domain/dates-and-timezones";
 import type { LogbookActionResult, LogbookLoaderData } from "../../features/consumption-logs/types/logbook.types";
+import { toCalorieTrackerInternalPath } from "../../routing/calorie-tracker-routes";
 import { readBrowserTimezone } from "../../timezone.server";
 
 /**
@@ -26,7 +27,7 @@ export async function loadLogsRoute({ request }: LoaderFunctionArgs): Promise<Lo
     getTodayInTimezone(timezone),
   );
   if (canonical.requiresReplace) {
-    throw redirect(`${url.pathname}?${new URLSearchParams(canonical.state)}`);
+    throw redirect(`${toCalorieTrackerInternalPath(url.pathname)}?${new URLSearchParams(canonical.state)}`);
   }
 
   try {

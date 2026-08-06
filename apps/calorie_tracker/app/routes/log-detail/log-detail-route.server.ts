@@ -4,6 +4,7 @@ import { requireUser } from "../../auth/auth.server";
 import { canonicalizeTrackerUrl } from "../../domain/consumption-types";
 import { getTodayInTimezone } from "../../domain/dates-and-timezones";
 import type { LogDetailActionResult, LogDetailLoaderData } from "../../features/consumption-logs/types/log-detail.types";
+import { toCalorieTrackerInternalPath } from "../../routing/calorie-tracker-routes";
 import { readBrowserTimezone } from "../../timezone.server";
 
 /**
@@ -18,7 +19,9 @@ export async function loadLogDetailRoute({ request, params }: LoaderFunctionArgs
   if (timezone === null) return emptyDetailData();
   const url = new URL(request.url);
   const canonical = canonicalizeTrackerUrl(url.searchParams.get("date"), url.searchParams.get("type"), getTodayInTimezone(timezone));
-  if (canonical.requiresReplace) throw redirect(`${url.pathname}?${new URLSearchParams(canonical.state)}`);
+  if (canonical.requiresReplace) {
+    throw redirect(`${toCalorieTrackerInternalPath(url.pathname)}?${new URLSearchParams(canonical.state)}`);
+  }
   const logId = params.logId;
   if (logId === undefined) throw new Response("Log niet gevonden.", { status: 404 });
 

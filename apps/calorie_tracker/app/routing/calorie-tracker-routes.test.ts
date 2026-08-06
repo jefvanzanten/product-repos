@@ -7,6 +7,7 @@ import {
   logDetailPath,
   newLogPath,
   statisticsPath,
+  toCalorieTrackerInternalPath,
 } from "./calorie-tracker-routes";
 
 const routeTree: RouteObject[] = [{
@@ -37,6 +38,12 @@ describe("Calorie Tracker route contracts", () => {
     expect(newLogPath(state)).toBe("/logs/new?date=2026-07-29&type=drink");
     expect(logDetailPath("10000000-0000-4000-8000-000000000001", state)).toContain("/logs/10000000-0000-4000-8000-000000000001?");
     expect(editLogPath("10000000-0000-4000-8000-000000000001", state)).toContain("/edit?");
+  });
+
+  it("removes the public basename before a server redirect", () => {
+    expect(toCalorieTrackerInternalPath("/calorie-tracker/")).toBe("/");
+    expect(toCalorieTrackerInternalPath("/calorie-tracker/logs/new")).toBe("/logs/new");
+    expect(toCalorieTrackerInternalPath("/inventory")).toBe("/");
   });
 
   it("matches every generated canonical path against the shared route patterns", () => {

@@ -5,6 +5,7 @@ import { requireUser } from "../../auth/auth.server";
 import { canonicalizeTrackerUrl } from "../../domain/consumption-types";
 import { getTodayInTimezone } from "../../domain/dates-and-timezones";
 import type { LogFormActionResult, LogFormLoaderData } from "../../features/consumption-logs/types/log-form.types";
+import { toCalorieTrackerInternalPath } from "../../routing/calorie-tracker-routes";
 import { readBrowserTimezone } from "../../timezone.server";
 
 /**
@@ -63,7 +64,9 @@ async function loadLogFormRoute(
   if (timezone === null) return pendingFormData();
   const url = new URL(request.url);
   const canonical = canonicalizeTrackerUrl(url.searchParams.get("date"), url.searchParams.get("type"), getTodayInTimezone(timezone));
-  if (canonical.requiresReplace) throw redirect(`${url.pathname}?${new URLSearchParams(canonical.state)}`);
+  if (canonical.requiresReplace) {
+    throw redirect(`${toCalorieTrackerInternalPath(url.pathname)}?${new URLSearchParams(canonical.state)}`);
+  }
 
   try {
     const initialPackagesPromise = getLoggablePackages(null, timezone, request);

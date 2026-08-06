@@ -5,6 +5,7 @@ import { requireUser } from "../../auth/auth.server";
 import { canonicalizeTrackerUrl } from "../../domain/consumption-types";
 import { getTodayInTimezone } from "../../domain/dates-and-timezones";
 import type { StatisticsActionResult, StatisticsLoaderData } from "../../features/statistics/types/statistics.types";
+import { toCalorieTrackerInternalPath } from "../../routing/calorie-tracker-routes";
 import { readBrowserTimezone } from "../../timezone.server";
 
 /**
@@ -32,7 +33,7 @@ export async function loadStatisticsRoute({ request }: LoaderFunctionArgs): Prom
   if (requiresRedirect) {
     const search = new URLSearchParams({ date: canonical.state.date });
     if (carriesType) search.set("type", canonical.state.type);
-    throw redirect(`${url.pathname}?${search}`);
+    throw redirect(`${toCalorieTrackerInternalPath(url.pathname)}?${search}`);
   }
 
   try {
