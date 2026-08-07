@@ -191,7 +191,7 @@ export function DishForm({
             <h2>Ingrediënten</h2>
             {ingredients.length === 0 && <p>Nog geen ingrediënten toegevoegd.</p>}
             {ingredients.map((ingredient, index) => (
-              <div key={`${ingredient.packageId}-${index}`} className={styles.productResult}>
+              <div key={`${ingredient.packageId}-${index}`} className={`${styles.productResult} ${styles.noImageColumn}`}>
                 <span>
                   <strong>{ingredient.label}</strong>
                   <small>{ingredient.quantity.replace(".", ",")} {ingredient.unitLabel}</small>
@@ -214,7 +214,7 @@ export function DishForm({
               <button
                 key={productPackage.packageId}
                 type="button"
-                className={selectedPackage?.packageId === productPackage.packageId ? styles.selectedProduct : styles.productResult}
+                className={`${selectedPackage?.packageId === productPackage.packageId ? styles.selectedProduct : styles.productResult} ${styles.noImageColumn}`}
                 onClick={() => { setSelectedPackage(productPackage); setSelectedUnitKey(null); }}
               >
                 <span>

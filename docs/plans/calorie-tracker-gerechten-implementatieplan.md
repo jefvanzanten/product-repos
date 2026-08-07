@@ -1,5 +1,7 @@
 # Implementatieplan — Calorie Tracker gerechten
 
+> Status: uitgevoerd. Backend (78 tests), frontend (66 tests), typechecks en build zijn groen. Alleen optionele dish-afbeeldingupload in de UI en Playwright-acceptatie staan nog open als vervolg.
+
 ## Status en scope
 
 Dit plan implementeert de gerecht-feature van de Calorie Tracker: gerechten zoeken, aanmaken en in porties loggen via de bestaande log-flow. Beslissingen staan vast in de grillsessie en zijn uitgeschreven in de specs; dit plan vertaalt ze naar uitvoerstappen.
@@ -84,8 +86,8 @@ Buiten scope (bewust uitgesteld naar de toekomstige gerechten-app):
 ```text
 corepack pnpm --filter @product-repos/backend test
 corepack pnpm --filter @product-repos/backend typecheck
-corepack pnpm --filter calory_tracker test
-corepack pnpm --filter calory_tracker build
+corepack pnpm --filter calorie_tracker test
+corepack pnpm --filter calorie_tracker build
 ```
 
 Stop wanneer `pnpm` een node_modules purge/recreate prompt toont; volg dan `docs/dependency-management.md`.

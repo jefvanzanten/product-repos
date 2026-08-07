@@ -156,16 +156,22 @@ function resetScenario(sqlite: Database, date: string): void {
   const userBId = findUserId(sqlite, USER_B.email);
   sqlite.exec("BEGIN IMMEDIATE");
   try {
-    sqlite.exec("DELETE FROM user_nutrition_goal; DELETE FROM consumption_log;");
+    sqlite.exec("DELETE FROM user_nutrition_goal; DELETE FROM product_consumption; DELETE FROM dish_consumption; DELETE FROM dish_ingredient; DELETE FROM dish_version; DELETE FROM dish; DELETE FROM consumption_log;");
     sqlite.query("UPDATE product_package SET archived_at = NULL WHERE id IN (?, ?, ?, ?)").run(CATALOG.foodPackageId, CATALOG.drinkPackageId, CATALOG.supplementPackageId, CATALOG.privatePackageId);
     sqlite.query("UPDATE product_package SET archived_at = ? WHERE id = ?").run("2024-01-01T00:00:00.000Z", CATALOG.archivedPackageId);
 
-    const logStatement = sqlite.query("INSERT INTO consumption_log (id, user_id, product_package_id, quantity, input_mode, input_unit_type_id, consumed_at, timezone, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, 'PACKAGE', NULL, ?, 'Europe/Amsterdam', ?, ?, NULL)");
-    logStatement.run(LOGS.earlyFood, userAId, CATALOG.foodPackageId, "1", instant(date, "06"), instant(date, "05"), instant(date, "05"));
-    logStatement.run(LOGS.lateDrink, userAId, CATALOG.drinkPackageId, "1", instant(date, "09"), instant(date, "05"), instant(date, "05"));
-    logStatement.run(LOGS.supplement, userAId, CATALOG.supplementPackageId, "2", instant(date, "11"), instant(date, "05"), instant(date, "05"));
-    logStatement.run(LOGS.archived, userAId, CATALOG.archivedPackageId, "1", instant(date, "13"), instant(date, "05"), instant(date, "05"));
-    logStatement.run(LOGS.otherUser, userBId, CATALOG.privatePackageId, "1", instant(date, "08"), instant(date, "05"), instant(date, "05"));
+    const logStatement = sqlite.query("INSERT INTO consumption_log (id, user_id, type, consumed_at, timezone, created_at, updated_at, deleted_at) VALUES (?, ?, 'PRODUCT', ?, 'Europe/Amsterdam', ?, ?, NULL)");
+    const productStatement = sqlite.query("INSERT INTO product_consumption (consumption_log_id, product_package_id, quantity, input_mode, input_unit_type_id) VALUES (?, ?, ?, 'PACKAGE', NULL)");
+    logStatement.run(LOGS.earlyFood, userAId, instant(date, "06"), instant(date, "05"), instant(date, "05"));
+    productStatement.run(LOGS.earlyFood, CATALOG.foodPackageId, "1");
+    logStatement.run(LOGS.lateDrink, userAId, instant(date, "09"), instant(date, "05"), instant(date, "05"));
+    productStatement.run(LOGS.lateDrink, CATALOG.drinkPackageId, "1");
+    logStatement.run(LOGS.supplement, userAId, instant(date, "11"), instant(date, "05"), instant(date, "05"));
+    productStatement.run(LOGS.supplement, CATALOG.supplementPackageId, "2");
+    logStatement.run(LOGS.archived, userAId, instant(date, "13"), instant(date, "05"), instant(date, "05"));
+    productStatement.run(LOGS.archived, CATALOG.archivedPackageId, "1");
+    logStatement.run(LOGS.otherUser, userBId, instant(date, "08"), instant(date, "05"), instant(date, "05"));
+    productStatement.run(LOGS.otherUser, CATALOG.privatePackageId, "1");
     sqlite.query("INSERT INTO user_nutrition_goal (user_id, calories_kcal, protein_g, carbohydrates_g, fat_g, created_at, updated_at) VALUES (?, 250, '100', NULL, NULL, ?, ?)").run(userAId, instant(date, "04"), instant(date, "04"));
     sqlite.exec("COMMIT");
   } catch (cause: unknown) {
@@ -203,7 +209,8 @@ function startControlServer(sqlite: Database): ReturnType<typeof Bun.serve> {
       if (request.method === "POST" && url.pathname === "/touch-log") {
         const id = body?.id;
         if (typeof id !== "string") return new Response("Invalid id", { status: 400 });
-        sqlite.query("UPDATE consumption_log SET quantity = '3', updated_at = ? WHERE id = ?").run(new Date().toISOString(), id);
+        sqlite.query("UPDATE product_consumption SET quantity = '3' WHERE consumption_log_id = ?").run(id);
+        sqlite.query("UPDATE consumption_log SET updated_at = ? WHERE id = ?").run(new Date().toISOString(), id);
         return Response.json({ touched: true });
       }
       return new Response("Not found", { status: 404 });

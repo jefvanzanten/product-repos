@@ -23,7 +23,7 @@ Deze index koppelt de functionele specbestanden onder `docs/specs/` aan een uitv
 | `docs/specs/calorie-tracker/logs/log-overzicht.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw; bestaande UI is niet aan de actieve router gekoppeld |
 | `docs/specs/calorie-tracker/logs/log-toevoegen.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw; bestaande legacy-modal gebruikt verouderde contracts |
 | `docs/specs/calorie-tracker/logs/log-detail-bewerken.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw |
-| `docs/specs/calorie-tracker/gerechten/gerecht-aanmaken.md` | `docs/plans/calorie-tracker-gerechten-implementatieplan.md` | implementatieplan | nieuw; specs, ERD en endpoints zijn uitgewerkt |
+| `docs/specs/calorie-tracker/gerechten/gerecht-aanmaken.md` | `docs/plans/calorie-tracker-gerechten-implementatieplan.md` | uitgevoerd implementatieplan | backend en frontend geïmplementeerd; afbeeldingupload-UI en Playwright-scenario's staan nog open |
 
 ## UI-specificatiecoverage
 
@@ -74,8 +74,8 @@ corepack pnpm --filter @product-repos/backend typecheck
 corepack pnpm --filter product-management-admin typecheck
 corepack pnpm --filter inventory test
 corepack pnpm --filter inventory typecheck
-corepack pnpm --filter calory_tracker test
-corepack pnpm --filter calory_tracker build
+corepack pnpm --filter calorie_tracker test
+corepack pnpm --filter calorie_tracker build
 ```
 
 Stop wanneer `pnpm` een node_modules purge/recreate prompt toont; volg dan `docs/dependency-management.md`.

@@ -15,6 +15,7 @@
 .results p { margin: 0; color: var(--ct-muted); font-size: 13px; }
 .productResult, .selectedProduct { display: grid; grid-template-columns: 62px 1fr 22px; align-items: center; gap: 12px; width: 100%; min-height: 84px; padding: 10px; color: var(--ct-ink); text-align: left; background: #fff; border: 1px solid var(--ct-border); border-radius: 10px; }
 .selectedProduct { background: #e7f7f3; border-color: var(--ct-primary); }
+.noImageColumn { grid-template-columns: 1fr 22px; }
 .productResult > span, .selectedProduct > span { display: grid; gap: 7px; min-width: 0; }
 .productResult strong, .selectedProduct strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
 .productResult small, .selectedProduct small { color: var(--ct-muted); font-size: 12px; }

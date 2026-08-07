@@ -209,7 +209,7 @@ test.describe("Calorie Tracker acceptance slice", function calorieTrackerAccepta
 
     await page.getByRole("link", { name: "Log toevoegen" }).last().click();
     await expect(page).toHaveURL(new RegExp(`/logs/new\\?date=${date}&type=drink$`));
-    await page.getByPlaceholder("Zoek op product of merk").fill("Volkoren");
+    await page.getByPlaceholder("Zoek op product, merk of gerecht").fill("Volkoren");
     const productResult = page.getByRole("button", { name: /Volkoren reep/ });
     await expect(productResult).toBeVisible();
     await productResult.click();
@@ -222,6 +222,7 @@ test.describe("Calorie Tracker acceptance slice", function calorieTrackerAccepta
 
     const createBody = {
       id: LOGS.idempotent,
+      type: "PRODUCT",
       packageId: CATALOG.foodPackageId,
       quantity: "1.25",
       inputMode: "PACKAGE",
@@ -263,8 +264,8 @@ test.describe("Calorie Tracker acceptance slice", function calorieTrackerAccepta
     await page.goto(appPath(`/logs/${LOGS.archived}?date=${date}&type=all`));
     await expect(page.getByText("Gearchiveerd", { exact: true })).toBeVisible();
     await page.goto(appPath(`/logs/new?date=${date}&type=all`));
-    await page.getByPlaceholder("Zoek op product of merk").fill("Archiefmix");
-    await expect(page.getByText("Product niet gevonden", { exact: true })).toBeVisible();
+    await page.getByPlaceholder("Zoek op product, merk of gerecht").fill("Archiefmix");
+    await expect(page.getByText("Niets gevonden", { exact: true })).toBeVisible();
   });
 
   /** Verify immediate soft deletion and both sides of the five-second restore boundary. */
