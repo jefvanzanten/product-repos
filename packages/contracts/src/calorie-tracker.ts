@@ -40,6 +40,9 @@ export const calorieTrackerErrorCodeSchema = z.enum([
   "LOG_CREATE_CONFLICT",
   "LOG_UPDATE_CONFLICT",
   "LOG_RESTORE_WINDOW_EXPIRED",
+  "DISH_NOT_FOUND",
+  "DISH_ALREADY_EXISTS",
+  "IMAGE_NOT_FOUND",
   "UNAUTHENTICATED",
   "AUTH_UNAVAILABLE",
   "INTERNAL_ERROR",
@@ -124,13 +127,13 @@ export const consumptionLogPackageSchema = packageSearchResultSchema.extend({
   packageArchived: z.boolean(),
 }).strict();
 
-/** Complete consumption-log response with current catalog-derived data. */
-export const consumptionLogSchema = z.object({
+/** Persistence kind of one consumption log. */
+export const consumptionLogTypeSchema = z.enum(["PRODUCT", "DISH"]);
+
+/** Shared immutable fields of every consumption-log response. */
+const consumptionLogBaseSchema = z.object({
   id: z.string().uuid(),
-  package: consumptionLogPackageSchema,
   quantity: calorieTrackerPositiveDecimalSchema,
-  inputMode: consumptionInputModeSchema,
-  inputUnitType: calorieTrackerUnitTypeSchema.nullable(),
   consumedAt: z.iso.datetime({ offset: true }),
   timezone: browserTimezoneSchema,
   localDate: localDateSchema,
@@ -140,6 +143,32 @@ export const consumptionLogSchema = z.object({
   updatedAt: z.iso.datetime({ offset: true }),
 }).strict();
 
+/** Pinned dish reference embedded in an existing dish consumption log. */
+export const dishConsumptionReferenceSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  imageUrl: z.string().url().nullable(),
+  versionId: z.string().uuid(),
+  servings: calorieTrackerPositiveDecimalSchema,
+}).strict();
+
+/** Complete product consumption-log response with current catalog-derived data. */
+export const productConsumptionLogSchema = consumptionLogBaseSchema.extend({
+  type: z.literal("PRODUCT"),
+  package: consumptionLogPackageSchema,
+  inputMode: consumptionInputModeSchema,
+  inputUnitType: calorieTrackerUnitTypeSchema.nullable(),
+}).strict();
+
+/** Complete dish consumption-log response with its pinned recipe version. */
+export const dishConsumptionLogSchema = consumptionLogBaseSchema.extend({
+  type: z.literal("DISH"),
+  dish: dishConsumptionReferenceSchema,
+}).strict();
+
+/** Complete consumption-log response discriminated by persisted log type. */
+export const consumptionLogSchema = z.discriminatedUnion("type", [productConsumptionLogSchema, dishConsumptionLogSchema]);
+
 /** Date-scoped chronologically sorted consumption-log list. */
 export const logListSchema = z.object({
   date: localDateSchema,
@@ -148,9 +177,10 @@ export const logListSchema = z.object({
   items: z.array(consumptionLogSchema),
 }).strict();
 
-/** Client-idempotent consumption-log creation request. */
-export const createConsumptionLogSchema = z.object({
+/** Client-idempotent product consumption-log creation request. */
+export const createProductConsumptionLogSchema = z.object({
   id: z.string().uuid(),
+  type: z.literal("PRODUCT"),
   packageId: z.number().int().positive(),
   quantity: calorieTrackerPositiveDecimalSchema,
   inputMode: consumptionInputModeSchema,
@@ -158,14 +188,115 @@ export const createConsumptionLogSchema = z.object({
   consumedAt: z.iso.datetime({ offset: true }),
 }).strict();
 
-/** Optimistic-concurrency consumption-log update request. */
-export const updateConsumptionLogSchema = z.object({
+/** Client-idempotent dish consumption-log creation request; the backend pins the newest dish version. */
+export const createDishConsumptionLogSchema = z.object({
+  id: z.string().uuid(),
+  type: z.literal("DISH"),
+  dishId: z.string().uuid(),
+  quantity: calorieTrackerPositiveDecimalSchema,
+  consumedAt: z.iso.datetime({ offset: true }),
+}).strict();
+
+/** Client-idempotent consumption-log creation request. */
+export const createConsumptionLogSchema = z.discriminatedUnion("type", [createProductConsumptionLogSchema, createDishConsumptionLogSchema]);
+
+/** Optimistic-concurrency product consumption-log update request. */
+export const updateProductConsumptionLogSchema = z.object({
   expectedUpdatedAt: z.iso.datetime({ offset: true }),
+  type: z.literal("PRODUCT"),
   packageId: z.number().int().positive(),
   quantity: calorieTrackerPositiveDecimalSchema,
   inputMode: consumptionInputModeSchema,
   inputUnitTypeId: z.number().int().positive().nullable(),
   consumedAt: z.iso.datetime({ offset: true }),
+}).strict();
+
+/** Optimistic-concurrency dish consumption-log update request limited to quantity and instant. */
+export const updateDishConsumptionLogSchema = z.object({
+  expectedUpdatedAt: z.iso.datetime({ offset: true }),
+  type: z.literal("DISH"),
+  quantity: calorieTrackerPositiveDecimalSchema,
+  consumedAt: z.iso.datetime({ offset: true }),
+}).strict();
+
+/** Optimistic-concurrency consumption-log update request. */
+export const updateConsumptionLogSchema = z.discriminatedUnion("type", [updateProductConsumptionLogSchema, updateDishConsumptionLogSchema]);
+
+/** One ingredient persisted inside an immutable dish recipe version. */
+export const dishIngredientSchema = z.object({
+  packageId: z.number().int().positive(),
+  productName: z.string(),
+  displayName: z.string(),
+  quantity: calorieTrackerPositiveDecimalSchema,
+  inputMode: consumptionInputModeSchema,
+  inputUnitType: calorieTrackerUnitTypeSchema.nullable(),
+  packageArchived: z.boolean(),
+}).strict();
+
+/** Complete user-owned dish with its newest recipe version. */
+export const dishSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  imageUrl: z.string().url().nullable(),
+  servings: calorieTrackerPositiveDecimalSchema,
+  versionId: z.string().uuid(),
+  versionCreatedAt: z.iso.datetime({ offset: true }),
+  ingredients: z.array(dishIngredientSchema),
+  macrosPerServing: macroValuesSchema.nullable(),
+  createdAt: z.iso.datetime({ offset: true }),
+  updatedAt: z.iso.datetime({ offset: true }),
+}).strict();
+
+/** One ingredient supplied when creating or replacing a dish recipe. */
+export const createDishIngredientSchema = z.object({
+  packageId: z.number().int().positive(),
+  quantity: calorieTrackerPositiveDecimalSchema,
+  inputMode: consumptionInputModeSchema,
+  inputUnitTypeId: z.number().int().positive().nullable(),
+}).strict();
+
+/** Dish creation request. */
+export const createDishSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  imageUrl: z.string().url().nullable(),
+  servings: calorieTrackerPositiveDecimalSchema,
+  ingredients: z.array(createDishIngredientSchema).min(1),
+}).strict();
+
+/** Dish replacement request; recipe changes create a new immutable version. */
+export const updateDishSchema = z.object({
+  name: z.string().trim().min(1).max(200).optional(),
+  imageUrl: z.string().url().nullable().optional(),
+  servings: calorieTrackerPositiveDecimalSchema.optional(),
+  ingredients: z.array(createDishIngredientSchema).min(1).optional(),
+}).strict();
+
+/** Dish search result row in the combined log-flow search. */
+export const dishSearchResultSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  imageUrl: z.string().url().nullable(),
+  servings: calorieTrackerPositiveDecimalSchema,
+  caloriesPerServing: calorieTrackerDecimalSchema.nullable(),
+}).strict();
+
+/** Package search result row tagged for the combined log-flow search. */
+export const packageUnifiedSearchResultSchema = packageSearchResultSchema.extend({
+  kind: z.literal("PACKAGE"),
+}).strict();
+
+/** Dish search result row tagged for the combined log-flow search. */
+export const dishUnifiedSearchResultSchema = dishSearchResultSchema.extend({
+  kind: z.literal("DISH"),
+}).strict();
+
+/** Combined package-and-dish search result discriminated by kind. */
+export const unifiedSearchResultSchema = z.discriminatedUnion("kind", [packageUnifiedSearchResultSchema, dishUnifiedSearchResultSchema]);
+
+/** Result returned after soft-deleting a dish without a restore flow. */
+export const deleteDishResultSchema = z.object({
+  id: z.string().uuid(),
+  deletedAt: z.iso.datetime({ offset: true }),
 }).strict();
 
 /** Result returned after soft-deleting a consumption log. */
@@ -227,14 +358,46 @@ export type AvailableInputUnit = z.infer<typeof availableInputUnitSchema>;
 export type MacroValues = z.infer<typeof macroValuesSchema>;
 /** A package embedded in an existing consumption log. */
 export type ConsumptionLogPackage = z.infer<typeof consumptionLogPackageSchema>;
+/** A persisted consumption-log kind. */
+export type ConsumptionLogType = z.infer<typeof consumptionLogTypeSchema>;
+/** A pinned dish reference inside a dish consumption log. */
+export type DishConsumptionReference = z.infer<typeof dishConsumptionReferenceSchema>;
+/** A complete product consumption log. */
+export type ProductConsumptionLog = z.infer<typeof productConsumptionLogSchema>;
+/** A complete dish consumption log. */
+export type DishConsumptionLog = z.infer<typeof dishConsumptionLogSchema>;
 /** A complete consumption log. */
 export type ConsumptionLog = z.infer<typeof consumptionLogSchema>;
 /** A date-scoped list of consumption logs. */
 export type LogList = z.infer<typeof logListSchema>;
+/** A product consumption-log creation request. */
+export type CreateProductConsumptionLog = z.infer<typeof createProductConsumptionLogSchema>;
+/** A dish consumption-log creation request. */
+export type CreateDishConsumptionLog = z.infer<typeof createDishConsumptionLogSchema>;
 /** A consumption-log creation request. */
 export type CreateConsumptionLog = z.infer<typeof createConsumptionLogSchema>;
+/** A product consumption-log update request. */
+export type UpdateProductConsumptionLog = z.infer<typeof updateProductConsumptionLogSchema>;
+/** A dish consumption-log update request. */
+export type UpdateDishConsumptionLog = z.infer<typeof updateDishConsumptionLogSchema>;
 /** A consumption-log update request. */
 export type UpdateConsumptionLog = z.infer<typeof updateConsumptionLogSchema>;
+/** An ingredient inside an immutable dish recipe version. */
+export type DishIngredient = z.infer<typeof dishIngredientSchema>;
+/** A complete user-owned dish. */
+export type Dish = z.infer<typeof dishSchema>;
+/** An ingredient supplied when creating or replacing a dish recipe. */
+export type CreateDishIngredient = z.infer<typeof createDishIngredientSchema>;
+/** A dish creation request. */
+export type CreateDish = z.infer<typeof createDishSchema>;
+/** A dish replacement request. */
+export type UpdateDish = z.infer<typeof updateDishSchema>;
+/** A dish search result row. */
+export type DishSearchResult = z.infer<typeof dishSearchResultSchema>;
+/** A combined package-and-dish search result. */
+export type UnifiedSearchResult = z.infer<typeof unifiedSearchResultSchema>;
+/** A dish soft-delete result. */
+export type DeleteDishResult = z.infer<typeof deleteDishResultSchema>;
 /** A soft-delete result. */
 export type DeleteLogResult = z.infer<typeof deleteLogResultSchema>;
 /** A user's current optional nutrition goals. */
