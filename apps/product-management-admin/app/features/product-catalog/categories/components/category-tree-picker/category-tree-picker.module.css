@@ -50,12 +50,15 @@
   gap: 0.5rem;
 }
 
-.categoryPickerRow {
+/* Doubled selector: these rules override the shared .categoryRow base from
+   category-tree.module.css, which can load after this stylesheet in
+   production builds, so a single-class selector would lose the cascade. */
+.categoryPickerRow.categoryPickerRow {
   grid-template-columns: 2.5rem minmax(0, 1fr) 2.5rem 2.5rem;
   flex: 0 0 auto;
 }
 
-.categoryPickerRowSelected {
+.categoryPickerRowSelected.categoryPickerRowSelected {
   border-color: #209b7e;
   box-shadow: 0 0 0 2px rgb(32 155 126 / 24%);
 }
