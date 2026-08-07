@@ -5,12 +5,15 @@ import { createAuthAdapter } from "./modules/auth/adapters/better-auth.adapter.t
 import { createCatalogAuthorization } from "./modules/auth/routes/catalog-authorization.middleware.ts";
 import { createSessionResolver } from "./modules/auth/services/session-resolution.service.ts";
 import { createDrizzleConsumptionLogRepository } from "./modules/calorie-tracker/repositories/drizzle-consumption-log.repository.ts";
+import { createDrizzleDishRepository } from "./modules/calorie-tracker/repositories/drizzle-dish.repository.ts";
 import { createDrizzleNutritionGoalRepository } from "./modules/calorie-tracker/repositories/drizzle-nutrition-goal.repository.ts";
 import { calorieTrackerRoutes } from "./modules/calorie-tracker/routes/calorie-tracker.routes.ts";
 import { systemClock } from "./modules/calorie-tracker/services/calorie-tracker-service-support.ts";
 import { createConsumptionLogService } from "./modules/calorie-tracker/services/consumption-log.service.ts";
+import { createDishService } from "./modules/calorie-tracker/services/dish.service.ts";
 import { createNutritionSummaryService } from "./modules/calorie-tracker/services/nutrition-summary.service.ts";
 import { createPackageSelectionService } from "./modules/calorie-tracker/services/package-selection.service.ts";
+import { createUnifiedSearchService } from "./modules/calorie-tracker/services/unified-search.service.ts";
 import { createDrizzleBrandRepository } from "./modules/catalog/internal/brands.repository.ts";
 import { createDrizzleCategoryRepository } from "./modules/catalog/internal/category.repository.ts";
 import { createDrizzleProductPackageRepository } from "./modules/catalog/internal/product-packages.repository.ts";
@@ -20,7 +23,7 @@ import { createDrizzleConsumptionCatalogReader } from "./modules/catalog/reposit
 import { catalogRoutes } from "./modules/catalog/routes/catalog.routes.ts";
 import { createCatalogQueryService } from "./modules/catalog/services/catalog-query.service.ts";
 import { createCatalogReferenceService } from "./modules/catalog/services/catalog-reference.service.ts";
-import { createPackageImageService } from "./modules/catalog/services/package-image.service.ts";
+import { createLocalImageService, createPackageImageService } from "./modules/catalog/services/package-image.service.ts";
 import { createCatalogProductRouteService, createProductService } from "./modules/catalog/services/products.service.ts";
 import { healthRoutes } from "./modules/health/health.routes.ts";
 import { createHealthService } from "./modules/health/health.service.ts";
@@ -63,13 +66,17 @@ export function createBackendRuntime(config: BackendConfig): BackendRuntime {
   const catalogQueries = createCatalogQueryService({ brands, categories, packages, products });
   const productRouteService = createCatalogProductRouteService(productService, packages, catalogQueries);
   const packageImages = createPackageImageService(config.databasePath, config.auth.baseUrl);
+  const dishImages = createLocalImageService(config.databasePath, config.auth.baseUrl, "dish-images", "calorie-tracker/dish-images");
 
   const catalogReader = createDrizzleConsumptionCatalogReader(database);
   const logRepository = createDrizzleConsumptionLogRepository(database);
   const goalRepository = createDrizzleNutritionGoalRepository(database);
+  const dishRepository = createDrizzleDishRepository(database);
   const packageSelection = createPackageSelectionService(catalogReader);
-  const consumptionLogs = createConsumptionLogService({ catalogReader, logRepository, clock: systemClock });
-  const nutritionSummary = createNutritionSummaryService({ catalogReader, logRepository, goalRepository, clock: systemClock });
+  const unifiedSearch = createUnifiedSearchService({ catalogReader, dishRepository });
+  const dishes = createDishService({ catalogReader, dishRepository, clock: systemClock });
+  const consumptionLogs = createConsumptionLogService({ catalogReader, logRepository, dishRepository, clock: systemClock });
+  const nutritionSummary = createNutritionSummaryService({ catalogReader, logRepository, dishRepository, goalRepository, clock: systemClock });
   const inventoryReader = createDrizzleInventoryRepository(database);
   const inventoryQueries = createInventoryQueryService(inventoryReader);
   const inventoryMutationStore = createDrizzleInventoryMutationRepository(database);
@@ -80,7 +87,7 @@ export function createBackendRuntime(config: BackendConfig): BackendRuntime {
     config,
     authHandler: (request) => auth.handler(request),
     catalogRoutes: catalogRoutes({ authorization: createCatalogAuthorization(sessionResolver), packageImages, references, products: productRouteService }),
-    calorieTrackerRoutes: calorieTrackerRoutes({ consumptionLogs, nutritionSummary, packageSelection, sessionResolver }),
+    calorieTrackerRoutes: calorieTrackerRoutes({ consumptionLogs, dishes, dishImages, nutritionSummary, packageSelection, unifiedSearch, sessionResolver }),
     inventoryRoutes: inventoryRoutes({ inventoryQueries, inventoryMutations, sessionResolver }),
     locationRoutes: locationRoutes({ locations, sessionResolver }),
     healthRoutes: healthRoutes(createHealthService(createDatabaseReadinessProbe(database))),

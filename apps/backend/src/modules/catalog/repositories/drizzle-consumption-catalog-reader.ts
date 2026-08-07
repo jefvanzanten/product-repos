@@ -1,8 +1,8 @@
 import { and, asc, desc, eq, inArray, isNull, max, or, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import type { BackendDatabase } from "../../../db/index.ts";
-import { brand, consumptionLog, packageType, product, productMacroProfile, productPackage, productPackagePortion, unitContent, unitType } from "../../../db/schema.ts";
-import type { CatalogPackageRecord, ConsumptionCatalogReader, UnitTypeRecord } from "./consumption-catalog-reader.ts";
+import { brand, consumptionLog, packageType, product, productConsumption, productMacroProfile, productPackage, productPackagePortion, unitContent, unitType } from "../../../db/schema.ts";
+import type { CatalogPackageRecord, ConsumptionCatalogReader, RecentCatalogPackage, UnitTypeRecord } from "./consumption-catalog-reader.ts";
 
 /** Create the consumption-facing catalog reader for one injected database. */
 export function createDrizzleConsumptionCatalogReader(db: BackendDatabase): ConsumptionCatalogReader {
@@ -20,13 +20,14 @@ export function createDrizzleConsumptionCatalogReader(db: BackendDatabase): Cons
   }
 
   /** Read recent active packages using bounded grouped log identifiers before projection. */
-  function findRecentActiveCatalogPackages(userId: string, limit: number): ReadonlyArray<CatalogPackageRecord> {
-    const recentIds = db.select({
-      packageId: consumptionLog.productPackageId,
+  function findRecentActiveCatalogPackages(userId: string, limit: number): ReadonlyArray<RecentCatalogPackage> {
+    const recentRows = db.select({
+      packageId: productConsumption.productPackageId,
       latestConsumedAt: max(consumptionLog.consumedAt),
       latestCreatedAt: max(consumptionLog.createdAt),
     }).from(consumptionLog)
-      .innerJoin(productPackage, eq(consumptionLog.productPackageId, productPackage.id))
+      .innerJoin(productConsumption, eq(productConsumption.consumptionLogId, consumptionLog.id))
+      .innerJoin(productPackage, eq(productConsumption.productPackageId, productPackage.id))
       .innerJoin(product, eq(productPackage.productId, product.id))
       .where(and(
         eq(consumptionLog.userId, userId),
@@ -34,19 +35,19 @@ export function createDrizzleConsumptionCatalogReader(db: BackendDatabase): Cons
         isNull(productPackage.archivedAt),
         isNull(product.archivedAt),
       ))
-      .groupBy(consumptionLog.productPackageId)
+      .groupBy(productConsumption.productPackageId)
       .orderBy(
         desc(max(consumptionLog.consumedAt)),
         desc(max(consumptionLog.createdAt)),
-        desc(consumptionLog.productPackageId),
+        desc(productConsumption.productPackageId),
       )
       .limit(limit)
-      .all()
-      .map((row) => row.packageId);
-    const byId = new Map(findCatalogPackagesByIds(recentIds).map((row) => [row.packageId, row]));
-    return recentIds.flatMap((packageId) => {
-      const record = byId.get(packageId);
-      return record === undefined ? [] : [record];
+      .all();
+    const byId = new Map(findCatalogPackagesByIds(recentRows.map((row) => row.packageId)).map((row) => [row.packageId, row]));
+    return recentRows.flatMap((row) => {
+      const record = byId.get(row.packageId);
+      if (record === undefined || row.latestConsumedAt === null) return [];
+      return [{ record, lastConsumedAt: row.latestConsumedAt }];
     });
   }
 

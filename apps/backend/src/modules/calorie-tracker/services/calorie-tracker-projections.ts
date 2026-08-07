@@ -2,6 +2,10 @@ import type {
   CalorieTrackerPortion,
   CalorieTrackerUnitType,
   ConsumptionLog,
+  Dish,
+  DishIngredient,
+  DishSearchResult,
+  MacroValues,
   NutritionGoal,
   PackageSearchResult,
 } from "@product-repos/contracts/calorie-tracker";
@@ -9,87 +13,271 @@ import {
   calculateMacroValues,
   canonicalDecimal,
   deriveConsumptionQuantity,
+  divideDecimals,
   localDateForInstant,
+  multiplyDecimals,
+  sumMacroValues,
   type QuantityPackage,
   type QuantityUnit,
 } from "../domain/calorie-tracker-domain.ts";
 import type { CatalogPackageRecord, ConsumptionCatalogReader, UnitTypeRecord } from "../../catalog/repositories/consumption-catalog-reader.ts";
-import type { ConsumptionLogRecord, NutritionGoalRecord } from "../repositories/calorie-tracker-store.ts";
+import type {
+  ConsumptionLogRecord,
+  DishIngredientRecord,
+  DishRecord,
+  DishRepository,
+  DishVersionRecord,
+  NutritionGoalRecord,
+} from "../repositories/calorie-tracker-store.ts";
 
 /** Result of projecting persisted data into a strict response contract. */
 export type LogProjection =
   | { readonly ok: true; readonly value: ConsumptionLog }
   | { readonly ok: false };
 
-/** Catalog references required to project a collection of persisted logs. */
+/** Catalog and dish references required to project a collection of persisted logs. */
 export type ProjectionReferences = {
   readonly packages: ReadonlyMap<number, CatalogPackageRecord>;
   readonly units: ReadonlyMap<number, UnitTypeRecord>;
+  readonly dishes: ReadonlyMap<string, DishRecord>;
+  readonly versions: ReadonlyMap<string, DishVersionRecord>;
+  readonly ingredientsByVersion: ReadonlyMap<string, ReadonlyArray<DishIngredientRecord>>;
 };
 
-/** Create reusable single and batched log projections from current catalog data. */
-export function createConsumptionLogProjector(catalogReader: ConsumptionCatalogReader) {
-  /** Read only current catalog references required by found logs. */
+/** Create reusable single and batched log projections from current catalog and dish data. */
+export function createConsumptionLogProjector(catalogReader: ConsumptionCatalogReader, dishRepository: DishRepository) {
+  /** Read only current catalog and dish references required by found logs. */
   function readReferences(rows: ReadonlyArray<ConsumptionLogRecord>): ProjectionReferences {
-    const packageIds = rows.map((row) => row.productPackageId);
-    const unitIds = rows.flatMap((row) => row.inputUnitTypeId === null ? [] : [row.inputUnitTypeId]);
-    return {
-      packages: new Map(catalogReader.findCatalogPackagesByIds(packageIds).map((value) => [value.packageId, value])),
-      units: new Map(catalogReader.findUnitTypesByIds(unitIds).map((value) => [value.id, value])),
-    };
+    const productPackageIds = rows.flatMap((row) => row.type === "PRODUCT" ? [row.productPackageId] : []);
+    const versionIds = rows.flatMap((row) => row.type === "DISH" ? [row.dishVersionId] : []);
+    return readProjectionReferences(productPackageIds, rows.flatMap((row) => row.type === "PRODUCT" && row.inputUnitTypeId !== null ? [row.inputUnitTypeId] : []), versionIds);
   }
 
   /** Project one persistence log using optional preloaded references. */
   function projectLog(row: ConsumptionLogRecord, references?: ProjectionReferences): LogProjection {
-    const packageRecord = references?.packages.get(row.productPackageId) ?? catalogReader.findCatalogPackage(row.productPackageId);
-    const inputUnit = row.inputUnitTypeId === null
-      ? null
-      : references?.units.get(row.inputUnitTypeId) ?? catalogReader.findUnitType(row.inputUnitTypeId);
-    return projectConsumptionLog(row, packageRecord, inputUnit);
+    const resolved = references ?? readReferences([row]);
+    if (row.type === "PRODUCT") return projectProductLog(row, resolved);
+    return projectDishLog(row, resolved);
   }
 
-  return { readReferences, projectLog };
-}
+  /** Read all references required to project the supplied package, unit, and dish-version identifiers. */
+  function readProjectionReferences(packageIds: ReadonlyArray<number>, unitIds: ReadonlyArray<number>, versionIds: ReadonlyArray<string>): ProjectionReferences {
+    const versions = new Map(dishRepository.findVersionsByIds(versionIds).map((version) => [version.id, version]));
+    const ingredients = dishRepository.findIngredientsByVersionIds([...versions.keys()]);
+    const ingredientsByVersion = new Map<string, DishIngredientRecord[]>();
+    for (const ingredient of ingredients) {
+      const list = ingredientsByVersion.get(ingredient.dishVersionId);
+      if (list === undefined) ingredientsByVersion.set(ingredient.dishVersionId, [ingredient]);
+      else list.push(ingredient);
+    }
+    const dishIds = [...new Set([...versions.values()].map((version) => version.dishId))];
+    const dishes = new Map(dishIds.flatMap((dishId) => {
+      const storedDish = dishRepository.findDishById(dishId);
+      return storedDish === undefined ? [] : [[storedDish.id, storedDish] as const];
+    }));
+    const ingredientPackageIds = ingredients.map((ingredient) => ingredient.productPackageId);
+    const ingredientUnitIds = ingredients.flatMap((ingredient) => ingredient.inputUnitTypeId === null ? [] : [ingredient.inputUnitTypeId]);
+    return {
+      packages: new Map(catalogReader.findCatalogPackagesByIds([...packageIds, ...ingredientPackageIds]).map((value) => [value.packageId, value])),
+      units: new Map(catalogReader.findUnitTypesByIds([...unitIds, ...ingredientUnitIds]).map((value) => [value.id, value])),
+      dishes,
+      versions,
+      ingredientsByVersion,
+    };
+  }
 
-/** Project one persisted log with explicitly supplied current references. */
-export function projectConsumptionLog(
-  row: ConsumptionLogRecord,
-  packageRecord: CatalogPackageRecord | undefined,
-  inputUnit: UnitTypeRecord | null | undefined,
-): LogProjection {
-  if (packageRecord === undefined) return { ok: false };
-  if (row.inputUnitTypeId !== null && inputUnit == null) return { ok: false };
-  try {
-    const derived = deriveConsumptionQuantity(toQuantityPackage(packageRecord), {
-      quantity: canonicalDecimal(row.quantity),
-      inputMode: row.inputMode,
-      inputUnit: inputUnit ?? null,
-    });
-    if (!derived.ok) return { ok: false };
+  /** Project one persisted product log using preloaded references. */
+  function projectProductLog(row: Extract<ConsumptionLogRecord, { readonly type: "PRODUCT" }>, references: ProjectionReferences): LogProjection {
+    const packageRecord = references.packages.get(row.productPackageId);
+    if (packageRecord === undefined) return { ok: false };
+    const inputUnit = row.inputUnitTypeId === null ? null : references.units.get(row.inputUnitTypeId);
+    if (row.inputUnitTypeId !== null && inputUnit === undefined) return { ok: false };
+    try {
+      const derived = deriveConsumptionQuantity(toQuantityPackage(packageRecord), {
+        quantity: canonicalDecimal(row.quantity),
+        inputMode: row.inputMode,
+        inputUnit: inputUnit ?? null,
+      });
+      if (!derived.ok) return { ok: false };
+      return {
+        ok: true,
+        value: {
+          id: row.id,
+          type: "PRODUCT",
+          package: {
+            ...toPackageSearchResult(packageRecord),
+            productArchived: packageRecord.productArchivedAt !== null,
+            packageArchived: packageRecord.packageArchivedAt !== null,
+          },
+          quantity: canonicalDecimal(row.quantity),
+          inputMode: row.inputMode,
+          inputUnitType: inputUnit == null ? null : toUnitType(inputUnit),
+          consumedAt: row.consumedAt,
+          timezone: row.timezone,
+          localDate: localDateForInstant(row.consumedAt, row.timezone),
+          derivedQuantityLabel: derived.value.label,
+          macroValues: calculateMacroValues(packageRecord.macroProfile, derived.value.baseAmount),
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+        },
+      };
+    } catch {
+      return { ok: false };
+    }
+  }
+
+  /** Project one persisted dish log from its pinned recipe version. */
+  function projectDishLog(row: Extract<ConsumptionLogRecord, { readonly type: "DISH" }>, references: ProjectionReferences): LogProjection {
+    const version = references.versions.get(row.dishVersionId);
+    if (version === undefined) return { ok: false };
+    const storedDish = references.dishes.get(version.dishId);
+    if (storedDish === undefined) return { ok: false };
+    const ingredientRows = references.ingredientsByVersion.get(version.id) ?? [];
+    if (ingredientRows.length === 0) return { ok: false };
+    const perServing = computeDishVersionMacrosPerServing(version, ingredientRows, references);
+    if (perServing === "invalid") return { ok: false };
+    const quantity = canonicalDecimal(row.quantity);
     return {
       ok: true,
       value: {
         id: row.id,
-        package: {
-          ...toPackageSearchResult(packageRecord),
-          productArchived: packageRecord.productArchivedAt !== null,
-          packageArchived: packageRecord.packageArchivedAt !== null,
+        type: "DISH",
+        dish: {
+          id: storedDish.id,
+          name: storedDish.name,
+          imageUrl: storedDish.imageUrl,
+          versionId: version.id,
+          servings: canonicalDecimal(version.servings),
         },
-        quantity: canonicalDecimal(row.quantity),
-        inputMode: row.inputMode,
-        inputUnitType: inputUnit == null ? null : toUnitType(inputUnit),
+        quantity,
         consumedAt: row.consumedAt,
         timezone: row.timezone,
         localDate: localDateForInstant(row.consumedAt, row.timezone),
-        derivedQuantityLabel: derived.value.label,
-        macroValues: calculateMacroValues(packageRecord.macroProfile, derived.value.baseAmount),
+        derivedQuantityLabel: `${quantity} portie`,
+        macroValues: perServing === null ? null : scaleMacroValues(perServing, quantity),
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       },
     };
-  } catch {
-    return { ok: false };
   }
+
+  return { readReferences, projectLog, readProjectionReferences };
+}
+
+/** Exact macro totals of one recipe version divided by its serving count. */
+export function computeDishVersionMacrosPerServing(
+  version: DishVersionRecord,
+  ingredientRows: ReadonlyArray<DishIngredientRecord>,
+  references: Pick<ProjectionReferences, "packages" | "units">,
+): MacroValues | null | "invalid" {
+  const contributions: Array<MacroValues | null> = [];
+  for (const ingredient of ingredientRows) {
+    const packageRecord = references.packages.get(ingredient.productPackageId);
+    if (packageRecord === undefined) return "invalid";
+    const inputUnit = ingredient.inputUnitTypeId === null ? null : references.units.get(ingredient.inputUnitTypeId);
+    if (ingredient.inputUnitTypeId !== null && inputUnit === undefined) return "invalid";
+    const derived = deriveConsumptionQuantity(toQuantityPackage(packageRecord), {
+      quantity: canonicalDecimal(ingredient.quantity),
+      inputMode: ingredient.inputMode,
+      inputUnit: inputUnit ?? null,
+    });
+    if (!derived.ok) return "invalid";
+    contributions.push(calculateMacroValues(packageRecord.macroProfile, derived.value.baseAmount));
+  }
+  const summed = sumMacroValues(contributions);
+  if (summed.caloriesKcal === null && summed.proteinG === null && summed.carbohydratesG === null && summed.fatG === null) return null;
+  const servings = canonicalDecimal(version.servings);
+  return {
+    caloriesKcal: summed.caloriesKcal === null ? null : divideDecimals(summed.caloriesKcal, servings),
+    proteinG: summed.proteinG === null ? null : divideDecimals(summed.proteinG, servings),
+    carbohydratesG: summed.carbohydratesG === null ? null : divideDecimals(summed.carbohydratesG, servings),
+    fatG: summed.fatG === null ? null : divideDecimals(summed.fatG, servings),
+  };
+}
+
+/** Multiply each present macro value by a consumed quantity. */
+function scaleMacroValues(values: MacroValues, multiplier: string): MacroValues {
+  return {
+    caloriesKcal: values.caloriesKcal === null ? null : multiplyDecimals(values.caloriesKcal, multiplier),
+    proteinG: values.proteinG === null ? null : multiplyDecimals(values.proteinG, multiplier),
+    carbohydratesG: values.carbohydratesG === null ? null : multiplyDecimals(values.carbohydratesG, multiplier),
+    fatG: values.fatG === null ? null : multiplyDecimals(values.fatG, multiplier),
+  };
+}
+
+/** Create dish projections for CRUD and search use cases. */
+export function createDishProjector(catalogReader: ConsumptionCatalogReader, dishRepository: DishRepository) {
+  /** Project one active dish stem with its newest recipe version. */
+  function projectDish(stem: DishRecord): { readonly ok: true; readonly value: Dish } | { readonly ok: false } {
+    const version = dishRepository.findNewestVersion(stem.id);
+    if (version === undefined) return { ok: false };
+    const ingredientRows = dishRepository.findIngredientsByVersionId(version.id);
+    const references = readReferences(ingredientRows);
+    if (references === undefined) return { ok: false };
+    const perServing = computeDishVersionMacrosPerServing(version, ingredientRows, references);
+    if (perServing === "invalid") return { ok: false };
+    return {
+      ok: true,
+      value: {
+        id: stem.id,
+        name: stem.name,
+        imageUrl: stem.imageUrl,
+        servings: canonicalDecimal(version.servings),
+        versionId: version.id,
+        versionCreatedAt: version.createdAt,
+        ingredients: ingredientRows.map((ingredient) => toDishIngredient(ingredient, references)),
+        macrosPerServing: perServing,
+        createdAt: stem.createdAt,
+        updatedAt: stem.updatedAt,
+      },
+    };
+  }
+
+  /** Project active dish stems into search rows including derived calories per serving. */
+  function projectDishSearchResults(stems: ReadonlyArray<DishRecord>): ReadonlyArray<DishSearchResult> {
+    return stems.flatMap((stem) => {
+      const version = dishRepository.findNewestVersion(stem.id);
+      if (version === undefined) return [];
+      const ingredientRows = dishRepository.findIngredientsByVersionId(version.id);
+      const references = readReferences(ingredientRows);
+      if (references === undefined) return [];
+      const perServing = computeDishVersionMacrosPerServing(version, ingredientRows, references);
+      if (perServing === "invalid") return [];
+      return [{
+        id: stem.id,
+        name: stem.name,
+        imageUrl: stem.imageUrl,
+        servings: canonicalDecimal(version.servings),
+        caloriesPerServing: perServing === null ? null : perServing.caloriesKcal,
+      }];
+    });
+  }
+
+  /** Read catalog references required by one recipe version. */
+  function readReferences(ingredientRows: ReadonlyArray<DishIngredientRecord>): Pick<ProjectionReferences, "packages" | "units"> | undefined {
+    return {
+      packages: new Map(catalogReader.findCatalogPackagesByIds(ingredientRows.map((ingredient) => ingredient.productPackageId)).map((value) => [value.packageId, value])),
+      units: new Map(catalogReader.findUnitTypesByIds(ingredientRows.flatMap((ingredient) => ingredient.inputUnitTypeId === null ? [] : [ingredient.inputUnitTypeId])).map((value) => [value.id, value])),
+    };
+  }
+
+  return { projectDish, projectDishSearchResults };
+}
+
+/** Project one persisted ingredient with its current catalog presentation. */
+function toDishIngredient(ingredient: DishIngredientRecord, references: Pick<ProjectionReferences, "packages" | "units">): DishIngredient {
+  const packageRecord = references.packages.get(ingredient.productPackageId);
+  if (packageRecord === undefined) throw new Error("Persisted dish ingredient references a missing package");
+  const inputUnit = ingredient.inputUnitTypeId === null ? null : references.units.get(ingredient.inputUnitTypeId);
+  return {
+    packageId: ingredient.productPackageId,
+    productName: packageRecord.productName,
+    displayName: packageRecord.brandName === null ? packageRecord.productName : `${packageRecord.productName} - ${packageRecord.brandName}`,
+    quantity: canonicalDecimal(ingredient.quantity),
+    inputMode: ingredient.inputMode,
+    inputUnitType: inputUnit === null || inputUnit === undefined ? null : toUnitType(inputUnit),
+    packageArchived: packageRecord.productArchivedAt !== null || packageRecord.packageArchivedAt !== null,
+  };
 }
 
 /** Project a persistence unit into the shared strict protocol contract. */

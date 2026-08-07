@@ -2,19 +2,27 @@ import {
   browserTimezoneSchema,
   consumptionTypeFilterSchema,
   createConsumptionLogSchema,
+  createDishSchema,
+  dishSchema,
   localDateSchema,
   nutritionGoalSchema,
   packageSearchResultSchema,
+  unifiedSearchResultSchema,
   updateConsumptionLogSchema,
+  updateDishSchema,
   upsertNutritionGoalSchema,
 } from "@product-repos/contracts/calorie-tracker";
 import { z } from "zod/v4";
 import { Hono, type Context, type Next } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { reportAuthenticationStoreUnavailable, type SessionResolver } from "../../auth/services/session-resolution.service.ts";
+import type { LocalImageService } from "../../catalog/services/package-image.service.ts";
 import type { CalorieTrackerResult } from "../services/calorie-tracker-service-support.ts";
 import type { ConsumptionLogService } from "../services/consumption-log.service.ts";
+import type { DishService } from "../services/dish.service.ts";
 import type { NutritionSummaryService } from "../services/nutrition-summary.service.ts";
 import type { PackageSelectionService } from "../services/package-selection.service.ts";
+import type { UnifiedSearchService } from "../services/unified-search.service.ts";
 import { isAllowedLocalDate, parseTimezone } from "../domain/calorie-tracker-domain.ts";
 
 const packageSearchQuerySchema = z.object({
@@ -49,6 +57,9 @@ const errorStatus = {
   LOG_CREATE_CONFLICT: 409,
   LOG_UPDATE_CONFLICT: 409,
   LOG_RESTORE_WINDOW_EXPIRED: 409,
+  DISH_NOT_FOUND: 404,
+  DISH_ALREADY_EXISTS: 409,
+  IMAGE_NOT_FOUND: 404,
   UNAUTHENTICATED: 401,
   AUTH_UNAVAILABLE: 503,
   INTERNAL_ERROR: 500,
@@ -82,12 +93,29 @@ async function requireCalorieTrackerSession(
 /** Create the authenticated Calorie Tracker HTTP route adapter. */
 export function calorieTrackerRoutes(dependencies: {
   readonly consumptionLogs: ConsumptionLogService;
+  readonly dishes: DishService;
+  readonly dishImages: LocalImageService;
   readonly nutritionSummary: NutritionSummaryService;
   readonly packageSelection: PackageSelectionService;
+  readonly unifiedSearch: UnifiedSearchService;
   readonly sessionResolver: SessionResolver;
 }): Hono<CalorieTrackerEnvironment> {
-  const { consumptionLogs, nutritionSummary, packageSelection } = dependencies;
+  const { consumptionLogs, dishes, dishImages, nutritionSummary, packageSelection, unifiedSearch } = dependencies;
   const router = new Hono<CalorieTrackerEnvironment>();
+
+  // Registered before the session middleware so stored dish images stay publicly readable.
+  router.get("/dish-images/:fileName", async (context) => {
+    const storedImage = await dishImages.readImage(context.req.param("fileName"));
+    if (storedImage === null) return context.json({ code: "IMAGE_NOT_FOUND", message: "Image not found" }, 404);
+    return new Response(storedImage.file, {
+      headers: {
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Content-Type": storedImage.mediaType,
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  });
+
   router.use("*", (context, next) => requireCalorieTrackerSession(dependencies.sessionResolver, context, next));
 
   router.get("/packages/search", (context) => {
@@ -102,11 +130,79 @@ export function calorieTrackerRoutes(dependencies: {
     return context.json(packageSearchResultSchema.array().parse(result.value));
   });
 
+  router.get("/search", (context) => {
+    const url = new URL(context.req.url);
+    const parsed = packageSearchQuerySchema.safeParse({
+      query: url.searchParams.has("query") ? url.searchParams.get("query") ?? "" : undefined,
+      limit: url.searchParams.get("limit") ?? undefined,
+    });
+    if (!parsed.success) return validationResponse(context);
+    const result = unifiedSearch.search(context.get("calorieTrackerUserId"), parsed.data.query, parsed.data.limit);
+    if (!result.ok) return errorResponse(context, result);
+    return context.json(unifiedSearchResultSchema.array().parse(result.value));
+  });
+
   router.get("/packages/:packageId/input-units", (context) => {
     const packageId = positiveIntegerPathSchema.safeParse(context.req.param("packageId"));
     if (!packageId.success) return context.json({ code: "PRODUCT_PACKAGE_NOT_FOUND", message: "Product package not found" }, 404);
     const result = packageSelection.getAvailableInputUnits(packageId.data);
     return result.ok ? context.json(result.value) : errorResponse(context, result);
+  });
+
+  router.get("/dishes/:dishId", (context) => {
+    const dishId = uuidPathSchema.safeParse(context.req.param("dishId"));
+    if (!dishId.success) return context.json({ code: "DISH_NOT_FOUND", message: "Dish not found" }, 404);
+    const result = dishes.getDish(context.get("calorieTrackerUserId"), dishId.data);
+    if (!result.ok) return errorResponse(context, result);
+    return context.json(dishSchema.parse(result.value));
+  });
+
+  router.post("/dishes", async (context) => {
+    const body = createDishSchema.safeParse(await readJson(context));
+    if (!body.success) return validationResponse(context);
+    const result = dishes.createDish(context.get("calorieTrackerUserId"), body.data);
+    if (!result.ok) return errorResponse(context, result);
+    return context.json(dishSchema.parse(result.value), 201);
+  });
+
+  router.put("/dishes/:dishId", async (context) => {
+    const dishId = uuidPathSchema.safeParse(context.req.param("dishId"));
+    if (!dishId.success) return context.json({ code: "DISH_NOT_FOUND", message: "Dish not found" }, 404);
+    const body = updateDishSchema.safeParse(await readJson(context));
+    if (!body.success) return validationResponse(context);
+    const result = dishes.updateDish(context.get("calorieTrackerUserId"), dishId.data, body.data);
+    if (!result.ok) return errorResponse(context, result);
+    return context.json(dishSchema.parse(result.value));
+  });
+
+  router.delete("/dishes/:dishId", (context) => {
+    const dishId = uuidPathSchema.safeParse(context.req.param("dishId"));
+    if (!dishId.success) return context.json({ code: "DISH_NOT_FOUND", message: "Dish not found" }, 404);
+    const result = dishes.deleteDish(context.get("calorieTrackerUserId"), dishId.data);
+    return result.ok ? context.json(result.value) : errorResponse(context, result);
+  });
+
+  router.post(
+    "/dish-images",
+    bodyLimit({
+      maxSize: 5 * 1024 * 1024 + 64 * 1024,
+      onError: (context) => context.json({ code: "VALIDATION_ERROR", message: "De afbeelding mag maximaal 5 MB zijn.", fields: { image: "De afbeelding mag maximaal 5 MB zijn." } }, 413),
+    }),
+    async (context) => {
+      const body = await context.req.parseBody();
+      const image = body.image;
+      if (!(image instanceof File)) return validationResponse(context, "Kies een afbeelding.");
+      const upload = await dishImages.storeImage(image);
+      if (!upload.ok) return validationResponse(context, upload.message);
+      return context.json({ imageUrl: upload.imageUrl }, 201);
+    },
+  );
+
+  router.delete("/dish-images", async (context) => {
+    const body = await readJson(context) as { readonly imageUrl?: unknown } | null;
+    if (typeof body?.imageUrl !== "string" || body.imageUrl.trim().length === 0) return validationResponse(context, "Image cleanup request is invalid");
+    await dishImages.deleteImage(body.imageUrl);
+    return context.body(null, 204);
   });
 
   router.get("/logs", (context) => {

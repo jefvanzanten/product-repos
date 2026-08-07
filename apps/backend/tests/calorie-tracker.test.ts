@@ -54,6 +54,7 @@ async function createLoggablePackage(consumptionType: "FOOD" | "DRINK" | "SUPPLE
 function createLogBody(packageId: number, id = crypto.randomUUID()) {
   return {
     id,
+    type: "PRODUCT",
     packageId,
     quantity: "1.50",
     inputMode: "PACKAGE",
@@ -124,6 +125,7 @@ describe("Calorie Tracker authenticated route integration", () => {
 
     const updateBody = {
       expectedUpdatedAt: created.updatedAt,
+      type: "PRODUCT",
       packageId,
       quantity: "2",
       inputMode: "CONTENT_UNIT",

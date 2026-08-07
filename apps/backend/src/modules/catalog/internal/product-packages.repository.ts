@@ -2,7 +2,7 @@ import type { ProductPackageDto, ProductPackagePortionRequest, ProductPackageReq
 import { and, eq, ne } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import type { BackendDatabase } from "../../../db/index.ts";
-import { consumptionLog, packageType, product, productMacroProfile, productPackage, productPackagePortion, unitContent, unitType } from "../../../db/schema";
+import { consumptionLog, packageType, product, productConsumption, productMacroProfile, productPackage, productPackagePortion, unitContent, unitType } from "../../../db/schema";
 import { err, ok, type Result } from "../domain/catalog-domain.ts";
 import { requiredDimensionForReferenceBasis } from "../domain/product-macro-profile.ts";
 import type { ReferenceDataRepository } from "./units.repository.ts";
@@ -288,18 +288,22 @@ function shouldActivateCorrectedLegacyPackage(existing: ProductPackageFullRow, i
 
 /** Determine whether a retained explicit content-unit log requires the package's current dimension. */
 function hasRetainedExplicitContentLogs(packageId: number): boolean {
-  return database.select({ id: consumptionLog.id }).from(consumptionLog).where(and(
-    eq(consumptionLog.productPackageId, packageId),
-    eq(consumptionLog.inputMode, "CONTENT_UNIT"),
-  )).limit(1).get() !== undefined;
+  return database.select({ id: consumptionLog.id }).from(consumptionLog)
+    .innerJoin(productConsumption, eq(productConsumption.consumptionLogId, consumptionLog.id))
+    .where(and(
+      eq(productConsumption.productPackageId, packageId),
+      eq(productConsumption.inputMode, "CONTENT_UNIT"),
+    )).limit(1).get() !== undefined;
 }
 
 /** Determine whether retained individual-unit logs require current portion metadata. */
 function hasRetainedIndividualLogs(packageId: number): boolean {
-  return database.select({ id: consumptionLog.id }).from(consumptionLog).where(and(
-    eq(consumptionLog.productPackageId, packageId),
-    eq(consumptionLog.inputMode, "INDIVIDUAL_UNIT"),
-  )).limit(1).get() !== undefined;
+  return database.select({ id: consumptionLog.id }).from(consumptionLog)
+    .innerJoin(productConsumption, eq(productConsumption.consumptionLogId, consumptionLog.id))
+    .where(and(
+      eq(productConsumption.productPackageId, packageId),
+      eq(productConsumption.inputMode, "INDIVIDUAL_UNIT"),
+    )).limit(1).get() !== undefined;
 }
 
 /** Check whether a product exists before package operations. */

@@ -46,10 +46,16 @@ export type UnitTypeRecord = {
   readonly conversionToBase: string;
 };
 
+/** One recently consumed active catalog package with its most recent consumption instant. */
+export type RecentCatalogPackage = {
+  readonly record: CatalogPackageRecord;
+  readonly lastConsumedAt: string;
+};
+
 /** Catalog reads required by current Calorie Tracker use cases. */
 export type ConsumptionCatalogReader = {
   readonly searchActiveCatalogPackages: (query: string, limit: number) => ReadonlyArray<CatalogPackageRecord>;
-  readonly findRecentActiveCatalogPackages: (userId: string, limit: number) => ReadonlyArray<CatalogPackageRecord>;
+  readonly findRecentActiveCatalogPackages: (userId: string, limit: number) => ReadonlyArray<RecentCatalogPackage>;
   readonly findCatalogPackage: (packageId: number) => CatalogPackageRecord | undefined;
   readonly findCatalogPackagesByIds: (packageIds: ReadonlyArray<number>) => ReadonlyArray<CatalogPackageRecord>;
   readonly findCompatibleUnitTypes: (dimension: UnitTypeRecord["dimension"]) => ReadonlyArray<UnitTypeRecord>;

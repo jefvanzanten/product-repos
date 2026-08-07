@@ -86,3 +86,69 @@ function verifyLegacyMultiPackageMigration(): void {
 describe("Calorie Tracker migrations 0005 to 0007", () => {
   it("canonicalizes legacy decimals and separates total content from quarantined portion data", verifyLegacyMultiPackageMigration);
 });
+
+/** Exercise the 0011 dish migration over a legacy product-only consumption log. */
+function verifyDishSplitMigration(): void {
+  const tempDirectory = mkdtempSync(join(tmpdir(), "calorie-dish-migration-test-"));
+  const database = new Database(join(tempDirectory, "migration.sqlite"), { create: true });
+
+  try {
+    for (const migrationName of [
+      "0000_long_puppet_master",
+      "0001_spooky_nebula",
+      "0002_product_create_slice",
+      "0003_better_auth",
+      "0004_product_consumption_macros",
+      "0005_product_package_integer_ids",
+      "0006_calorie_tracker_backend",
+      "0007_package_portions",
+      "0008_product_package_image",
+      "0009_inventory_backend",
+      "0010_location_management",
+    ]) {
+      applyMigration(database, migrationName);
+    }
+
+    const userId = "20000000-0000-4000-8000-000000000001";
+    database.query("INSERT INTO `user` (id, name, email, created_at, updated_at) VALUES (?, ?, ?, 0, 0)").run(userId, "Migratie Tester", "dish-migration@example.com");
+    database.query("INSERT INTO category (id, name) VALUES (?, ?)").run(1, "Vlees");
+    database.query("INSERT INTO unit_type (id, name, symbol, dimension, conversion_to_base) VALUES (?, ?, ?, ?, ?)").run(1, "gram", "g", "MASS", 1);
+    database.query("INSERT INTO unit_content (id, unit_type_id, amount) VALUES (?, ?, ?)").run(1, 1, 500);
+    database.query("INSERT INTO package_type (id, name) VALUES (?, ?)").run(1, "pak");
+    database.query("INSERT INTO product (id, name, category_id, brand_id, consumption_type) VALUES (?, ?, ?, NULL, ?)")
+      .run("20000000-0000-4000-8000-000000000002", "Rundergehakt", 1, "FOOD");
+    database.query("INSERT INTO product_package (id, product_id, unit_content_id, package_type_id) VALUES (?, ?, ?, ?)")
+      .run(20, "20000000-0000-4000-8000-000000000002", 1, 1);
+    database.query("INSERT INTO consumption_log (id, user_id, product_package_id, quantity, input_mode, input_unit_type_id, consumed_at, timezone, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, NULL)")
+      .run("20000000-0000-4000-8000-000000000003", userId, 20, "1.5", "PACKAGE", "2026-01-01T12:00:00.000Z", "Europe/Amsterdam", "2026-01-01T12:00:00.000Z", "2026-01-01T12:00:00.000Z");
+
+    applyMigration(database, "0011_dishes_backend");
+
+    expect(database.query("SELECT id, user_id, type, consumed_at, timezone, deleted_at FROM consumption_log").all()).toEqual([{
+      id: "20000000-0000-4000-8000-000000000003",
+      user_id: userId,
+      type: "PRODUCT",
+      consumed_at: "2026-01-01T12:00:00.000Z",
+      timezone: "Europe/Amsterdam",
+      deleted_at: null,
+    }]);
+    expect(database.query("SELECT consumption_log_id, product_package_id, quantity, input_mode, input_unit_type_id FROM product_consumption").all()).toEqual([{
+      consumption_log_id: "20000000-0000-4000-8000-000000000003",
+      product_package_id: 20,
+      quantity: "1.5",
+      input_mode: "PACKAGE",
+      input_unit_type_id: null,
+    }]);
+    expect(readCount(database.query("SELECT count(*) AS count FROM dish").get())).toBe(0);
+    expect(readCount(database.query("SELECT count(*) AS count FROM dish_version").get())).toBe(0);
+    expect(readCount(database.query("SELECT count(*) AS count FROM dish_consumption").get())).toBe(0);
+    expect(database.query("PRAGMA foreign_key_check").all()).toEqual([]);
+  } finally {
+    database.close();
+    rmSync(tempDirectory, { recursive: true, force: true });
+  }
+}
+
+describe("Calorie Tracker dish migration 0011", () => {
+  it("moves legacy product logs into product_consumption and adds empty dish tables", verifyDishSplitMigration);
+});

@@ -5,37 +5,42 @@ import { detectSupportedImage } from "./package-image-validation.ts";
 const maximumImageBytes = 5 * 1024 * 1024;
 const storedFileNamePattern = /^[0-9a-f-]+\.(?:png|jpg|webp)$/;
 
-/** Result of validating and storing one package image. */
-export type PackageImageUploadResult =
+/** Result of validating and storing one image. */
+export type LocalImageUploadResult =
   | { readonly ok: true; readonly imageUrl: string }
   | { readonly ok: false; readonly message: string };
 
-/** Package-image storage operations used by catalog HTTP routes. */
-export type PackageImageService = {
+/** Local image storage operations used by HTTP routes. */
+export type LocalImageService = {
   readonly deleteImage: (imageUrl: string) => Promise<void>;
-  readonly storeImage: (file: File) => Promise<PackageImageUploadResult>;
+  readonly storeImage: (file: File) => Promise<LocalImageUploadResult>;
   readonly readImage: (fileName: string) => Promise<{ readonly file: Blob; readonly mediaType: string } | null>;
 };
 
+/** Package-image storage operations used by catalog HTTP routes. */
+export type PackageImageService = LocalImageService;
+
 /**
- * Create local package-image storage alongside the configured SQLite database.
+ * Create local image storage alongside the configured SQLite database.
  *
- * @param databasePath - Path to the catalog SQLite database.
+ * @param databasePath - Path to the backend SQLite database.
  * @param publicBaseUrl - Public backend URL used in persisted image URLs.
- * @returns Package-image storage operations scoped to the configured database.
+ * @param storageName - Directory name stored next to the database file.
+ * @param urlSegment - Public URL segment used in generated image URLs.
+ * @returns Image storage operations scoped to the configured database.
  */
-export function createPackageImageService(databasePath: string, publicBaseUrl: string): PackageImageService {
-  const storageDirectory = resolve(dirname(databasePath), "package-images");
+export function createLocalImageService(databasePath: string, publicBaseUrl: string, storageName: string, urlSegment: string): LocalImageService {
+  const storageDirectory = resolve(dirname(databasePath), storageName);
   const normalizedBaseUrl = publicBaseUrl.replace(/\/$/, "");
-  const imageUrlPrefix = `${normalizedBaseUrl}/package-images/`;
+  const imageUrlPrefix = `${normalizedBaseUrl}/${urlSegment}/`;
 
   /**
-   * Validate and persist one package image under a generated name.
+   * Validate and persist one image under a generated name.
    *
    * @param file - Uploaded image candidate.
    * @returns The immutable public URL or a safe validation message.
    */
-  async function storeImage(file: File): Promise<PackageImageUploadResult> {
+  async function storeImage(file: File): Promise<LocalImageUploadResult> {
     if (file.size === 0) return { ok: false, message: "Kies een afbeelding." };
     if (file.size > maximumImageBytes) return { ok: false, message: "De afbeelding mag maximaal 5 MB zijn." };
 
@@ -50,7 +55,7 @@ export function createPackageImageService(databasePath: string, publicBaseUrl: s
   }
 
   /**
-   * Read a generated package image without allowing path traversal.
+   * Read a generated image without allowing path traversal.
    *
    * @param fileName - Server-generated image file name.
    * @returns Stored image content and media type, or null when absent.
@@ -75,11 +80,22 @@ export function createPackageImageService(databasePath: string, publicBaseUrl: s
     try {
       await rm(resolve(storageDirectory, fileName), { force: true });
     } catch (error) {
-      console.error("Failed to delete a managed package image", { error, fileName });
+      console.error("Failed to delete a managed stored image", { error, fileName });
     }
   }
 
   return { deleteImage, storeImage, readImage };
+}
+
+/**
+ * Create local package-image storage using the canonical package URL segment.
+ *
+ * @param databasePath - Path to the backend SQLite database.
+ * @param publicBaseUrl - Public backend URL used in persisted image URLs.
+ * @returns Package-image storage operations scoped to the configured database.
+ */
+export function createPackageImageService(databasePath: string, publicBaseUrl: string): PackageImageService {
+  return createLocalImageService(databasePath, publicBaseUrl, "package-images", "package-images");
 }
 
 /**

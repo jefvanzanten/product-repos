@@ -86,12 +86,13 @@ function createLogBody(
 ) {
   return {
     id: options.id ?? crypto.randomUUID(),
+    type: "PRODUCT" as const,
     packageId,
     quantity: options.quantity ?? "1",
     inputMode: options.inputMode ?? "PACKAGE",
     inputUnitTypeId: options.inputUnitTypeId ?? null,
     consumedAt: options.consumedAt ?? "2026-01-15T12:00:00.000Z",
-  } as const;
+  };
 }
 
 /** Read the daily statistics route for one local date and timezone. */
@@ -301,7 +302,9 @@ describe("Calorie Tracker backend coverage", () => {
     executeTestSql("UPDATE product_package SET archived_at = ? WHERE id = ?", "2026-04-06T00:00:00.000Z", created.package.id);
     const retryAfterArchive = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", body);
     expect(retryAfterArchive.status).toBe(200);
-    expect(consumptionLogSchema.parse(await retryAfterArchive.json()).package.packageArchived).toBe(true);
+    const retriedLog = consumptionLogSchema.parse(await retryAfterArchive.json());
+    if (retriedLog.type !== "PRODUCT") throw new Error("Expected a product consumption log");
+    expect(retriedLog.package.packageArchived).toBe(true);
   });
 
   it("blocks package dimension correction while a retained explicit-content log can be restored", async () => {
@@ -352,7 +355,7 @@ describe("Calorie Tracker backend coverage", () => {
     expect((await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", body)).status).toBe(201);
 
     executeTestSql("PRAGMA foreign_keys = OFF");
-    executeTestSql("UPDATE consumption_log SET product_package_id = ? WHERE id = ?", 999_999, body.id);
+    executeTestSql("UPDATE product_consumption SET product_package_id = ? WHERE consumption_log_id = ?", 999_999, body.id);
     try {
       const response = await requestAsUser("/calorie-tracker/logs?date=2026-04-20&type=all", {
         headers: { "X-Browser-Timezone": "UTC" },
@@ -362,7 +365,7 @@ describe("Calorie Tracker backend coverage", () => {
       expect(payload).toMatchObject({ code: "INTERNAL_ERROR", fields: { correlationId: expect.any(String) } });
       expect(payload).not.toHaveProperty("items");
     } finally {
-      executeTestSql("UPDATE consumption_log SET product_package_id = ? WHERE id = ?", created.package.id, body.id);
+      executeTestSql("UPDATE product_consumption SET product_package_id = ? WHERE consumption_log_id = ?", created.package.id, body.id);
       executeTestSql("PRAGMA foreign_keys = ON");
     }
   });
@@ -378,9 +381,10 @@ describe("Calorie Tracker backend coverage", () => {
     executeTestSql("UPDATE consumption_log SET deleted_at = ?, updated_at = ? WHERE id = ?", "2026-07-01T12:00:00.000Z", "2026-07-01T12:00:00.000Z", expiredBody.id);
     executeTestSql("UPDATE consumption_log SET deleted_at = ?, updated_at = ? WHERE id = ?", "2026-07-02T12:00:00.001Z", "2026-07-02T12:00:00.001Z", retainedBody.id);
 
-    const [{ createConsumptionLogService }, { createDrizzleConsumptionLogRepository }, { createDrizzleConsumptionCatalogReader }] = await Promise.all([
+    const [{ createConsumptionLogService }, { createDrizzleConsumptionLogRepository }, { createDrizzleDishRepository }, { createDrizzleConsumptionCatalogReader }] = await Promise.all([
       import("../src/modules/calorie-tracker/services/consumption-log.service.ts"),
       import("../src/modules/calorie-tracker/repositories/drizzle-consumption-log.repository.ts"),
+      import("../src/modules/calorie-tracker/repositories/drizzle-dish.repository.ts"),
       import("../src/modules/catalog/repositories/drizzle-consumption-catalog-reader.ts"),
     ]);
     const fixedClock = {
@@ -389,6 +393,7 @@ describe("Calorie Tracker backend coverage", () => {
     };
     const cleanup = createConsumptionLogService({
       logRepository: createDrizzleConsumptionLogRepository(testDatabase),
+      dishRepository: createDrizzleDishRepository(testDatabase),
       catalogReader: createDrizzleConsumptionCatalogReader(testDatabase),
       clock: fixedClock,
     }).cleanupDeletedLogs();

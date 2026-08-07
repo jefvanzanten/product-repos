@@ -15,7 +15,14 @@ import {
   parsePositiveDecimal,
 } from "../domain/calorie-tracker-domain.ts";
 import type { CatalogPackageRecord, ConsumptionCatalogReader } from "../../catalog/repositories/consumption-catalog-reader.ts";
-import type { ConsumptionLogRecord, ConsumptionLogRepository } from "../repositories/calorie-tracker-store.ts";
+import type {
+  ConsumptionLogRecord,
+  ConsumptionLogRepository,
+  DishRepository,
+  InsertConsumptionLogRecord,
+  ProductConsumptionLogRecord,
+  UpdateConsumptionLogRecord,
+} from "../repositories/calorie-tracker-store.ts";
 import { createConsumptionLogProjector, toQuantityPackage } from "./calorie-tracker-projections.ts";
 import {
   failure,
@@ -48,10 +55,11 @@ const deletedLogRetentionMilliseconds = 30 * 24 * 60 * 60 * 1_000;
 export function createConsumptionLogService(dependencies: {
   readonly catalogReader: ConsumptionCatalogReader;
   readonly logRepository: ConsumptionLogRepository;
+  readonly dishRepository: DishRepository;
   readonly clock: Clock;
 }) {
-  const { catalogReader, logRepository, clock } = dependencies;
-  const projector = createConsumptionLogProjector(catalogReader);
+  const { catalogReader, logRepository, dishRepository, clock } = dependencies;
+  const projector = createConsumptionLogProjector(catalogReader, dishRepository);
 
   /** List active user-owned logs for a local date and optional type filter. */
   function listLogs(userId: string, date: string, timezone: string, filter: ConsumptionTypeFilter): CalorieTrackerResult<LogList> {
@@ -63,7 +71,7 @@ export function createConsumptionLogService(dependencies: {
     for (const row of rows) {
       const projected = projector.projectLog(row, references);
       if (!projected.ok) return projectionFailure();
-      if (filter === "all" || projected.value.package.consumptionType.toLowerCase() === filter) logs.push(projected.value);
+      if (filter === "all" || logMatchesFilter(projected.value, filter)) logs.push(projected.value);
     }
     return success({ date, timezone, type: filter, items: logs });
   }
@@ -83,32 +91,35 @@ export function createConsumptionLogService(dependencies: {
       if (existing.userId !== userId) return failure("LOG_ALREADY_EXISTS", "A log with this id already exists");
       const retryContent = parseCreateRequestContent(input, timezone);
       if (!retryContent.ok) return retryContent;
-      if (existing.deletedAt !== null || !sameCreateContent(existing, retryContent.value)) return failure("LOG_CREATE_CONFLICT", "The log id was already used with different content");
+      const sameContent = sameCreateContent(existing, retryContent.value);
+      if (!sameContent.ok) return sameContent;
+      if (existing.deletedAt !== null || !sameContent.value) return failure("LOG_CREATE_CONFLICT", "The log id was already used with different content");
       const projected = projector.projectLog(existing);
       return projected.ok ? success({ state: "existing", log: projected.value }) : projectionFailure();
     }
 
-    const parsed = parseMutationInput(input, undefined);
+    const parsed = parseCreateInput(userId, input);
     if (!parsed.ok) return parsed;
     const now = clock.now().toISOString();
+    const createContent: ParsedCreateContent = parsed.value;
     const stored = logRepository.insertLog({
+      ...createContent,
       id: input.id,
       userId,
-      productPackageId: parsed.value.productPackageId,
-      quantity: parsed.value.quantity,
-      inputMode: parsed.value.inputMode,
-      inputUnitTypeId: parsed.value.inputUnitTypeId,
-      consumedAt: parsed.value.consumedAt,
       timezone,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
-    });
+    } satisfies InsertConsumptionLogRecord);
     if (stored === undefined) {
       const raced = logRepository.findLogById(input.id);
       if (raced === undefined) throw new Error("Idempotent log insert did not persist or conflict");
       if (raced.userId !== userId) return failure("LOG_ALREADY_EXISTS", "A log with this id already exists");
-      if (raced.deletedAt !== null || !sameCreateContent(raced, { ...parsed.value, timezone })) return failure("LOG_CREATE_CONFLICT", "The log id was already used with different content");
+      const racedContent = parseCreateRequestContent(input, timezone);
+      if (!racedContent.ok) return racedContent;
+      const sameRacedContent = sameCreateContent(raced, racedContent.value);
+      if (!sameRacedContent.ok) return sameRacedContent;
+      if (raced.deletedAt !== null || !sameRacedContent.value) return failure("LOG_CREATE_CONFLICT", "The log id was already used with different content");
       const projected = projector.projectLog(raced);
       return projected.ok ? success({ state: "existing", log: projected.value }) : projectionFailure();
     }
@@ -116,15 +127,19 @@ export function createConsumptionLogService(dependencies: {
     return projected.ok ? success({ state: "created", log: projected.value }) : projectionFailure();
   }
 
-  /** Update one log with optimistic concurrency and current package selectability rules. */
+  /** Update one log with optimistic concurrency and current catalog or dish rules per subtype. */
   function updateLog(userId: string, logId: string, timezone: string, input: UpdateConsumptionLog): CalorieTrackerResult<ConsumptionLog> {
     const existing = logRepository.findLogById(logId);
     if (existing === undefined || existing.userId !== userId || existing.deletedAt !== null) return failure("LOG_NOT_FOUND", "Log not found");
     if (existing.updatedAt !== input.expectedUpdatedAt) return failure("LOG_UPDATE_CONFLICT", "The log has changed since it was opened");
-    const parsed = parseMutationInput(input, existing);
+    if (existing.type !== input.type) return failure("VALIDATION_ERROR", "Log type cannot be changed");
+    const parsed = input.type === "PRODUCT"
+      ? parseProductInput(input, existing.type === "PRODUCT" ? existing : undefined)
+      : parseDishUpdateInput(input);
     if (!parsed.ok) return parsed;
     const updatedAt = nextTimestamp(clock.now(), existing.updatedAt);
-    const updated = logRepository.updateLog(userId, logId, input.expectedUpdatedAt, { ...parsed.value, timezone, updatedAt });
+    const updateContent: ParsedUpdateContent = parsed.value;
+    const updated = logRepository.updateLog(userId, logId, input.expectedUpdatedAt, { ...updateContent, timezone, updatedAt } satisfies UpdateConsumptionLogRecord);
     if (updated === undefined) return failure("LOG_UPDATE_CONFLICT", "The log has changed since it was opened");
     const projected = projector.projectLog(updated);
     return projected.ok ? success(projected.value) : projectionFailure();
@@ -159,17 +174,24 @@ export function createConsumptionLogService(dependencies: {
     return success({ deletedCount: logRepository.deleteExpiredLogs(cutoffInclusive), cutoffInclusive });
   }
 
-  /** Parse and normalize a create or update payload into persistence values. */
-  function parseMutationInput(
-    input: Omit<CreateConsumptionLog, "id"> | UpdateConsumptionLog,
-    currentLog: ConsumptionLogRecord | undefined,
-  ): CalorieTrackerResult<{
-    readonly productPackageId: number;
-    readonly quantity: string;
-    readonly inputMode: ConsumptionInputMode;
-    readonly inputUnitTypeId: number | null;
-    readonly consumedAt: string;
-  }> {
+  /** Parse and validate a create payload into persisted subtype content. */
+  function parseCreateInput(userId: string, input: CreateConsumptionLog): CalorieTrackerResult<ParsedCreateContent> {
+    if (input.type === "PRODUCT") return parseProductInput(input, undefined);
+    const dishRow = dishRepository.findDishById(input.dishId);
+    if (dishRow === undefined || dishRow.userId !== userId || dishRow.deletedAt !== null) return failure("DISH_NOT_FOUND", "Dish not found");
+    const version = dishRepository.findNewestVersion(dishRow.id);
+    if (version === undefined) return projectionFailure();
+    const quantity = parsePositiveDecimal(input.quantity);
+    if (!quantity.ok) return { ok: false, error: quantity.error };
+    if (!isAllowedConsumedAt(input.consumedAt, clock.now())) return failure("VALIDATION_ERROR", "Consumed instant cannot be in the future", { consumedAt: "Future instants are not allowed" });
+    return success({ type: "DISH", dishVersionId: version.id, quantity: quantity.value, consumedAt: new Date(input.consumedAt).toISOString() });
+  }
+
+  /** Parse and validate a product create or update payload against current catalog rules. */
+  function parseProductInput(
+    input: { readonly packageId: number; readonly quantity: string; readonly inputMode: ConsumptionInputMode; readonly inputUnitTypeId: number | null; readonly consumedAt: string },
+    currentLog: ProductConsumptionLogRecord | undefined,
+  ): CalorieTrackerResult<ProductContent> {
     const packageRecord = catalogReader.findCatalogPackage(input.packageId);
     if (packageRecord === undefined) return failure("PRODUCT_PACKAGE_NOT_FOUND", "Product package not found");
     if (!isActivePackage(packageRecord)) {
@@ -190,6 +212,7 @@ export function createConsumptionLogService(dependencies: {
     if (!derived.ok) return { ok: false, error: derived.error };
     if (!isAllowedConsumedAt(input.consumedAt, clock.now())) return failure("VALIDATION_ERROR", "Consumed instant cannot be in the future", { consumedAt: "Future instants are not allowed" });
     return success({
+      type: "PRODUCT",
       productPackageId: input.packageId,
       quantity: quantity.value,
       inputMode: input.inputMode,
@@ -198,7 +221,81 @@ export function createConsumptionLogService(dependencies: {
     });
   }
 
+  /** Parse and validate a dish update payload limited to quantity and instant. */
+  function parseDishUpdateInput(input: { readonly quantity: string; readonly consumedAt: string }): CalorieTrackerResult<DishUpdateContent> {
+    const quantity = parsePositiveDecimal(input.quantity);
+    if (!quantity.ok) return { ok: false, error: quantity.error };
+    if (!isAllowedConsumedAt(input.consumedAt, clock.now())) return failure("VALIDATION_ERROR", "Consumed instant cannot be in the future", { consumedAt: "Future instants are not allowed" });
+    return success({ type: "DISH", quantity: quantity.value, consumedAt: new Date(input.consumedAt).toISOString() });
+  }
+
+  /** Compare canonical create content to persisted content for idempotent retries. */
+  function sameCreateContent(row: ConsumptionLogRecord, input: CreateContent): CalorieTrackerResult<boolean> {
+    if (row.type === "PRODUCT") {
+      if (input.type !== "PRODUCT") return success(false);
+      return success(
+        row.productPackageId === input.productPackageId
+        && canonicalDecimal(row.quantity) === input.quantity
+        && row.inputMode === input.inputMode
+        && row.inputUnitTypeId === input.inputUnitTypeId
+        && row.consumedAt === input.consumedAt
+        && row.timezone === input.timezone,
+      );
+    }
+    if (input.type !== "DISH") return success(false);
+    const versions = dishRepository.findVersionsByIds([row.dishVersionId]);
+    if (versions.length !== 1) return projectionFailure();
+    return success(
+      versions[0]!.dishId === input.dishId
+      && canonicalDecimal(row.quantity) === input.quantity
+      && row.consumedAt === input.consumedAt
+      && row.timezone === input.timezone,
+    );
+  }
+
   return { listLogs, getLog, createLog, updateLog, deleteLog, restoreLog, cleanupDeletedLogs };
+}
+
+/** Persisted product subtype content shared by create and update parsing. */
+type ProductContent = {
+  readonly type: "PRODUCT";
+  readonly productPackageId: number;
+  readonly quantity: string;
+  readonly inputMode: ConsumptionInputMode;
+  readonly inputUnitTypeId: number | null;
+  readonly consumedAt: string;
+};
+
+/** Persisted dish content produced by create parsing, pinning the resolved version. */
+type DishCreateContent = {
+  readonly type: "DISH";
+  readonly dishVersionId: string;
+  readonly quantity: string;
+  readonly consumedAt: string;
+};
+
+/** Persisted dish content produced by update parsing, keeping the pinned version. */
+type DishUpdateContent = {
+  readonly type: "DISH";
+  readonly quantity: string;
+  readonly consumedAt: string;
+};
+
+/** Parsed create payload ready for persistence. */
+type ParsedCreateContent = ProductContent | DishCreateContent;
+
+/** Parsed update payload ready for persistence. */
+type ParsedUpdateContent = ProductContent | DishUpdateContent;
+
+/** Canonical create-content comparison values for idempotent retries. */
+type CreateContent =
+  | { readonly type: "PRODUCT"; readonly productPackageId: number; readonly quantity: string; readonly inputMode: ConsumptionInputMode; readonly inputUnitTypeId: number | null; readonly consumedAt: string; readonly timezone: string }
+  | { readonly type: "DISH"; readonly dishId: string; readonly quantity: string; readonly consumedAt: string; readonly timezone: string };
+
+/** Determine whether one projected log satisfies the requested type filter. */
+function logMatchesFilter(log: ConsumptionLog, filter: ConsumptionTypeFilter): boolean {
+  if (log.type === "DISH") return filter === "food";
+  return log.package.consumptionType.toLowerCase() === filter;
 }
 
 /** Determine whether both product and package are actively selectable. */
@@ -207,39 +304,25 @@ function isActivePackage(row: CatalogPackageRecord): boolean {
 }
 
 /** Canonicalize only immutable create-request fields without consulting mutable catalog data. */
-function parseCreateRequestContent(input: CreateConsumptionLog, timezone: string): CalorieTrackerResult<{
-  readonly productPackageId: number;
-  readonly quantity: string;
-  readonly inputMode: ConsumptionInputMode;
-  readonly inputUnitTypeId: number | null;
-  readonly consumedAt: string;
-  readonly timezone: string;
-}> {
+function parseCreateRequestContent(input: CreateConsumptionLog, timezone: string): CalorieTrackerResult<CreateContent> {
   const quantity = parsePositiveDecimal(input.quantity);
   if (!quantity.ok) return { ok: false, error: quantity.error };
+  if (input.type === "PRODUCT") {
+    return success({
+      type: "PRODUCT",
+      productPackageId: input.packageId,
+      quantity: quantity.value,
+      inputMode: input.inputMode,
+      inputUnitTypeId: input.inputUnitTypeId,
+      consumedAt: new Date(input.consumedAt).toISOString(),
+      timezone,
+    });
+  }
   return success({
-    productPackageId: input.packageId,
+    type: "DISH",
+    dishId: input.dishId,
     quantity: quantity.value,
-    inputMode: input.inputMode,
-    inputUnitTypeId: input.inputUnitTypeId,
     consumedAt: new Date(input.consumedAt).toISOString(),
     timezone,
   });
-}
-
-/** Compare canonical create content to persisted content for idempotent retries. */
-function sameCreateContent(row: ConsumptionLogRecord, input: {
-  readonly productPackageId: number;
-  readonly quantity: string;
-  readonly inputMode: ConsumptionInputMode;
-  readonly inputUnitTypeId: number | null;
-  readonly consumedAt: string;
-  readonly timezone: string;
-}): boolean {
-  return row.productPackageId === input.productPackageId
-    && canonicalDecimal(row.quantity) === input.quantity
-    && row.inputMode === input.inputMode
-    && row.inputUnitTypeId === input.inputUnitTypeId
-    && row.consumedAt === input.consumedAt
-    && row.timezone === input.timezone;
 }

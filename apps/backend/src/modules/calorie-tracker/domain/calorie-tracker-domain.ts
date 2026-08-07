@@ -136,6 +136,19 @@ export function addDecimals(left: string, right: string): string {
   return renderDecimal({ coefficient: leftCoefficient + rightCoefficient, scale });
 }
 
+/** Divide a trusted decimal by another with fixed-precision half-up rounding. */
+export function divideDecimals(dividend: string, divisor: string, precision = 12): string {
+  const dividendParts = parseDecimalParts(dividend);
+  const divisorParts = parseDecimalParts(divisor);
+  if (dividendParts === null || divisorParts === null || divisorParts.coefficient <= 0n) throw new Error("Invalid decimal division input");
+  const numerator = dividendParts.coefficient * 10n ** BigInt(divisorParts.scale + precision);
+  const denominator = divisorParts.coefficient * 10n ** BigInt(dividendParts.scale);
+  let quotient = numerator / denominator;
+  const remainder = numerator % denominator;
+  if (remainder * 2n >= denominator) quotient += 1n;
+  return renderDecimal({ coefficient: quotient, scale: precision });
+}
+
 /** Validate an IANA timezone and return its normalized input value. */
 export function parseTimezone(value: string): DomainResult<string, ConsumptionInputError> {
   try {

@@ -5,6 +5,7 @@ import type { ConsumptionCatalogReader } from "../src/modules/catalog/repositori
 import type {
   ConsumptionLogRecord,
   ConsumptionLogRepository,
+  DishRepository,
   NutritionGoalRecord,
   NutritionGoalRepository,
 } from "../src/modules/calorie-tracker/repositories/calorie-tracker-store.ts";
@@ -12,6 +13,7 @@ import type {
 const missingReferenceLog: ConsumptionLogRecord = {
   id: "10000000-0000-4000-8000-000000000001",
   userId: "user-1",
+  type: "PRODUCT",
   productPackageId: 404,
   quantity: "1",
   inputMode: "PACKAGE",
@@ -27,6 +29,7 @@ const missingReferenceLog: ConsumptionLogRecord = {
 function createBrokenProjectionStore(): {
   readonly catalogReader: ConsumptionCatalogReader;
   readonly logRepository: ConsumptionLogRepository;
+  readonly dishRepository: DishRepository;
   readonly goalRepository: NutritionGoalRepository;
 } {
   const catalogReader: ConsumptionCatalogReader = {
@@ -51,7 +54,22 @@ function createBrokenProjectionStore(): {
     findGoals: () => undefined,
     upsertGoals: (input: NutritionGoalRecord) => input,
   };
-  return { catalogReader, logRepository, goalRepository };
+  const dishRepository: DishRepository = {
+    findDishById: () => undefined,
+    existsActiveDishWithName: () => false,
+    insertDish: () => undefined,
+    updateDishStem: () => undefined,
+    softDeleteDish: () => undefined,
+    findNewestVersion: () => undefined,
+    findVersionsByIds: () => [],
+    insertVersion: (input) => input,
+    findIngredientsByVersionId: () => [],
+    findIngredientsByVersionIds: () => [],
+    insertIngredients: () => undefined,
+    searchActiveUserDishes: () => [],
+    findRecentConsumedDishes: () => [],
+  };
+  return { catalogReader, logRepository, dishRepository, goalRepository };
 }
 
 /** Create focused services under a deterministic clock for pure application tests. */

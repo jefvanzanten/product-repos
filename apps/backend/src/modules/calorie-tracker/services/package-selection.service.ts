@@ -11,7 +11,7 @@ export function createPackageSelectionService(catalogReader: ConsumptionCatalogR
   /** Search active packages or return the user's recently consumed active packages. */
   function searchPackages(userId: string, query: string | undefined, limit: number): CalorieTrackerResult<ReadonlyArray<PackageSearchResult>> {
     if (query === undefined) {
-      return success(catalogReader.findRecentActiveCatalogPackages(userId, limit).map(toPackageSearchResult));
+      return success(catalogReader.findRecentActiveCatalogPackages(userId, limit).map((row) => toPackageSearchResult(row.record)));
     }
     const normalizedQuery = query.trim();
     if (normalizedQuery.length < 2) return failure("VALIDATION_ERROR", "Search query must contain at least two characters", { query: "Minimum length is 2" });

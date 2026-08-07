@@ -1,7 +1,7 @@
 import type { DailyStatistics, MacroValues, NutritionGoal, UpsertNutritionGoal } from "@product-repos/contracts/calorie-tracker";
 import { canonicalDecimal, localDateForInstant, sumMacroValues } from "../domain/calorie-tracker-domain.ts";
 import type { ConsumptionCatalogReader } from "../../catalog/repositories/consumption-catalog-reader.ts";
-import type { ConsumptionLogRepository, NutritionGoalRepository } from "../repositories/calorie-tracker-store.ts";
+import type { ConsumptionLogRepository, DishRepository, NutritionGoalRepository } from "../repositories/calorie-tracker-store.ts";
 import { createConsumptionLogProjector, emptyGoals, toNutritionGoal } from "./calorie-tracker-projections.ts";
 import {
   nextTimestamp,
@@ -19,11 +19,12 @@ export type NutritionSummaryService = ReturnType<typeof createNutritionSummarySe
 export function createNutritionSummaryService(dependencies: {
   readonly catalogReader: ConsumptionCatalogReader;
   readonly logRepository: ConsumptionLogRepository;
+  readonly dishRepository: DishRepository;
   readonly goalRepository: NutritionGoalRepository;
   readonly clock: Clock;
 }) {
-  const { catalogReader, logRepository, goalRepository, clock } = dependencies;
-  const projector = createConsumptionLogProjector(catalogReader);
+  const { catalogReader, logRepository, dishRepository, goalRepository, clock } = dependencies;
+  const projector = createConsumptionLogProjector(catalogReader, dishRepository);
 
   /** Return current goals or an empty goal projection when none have been stored. */
   function getGoals(userId: string): CalorieTrackerResult<NutritionGoal> {
