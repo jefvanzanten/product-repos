@@ -23,6 +23,7 @@ Deze index koppelt de functionele specbestanden onder `docs/specs/` aan een uitv
 | `docs/specs/calorie-tracker/logs/log-overzicht.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw; bestaande UI is niet aan de actieve router gekoppeld |
 | `docs/specs/calorie-tracker/logs/log-toevoegen.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw; bestaande legacy-modal gebruikt verouderde contracts |
 | `docs/specs/calorie-tracker/logs/log-detail-bewerken.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` | implementatieplan | nieuw |
+| `docs/specs/calorie-tracker/gerechten/gerecht-aanmaken.md` | `docs/plans/calorie-tracker-gerechten-implementatieplan.md` | implementatieplan | nieuw; specs, ERD en endpoints zijn uitgewerkt |
 
 ## UI-specificatiecoverage
 
@@ -40,6 +41,7 @@ Deze index koppelt de functionele specbestanden onder `docs/specs/` aan een uitv
 | `docs/specs/calorie-tracker/logs/log-overzicht-ui-specificatie.md` | `docs/specs/calorie-tracker/logs/log-overzicht.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` |
 | `docs/specs/calorie-tracker/logs/log-toevoegen-ui-specificatie.md` | `docs/specs/calorie-tracker/logs/log-toevoegen.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` |
 | `docs/specs/calorie-tracker/logs/log-detail-bewerken-ui-specificatie.md` | `docs/specs/calorie-tracker/logs/log-detail-bewerken.md` | `docs/plans/calory-tracker-figma-implementatieplan.md` |
+| `docs/specs/calorie-tracker/gerechten/gerecht-aanmaken-ui-specificatie.md` | `docs/specs/calorie-tracker/gerechten/gerecht-aanmaken.md` | `docs/plans/calorie-tracker-gerechten-implementatieplan.md` |
 | `docs/specs/inventory-client/voorraad-inzien-ui-specificatie.md` | `docs/specs/inventory-client/voorraad-inzien-specificatie.md` | `docs/plans/inventory-voorraad-inzien-plan.md` |
 | `docs/specs/inventory-client/voorraad-aanpassen-ui-specificatie.md` | `docs/specs/inventory-client/voorraad-aanpassen-specificatie.md` | `docs/plans/inventory-client-roadmap-plan.md` |
 | `docs/specs/inventory-client/voorraad-toevoegen-bottom-sheet-ui-specificatie.md` | `docs/specs/inventory-client/voorraad-toevoegen-bottom-sheet-specificatie.md` | `docs/plans/inventory-voorraad-toevoegen-bottomsheet-plan.md` |
@@ -60,6 +62,7 @@ Het historische `admin-dashboard-shared-package-calory-router-plan.md` behoudt d
 5. Bouw cataloguszoeken en browsen samen, omdat ze dezelfde productrij-, categoriepad- en verpakkingssamenvatting-contracten delen.
 6. Rond na het uitgevoerde gedeelde opbergplaatsenbeheer de Inventory-mutatiecontracts en toevoegflow af.
 7. Implementeer de Calorie Tracker in de fasen uit `docs/plans/calory-tracker-figma-implementatieplan.md`; de specs, ERD en endpoints zijn hiervoor inhoudelijk uitgewerkt.
+8. Implementeer daarna de gerecht-feature volgens `docs/plans/calorie-tracker-gerechten-implementatieplan.md`, te beginnen met de schema-splitsing naar product- en dish-consumptie.
 
 ## Verificatie-afspraak
 

@@ -4,7 +4,7 @@
 
 - Onderdeel: Inventory client
 - Functionele specificatie: [voorraad-toevoegen-bottom-sheet-specificatie.md](./voorraad-toevoegen-bottom-sheet-specificatie.md)
-- Status: gepland
+- Status: geïmplementeerd
 
 ## Doel
 

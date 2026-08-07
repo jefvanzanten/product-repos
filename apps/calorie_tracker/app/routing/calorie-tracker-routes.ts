@@ -9,6 +9,7 @@ export const calorieTrackerRoutePatterns = {
   login: "login",
   logs: "logs",
   newLog: "new",
+  newDish: "new/dish",
   legacyNewLog: "nieuw",
   logDetail: ":logId",
   editLog: ":logId/edit",
@@ -43,6 +44,18 @@ export function logbookPath(state: LogbookRouteState): string {
 /** Build the canonical create-log route. */
 export function newLogPath(state: LogbookRouteState): string {
   return `/logs/new?${createLogbookSearch(state)}`;
+}
+
+/** Build the canonical create-dish route inside the log-addition flow. */
+export function newDishPath(state: LogbookRouteState): string {
+  return `/logs/new/dish?${createLogbookSearch(state)}`;
+}
+
+/** Build the create-log route with one preselected dish. */
+export function newLogWithDishPath(dishId: string, state: LogbookRouteState): string {
+  const search = createLogbookSearch(state);
+  search.set("dish", dishId);
+  return `/logs/new?${search}`;
 }
 
 /** Build a canonical private log-detail route. */

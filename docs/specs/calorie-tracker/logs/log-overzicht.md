@@ -72,6 +72,7 @@ De primaire actie blijft bereikbaar en mag geen logs bedekken. Het logboekpaneel
 - `Alles` is standaard actief.
 - Maximaal één filter is actief.
 - De lijst wordt direct na een filterkeuze bijgewerkt.
+- Dish-logs vallen onder het food-filter.
 - De pagina toont geen aparte teller voor het aantal zichtbare logs.
 - De pagina toont geen calorie-, macro- of micronutriënttotalen.
 
@@ -88,14 +89,14 @@ De primaire actie blijft bereikbaar en mag geen logs bedekken. Het logboekpaneel
 
 Ieder logitem toont:
 
-- verpakkingsafbeelding of placeholder;
+- verpakkingsafbeelding of gerecht-afbeelding, anders placeholder;
 - tijd;
-- actuele productnaam en merk;
-- oorspronkelijke geconsumeerde hoeveelheid als vermenigvuldiger met de gekozen eenheid;
+- actuele productnaam en merk bij een productlog, of gerechtnaam zonder merk bij een dish-log;
+- oorspronkelijke geconsumeerde hoeveelheid als vermenigvuldiger met de gekozen eenheid, of als porties bij een dish-log;
 - tekstueel consumptietype;
 - een aanwijzing dat het item geopend kan worden.
 
-De verpakkingsomschrijving, volledige verpakkingsinhoud, portiedefinitie, calorieën en macro's staan niet in het compacte logitem. De responsive plaatsing staat in de UI-specificatie. Het consumptietype wordt nooit uitsluitend met kleur gecommuniceerd.
+Dish-logs tonen het consumptietype voeding. De verpakkingsomschrijving, volledige verpakkingsinhoud, portiedefinitie, calorieën en macro's staan niet in het compacte logitem. De responsive plaatsing staat in de UI-specificatie. Het consumptietype wordt nooit uitsluitend met kleur gecommuniceerd.
 
 ## Gearchiveerde catalogusdata
 
@@ -145,7 +146,7 @@ En scrolt de eerste weergave naar de laatste zichtbare log.
 ### AC-04 - Compacte inhoud
 
 Gegeven dat een logitem zichtbaar is
-Dan toont het afbeelding-, product-, merk-, hoeveelheid-, eenheid-, tijd- en typegegevens in vaste responsieve slots
+Dan toont het afbeelding-, product- of gerecht-, merk-, hoeveelheid-, eenheid-, tijd- en typegegevens in vaste responsieve slots
 En toont het geen verpakkingsomschrijving, calorieën of macro's.
 
 ### AC-05 - Typefilter

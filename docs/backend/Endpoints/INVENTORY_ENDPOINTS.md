@@ -17,7 +17,7 @@ body: strict; onbekende velden of verkeerde shapes => 400 VALIDATION_ERROR
 text: trim voor validatie/opslag
 date: kalenderdatum YYYY-MM-DD; null betekent geen datum
 quantity: positief geheel getal; telt volledige verpakkingen
-version: optimistic-lockingveld van inventory_item; mutaties sturen de gelezen versie mee
+version: optimistic-lockingveld van inventory_item; mutaties op een bestaande partij sturen de gelezen versie mee; toevoegen verhoogt atomair zonder gelezen versie
 merge: mutaties op een bestaande combinatie productverpakking + locatie + datum tellen op bij die partij
 timezoneHeader: X-Browser-Timezone; IANA; dagberekeningen gebruiken de applicatietijdzone
 errorshape: { code, message, fields? }
@@ -77,7 +77,7 @@ GET /inventory-items/suggestions:
 GET /inventory-items/packages/search:
   auth: user
   query:
-    query?: string; trim; minSearchLength=2
+    query: string; trim; minSearchLength=2
     limit?: int; default=20; max=100
   behavior:
     toont uitsluitend actieve, niet-gearchiveerde producten en verpakkingen
@@ -229,7 +229,7 @@ InventorySuggestions:
 
 InventoryPackageSearchResult:
   source: product + product_package
-  fields: [productId, productPackageId, displayName, brandName, packageSummary, categoryPath]
+  fields: [productId, productPackageId, displayName, brandName, packageSummary, categoryPath, imageUrl]
 
 CategorySuggestion:
   fields: [id, name, path:derived]

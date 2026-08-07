@@ -21,7 +21,7 @@ Dit document bewaart gedeelde Calorie Tracker-domeinkennis die door dashboard, l
 
 ## Consumptielogs
 
-- Een consumptielog hoort bij exact één gebruiker en één catalogusverpakking.
+- Een consumptielog hoort bij exact één gebruiker en één catalogusverpakking of één gepinde gerechtversie.
 - Een log bewaart de oorspronkelijke hoeveelheid, invoermodus, invoereenheid, het consumptiemoment en de gebruikte browsertijdzone.
 - Logs bewaren geen product-, verpakking- of voedingssnapshot.
 - Actuele catalogusdata bepaalt de zichtbare productinformatie, afgeleide hoeveelheden en voedingswaarden.
@@ -38,6 +38,25 @@ Dit document bewaart gedeelde Calorie Tracker-domeinkennis die door dashboard, l
 - Een log bevat exact één hoeveelheid en één invoermodus.
 - Samengestelde invoer, zoals `2 stuks en 100 g`, bestaat niet; de gebruiker maakt daarvoor meerdere logs.
 - Interne berekeningen bewaren hogere precisie. Afronding gebeurt pas voor presentatie.
+
+## Gerechten
+
+- Gerechten zijn privé per gebruiker.
+- Gerechten gebruiken versiebeheer: een receptwijziging maakt een nieuwe immutable versie en bestaande versies worden nooit bewerkt of verwijderd.
+- Een dish-consumptielog pint de versie van het log-moment; latere receptwijzigingen veranderen de historie niet.
+- Naam en afbeelding horen bij de stam; een naamswijziging werkt terug in de historie.
+- Namen worden getrimd en zijn case-insensitief uniek per gebruiker onder de niet-verwijderde gerechten.
+- Het aantal porties is een decimaal getal groter dan nul en hoort bij de versie.
+- Een gerecht heeft minimaal één ingrediënt.
+- Ingrediënten gebruiken dezelfde drie invoermodi en combinatieregels als productlogs.
+- Nieuwe en bewerkte gerechtversies kiezen uitsluitend actieve verpakkingen.
+- Bestaande ingrediënten met een inmiddels gearchiveerde verpakking blijven berekenbaar en mogen ongewijzigd mee naar een nieuwe versie.
+- Macro's per portie: de som van de actuele ingrediëntbijdragen gedeeld door het aantal porties van de versie; de gelogde porties vermenigvuldigen dat resultaat.
+- Ingrediënten zonder macroprofiel dragen stil niets bij; het gerecht blijft logbaar.
+- Decimale portiehoeveelheden groter dan nul zijn toegestaan bij het loggen.
+- Verwijderen is een soft delete op de stam zonder restore-flow; versies blijven behouden voor gepinde logs.
+- Afbeeldingen zijn optioneel en volgen het gedeelde uploadpatroon: PNG/JPEG/WebP, maximaal 5 MB, server-side validatie, immutable serving.
+- Dish-logs vallen onder het food-filter en tonen het consumptietype voeding.
 
 ## Lokale dagen en tijdzones
 

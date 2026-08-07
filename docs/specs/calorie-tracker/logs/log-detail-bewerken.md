@@ -27,7 +27,7 @@ De responsive routepresentatie en detailopbouw staan in [log-detail-bewerken-ui-
 
 ## Detailinhoud
 
-Het detail toont:
+Het detail toont voor een productlog:
 
 - actuele productnaam en merk;
 - productafbeelding of fallback;
@@ -40,7 +40,19 @@ Het detail toont:
 - status `Gearchiveerd` wanneer product of verpakking niet meer actief is;
 - acties `Bewerken` en `Verwijderen`.
 
-De catalogus is de bron van waarheid. Correcties aan product-, verpakking- of voedingsdata verschijnen zonder snapshot- of synchronisatieactie in het detail.
+Het detail toont voor een dish-log:
+
+- gerechtnaam;
+- gerecht-afbeelding of fallback;
+- oorspronkelijke hoeveelheid in porties;
+- datum en tijd;
+- consumptietype voeding;
+- calorie- en macrowaarden berekend uit de gepinde gerechtversie;
+- acties `Bewerken` en `Verwijderen`.
+
+Het dish-detail toont geen ingrediëntenlijst en geen verwijzing naar het gerecht zelf. De macro's horen bij de gepinde versie; latere receptwijzigingen veranderen het detail niet.
+
+De catalogus is de bron van waarheid. Correcties aan product-, verpakking- of voedingsdata verschijnen zonder snapshot- of synchronisatieactie in het detail van productlogs.
 
 ## Niet gevonden en gegevensscheiding
 
@@ -54,15 +66,23 @@ De UI en API maken niet zichtbaar of een ID bij een andere gebruiker bestaat.
 
 ## Bewerken
 
-Bewerken gebruikt dezelfde productzoek- en hoeveelheidsregels als [log-toevoegen.md](./log-toevoegen.md).
+Bewerken van een productlog gebruikt dezelfde productzoek- en hoeveelheidsregels als [log-toevoegen.md](./log-toevoegen.md).
 
-Bewerkbare waarden:
+Bewerkbare waarden voor een productlog:
 
 - productverpakking;
 - hoeveelheid;
 - invoereenheid;
 - datum;
 - tijd.
+
+Bewerkbare waarden voor een dish-log:
+
+- hoeveelheid in porties;
+- datum;
+- tijd.
+
+Het gerecht of de gepinde versie zelf is niet vervangbaar; een ander gerecht loggen heet verwijderen en opnieuw toevoegen.
 
 Het wijzigen van een log verandert nooit de productcatalogus.
 
@@ -148,3 +168,9 @@ En kan de gebruiker het gedurende vijf seconden ongedaan maken.
 Gegeven dat het gekoppelde product is gearchiveerd
 Dan blijft het log leesbaar en beperkt bewerkbaar
 En kan het gearchiveerde product niet voor een nieuw log worden geselecteerd.
+
+### AC-08 - Dish-log
+
+Gegeven dat de gebruiker een dish-log opent
+Dan toont het detail de gerechtnaam, porties en macro's van de gepinde versie zonder ingrediëntenlijst
+En is bewerken beperkt tot porties, datum en tijd.

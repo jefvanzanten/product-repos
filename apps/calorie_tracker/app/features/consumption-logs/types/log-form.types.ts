@@ -1,4 +1,4 @@
-import type { ConsumptionLog, PackageSearchResult } from "@product-repos/contracts/calorie-tracker";
+import type { ConsumptionLog, Dish, UnifiedSearchResult } from "@product-repos/contracts/calorie-tracker";
 import type { TrackerUrlState } from "../../../domain/consumption-types";
 
 /** Add/edit form route mode with current data when editing. */
@@ -11,7 +11,8 @@ export type LogFormLoaderData = {
   readonly timezone: string | null;
   readonly routeState: TrackerUrlState | null;
   readonly mode: LogFormMode | null;
-  readonly initialPackages: ReadonlyArray<PackageSearchResult>;
+  readonly initialResults: ReadonlyArray<UnifiedSearchResult>;
+  readonly initialDish: Dish | null;
   readonly notFound: boolean;
   readonly loadFailed: boolean;
 };

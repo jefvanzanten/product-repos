@@ -7,7 +7,7 @@ Dit is de index voor de client/inventarisatiekant van de app. Dit is niet de adm
 | Feature | Functionele spec | UI-specificatie | Status |
 | --- | --- | --- | --- |
 | Voorraad inzien | [voorraad-inzien-specificatie.md](./voorraad-inzien-specificatie.md) | [voorraad-inzien-ui-specificatie.md](./voorraad-inzien-ui-specificatie.md) | Gepland / te herwerken |
-| Voorraad toevoegen | [voorraad-toevoegen-bottom-sheet-specificatie.md](./voorraad-toevoegen-bottom-sheet-specificatie.md) | [voorraad-toevoegen-bottom-sheet-ui-specificatie.md](./voorraad-toevoegen-bottom-sheet-ui-specificatie.md) | Gepland |
+| Voorraad toevoegen | [voorraad-toevoegen-bottom-sheet-specificatie.md](./voorraad-toevoegen-bottom-sheet-specificatie.md) | [voorraad-toevoegen-bottom-sheet-ui-specificatie.md](./voorraad-toevoegen-bottom-sheet-ui-specificatie.md) | Geïmplementeerd |
 | Voorraad aanpassen | [voorraad-aanpassen-specificatie.md](./voorraad-aanpassen-specificatie.md) | [voorraad-aanpassen-ui-specificatie.md](./voorraad-aanpassen-ui-specificatie.md) | Gepland |
 
 ## Rollen

@@ -1,6 +1,6 @@
 import { createConsumptionLogSchema, updateConsumptionLogSchema } from "@product-repos/contracts/calorie-tracker";
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { CalorieTrackerApiError, createConsumptionLog, getConsumptionLog, getLoggablePackages, updateConsumptionLog } from "../../api/calorie-tracker-api.server";
+import { CalorieTrackerApiError, createConsumptionLog, getConsumptionLog, getDish, getUnifiedSearch, updateConsumptionLog } from "../../api/calorie-tracker-api.server";
 import { requireUser } from "../../auth/auth.server";
 import { canonicalizeTrackerUrl } from "../../domain/consumption-types";
 import { getTodayInTimezone } from "../../domain/dates-and-timezones";
@@ -69,27 +69,30 @@ async function loadLogFormRoute(
   }
 
   try {
-    const initialPackagesPromise = getLoggablePackages(null, timezone, request);
+    const initialResultsPromise = getUnifiedSearch(null, timezone, request);
     if (mode === "Create") {
+      const requestedDishId = url.searchParams.get("dish");
+      const initialDish = requestedDishId === null ? null : await getDish(requestedDishId, timezone, request);
       return {
         timezone,
         routeState: canonical.state,
         mode: { _tag: "Create" },
-        initialPackages: await initialPackagesPromise,
+        initialResults: await initialResultsPromise,
+        initialDish,
         notFound: false,
         loadFailed: false,
       };
     }
     const logId = params.logId;
     if (logId === undefined) throw new Response("Log niet gevonden.", { status: 404 });
-    const [initialPackages, log] = await Promise.all([
-      initialPackagesPromise,
+    const [initialResults, log] = await Promise.all([
+      initialResultsPromise,
       getConsumptionLog(logId, timezone, request),
     ]);
-    return { timezone, routeState: canonical.state, mode: { _tag: "Edit", log }, initialPackages, notFound: false, loadFailed: false };
+    return { timezone, routeState: canonical.state, mode: { _tag: "Edit", log }, initialResults, initialDish: null, notFound: false, loadFailed: false };
   } catch (error: unknown) {
     const notFound = error instanceof CalorieTrackerApiError && error.status === 404;
-    return { timezone, routeState: canonical.state, mode: null, initialPackages: [], notFound, loadFailed: !notFound };
+    return { timezone, routeState: canonical.state, mode: null, initialResults: [], initialDish: null, notFound, loadFailed: !notFound };
   }
 }
 
@@ -147,5 +150,5 @@ async function handleLogFormRouteAction(
  * @returns The function result.
  */
 function pendingFormData(): LogFormLoaderData {
-  return { timezone: null, routeState: null, mode: null, initialPackages: [], notFound: false, loadFailed: false };
+  return { timezone: null, routeState: null, mode: null, initialResults: [], initialDish: null, notFound: false, loadFailed: false };
 }

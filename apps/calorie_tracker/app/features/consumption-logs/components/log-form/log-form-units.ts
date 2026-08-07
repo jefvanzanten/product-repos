@@ -1,4 +1,4 @@
-import type { AvailableInputUnit, ConsumptionLog } from "@product-repos/contracts/calorie-tracker";
+import type { AvailableInputUnit, ProductConsumptionLog } from "@product-repos/contracts/calorie-tracker";
 
 /**
  * Encode an available unit as a stable select option value.
@@ -11,22 +11,22 @@ export function createUnitKey(unit: AvailableInputUnit): string {
 }
 
 /**
- * Encode an existing log unit in the same form as fetched available units.
+ * Encode an existing product log unit in the same form as fetched available units.
  *
- * @param log - Existing consumption log.
+ * @param log - Existing product consumption log.
  * @returns Stable option value for the log's input unit.
  */
-export function createExistingUnitKey(log: ConsumptionLog): string {
+export function createExistingUnitKey(log: ProductConsumptionLog): string {
   return `${log.inputMode}:${log.inputUnitType?.id ?? "package"}`;
 }
 
 /**
  * Project an existing input unit so archived logs retain their current legal choice.
  *
- * @param log - Existing consumption log.
+ * @param log - Existing product consumption log.
  * @returns Available-unit projection of the log's input unit.
  */
-export function createExistingUnit(log: ConsumptionLog): AvailableInputUnit {
+export function createExistingUnit(log: ProductConsumptionLog): AvailableInputUnit {
   const label = log.inputMode === "CONTENT_UNIT"
     ? log.inputUnitType?.symbol ?? "Eenheid"
     : log.inputMode === "INDIVIDUAL_UNIT"

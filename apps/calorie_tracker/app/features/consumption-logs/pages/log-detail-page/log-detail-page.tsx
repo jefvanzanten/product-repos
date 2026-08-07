@@ -9,6 +9,7 @@ import { formatLocalDate } from "../../../../domain/dates-and-timezones";
 import { formatDecimal } from "../../../../domain/quantities";
 import { editLogPath, logbookPath } from "../../../../routing/calorie-tracker-routes";
 import type { LogDetailActionResult, LogDetailLoaderData } from "../../types/log-detail.types";
+import { formatOriginalLogQuantity, presentConsumptionLog } from "../../utils/log-presentation";
 import styles from "./log-detail-page.module.css";
 
 /**
@@ -78,10 +79,9 @@ function DetailFrame({ backHref, children }: { readonly backHref: string; readon
  * @returns The function result.
  */
 function DetailContent({ log, routeState, deleteError, deleting, onDelete }: { readonly log: ConsumptionLog; readonly routeState: { readonly date: string; readonly type: "all" | "food" | "drink" | "supplement" }; readonly deleteError: string | null; readonly deleting: boolean; readonly onDelete: () => void }): ReactNode {
-  const brand = log.package.brand?.name;
-  const archived = log.package.productArchived || log.package.packageArchived;
+  const presentation = presentConsumptionLog(log);
   const time = new Intl.DateTimeFormat("nl-NL", { hour: "2-digit", minute: "2-digit", timeZone: log.timezone }).format(new Date(log.consumedAt));
-  const original = formatOriginalQuantity(log);
+  const original = formatOriginalLogQuantity(log);
   return (
     <main className={styles.page}>
       <header className={styles.topbar}>
@@ -90,8 +90,8 @@ function DetailContent({ log, routeState, deleteError, deleting, onDelete }: { r
       </header>
       <section className={styles.sheet}>
         <article className={styles.productSummary}>
-          <ProductImage type={log.package.consumptionType} imageUrl={log.package.imageUrl} size="large" />
-          <div><h2>{log.package.productName}</h2>{brand !== undefined && <p>{brand}</p>}<strong>{log.package.summary}</strong><ConsumptionTypeBadge type={log.package.consumptionType} />{archived && <em>Gearchiveerd</em>}</div>
+          <ProductImage type={presentation.consumptionType} imageUrl={presentation.imageUrl} size="large" />
+          <div><h2>{presentation.title}</h2>{presentation.subtitle !== null && <p>{presentation.subtitle}</p>}<strong>{presentation.summary}</strong><ConsumptionTypeBadge type={presentation.consumptionType} />{presentation.archived && <em>Gearchiveerd</em>}</div>
         </article>
         <h2 className={styles.sectionTitle}>Consumptie</h2>
         <dl className={styles.details}>
@@ -125,17 +125,4 @@ function DetailContent({ log, routeState, deleteError, deleting, onDelete }: { r
  */
 function MacroValue({ label, value, unit, fractions }: { readonly label: string; readonly value: string | null; readonly unit: string; readonly fractions: number }): ReactNode {
   return <div><dt>{label}</dt><dd>{value === null ? "Onbekend" : `${formatDecimal(value, fractions)} ${unit}`}</dd></div>;
-}
-
-/**
- * Format the original quantity and selected input unit.
- *
- * @param log - The log value.
- * @returns The function result.
- */
-function formatOriginalQuantity(log: ConsumptionLog): string {
-  const quantity = log.quantity.replace(".", ",");
-  if (log.inputMode === "CONTENT_UNIT") return `${quantity} ${log.inputUnitType?.symbol ?? ""}`.trim();
-  if (log.inputMode === "INDIVIDUAL_UNIT") return `${quantity} ${log.package.portion?.name.toLowerCase() ?? "eenheid"}`;
-  return `${quantity} ${log.package.packageType.name.toLowerCase()}`;
 }

@@ -3,21 +3,29 @@ import {
   calorieTrackerErrorResponseSchema,
   consumptionLogSchema,
   dailyStatisticsSchema,
+  deleteDishResultSchema,
   deleteLogResultSchema,
+  dishSchema,
   logListSchema,
   nutritionGoalSchema,
   packageSearchResultsSchema,
+  unifiedSearchResultSchema,
   type AvailableInputUnit,
   type CalorieTrackerErrorResponse,
   type ConsumptionLog,
   type ConsumptionTypeFilter,
   type CreateConsumptionLog,
+  type CreateDish,
   type DailyStatistics,
+  type DeleteDishResult,
   type DeleteLogResult,
+  type Dish,
   type LogList,
   type NutritionGoal,
   type PackageSearchResult,
+  type UnifiedSearchResult,
   type UpdateConsumptionLog,
+  type UpdateDish,
   type UpsertNutritionGoal,
 } from "@product-repos/contracts/calorie-tracker";
 import { sendBackendRequest } from "./backend-api.server";
@@ -93,6 +101,68 @@ export async function getConsumptionLogs(date: string, type: ConsumptionTypeFilt
 export async function getLoggablePackages(query: string | null, timezone: string, request: Request): Promise<ReadonlyArray<PackageSearchResult>> {
   const search = query === null ? "" : `?${new URLSearchParams({ query })}`;
   return getJson(`/calorie-tracker/packages/search${search}`, packageSearchResultsSchema, timezone, request);
+}
+
+/**
+ * Search packages and dishes together for the log-addition flow.
+ *
+ * @param query - The query value.
+ * @param timezone - The timezone value.
+ * @param request - The request value.
+ * @returns The function result.
+ */
+export async function getUnifiedSearch(query: string | null, timezone: string, request: Request): Promise<ReadonlyArray<UnifiedSearchResult>> {
+  const search = query === null ? "" : `?${new URLSearchParams({ query })}`;
+  return getJson(`/calorie-tracker/search${search}`, unifiedSearchResultSchema.array(), timezone, request);
+}
+
+/**
+ * Fetch one private dish with its newest recipe version.
+ *
+ * @param dishId - The dishId value.
+ * @param timezone - The timezone value.
+ * @param request - The request value.
+ * @returns The function result.
+ */
+export async function getDish(dishId: string, timezone: string, request: Request): Promise<Dish> {
+  return getJson(`/calorie-tracker/dishes/${encodeURIComponent(dishId)}`, dishSchema, timezone, request);
+}
+
+/**
+ * Create one user-owned dish with its first recipe version.
+ *
+ * @param input - The input value.
+ * @param timezone - The timezone value.
+ * @param request - The request value.
+ * @returns The function result.
+ */
+export async function createDish(input: CreateDish, timezone: string, request: Request): Promise<Dish> {
+  return requestJson("/calorie-tracker/dishes", "POST", input, dishSchema, timezone, request);
+}
+
+/**
+ * Update one user-owned dish, creating a new version on recipe changes.
+ *
+ * @param dishId - The dishId value.
+ * @param input - The input value.
+ * @param timezone - The timezone value.
+ * @param request - The request value.
+ * @returns The function result.
+ */
+export async function updateDish(dishId: string, input: UpdateDish, timezone: string, request: Request): Promise<Dish> {
+  return requestJson(`/calorie-tracker/dishes/${encodeURIComponent(dishId)}`, "PUT", input, dishSchema, timezone, request);
+}
+
+/**
+ * Soft-delete one user-owned dish without a restore flow.
+ *
+ * @param dishId - The dishId value.
+ * @param timezone - The timezone value.
+ * @param request - The request value.
+ * @returns The function result.
+ */
+export async function deleteDish(dishId: string, timezone: string, request: Request): Promise<DeleteDishResult> {
+  return requestJson(`/calorie-tracker/dishes/${encodeURIComponent(dishId)}`, "DELETE", undefined, deleteDishResultSchema, timezone, request);
 }
 
 /**

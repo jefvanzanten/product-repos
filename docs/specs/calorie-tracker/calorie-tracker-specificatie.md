@@ -14,6 +14,7 @@ De Calorie Tracker laat een ingelogde gebruiker consumpties registreren en de ca
 | Consumptielogboek | [logs/log-overzicht.md](./logs/log-overzicht.md) | [logs/log-overzicht-ui-specificatie.md](./logs/log-overzicht-ui-specificatie.md) | Concept |
 | Consumptielog toevoegen | [logs/log-toevoegen.md](./logs/log-toevoegen.md) | [logs/log-toevoegen-ui-specificatie.md](./logs/log-toevoegen-ui-specificatie.md) | Concept |
 | Logdetail, bewerken en verwijderen | [logs/log-detail-bewerken.md](./logs/log-detail-bewerken.md) | [logs/log-detail-bewerken-ui-specificatie.md](./logs/log-detail-bewerken-ui-specificatie.md) | Concept |
+| Gerecht aanmaken en loggen | [gerechten/gerecht-aanmaken.md](./gerechten/gerecht-aanmaken.md) | [gerechten/gerecht-aanmaken-ui-specificatie.md](./gerechten/gerecht-aanmaken-ui-specificatie.md) | Concept |
 
 ## Onderliggende documenten
 
@@ -61,6 +62,7 @@ De React Router-routes van deze app worden in productie onder het publieke basis
 | Caloriestatistieken | `/?date=YYYY-MM-DD` | `/calorie-tracker?date=YYYY-MM-DD` | Iedere ingelogde gebruiker |
 | Consumptielogboek | `/logs?date=YYYY-MM-DD&type=all` | `/calorie-tracker/logs?date=YYYY-MM-DD&type=all` | Iedere ingelogde gebruiker |
 | Consumptielog toevoegen | `/logs/new?date=YYYY-MM-DD&type=all` | `/calorie-tracker/logs/new?date=YYYY-MM-DD&type=all` | Iedere ingelogde gebruiker |
+| Gerecht aanmaken | `/logs/new/dish?date=YYYY-MM-DD` | `/calorie-tracker/logs/new/dish?date=YYYY-MM-DD` | Iedere ingelogde gebruiker |
 | Consumptielog bewerken | `/logs/:logId/edit?date=YYYY-MM-DD&type=all` | `/calorie-tracker/logs/:logId/edit?date=YYYY-MM-DD&type=all` | Iedere ingelogde gebruiker |
 | Product Management Admin | niet van toepassing | `/product-management-admin/product-catalogus?source=calorie-tracker` | Alleen beheerders |
 
@@ -74,7 +76,8 @@ Er is voorlopig geen aparte instellingentab. Calorie- en macrodoelen worden vanu
 
 ## Leidende domeinregels
 
-- Een consumptielog hoort bij exact één gebruiker en één catalogusverpakking.
+- Een consumptielog hoort bij exact één gebruiker en één catalogusverpakking of één gepinde gerechtversie.
+- Gerechten gebruiken versiebeheer: een consumptielog pint de gerechtversie van het log-moment en verandert daardoor nooit mee met latere receptwijzigingen.
 - De catalogus is de actuele bron van waarheid; logs bevatten geen product- of voedingssnapshot.
 - Een log bewaart de oorspronkelijke hoeveelheid en gekozen invoereenheid. Afgeleide hoeveelheden en voedingswaarden worden met de actuele catalogusdata berekend.
 - Correcties aan product-, verpakking- of voedingsdata werken daardoor bewust door in historische logs en statistieken.
@@ -106,6 +109,16 @@ Een optioneel macroprofiel hoort bij het product en geldt voor alle compatibele 
 - Vrije producten of calorie-only logs buiten de catalogus.
 - Een productaanvraagflow bij `Product niet gevonden`.
 - Realtime synchronisatie via WebSockets of een vergelijkbare infrastructuur.
+- Bewerken en verwijderen van gerechten in de Calorie Tracker-UI; de endpoints bestaan al, de UX hoort bij een toekomstige gerechten-app.
+- Geneste gerechten (gerechten als ingrediënt van andere gerechten).
+
+## Open punt - toekomstige gerechten-app
+
+Er is een aparte gerechten-app gepland waarin gebruikers gerechten aanmaken, beheren en dagsuggesties aanvragen. Beslispunten die bewust voor die app bewaard blijven:
+
+- gerechtbeheer-UX (bewerken en verwijderen);
+- ownership en eventueel delen van gerechten tussen gebruikers; vandaag zijn dishes strikt privé per `user_id`;
+- suggestiemodaliteiten voor dagelijkse maaltijden.
 
 ## Overkoepelende acceptatiecriteria
 

@@ -5,7 +5,7 @@
 - Onderdeel: inventory client
 - Opent vanaf route: `/`
 - UI-vorm: overlay zonder routewijziging volgens de [UI-specificatie](./voorraad-toevoegen-bottom-sheet-ui-specificatie.md); geen aparte pagina
-- Status: gepland
+- Status: geïmplementeerd
 
 ## Doel
 
@@ -75,16 +75,9 @@ Locaties aanmaken gebeurt uitsluitend in Product Management Admin.
 
 De flow moet correct werken met het mobiele toetsenbord: het actieve veld blijft zichtbaar en bedienbaar en de acties blokkeren het veld niet. Dit gedrag wordt op een echte mobiele viewport getest. De toegestane presentatie en fallback staan in de UI-specificatie.
 
-## Benodigde backend/API — nog te specificeren
+## Backend/API
 
-Nog te bepalen:
-
-- zoeken van productverpakkingen voor inventorygebruik;
-- endpoint om voorraad toe te voegen (verhogende semantiek, samenvoegend per productverpakking + opbergplaats + datum);
-- request/response DTO;
-- foutcodes voor niet-bestaand product, verpakking of opbergplaats, en voor niet-beheerders.
-
-De actieve locatieboom volgt [LOCATION_ENDPOINTS.md](../../backend/Endpoints/LOCATION_ENDPOINTS.md) en de [opbergplaatsen-domeinregels](../../domein/opbergplaatsen-domeinregels.md). Het datamodel staat in het [Storage/Inventory ERD](../../backend/ERD/STORAGE_ERD.md).
+De productverpakkingszoekactie en de verhogende toevoegmutatie volgen [INVENTORY_ENDPOINTS.md](../../backend/Endpoints/INVENTORY_ENDPOINTS.md). De actieve locatieboom volgt [LOCATION_ENDPOINTS.md](../../backend/Endpoints/LOCATION_ENDPOINTS.md) en de [opbergplaatsen-domeinregels](../../domein/opbergplaatsen-domeinregels.md). Het datamodel en de auditmutatie staan in het [Storage/Inventory ERD](../../backend/ERD/STORAGE_ERD.md).
 
 ## Acceptatiecriteria
 

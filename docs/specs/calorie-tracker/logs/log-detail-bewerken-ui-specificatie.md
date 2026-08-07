@@ -18,7 +18,7 @@ Dit document is de bron van waarheid voor de responsive presentatie van logdetai
 
 ## Detailinhoud
 
-Het detail presenteert:
+Het productlogdetail presenteert:
 
 - actuele productnaam en merk;
 - productafbeelding of fallback;
@@ -30,6 +30,18 @@ Het detail presenteert:
 - alle actuele beschikbare calorie- en macrowaarden;
 - status `Gearchiveerd` wanneer product of verpakking niet meer actief is;
 - acties `Bewerken` en `Verwijderen`.
+
+Het dish-logdetail presenteert:
+
+- gerechtnaam;
+- gerecht-afbeelding of fallback;
+- oorspronkelijke hoeveelheid in porties;
+- datum en tijd;
+- consumptietype voeding;
+- calorie- en macrowaarden van de gepinde gerechtversie;
+- acties `Bewerken` en `Verwijderen`.
+
+Het dish-logdetail toont geen ingrediëntenlijst. Het bewerkformulier voor een dish-log toont alleen de portiehoeveelheid, datum en tijd.
 
 Een onbekend of niet-toegankelijk log gebruikt dezelfde zichtbare toestand:
 

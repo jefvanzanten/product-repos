@@ -5,7 +5,7 @@ Documentatieregel: houd ERD's beperkt tot persistente tabellen, relaties en hard
 Domeinregels, UI-gedrag, endpointcontracten en rationale horen in specs of domeindocs; verwijs hier alleen kort wanneer dat nodig is.
 -->
 
-Dit document beschrijft de persistente gegevens voor voedingswaarden, persoonlijke doelen en consumptielogs. Domeinregels staan in [calorie-tracker-domeinregels.md](../../domein/calorie-tracker-domeinregels.md). Product-, verpakkings- en eenheidsgegevens komen uit de gedeelde productcatalogus in [PRODUCT_ERD.md](./PRODUCT_ERD.md).
+Dit document beschrijft de persistente gegevens voor voedingswaarden, persoonlijke doelen, gerechten en consumptielogs. Domeinregels staan in [calorie-tracker-domeinregels.md](../../domein/calorie-tracker-domeinregels.md). Product-, verpakkings- en eenheidsgegevens komen uit de gedeelde productcatalogus in [PRODUCT_ERD.md](./PRODUCT_ERD.md).
 
 ## Tabellen
 
@@ -40,29 +40,82 @@ product_macro_profile
         (calories_kcal IS NOT NULL AND calories_source IS NOT NULL)
     )
 
-consumption_log
+dish
     id: uuid PK
     user_id: uuid FK -> user.id NOT NULL
+    name: text NOT NULL
+    image_url: text NULL
+
+    created_at: timestamp with time zone NOT NULL
+    updated_at: timestamp with time zone NOT NULL
+    deleted_at: timestamp with time zone NULL
+
+    # Name is unique per user among non-deleted dishes, case-insensitive after trim.
+    UNIQUE INDEX (user_id, lower(trim(name))) WHERE deleted_at IS NULL
+
+dish_version
+    id: uuid PK
+    dish_id: uuid FK -> dish.id NOT NULL
+    servings: decimal NOT NULL
+    created_at: timestamp with time zone NOT NULL
+
+    CHECK (servings > 0)
+
+    # Versions are immutable; they are never updated or deleted so pinned
+    # consumption logs remain readable and computable.
+
+dish_ingredient
+    id: uuid PK
+    dish_version_id: uuid FK -> dish_version.id NOT NULL
+
     product_package_id: int FK -> product_package.id NOT NULL
+
     quantity: decimal NOT NULL
     input_mode: enum(PACKAGE, INDIVIDUAL_UNIT, CONTENT_UNIT) NOT NULL
     input_unit_type_id: int FK -> unit_type.id NULL
+
+    CHECK (quantity > 0)
+
+    CHECK (
+        (input_mode = CONTENT_UNIT AND input_unit_type_id IS NOT NULL)
+        OR
+        (input_mode IN (PACKAGE, INDIVIDUAL_UNIT) AND input_unit_type_id IS NULL)
+    )
+
+    # A version has at least one ingredient (enforced in the dish service).
+
+product_consumption
+    consumption_log_id: uuid PK
+        FK -> consumption_log.id
+        ON DELETE CASCADE
+
+    product_package_id: int FK NOT NULL
+    quantity: decimal NOT NULL
+    input_mode: enum(...) NOT NULL
+    input_unit_type_id: int FK NULL
+
+dish_consumption
+    consumption_log_id: uuid PK
+        FK -> consumption_log.id
+        ON DELETE CASCADE
+
+    # Pins the exact recipe version consumed; history never changes when the dish is edited.
+    dish_version_id: uuid FK -> dish_version.id NOT NULL
+    quantity: decimal NOT NULL
+
+    CHECK (quantity > 0)
+
+consumption_log
+    id: uuid PK
+    user_id: uuid FK -> user.id NOT NULL
+    type: enum (PRODUCT, DISH) NOT NULL
     consumed_at: timestamp with time zone NOT NULL
     timezone: text NOT NULL
     created_at: timestamp with time zone NOT NULL
     updated_at: timestamp with time zone NOT NULL
     deleted_at: timestamp with time zone NULL
 
-    CHECK (quantity > 0)
-
-    # input_unit_type_id is stored only for explicit content-unit input.
-    CHECK (
-        (input_mode = CONTENT_UNIT AND input_unit_type_id IS NOT NULL) OR
-        (input_mode IN (PACKAGE, INDIVIDUAL_UNIT) AND input_unit_type_id IS NULL)
-    )
-
     INDEX (user_id, consumed_at)
-    INDEX (product_package_id)
     INDEX (deleted_at) WHERE deleted_at IS NOT NULL
 
 user_nutrition_goal
@@ -86,10 +139,18 @@ user_nutrition_goal
 erDiagram
     USER ||--o{ CONSUMPTION_LOG : owns
     USER ||--o| USER_NUTRITION_GOAL : sets
+    USER ||--o{ DISH : owns
     PRODUCT ||--o| PRODUCT_MACRO_PROFILE : has
     PRODUCT ||--|{ PRODUCT_PACKAGE : has
-    PRODUCT_PACKAGE ||--o{ CONSUMPTION_LOG : referenced_by
-    UNIT_TYPE ||--o{ CONSUMPTION_LOG : selected_for_content_input
+    PRODUCT_PACKAGE ||--o{ PRODUCT_CONSUMPTION : referenced_by
+    UNIT_TYPE ||--o{ PRODUCT_CONSUMPTION : selected_for_content_input
+    DISH ||--|{ DISH_VERSION : versioned_as
+    DISH_VERSION ||--|{ DISH_INGREDIENT : composed_of
+    DISH_VERSION ||--o{ DISH_CONSUMPTION : pinned_by
+    PRODUCT_PACKAGE ||--o{ DISH_INGREDIENT : referenced_by
+    UNIT_TYPE ||--o{ DISH_INGREDIENT : selected_for_content_input
+    CONSUMPTION_LOG ||--o| PRODUCT_CONSUMPTION : detailed_by
+    CONSUMPTION_LOG ||--o| DISH_CONSUMPTION : detailed_by
 ```
 
 ## Catalogusafhankelijkheden

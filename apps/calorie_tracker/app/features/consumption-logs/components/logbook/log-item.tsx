@@ -5,6 +5,7 @@ import { ConsumptionTypeBadge } from "../../../../components/consumption-type-ba
 import { Icon } from "../../../../components/icon/icon";
 import { ProductImage } from "../../../../components/product-image/product-image";
 import { logDetailPath, type LogbookRouteState } from "../../../../routing/calorie-tracker-routes";
+import { formatLogbookQuantity, presentConsumptionLog } from "../../utils/log-presentation";
 import styles from "../../pages/logbook-page/logbook-page.module.css";
 
 /**
@@ -14,7 +15,8 @@ import styles from "../../pages/logbook-page/logbook-page.module.css";
  * @returns The function result.
  */
 export function LogItem({ item, routeState }: { readonly item: ConsumptionLog; readonly routeState: LogbookRouteState }): ReactNode {
-  const brand = item.package.brand === null ? "" : ` · ${item.package.brand.name}`;
+  const presentation = presentConsumptionLog(item);
+  const subtitle = presentation.subtitle === null ? "" : ` · ${presentation.subtitle}`;
   const time = new Intl.DateTimeFormat("nl-NL", {
     hour: "2-digit",
     minute: "2-digit",
@@ -22,30 +24,17 @@ export function LogItem({ item, routeState }: { readonly item: ConsumptionLog; r
   }).format(new Date(item.consumedAt));
   return (
     <Link className={styles.logItem} data-log-id={item.id} to={logDetailPath(item.id, routeState)}>
-      <ProductImage type={item.package.consumptionType} imageUrl={item.package.imageUrl} />
-      <span className={styles.itemProduct}><strong>{item.package.productName}{brand}</strong></span>
+      <ProductImage type={presentation.consumptionType} imageUrl={presentation.imageUrl} />
+      <span className={styles.itemProduct}><strong>{presentation.title}{subtitle}</strong></span>
       <span className={styles.itemDetails}>
         <span className={styles.itemMeta}>
-          <ConsumptionTypeBadge type={item.package.consumptionType} />
-          {(item.package.productArchived || item.package.packageArchived) && <em>Gearchiveerd</em>}
+          <ConsumptionTypeBadge type={presentation.consumptionType} />
+          {presentation.archived && <em>Gearchiveerd</em>}
         </span>
-        <b className={styles.itemQuantity}>{formatQuantity(item)}</b>
+        <b className={styles.itemQuantity}>{formatLogbookQuantity(item)}</b>
         <time className={styles.itemTime} dateTime={item.consumedAt}>{time}</time>
       </span>
       <span className={styles.itemChevron}><Icon name="chevron-right" /></span>
     </Link>
   );
-}
-
-/**
- * Format a logged quantity as a Dutch multiplier with its input unit.
- *
- * @param item - The item value.
- * @returns The function result.
- */
-function formatQuantity(item: ConsumptionLog): string {
-  const quantity = item.quantity.replace(".", ",");
-  if (item.inputMode === "CONTENT_UNIT") return `${quantity}x ${item.inputUnitType?.symbol ?? "eenheid"}`;
-  if (item.inputMode === "INDIVIDUAL_UNIT") return `${quantity}x ${item.package.portion?.name.toLowerCase() ?? "eenheid"}`;
-  return `${quantity}x ${item.package.packageType.name.toLowerCase()}`;
 }

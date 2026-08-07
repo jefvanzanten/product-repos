@@ -61,6 +61,15 @@ Frisdrank · Merknaam
 Drinken
 ```
 
+Een dish-log toont de gerechtnaam zonder merk en de hoeveelheid in porties:
+
+```text
+12:30
+Spaghetti bolognese
+1,5 portie
+Voeding
+```
+
 Op desktop gebruikt elk item vaste kolommen voor afbeelding, tijd, product en merk, hoeveelheid en eenheid, consumptietype en chevron. Op mobiel gebruikt hetzelfde item twee compacte tekstregels naast de afbeelding, met de chevron in een vaste eindkolom. Lange product- en merknamen mogen de overige slots niet verschuiven.
 
 Het consumptietype krijgt een herkenbare kleur naast het verplichte tekstlabel.
