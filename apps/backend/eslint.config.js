@@ -20,6 +20,7 @@ export default [
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
       'no-restricted-syntax': ['error', restrictedApplicationClasses],
     },
   },
@@ -27,7 +28,7 @@ export default [
     files: ['src/modules/*/routes/**/*.ts', 'src/modules/*/*.routes.ts'],
     rules: {
       'no-restricted-imports': ['error', { patterns: [
-        { group: ['**/db/**', '**/internal/**', '**/repositories/drizzle-*', '**/adapters/**'], message: 'Routes may only depend on injected service and middleware capabilities.' },
+        { group: ['**/db/**', '**/internal/**', '**/repositories/**', '**/adapters/**'], message: 'Routes may only depend on injected service and middleware capabilities.' },
       ] }],
     },
   },
@@ -35,7 +36,7 @@ export default [
     files: ['src/modules/*/services/**/*.ts', 'src/modules/*/*.service.ts'],
     rules: {
       'no-restricted-imports': ['error', { patterns: [
-        { group: ['hono', 'drizzle-orm', 'drizzle-orm/**', '**/db/**', '**/repositories/drizzle-*'], message: 'Services may not depend on HTTP, database, or concrete persistence adapters.' },
+        { group: ['hono', 'drizzle-orm', 'drizzle-orm/**', '**/db/**'], message: 'Services may not depend on HTTP or database infrastructure.' },
       ] }],
     },
   },

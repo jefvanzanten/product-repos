@@ -1,16 +1,13 @@
 import { describe, expect, it } from "bun:test";
-import {
-  productCreatedDtoSchema,
-  type MacroProfile,
-  type ProductCreatedDto,
-} from "@product-repos/contracts";
+import type { MacroProfile } from "@product-repos/contracts";
 import {
   consumptionLogSchema,
   dailyStatisticsSchema,
   logListSchema,
-  packageSearchResultSchema,
+  productSearchResultSchema,
 } from "@product-repos/contracts/calorie-tracker";
 import {
+  createTestProduct,
   executeTestSql,
   requestAsAdmin,
   requestAsOtherUser,
@@ -50,36 +47,26 @@ function requestJson(
   });
 }
 
-/** Create one unique catalog product and its first package through the admin route. */
-async function createCatalogPackage(input: CreateCatalogPackageInput): Promise<ProductCreatedDto> {
-  const response = await requestAsAdmin("/products", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: `${input.name} ${crypto.randomUUID()}`,
-      categoryId: testCatalog.categoryId,
-      brandId: null,
-      consumptionType: input.consumptionType ?? "FOOD",
-      macroProfile: input.macroProfile ?? null,
-      package: {
-        packageTypeId: testCatalog.packageTypeId,
-        amount: input.amount,
-        unitTypeId: input.unitTypeId,
-        portion: input.portion ?? null,
-      },
-    }),
+/** Create one unique composition and concrete product through the target admin API. */
+async function createCatalogPackage(input: CreateCatalogPackageInput) {
+  const created = await createTestProduct({
+    name: input.name,
+    consumptionType: input.consumptionType,
+    macroProfile: input.macroProfile ?? null,
+    amount: input.amount,
+    unitTypeId: input.unitTypeId,
+    portion: input.portion ? { singularName: input.portion.name, pluralName: `${input.portion.name}s`, amount: input.portion.amount, unitTypeId: input.portion.unitTypeId, portionsPerProduct: input.portion.portionsPerPackage } : null,
   });
-  expect(response.status).toBe(201);
-  return productCreatedDtoSchema.parse(await response.json());
+  return { id: created.compositionId, package: { id: created.productId }, product: { id: created.productId } };
 }
 
 /** Build a canonical create-log request with an explicit stable instant. */
 function createLogBody(
-  packageId: number,
+  productId: string,
   options: {
     readonly id?: string;
     readonly quantity?: string;
-    readonly inputMode?: "PACKAGE" | "INDIVIDUAL_UNIT" | "CONTENT_UNIT";
+    readonly inputMode?: "FULL_PRODUCT" | "PRODUCT_PORTION" | "CONTENT_UNIT";
     readonly inputUnitTypeId?: number | null;
     readonly consumedAt?: string;
   } = {},
@@ -87,9 +74,9 @@ function createLogBody(
   return {
     id: options.id ?? crypto.randomUUID(),
     type: "PRODUCT" as const,
-    packageId,
+    productId,
     quantity: options.quantity ?? "1",
-    inputMode: options.inputMode ?? "PACKAGE",
+    inputMode: options.inputMode ?? "FULL_PRODUCT",
     inputUnitTypeId: options.inputUnitTypeId ?? null,
     consumedAt: options.consumedAt ?? "2026-01-15T12:00:00.000Z",
   };
@@ -122,16 +109,16 @@ describe("Calorie Tracker backend coverage", () => {
       portion: { name: "wafel", amount: "4.9", unitTypeId: testCatalog.massUnitTypeId, portionsPerPackage: 18 },
     });
 
-    const packageResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(created.package.id));
+    const packageResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(created.product.id));
     expect(packageResponse.status).toBe(201);
     expect(consumptionLogSchema.parse(await packageResponse.json())).toMatchObject({
       derivedQuantityLabel: "1 fles",
       macroValues: { caloriesKcal: "88", proteinG: "8.8", carbohydratesG: null, fatG: null },
     });
 
-    const individualResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(created.package.id, {
+    const individualResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(created.product.id, {
       quantity: "3",
-      inputMode: "INDIVIDUAL_UNIT",
+      inputMode: "PRODUCT_PORTION",
     }));
     expect(individualResponse.status).toBe(201);
     expect(consumptionLogSchema.parse(await individualResponse.json())).toMatchObject({
@@ -139,20 +126,7 @@ describe("Calorie Tracker backend coverage", () => {
       macroValues: { caloriesKcal: "14.7", proteinG: "1.47", carbohydratesG: null, fatG: null },
     });
 
-    const removeReferencedPortion = await requestAsAdmin(`/products/${created.id}/packages/${created.package.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        packageTypeId: testCatalog.packageTypeId,
-        amount: "88",
-        unitTypeId: testCatalog.massUnitTypeId,
-        portion: null,
-      }),
-    });
-    expect(removeReferencedPortion.status).toBe(400);
-    expect(await removeReferencedPortion.json()).toMatchObject({ code: "VALIDATION_ERROR" });
-
-    const contentResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(created.package.id, {
+    const contentResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(created.product.id, {
       quantity: "1.5",
       inputMode: "CONTENT_UNIT",
       inputUnitTypeId: testCatalog.massUnitTypeId,
@@ -163,7 +137,7 @@ describe("Calorie Tracker backend coverage", () => {
       macroValues: { caloriesKcal: "1.5", proteinG: "0.15", carbohydratesG: null, fatG: null },
     });
 
-    const incompatibleResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(created.package.id, {
+    const incompatibleResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(created.product.id, {
       inputMode: "CONTENT_UNIT",
       inputUnitTypeId: testCatalog.unitTypeId,
     }));
@@ -178,19 +152,20 @@ describe("Calorie Tracker backend coverage", () => {
     const secondId = "10000000-0000-4000-8000-000000000002";
     const consumedAt = "2026-01-20T10:00:00.000Z";
 
-    expect((await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(first.package.id, { id: firstId, consumedAt }))).status).toBe(201);
-    expect((await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(second.package.id, { id: secondId, consumedAt }))).status).toBe(201);
+    expect((await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(first.product.id, { id: firstId, consumedAt }))).status).toBe(201);
+    expect((await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(second.product.id, { id: secondId, consumedAt }))).status).toBe(201);
     executeTestSql("UPDATE consumption_log SET created_at = ?, updated_at = ? WHERE id IN (?, ?)", consumedAt, consumedAt, firstId, secondId);
 
     const listResponse = await requestAsUser("/calorie-tracker/logs?date=2026-01-20&type=all", { headers: { "X-Browser-Timezone": "UTC" } });
     const list = logListSchema.parse(await listResponse.json());
     expect(list.items.filter((item) => item.id === firstId || item.id === secondId).map((item) => item.id)).toEqual([firstId, secondId]);
 
-    const recentResponse = await requestAsUser("/calorie-tracker/packages/search?limit=20");
+    const recentResponse = await requestAsUser("/calorie-tracker/products/search?limit=20");
     expect(recentResponse.status).toBe(200);
-    const recent = packageSearchResultSchema.array().parse(await recentResponse.json());
-    const createdPackageIds = new Set([first.package.id, second.package.id]);
-    expect(recent.filter((item) => createdPackageIds.has(item.packageId)).map((item) => item.packageId)).toEqual([second.package.id, first.package.id]);
+    const recent = productSearchResultSchema.array().parse(await recentResponse.json());
+    const createdPackageIds = new Set([first.product.id, second.product.id]);
+    const expectedOrder = [first.product.id, second.product.id].sort((left, right) => right.localeCompare(left));
+    expect(recent.filter((item) => createdPackageIds.has(item.productId)).map((item) => item.productId)).toEqual(expectedOrder);
   });
 
   it("aggregates partial macros, explicit calories, 4/4/9 fallback, and exact values before presentation rounding", async () => {
@@ -221,7 +196,7 @@ describe("Calorie Tracker backend coverage", () => {
 
     const date = "2026-02-10";
     const responses = [];
-    for (const packageId of [partial.package.id, explicit.package.id, fallback.package.id, rounding.package.id, rounding.package.id]) {
+    for (const packageId of [partial.product.id, explicit.product.id, fallback.product.id, rounding.product.id, rounding.product.id]) {
       responses.push(await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", createLogBody(packageId, { consumedAt: `${date}T12:00:00.000Z` })));
     }
     expect(responses.every((response) => response.status === 201)).toBe(true);
@@ -244,9 +219,9 @@ describe("Calorie Tracker backend coverage", () => {
       amount: "100",
       unitTypeId: testCatalog.massUnitTypeId,
     });
-    const beforeBoundary = createLogBody(created.package.id, { consumedAt: "2026-03-29T21:59:00.000Z" });
-    const afterBoundary = createLogBody(created.package.id, { consumedAt: "2026-03-29T22:00:00.000Z" });
-    const otherUserLog = createLogBody(created.package.id, { consumedAt: "2026-03-29T22:30:00.000Z" });
+    const beforeBoundary = createLogBody(created.product.id, { consumedAt: "2026-03-29T21:59:00.000Z" });
+    const afterBoundary = createLogBody(created.product.id, { consumedAt: "2026-03-29T22:00:00.000Z" });
+    const otherUserLog = createLogBody(created.product.id, { consumedAt: "2026-03-29T22:30:00.000Z" });
 
     expect((await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", beforeBoundary, "Europe/Amsterdam")).status).toBe(201);
     expect((await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", afterBoundary, "Europe/Amsterdam")).status).toBe(201);
@@ -279,17 +254,17 @@ describe("Calorie Tracker backend coverage", () => {
       amount: "100",
       unitTypeId: testCatalog.massUnitTypeId,
     });
-    const body = createLogBody(created.package.id, { consumedAt: "2026-04-05T12:00:00.000Z" });
+    const body = createLogBody(created.product.id, { consumedAt: "2026-04-05T12:00:00.000Z" });
     const initialResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", body);
     expect(consumptionLogSchema.parse(await initialResponse.json()).macroValues?.caloriesKcal).toBe("200");
 
-    const correctionResponse = await requestAsAdmin(`/products/${created.id}/packages/${created.package.id}`, {
-      method: "PATCH",
+    const correctionResponse = await requestAsAdmin(`/products/${created.product.id}`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        productCompositionId: created.id,
         packageTypeId: testCatalog.packageTypeId,
-        amount: "250",
-        unitTypeId: testCatalog.massUnitTypeId,
+        content: { amount: "250", unitTypeId: testCatalog.massUnitTypeId },
         portion: null,
       }),
     });
@@ -299,63 +274,22 @@ describe("Calorie Tracker backend coverage", () => {
     expect(retryAfterCorrection.status).toBe(200);
     expect(consumptionLogSchema.parse(await retryAfterCorrection.json()).macroValues?.caloriesKcal).toBe("500");
 
-    executeTestSql("UPDATE product_package SET archived_at = ? WHERE id = ?", "2026-04-06T00:00:00.000Z", created.package.id);
+    executeTestSql("UPDATE product SET archived_at = ? WHERE id = ?", "2026-04-06T00:00:00.000Z", created.product.id);
     const retryAfterArchive = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", body);
     expect(retryAfterArchive.status).toBe(200);
     const retriedLog = consumptionLogSchema.parse(await retryAfterArchive.json());
     if (retriedLog.type !== "PRODUCT") throw new Error("Expected a product consumption log");
-    expect(retriedLog.package.packageArchived).toBe(true);
-  });
-
-  it("blocks package dimension correction while a retained explicit-content log can be restored", async () => {
-    const created = await createCatalogPackage({ name: "Dimension correction", amount: "1", unitTypeId: testCatalog.unitTypeId });
-    const logBody = createLogBody(created.package.id, {
-      inputMode: "CONTENT_UNIT",
-      inputUnitTypeId: testCatalog.unitTypeId,
-      consumedAt: "2026-04-10T12:00:00.000Z",
-    });
-    const logResponse = await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", logBody);
-    expect(logResponse.status).toBe(201);
-
-    const correctionResponse = await requestAsAdmin(`/products/${created.id}/packages/${created.package.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        packageTypeId: testCatalog.packageTypeId,
-        amount: "100",
-        unitTypeId: testCatalog.massUnitTypeId,
-        portion: null,
-      }),
-    });
-    expect(correctionResponse.status).toBe(400);
-    expect(await correctionResponse.json()).toMatchObject({ code: "UNIT_DIMENSION_INCOMPATIBLE" });
-
-    expect((await requestAsUser(`/calorie-tracker/logs/${logBody.id}`, { method: "DELETE" })).status).toBe(200);
-    const correctionDuringUndo = await requestAsAdmin(`/products/${created.id}/packages/${created.package.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        packageTypeId: testCatalog.packageTypeId,
-        amount: "100",
-        unitTypeId: testCatalog.massUnitTypeId,
-        portion: null,
-      }),
-    });
-    expect(correctionDuringUndo.status).toBe(400);
-    expect((await requestAsUser(`/calorie-tracker/logs/${logBody.id}/restore`, { method: "POST" })).status).toBe(200);
-
-    const unchangedResponse = await requestAsAdmin(`/products/${created.id}/packages/${created.package.id}`);
-    expect(unchangedResponse.status).toBe(200);
-    expect(await unchangedResponse.json()).toMatchObject({ unitContent: { unitType: { dimension: "VOLUME" } } });
+    expect(retriedLog.product.archived).toBe(true);
   });
 
   it("returns an invariant failure instead of a partial list when projection references are broken", async () => {
     const created = await createCatalogPackage({ name: "Broken projection", amount: "100", unitTypeId: testCatalog.massUnitTypeId });
-    const body = createLogBody(created.package.id, { consumedAt: "2026-04-20T12:00:00.000Z" });
+    const body = createLogBody(created.product.id, { consumedAt: "2026-04-20T12:00:00.000Z" });
     expect((await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", body)).status).toBe(201);
 
     executeTestSql("PRAGMA foreign_keys = OFF");
-    executeTestSql("UPDATE product_consumption SET product_package_id = ? WHERE consumption_log_id = ?", 999_999, body.id);
+    executeTestSql("PRAGMA foreign_keys = OFF");
+    executeTestSql("UPDATE product_consumption SET product_id = ? WHERE consumption_log_id = ?", "99999999-9999-4999-8999-999999999999", body.id);
     try {
       const response = await requestAsUser("/calorie-tracker/logs?date=2026-04-20&type=all", {
         headers: { "X-Browser-Timezone": "UTC" },
@@ -365,15 +299,16 @@ describe("Calorie Tracker backend coverage", () => {
       expect(payload).toMatchObject({ code: "INTERNAL_ERROR", fields: { correlationId: expect.any(String) } });
       expect(payload).not.toHaveProperty("items");
     } finally {
-      executeTestSql("UPDATE product_consumption SET product_package_id = ? WHERE consumption_log_id = ?", created.package.id, body.id);
+      executeTestSql("UPDATE product_consumption SET product_id = ? WHERE consumption_log_id = ?", created.product.id, body.id);
+      executeTestSql("PRAGMA foreign_keys = ON");
       executeTestSql("PRAGMA foreign_keys = ON");
     }
   });
 
   it("physically cleans only logs deleted for at least thirty days without adding a public route", async () => {
     const created = await createCatalogPackage({ name: "Cleanup retention", amount: "100", unitTypeId: testCatalog.massUnitTypeId });
-    const expiredBody = createLogBody(created.package.id, { consumedAt: "2026-05-01T12:00:00.000Z" });
-    const retainedBody = createLogBody(created.package.id, { consumedAt: "2026-05-02T12:00:00.000Z" });
+    const expiredBody = createLogBody(created.product.id, { consumedAt: "2026-05-01T12:00:00.000Z" });
+    const retainedBody = createLogBody(created.product.id, { consumedAt: "2026-05-02T12:00:00.000Z" });
     expect((await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", expiredBody)).status).toBe(201);
     expect((await requestJson(requestAsUser, "/calorie-tracker/logs", "POST", retainedBody)).status).toBe(201);
     expect((await requestAsUser(`/calorie-tracker/logs/${expiredBody.id}`, { method: "DELETE" })).status).toBe(200);
@@ -381,20 +316,20 @@ describe("Calorie Tracker backend coverage", () => {
     executeTestSql("UPDATE consumption_log SET deleted_at = ?, updated_at = ? WHERE id = ?", "2026-07-01T12:00:00.000Z", "2026-07-01T12:00:00.000Z", expiredBody.id);
     executeTestSql("UPDATE consumption_log SET deleted_at = ?, updated_at = ? WHERE id = ?", "2026-07-02T12:00:00.001Z", "2026-07-02T12:00:00.001Z", retainedBody.id);
 
-    const [{ createConsumptionLogService }, { createDrizzleConsumptionLogRepository }, { createDrizzleDishRepository }, { createDrizzleConsumptionCatalogReader }] = await Promise.all([
+    const [{ createConsumptionLogService }, { createConsumptionLogRepository }, { createDishRepository }, { createConsumptionCatalogRepository }] = await Promise.all([
       import("../src/modules/calorie-tracker/services/consumption-log.service.ts"),
-      import("../src/modules/calorie-tracker/repositories/drizzle-consumption-log.repository.ts"),
-      import("../src/modules/calorie-tracker/repositories/drizzle-dish.repository.ts"),
-      import("../src/modules/catalog/repositories/drizzle-consumption-catalog-reader.ts"),
+      import("../src/modules/calorie-tracker/repositories/consumption-log.repository.ts"),
+      import("../src/modules/recipes/repositories/dish.repository.ts"),
+      import("../src/modules/catalog/repositories/consumption-catalog.repository.ts"),
     ]);
     const fixedClock = {
       /** Return the deterministic cleanup instant. */
       now: () => new Date("2026-07-31T12:00:00.000Z"),
     };
     const cleanup = createConsumptionLogService({
-      logRepository: createDrizzleConsumptionLogRepository(testDatabase),
-      dishRepository: createDrizzleDishRepository(testDatabase),
-      catalogReader: createDrizzleConsumptionCatalogReader(testDatabase),
+      logRepository: createConsumptionLogRepository(testDatabase),
+      dishRepository: createDishRepository(testDatabase),
+      catalogReader: createConsumptionCatalogRepository(testDatabase),
       clock: fixedClock,
     }).cleanupDeletedLogs();
     expect(cleanup).toEqual({

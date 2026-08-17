@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { AnySQLiteColumn, check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { check, index, integer, sqliteTable, text, uniqueIndex, type AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import { uuid } from "./helper.ts";
 
 /** Product brand catalog records. */
@@ -32,7 +32,7 @@ export const unitType = sqliteTable("unit_type", {
   uniqueIndex("unit_type_symbol_normalized_unique").on(sql`lower(trim(${table.symbol}))`),
 ]);
 
-/** Canonical content quantities attached to product packages. */
+/** Canonical content quantities attached to concrete products and portions. */
 export const unitContent = sqliteTable("unit_content", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   unitTypeId: integer("unit_type_id").notNull().references(() => unitType.id),
@@ -42,79 +42,36 @@ export const unitContent = sqliteTable("unit_content", {
   uniqueIndex("unit_content_unit_type_id_amount_unique").on(table.unitTypeId, table.amount),
 ]);
 
-/** Package-type reference data. */
+/** Package-type reference data with grammatical display forms. */
 export const packageType = sqliteTable("package_type", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  name: text("name").notNull(),
-}, (table) => [uniqueIndex("package_type_name_normalized_unique").on(sql`lower(trim(${table.name}))`)]);
+  singularName: text("singular_name").notNull(),
+  pluralName: text("plural_name").notNull(),
+}, (table) => [
+  check("package_type_singular_name_nonempty", sql`length(trim(${table.singularName})) > 0`),
+  check("package_type_plural_name_nonempty", sql`length(trim(${table.pluralName})) > 0`),
+  uniqueIndex("package_type_singular_name_normalized_unique").on(sql`lower(trim(${table.singularName}))`),
+  uniqueIndex("package_type_plural_name_normalized_unique").on(sql`lower(trim(${table.pluralName}))`),
+]);
 
-/** Backward-compatible singular packaging-type alias. */
-export const packagingType = packageType;
-/** Backward-compatible plural packaging-type alias. */
-export const packagingTypes = packageType;
-
-/** Shared catalog products with archival and audit timestamps. */
-export const product = sqliteTable("product", {
+/** Shared identity, classification, and nutrition owner for concrete products. */
+export const productComposition = sqliteTable("product_composition", {
   id: uuid("id"),
   name: text("name").notNull(),
   categoryId: integer("category_id").notNull().references(() => category.id),
   brandId: text("brand_id").references(() => brand.id),
   consumptionType: text("consumption_type", { enum: ["FOOD", "DRINK", "SUPPLEMENT"] }).notNull(),
-  archivedAt: text("archived_at"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [
-  check("product_consumption_type_valid", sql`${table.consumptionType} IN ('FOOD', 'DRINK', 'SUPPLEMENT')`),
-  uniqueIndex("product_brand_name_unique").on(table.brandId, table.categoryId, sql`lower(trim(${table.name}))`).where(sql`${table.brandId} IS NOT NULL`),
-  uniqueIndex("product_no_brand_name_unique").on(table.categoryId, sql`lower(trim(${table.name}))`).where(sql`${table.brandId} IS NULL`),
+  check("product_composition_consumption_type_valid", sql`${table.consumptionType} IN ('FOOD', 'DRINK', 'SUPPLEMENT')`),
+  uniqueIndex("product_composition_brand_name_unique").on(table.brandId, table.categoryId, sql`lower(trim(${table.name}))`).where(sql`${table.brandId} IS NOT NULL`),
+  uniqueIndex("product_composition_no_brand_name_unique").on(table.categoryId, sql`lower(trim(${table.name}))`).where(sql`${table.brandId} IS NULL`),
 ]);
 
-/** Legacy product variants retained for the existing storage model. */
-export const productVariants = sqliteTable("product_variant", {
-  id: uuid("id"),
-  productId: text("product_id").notNull().references(() => product.id),
-  name: text("name").notNull(),
-});
-
-/** Legacy product SKUs retained for the existing storage model. */
-export const productSkus = sqliteTable("product_sku", {
-  id: uuid("id"),
-  productVariantId: text("product_variant_id").notNull().references(() => productVariants.id),
-  unitContentId: integer("unit_content_id").references(() => unitContent.id),
-  packagingTypeId: integer("packaging_type_id").references(() => packageType.id),
-  unitsPerPackage: integer("units_per_package"),
-  barcode: text("barcode"),
-});
-
-/** Concrete product packages selectable by consuming domains. */
-export const productPackage = sqliteTable("product_package", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  productId: text("product_id").notNull().references(() => product.id),
-  unitContentId: integer("unit_content_id").notNull().references(() => unitContent.id),
-  packageTypeId: integer("package_type_id").notNull().references(() => packageType.id),
-  imageUrl: text("image_url"),
-  archivedAt: text("archived_at"),
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-}, (table) => [
-  uniqueIndex("product_package_unique").on(table.productId, table.packageTypeId, table.unitContentId),
-  index("product_package_product_idx").on(table.productId),
-]);
-
-/** Optional explicit portion metadata belonging to one product package. */
-export const productPackagePortion = sqliteTable("product_package_portion", {
-  productPackageId: integer("product_package_id").primaryKey().references(() => productPackage.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  unitContentId: integer("unit_content_id").notNull().references(() => unitContent.id),
-  portionsPerPackage: integer("portions_per_package"),
-}, (table) => [
-  check("product_package_portion_name_nonempty", sql`length(trim(${table.name})) > 0`),
-  check("product_package_portion_count_positive", sql`${table.portionsPerPackage} IS NULL OR ${table.portionsPerPackage} > 0`),
-]);
-
-/** Optional current macro profile belonging to a product. */
-export const productMacroProfile = sqliteTable("product_macro_profile", {
-  productId: text("product_id").primaryKey().references(() => product.id, { onDelete: "cascade" }),
+/** Macro values shared by every concrete product in one composition. */
+export const productCompositionMacroProfile = sqliteTable("product_macro_profile", {
+  productCompositionId: text("product_composition_id").primaryKey().references(() => productComposition.id, { onDelete: "cascade" }),
   referenceBasis: text("reference_basis", { enum: ["PER_100_G", "PER_100_ML", "PER_UNIT"] }).notNull(),
   caloriesKcal: text("calories_kcal"),
   proteinG: text("protein_g"),
@@ -133,21 +90,32 @@ export const productMacroProfile = sqliteTable("product_macro_profile", {
   check("product_macro_profile_calories_source_consistent", sql`(${table.caloriesKcal} IS NULL AND ${table.caloriesSource} IS NULL) OR (${table.caloriesKcal} IS NOT NULL AND ${table.caloriesSource} IN ('AUTOMATIC', 'MANUAL'))`),
 ]);
 
-/** Backward-compatible plural brand alias. */
-export const brands = brand;
-/** Backward-compatible plural category alias. */
-export const categories = category;
-/** Backward-compatible plural unit-type alias. */
-export const unitTypes = unitType;
-/** Backward-compatible plural unit-content alias. */
-export const unitContents = unitContent;
-/** Backward-compatible plural package-type alias. */
-export const packageTypes = packageType;
-/** Backward-compatible plural product-package alias. */
-export const productPackages = productPackage;
-/** Backward-compatible plural product-package-portion alias. */
-export const productPackagePortions = productPackagePortion;
-/** Backward-compatible plural macro-profile alias. */
-export const productMacroProfiles = productMacroProfile;
-/** Backward-compatible plural product alias. */
-export const products = product;
+/** One concrete purchasable and selectable catalog product. */
+export const concreteProduct = sqliteTable("product", {
+  id: uuid("id"),
+  productCompositionId: text("product_composition_id").notNull().references(() => productComposition.id),
+  packageTypeId: integer("package_type_id").references(() => packageType.id),
+  unitContentId: integer("unit_content_id").references(() => unitContent.id),
+  imageUrl: text("image_url"),
+  barcode: text("barcode"),
+  archivedAt: text("archived_at"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  uniqueIndex("product_barcode_unique").on(table.barcode).where(sql`${table.barcode} IS NOT NULL`),
+  uniqueIndex("product_composition_package_content_unique").on(table.productCompositionId, table.packageTypeId, table.unitContentId).where(sql`${table.packageTypeId} IS NOT NULL AND ${table.unitContentId} IS NOT NULL`),
+  index("product_composition_idx").on(table.productCompositionId),
+]);
+
+/** Optional portion metadata belonging to one concrete product. */
+export const productPortion = sqliteTable("product_portion", {
+  productId: text("product_id").primaryKey().references(() => concreteProduct.id, { onDelete: "cascade" }),
+  singularName: text("singular_name").notNull(),
+  pluralName: text("plural_name").notNull(),
+  unitContentId: integer("unit_content_id").notNull().references(() => unitContent.id),
+  portionsPerProduct: integer("portions_per_product"),
+}, (table) => [
+  check("product_portion_singular_name_nonempty", sql`length(trim(${table.singularName})) > 0`),
+  check("product_portion_plural_name_nonempty", sql`length(trim(${table.pluralName})) > 0`),
+  check("product_portion_count_positive", sql`${table.portionsPerProduct} IS NULL OR ${table.portionsPerProduct} > 0`),
+]);

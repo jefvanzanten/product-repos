@@ -1,7 +1,9 @@
 # Plan — YAGNI, DRY en Single Responsibility aanscherpen
 
-**Status:** voorgesteld  
+**Status:** historisch vervolgplan
 **Scope:** uitsluitend de actuele staged architectuurwijzigingen opschonen zonder functioneel gedrag, publieke routes, API-contracten of UI te wijzigen.
+
+> **Supersession voor persistence:** de capabilitygerichte splitsing uit dit plan blijft behouden, maar de losse `calorie-tracker-store.ts`- en `drizzle-*`-bestanden zijn vervangen door één technologieneutraal repositorybestand per capability. Zie [Backendrepositories en domeingrenzen vereenvoudigen](backend-repository-en-domainvereenvoudigingsplan.md) voor de uiteindelijke naamgeving, bestandsimpact en definition of done.
 
 ## Aanleiding
 

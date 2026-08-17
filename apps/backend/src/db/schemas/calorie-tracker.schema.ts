@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { user } from "./auth.schema.ts";
-import { productPackage, unitType } from "./products.schema.ts";
+import { concreteProduct, unitType } from "./products.schema.ts";
 
 /** Persisted user-owned consumption logs with subtype data in dedicated tables. */
 export const consumptionLog = sqliteTable("consumption_log", {
@@ -22,15 +22,15 @@ export const consumptionLog = sqliteTable("consumption_log", {
 /** Persisted package-based consumption details keyed by their consumption log. */
 export const productConsumption = sqliteTable("product_consumption", {
   consumptionLogId: text("consumption_log_id").primaryKey().references(() => consumptionLog.id, { onDelete: "cascade" }),
-  productPackageId: integer("product_package_id").notNull().references(() => productPackage.id),
+  productId: text("product_id").notNull().references(() => concreteProduct.id),
   quantity: text("quantity").notNull(),
-  inputMode: text("input_mode", { enum: ["PACKAGE", "INDIVIDUAL_UNIT", "CONTENT_UNIT"] }).notNull(),
+  inputMode: text("input_mode", { enum: ["FULL_PRODUCT", "PRODUCT_PORTION", "CONTENT_UNIT"] }).notNull(),
   inputUnitTypeId: integer("input_unit_type_id").references(() => unitType.id),
 }, (table) => [
   check("product_consumption_quantity_positive", sql`CAST(${table.quantity} AS REAL) > 0`),
-  check("product_consumption_input_mode_valid", sql`${table.inputMode} IN ('PACKAGE', 'INDIVIDUAL_UNIT', 'CONTENT_UNIT')`),
-  check("product_consumption_input_unit_consistent", sql`(${table.inputMode} = 'CONTENT_UNIT' AND ${table.inputUnitTypeId} IS NOT NULL) OR (${table.inputMode} IN ('PACKAGE', 'INDIVIDUAL_UNIT') AND ${table.inputUnitTypeId} IS NULL)`),
-  index("product_consumption_product_package_idx").on(table.productPackageId),
+  check("product_consumption_input_mode_valid", sql`${table.inputMode} IN ('FULL_PRODUCT', 'PRODUCT_PORTION', 'CONTENT_UNIT')`),
+  check("product_consumption_input_unit_consistent", sql`(${table.inputMode} = 'CONTENT_UNIT' AND ${table.inputUnitTypeId} IS NOT NULL) OR (${table.inputMode} IN ('FULL_PRODUCT', 'PRODUCT_PORTION') AND ${table.inputUnitTypeId} IS NULL)`),
+  index("product_consumption_product_idx").on(table.productId),
 ]);
 
 /** Persisted user-owned dishes with identity fields on the stem. */
@@ -39,10 +39,13 @@ export const dish = sqliteTable("dish", {
   userId: text("user_id").notNull().references(() => user.id),
   name: text("name").notNull(),
   imageUrl: text("image_url"),
+  visibility: text("visibility", { enum: ["PRIVATE", "PUBLIC"] }).notNull().default("PRIVATE"),
+  archivedAt: text("archived_at"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
   deletedAt: text("deleted_at"),
 }, (table) => [
+  check("dish_visibility_valid", sql`${table.visibility} IN ('PRIVATE', 'PUBLIC')`),
   uniqueIndex("dish_user_name_unique").on(table.userId, sql`lower(trim(${table.name}))`).where(sql`${table.deletedAt} IS NULL`),
   index("dish_user_idx").on(table.userId),
 ]);
@@ -52,6 +55,7 @@ export const dishVersion = sqliteTable("dish_version", {
   id: text("id").primaryKey(),
   dishId: text("dish_id").notNull().references(() => dish.id),
   servings: text("servings").notNull(),
+  instructions: text("instructions"),
   createdAt: text("created_at").notNull(),
 }, (table) => [
   check("dish_version_servings_positive", sql`CAST(${table.servings} AS REAL) > 0`),
@@ -62,15 +66,16 @@ export const dishVersion = sqliteTable("dish_version", {
 export const dishIngredient = sqliteTable("dish_ingredient", {
   id: text("id").primaryKey(),
   dishVersionId: text("dish_version_id").notNull().references(() => dishVersion.id),
-  productPackageId: integer("product_package_id").notNull().references(() => productPackage.id),
+  productId: text("product_id").notNull().references(() => concreteProduct.id),
   quantity: text("quantity").notNull(),
-  inputMode: text("input_mode", { enum: ["PACKAGE", "INDIVIDUAL_UNIT", "CONTENT_UNIT"] }).notNull(),
+  inputMode: text("input_mode", { enum: ["FULL_PRODUCT", "PRODUCT_PORTION", "CONTENT_UNIT"] }).notNull(),
   inputUnitTypeId: integer("input_unit_type_id").references(() => unitType.id),
 }, (table) => [
   check("dish_ingredient_quantity_positive", sql`CAST(${table.quantity} AS REAL) > 0`),
-  check("dish_ingredient_input_mode_valid", sql`${table.inputMode} IN ('PACKAGE', 'INDIVIDUAL_UNIT', 'CONTENT_UNIT')`),
-  check("dish_ingredient_input_unit_consistent", sql`(${table.inputMode} = 'CONTENT_UNIT' AND ${table.inputUnitTypeId} IS NOT NULL) OR (${table.inputMode} IN ('PACKAGE', 'INDIVIDUAL_UNIT') AND ${table.inputUnitTypeId} IS NULL)`),
+  check("dish_ingredient_input_mode_valid", sql`${table.inputMode} IN ('FULL_PRODUCT', 'PRODUCT_PORTION', 'CONTENT_UNIT')`),
+  check("dish_ingredient_input_unit_consistent", sql`(${table.inputMode} = 'CONTENT_UNIT' AND ${table.inputUnitTypeId} IS NOT NULL) OR (${table.inputMode} IN ('FULL_PRODUCT', 'PRODUCT_PORTION') AND ${table.inputUnitTypeId} IS NULL)`),
   index("dish_ingredient_version_idx").on(table.dishVersionId),
+  index("dish_ingredient_product_idx").on(table.productId),
 ]);
 
 /** Persisted dish consumption details pinning the consumed recipe version. */

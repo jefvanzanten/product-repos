@@ -1,176 +1,61 @@
 import { describe, expect, test } from "bun:test";
+import type { InventoryReader, PhysicalInventoryStockRow } from "../repositories/inventory.repository.ts";
 import { createInventoryQueryService } from "./inventory-query.service.ts";
-import type { InventoryCategoryRow, InventoryLocationRow, InventoryPackageRow, InventoryReader, InventoryStockRow } from "../repositories/inventory-reader.ts";
 
-/**
- * Build one joined stock row with sensible defaults for test scenarios.
- *
- * @param overrides - Scenario-specific values that replace the defaults.
- * @returns A complete joined stock row.
- */
-function stockRow(overrides: Partial<InventoryStockRow>): InventoryStockRow {
-  return {
-    itemId: "item-1",
-    quantity: 1,
-    version: 0,
-    expiryDate: null,
-    locationId: 1,
-    productPackageId: 10,
-    productId: "product-1",
-    productName: "Melk halfvol",
-    brandName: "Zuivelboer",
-    packageTypeName: "pak",
-    contentAmount: "1",
-    contentUnitName: "liter",
-    packageImageUrl: null,
-    packageArchivedAt: null,
-    productArchivedAt: null,
-    categoryId: 1,
-    ...overrides,
-  };
+/** Build one joined physical item fixture. */
+function stockRow(overrides: Partial<PhysicalInventoryStockRow> = {}): PhysicalInventoryStockRow {
+  return { itemId: crypto.randomUUID(), productId: "00000000-0000-4000-8000-000000000001", compositionName: "Kaasplakken", brandName: "Zuivelmeester", packageTypeName: "pak", contentAmount: "120", contentUnitSymbol: "g", dimension: "MASS", conversionToBase: "1", imageUrl: null, archivedAt: null, categoryId: 1, remainingAmountBase: "120", version: 0, expiryDate: null, locationId: 1, ...overrides };
 }
 
-/**
- * Create a fake persistence port around in-memory rows.
- *
- * @param rows - Inventory rows returned by the fake reader.
- * @param locations - Location rows returned by the fake reader.
- * @param categories - Category rows returned by the fake reader.
- * @returns An in-memory inventory reader.
- */
-function fakeReader(
-  rows: ReadonlyArray<InventoryStockRow>,
-  locations: ReadonlyArray<InventoryLocationRow> = [{ id: 1, parentId: null, name: "Keuken", archivedAt: null }],
-  categories: ReadonlyArray<InventoryCategoryRow> = [{ id: 1, parentId: null, name: "Zuivel" }],
-  packages: ReadonlyArray<InventoryPackageRow> = [],
-): InventoryReader {
+/** Build an in-memory physical inventory reader. */
+function fakeReader(rows: ReadonlyArray<PhysicalInventoryStockRow>, threshold: string | null = null): InventoryReader {
   return {
     findStockRows: () => rows,
-    findActivePackageRows: () => packages,
-    findAllLocations: () => locations,
-    findAllCategories: () => categories,
+    findProductsWithKnownContent: () => rows.length === 0 ? [] : [rows[0]!],
+    findAllLocations: () => [{ id: 1, parentId: null, name: "Koelkast", archivedAt: null }, { id: 2, parentId: null, name: "Berging", archivedAt: null }],
+    findAllCategories: () => [{ id: 1, parentId: null, name: "Zuivel" }],
+    findThresholds: () => threshold === null ? [] : [{ productId: rows[0]!.productId, lowStockAmountBase: threshold, movementClass: null }],
   };
 }
 
-describe("inventory query service", () => {
-  test("groups batches of the same package and sums quantities", () => {
-    const service = createInventoryQueryService(
-      fakeReader([
-        stockRow({ itemId: "a", quantity: 2, expiryDate: "2026-08-10" }),
-        stockRow({ itemId: "b", quantity: 3, expiryDate: null }),
-      ]),
-    );
-    const page = service.listInventory({ query: null, limit: 30, offset: 0 });
-    expect(page.groups).toHaveLength(1);
-    expect(page.groups[0]!.totalQuantity).toBe(5);
-    expect(page.groups[0]!.earliestExpiryDate).toBe("2026-08-10");
-    expect(page.nextCursor).toBeNull();
+const query = { query: null, filter: "all", limit: 30, offset: 0, today: "2026-08-10" } as const;
+
+describe("physical inventory query service", () => {
+  test("groups only equal full items and keeps partial items independent", () => {
+    const rows = [
+      stockRow({ itemId: crypto.randomUUID(), expiryDate: "2026-08-12" }),
+      stockRow({ itemId: crypto.randomUUID(), expiryDate: "2026-08-12" }),
+      stockRow({ itemId: crypto.randomUUID(), remainingAmountBase: "80", expiryDate: "2026-08-11" }),
+      stockRow({ itemId: crypto.randomUUID(), remainingAmountBase: "40", locationId: 2, expiryDate: "2026-08-11" }),
+    ];
+    const group = createInventoryQueryService(fakeReader(rows)).listInventory(query).groups[0]!;
+    expect(group.fullGroups[0]?.count).toBe(2);
+    expect(group.fullGroups[0]?.itemIds).toHaveLength(2);
+    expect(group.partialItems).toHaveLength(2);
+    expect(group.totalPackageEquivalent).toBe(3);
+    expect(new Set(group.partialItems.map((item) => item.locationPath))).toEqual(new Set(["Koelkast", "Berging"]));
   });
 
-  test("orders batches from earliest expiry first and undated last", () => {
-    const service = createInventoryQueryService(
-      fakeReader([
-        stockRow({ itemId: "late", expiryDate: "2026-09-01", locationId: 1 }),
-        stockRow({ itemId: "none", expiryDate: null, locationId: 2 }),
-        stockRow({ itemId: "early", expiryDate: "2026-08-01", locationId: 3 }),
-      ]),
-    );
-    const page = service.listInventory({ query: null, limit: 30, offset: 0 });
-    expect(page.groups[0]!.items.map((item) => item.id)).toEqual(["early", "late", "none"]);
+  test("rounds only package-equivalent presentation and sorts undated rows last", () => {
+    const rows = [stockRow({ remainingAmountBase: "250", contentAmount: "500", expiryDate: null }), stockRow({ remainingAmountBase: "250", contentAmount: "500", expiryDate: "2026-08-11" })];
+    const group = createInventoryQueryService(fakeReader(rows)).listInventory(query).groups[0]!;
+    expect(group.totalPackageEquivalent).toBe(1);
+    expect(group.partialItems.map((item) => item.expiryDate)).toEqual(["2026-08-11", null]);
+    expect(group.partialItems[0]?.remainingAmountBase).toBe("250");
   });
 
-  test("orders groups expired first, dated next, and undated alphabetically last", () => {
-    const service = createInventoryQueryService(
-      fakeReader([
-        stockRow({ itemId: "z", productPackageId: 10, productId: "p1", productName: "Zuurkool", expiryDate: null }),
-        stockRow({ itemId: "a", productPackageId: 11, productId: "p2", productName: "Appelsap", expiryDate: null }),
-        stockRow({ itemId: "f", productPackageId: 12, productId: "p3", productName: "Frisdrank", expiryDate: "2026-09-01" }),
-        stockRow({ itemId: "e", productPackageId: 13, productId: "p4", productName: "Eieren", expiryDate: "2026-01-01" }),
-      ]),
-    );
-    const page = service.listInventory({ query: null, limit: 30, offset: 0 });
-    expect(page.groups.map((group) => group.displayName)).toEqual(["Eieren", "Frisdrank", "Appelsap", "Zuurkool"]);
+  test("treats today as consumable and applies expiring and low-stock filters", () => {
+    const todayRow = stockRow({ expiryDate: "2026-08-10", remainingAmountBase: "40" });
+    const service = createInventoryQueryService(fakeReader([todayRow], "50"));
+    const group = service.listInventory(query).groups[0]!;
+    expect(group.earliestExpiryStatus).toBe("TODAY");
+    expect(group.isLowStock).toBeTrue();
+    expect(service.listInventory({ ...query, filter: "expiring" }).groups).toHaveLength(1);
+    expect(service.listInventory({ ...query, filter: "low-stock" }).groups).toHaveLength(1);
   });
 
-  test("filters by product name, brand, package summary, category and location path", () => {
-    const service = createInventoryQueryService(
-      fakeReader(
-        [
-          stockRow({ itemId: "milk", productName: "Melk halfvol", brandName: "Zuivelboer", locationId: 2 }),
-          stockRow({ itemId: "cola", productPackageId: 11, productId: "p2", productName: "Cola", brandName: "Fizz", packageTypeName: "fles", contentAmount: "1.5" }),
-        ],
-        [
-          { id: 1, parentId: null, name: "Keuken", archivedAt: null },
-          { id: 2, parentId: 1, name: "Koelkast", archivedAt: null },
-        ],
-      ),
-    );
-    expect(service.listInventory({ query: "melk", limit: 30, offset: 0 }).groups).toHaveLength(1);
-    expect(service.listInventory({ query: "zuivelboer", limit: 30, offset: 0 }).groups).toHaveLength(1);
-    expect(service.listInventory({ query: "koelkast", limit: 30, offset: 0 }).groups).toHaveLength(1);
-    expect(service.listInventory({ query: "zuivel", limit: 30, offset: 0 }).groups).toHaveLength(2);
-    expect(service.listInventory({ query: "pak 1 liter", limit: 30, offset: 0 }).groups).toHaveLength(1);
-    expect(service.listInventory({ query: "onvindbaar", limit: 30, offset: 0 }).groups).toHaveLength(0);
-  });
-
-  test("paginates groups with an offset cursor", () => {
-    const rows = [0, 1, 2].map((index) =>
-      stockRow({ itemId: `item-${index}`, productPackageId: index + 1, productId: `p${index}`, productName: `Product ${index}`, expiryDate: `2026-09-0${index + 1}` }),
-    );
-    const service = createInventoryQueryService(fakeReader(rows));
-    const firstPage = service.listInventory({ query: null, limit: 2, offset: 0 });
-    expect(firstPage.groups).toHaveLength(2);
-    expect(firstPage.nextCursor).toBe("2");
-    const secondPage = service.listInventory({ query: null, limit: 2, offset: Number(firstPage.nextCursor) });
-    expect(secondPage.groups).toHaveLength(1);
-    expect(secondPage.nextCursor).toBeNull();
-  });
-
-  test("projects location and category paths", () => {
-    const service = createInventoryQueryService(
-      fakeReader(
-        [stockRow({ itemId: "milk", locationId: 3 })],
-        [
-          { id: 1, parentId: null, name: "Keuken", archivedAt: null },
-          { id: 2, parentId: 1, name: "Koelkast", archivedAt: null },
-          { id: 3, parentId: 2, name: "Lade 1", archivedAt: null },
-        ],
-        [
-          { id: 5, parentId: null, name: "Voeding" },
-          { id: 1, parentId: 5, name: "Zuivel" },
-        ],
-      ),
-    );
-    const group = service.listInventory({ query: null, limit: 30, offset: 0 }).groups[0]!;
-    expect(group.items[0]!.locationPath).toBe("Keuken › Koelkast › Lade 1");
-    expect(group.categoryPath).toBe("Voeding › Zuivel");
-    expect(group.packageSummary).toBe("pak 1 liter");
-  });
-
-  test("searches active package choices by package description and category path", () => {
-    const packages: InventoryPackageRow[] = [{
-      productPackageId: 10,
-      productId: "00000000-0000-4000-8000-000000000001",
-      productName: "Melk halfvol",
-      brandName: "Zuivelboer",
-      packageTypeName: "pak",
-      contentAmount: "1",
-      contentUnitName: "liter",
-      packageImageUrl: null,
-      categoryId: 2,
-    }];
-    const service = createInventoryQueryService(fakeReader(
-      [],
-      undefined,
-      [
-        { id: 1, parentId: null, name: "Voeding" },
-        { id: 2, parentId: 1, name: "Zuivel" },
-      ],
-      packages,
-    ));
-
-    expect(service.searchPackages("1 liter", 20)).toHaveLength(1);
-    expect(service.searchPackages("voeding", 20)[0]?.categoryPath).toBe("Voeding › Zuivel");
-    expect(service.searchPackages("barcode", 20)).toHaveLength(0);
+  test("uses the shared concrete-product display name for search results", () => {
+    const service = createInventoryQueryService(fakeReader([stockRow()]));
+    expect(service.searchProducts("zuivel", 20)[0]?.displayName).toBe("Zuivelmeester Kaasplakken — pak 120 g");
   });
 });

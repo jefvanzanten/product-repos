@@ -1,22 +1,18 @@
 import { describe, expect, it } from "bun:test";
 import { createConsumptionLogService } from "../src/modules/calorie-tracker/services/consumption-log.service.ts";
 import { createNutritionSummaryService } from "../src/modules/calorie-tracker/services/nutrition-summary.service.ts";
-import type { ConsumptionCatalogReader } from "../src/modules/catalog/repositories/consumption-catalog-reader.ts";
-import type {
-  ConsumptionLogRecord,
-  ConsumptionLogRepository,
-  DishRepository,
-  NutritionGoalRecord,
-  NutritionGoalRepository,
-} from "../src/modules/calorie-tracker/repositories/calorie-tracker-store.ts";
+import type { ConsumptionCatalogReader } from "../src/modules/catalog/repositories/consumption-catalog.repository.ts";
+import type { ConsumptionLogRecord, ConsumptionLogRepository } from "../src/modules/calorie-tracker/repositories/consumption-log.repository.ts";
+import type { NutritionGoalRecord, NutritionGoalRepository } from "../src/modules/calorie-tracker/repositories/nutrition-goal.repository.ts";
+import type { DishRepository } from "../src/modules/recipes/repositories/dish.repository.ts";
 
 const missingReferenceLog: ConsumptionLogRecord = {
   id: "10000000-0000-4000-8000-000000000001",
   userId: "user-1",
   type: "PRODUCT",
-  productPackageId: 404,
+  productId: "40000000-0000-4000-8000-000000000004",
   quantity: "1",
-  inputMode: "PACKAGE",
+  inputMode: "FULL_PRODUCT",
   inputUnitTypeId: null,
   consumedAt: "2026-01-15T12:00:00.000Z",
   timezone: "UTC",
@@ -33,11 +29,12 @@ function createBrokenProjectionStore(): {
   readonly goalRepository: NutritionGoalRepository;
 } {
   const catalogReader: ConsumptionCatalogReader = {
-    searchActiveCatalogPackages: () => [],
-    findRecentActiveCatalogPackages: () => [],
-    findCatalogPackage: () => undefined,
-    findCatalogPackagesByIds: () => [],
+    searchActiveCatalogProducts: () => [],
+    findRecentActiveCatalogProducts: () => [],
+    findCatalogProduct: () => undefined,
+    findCatalogProductsByIds: () => [],
     findCompatibleUnitTypes: () => [],
+    findAllUnitTypes: () => [],
     findUnitType: () => undefined,
     findUnitTypesByIds: () => [],
   };
@@ -56,17 +53,21 @@ function createBrokenProjectionStore(): {
   };
   const dishRepository: DishRepository = {
     findDishById: () => undefined,
+    listRecipeDishes: () => [],
     existsActiveDishWithName: () => false,
     insertDish: () => undefined,
     updateDishStem: () => undefined,
     softDeleteDish: () => undefined,
+    archiveDish: () => undefined,
+    restoreDish: () => undefined,
     findNewestVersion: () => undefined,
     findVersionsByIds: () => [],
     insertVersion: (input) => input,
     findIngredientsByVersionId: () => [],
     findIngredientsByVersionIds: () => [],
     insertIngredients: () => undefined,
-    searchActiveUserDishes: () => [],
+    searchAccessibleDishes: () => [],
+    findMakerDisplayName: () => null,
     findRecentConsumedDishes: () => [],
   };
   return { catalogReader, logRepository, dishRepository, goalRepository };

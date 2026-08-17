@@ -1,6 +1,6 @@
-import type { AvailableInputUnit, PackageSearchResult } from "@product-repos/contracts/calorie-tracker";
-import type { CatalogPackageRecord, ConsumptionCatalogReader } from "../../catalog/repositories/consumption-catalog-reader.ts";
-import { toPackageSearchResult, toUnitType } from "./calorie-tracker-projections.ts";
+import type { AvailableInputUnit, ProductSearchResult } from "@product-repos/contracts/calorie-tracker";
+import type { CatalogProductRecord, ConsumptionCatalogReader } from "../../catalog/repositories/consumption-catalog.repository.ts";
+import { toProductSearchResult, toUnitType } from "./calorie-tracker-projections.ts";
 import { failure, success, type CalorieTrackerResult } from "./calorie-tracker-service-support.ts";
 
 /** Package-selection use cases consumed by Calorie Tracker routes. */
@@ -9,22 +9,22 @@ export type PackageSelectionService = ReturnType<typeof createPackageSelectionSe
 /** Create package search and quantity-input selection use cases. */
 export function createPackageSelectionService(catalogReader: ConsumptionCatalogReader) {
   /** Search active packages or return the user's recently consumed active packages. */
-  function searchPackages(userId: string, query: string | undefined, limit: number): CalorieTrackerResult<ReadonlyArray<PackageSearchResult>> {
+  function searchPackages(userId: string, query: string | undefined, limit: number): CalorieTrackerResult<ReadonlyArray<ProductSearchResult>> {
     if (query === undefined) {
-      return success(catalogReader.findRecentActiveCatalogPackages(userId, limit).map((row) => toPackageSearchResult(row.record)));
+      return success(catalogReader.findRecentActiveCatalogProducts(userId, limit).map((row) => toProductSearchResult(row.record)));
     }
     const normalizedQuery = query.trim();
     if (normalizedQuery.length < 2) return failure("VALIDATION_ERROR", "Search query must contain at least two characters", { query: "Minimum length is 2" });
-    return success(catalogReader.searchActiveCatalogPackages(normalizedQuery, limit).map(toPackageSearchResult));
+    return success(catalogReader.searchActiveCatalogProducts(normalizedQuery, limit).map(toProductSearchResult));
   }
 
   /** Return quantity input modes and compatible units for an active package. */
-  function getAvailableInputUnits(packageId: number): CalorieTrackerResult<ReadonlyArray<AvailableInputUnit>> {
-    const packageRecord = catalogReader.findCatalogPackage(packageId);
-    if (packageRecord === undefined || !isActivePackage(packageRecord)) return failure("PRODUCT_PACKAGE_NOT_FOUND", "Product package not found");
-    const values: AvailableInputUnit[] = [{ inputMode: "PACKAGE", unitType: null, label: packageRecord.packageTypeName }];
-    if (packageRecord.portionName !== null) values.push({ inputMode: "INDIVIDUAL_UNIT", unitType: null, label: packageRecord.portionName });
-    for (const unit of catalogReader.findCompatibleUnitTypes(packageRecord.contentUnitDimension)) {
+  function getAvailableInputUnits(productId: string): CalorieTrackerResult<ReadonlyArray<AvailableInputUnit>> {
+    const productRecord = catalogReader.findCatalogProduct(productId);
+    if (productRecord === undefined || !isActiveProduct(productRecord)) return failure("PRODUCT_NOT_FOUND", "Product not found");
+    const values: AvailableInputUnit[] = [{ inputMode: "FULL_PRODUCT", unitType: null, label: productRecord.packageTypeName }];
+    if (productRecord.portionName !== null) values.push({ inputMode: "PRODUCT_PORTION", unitType: null, label: productRecord.portionName });
+    for (const unit of catalogReader.findCompatibleUnitTypes(productRecord.contentUnitDimension)) {
       values.push({ inputMode: "CONTENT_UNIT", unitType: toUnitType(unit), label: unit.name });
     }
     return success(values);
@@ -33,7 +33,7 @@ export function createPackageSelectionService(catalogReader: ConsumptionCatalogR
   return { searchPackages, getAvailableInputUnits };
 }
 
-/** Determine whether both product and package are actively selectable. */
-function isActivePackage(row: CatalogPackageRecord): boolean {
-  return row.productArchivedAt === null && row.packageArchivedAt === null;
+/** Determine whether one concrete product is actively selectable. */
+function isActiveProduct(row: CatalogProductRecord): boolean {
+  return row.productArchivedAt === null;
 }

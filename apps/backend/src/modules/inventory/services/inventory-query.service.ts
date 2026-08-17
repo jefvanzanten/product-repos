@@ -1,275 +1,196 @@
-import type { InventoryPackageSearchResult, InventoryPage, InventoryProductGroup } from "@product-repos/contracts/inventory";
-import type { InventoryPackageRow, InventoryReader, InventoryStockRow } from "../repositories/inventory-reader.ts";
-import { projectLocationMetadata, type LocationMetadata } from "../../locations/domain/location-domain.ts";
+import type { InventoryProductSearchResult, PhysicalInventoryItemDetail, PhysicalInventoryPage, PhysicalInventoryProductGroup } from "@product-repos/contracts/inventory";
+import { formatConcreteProductDisplayName, formatPackageSummary } from "@product-repos/shared/product-presentation";
+import { projectLocationMetadata } from "../../locations/domain/location-domain.ts";
+import { addInventoryDecimals, compareInventoryDecimals, deriveExpiryStatus, inventoryRatio, multiplyInventoryDecimals, packageEquivalent } from "../domain/inventory-domain.ts";
+import type { InventoryProductRow, InventoryReader, PhysicalInventoryStockRow } from "../repositories/inventory.repository.ts";
 
-/** Parsed list request accepted by the inventory query service. */
+/** Parsed physical inventory list request. */
 export type InventoryListQuery = {
   readonly query: string | null;
+  readonly filter: "all" | "low-stock" | "expiring";
   readonly limit: number;
   readonly offset: number;
+  readonly today: string;
 };
 
-/** Inventory read capability exposed to the HTTP adapter. */
+/** Physical inventory read capability exposed to HTTP routes. */
 export type InventoryQueryService = {
-  /**
-   * List current stock grouped per product package.
-   *
-   * @param input - Search and pagination values for the list request.
-   * @returns One page of matching inventory product groups.
-   */
-  readonly listInventory: (input: InventoryListQuery) => InventoryPage;
-  /**
-   * Search active catalog packages for inventory registration.
-   *
-   * @param query - Trimmed free-text query with at least two characters.
-   * @param limit - Maximum number of package results.
-   * @returns Matching package choices in deterministic order.
-   */
-  readonly searchPackages: (query: string, limit: number) => InventoryPackageSearchResult[];
+  readonly listInventory: (input: InventoryListQuery) => PhysicalInventoryPage;
+  readonly findItem: (itemId: string) => PhysicalInventoryItemDetail | null;
+  readonly searchProducts: (query: string, limit: number) => InventoryProductSearchResult[];
 };
 
-/** Grouping key with derived presentation fields for one product package. */
-type GroupDraft = {
-  readonly productId: string;
-  readonly productPackageId: number;
-  readonly displayName: string;
-  readonly brandName: string | null;
-  readonly packageSummary: string;
-  readonly categoryPath: string;
-  readonly imageUrl: string | null;
-  readonly archivedAt: string | null;
-  readonly items: InventoryStockRow[];
-};
-
-/**
- * Create the inventory read capability from one injected persistence port.
- *
- * @param reader - Persistence reader supplying inventory and path source rows.
- * @returns The inventory query service.
- */
+/** Build product-oriented physical inventory projections. */
 export function createInventoryQueryService(reader: InventoryReader): InventoryQueryService {
-  /**
-   * List current stock grouped per product package with urgency ordering.
-   *
-   * @param input - Search and pagination values for the list request.
-   * @returns One page of matching inventory product groups.
-   */
-  function listInventory(input: InventoryListQuery): InventoryPage {
-    const stockRows = reader.findStockRows();
-    const locationMetadata = projectLocationMetadata(reader.findAllLocations());
-    const locationPaths = new Map([...locationMetadata].map(([id, value]) => [id, value.path]));
+  /** List and filter current physical inventory. */
+  function listInventory(input: InventoryListQuery): PhysicalInventoryPage {
+    const locations = projectLocationMetadata(reader.findAllLocations());
     const categoryPaths = buildPathMap(reader.findAllCategories());
-    const searchable = input.query === null ? null : input.query.trim().toLowerCase();
-
-    const drafts: GroupDraft[] = [];
-    const draftByPackage = new Map<number, GroupDraft>();
-    for (const row of stockRows) {
-      let draft = draftByPackage.get(row.productPackageId);
-      if (draft === undefined) {
-        draft = {
-          productId: row.productId,
-          productPackageId: row.productPackageId,
-          displayName: row.productName,
-          brandName: row.brandName,
-          packageSummary: formatPackageSummary(row),
-          categoryPath: categoryPaths.get(row.categoryId) ?? "",
-          imageUrl: row.packageImageUrl,
-          archivedAt: row.packageArchivedAt ?? row.productArchivedAt,
-          items: [],
-        };
-        draftByPackage.set(row.productPackageId, draft);
-        drafts.push(draft);
-      }
-      draft.items.push(row);
+    const thresholds = new Map(reader.findThresholds().map((row) => [row.productId, row.lowStockAmountBase]));
+    const rowsByProduct = new Map<string, PhysicalInventoryStockRow[]>();
+    for (const row of reader.findStockRows()) {
+      const rows = rowsByProduct.get(row.productId) ?? [];
+      rows.push(row);
+      rowsByProduct.set(row.productId, rows);
     }
-
-    const matched = drafts.filter((draft) => matchesQuery(draft, locationPaths, searchable));
-    const groups = matched.map((draft) => toProductGroup(draft, locationMetadata)).sort(compareGroups);
+    const query = input.query?.trim().toLocaleLowerCase("nl") ?? null;
+    const groups = [...rowsByProduct.values()]
+      .filter((rows) => query === null || matchesQuery(rows, locations, categoryPaths, query))
+      .map((rows) => projectGroup(rows, locations, categoryPaths, thresholds, input.today))
+      .filter((group) => input.filter === "all" || (input.filter === "low-stock" ? group.isLowStock : isExpiring(group)))
+      .sort(compareGroups);
     const page = groups.slice(input.offset, input.offset + input.limit);
     return { groups: page, nextCursor: input.offset + input.limit < groups.length ? String(input.offset + input.limit) : null };
   }
 
-  /** Search active packages across all documented selection fields. */
-  function searchPackages(query: string, limit: number): InventoryPackageSearchResult[] {
-    const categoryPaths = buildPathMap(reader.findAllCategories());
-    const normalizedQuery = query.trim().toLocaleLowerCase("nl");
-    return reader.findActivePackageRows()
-      .filter((row) => packageMatchesQuery(row, categoryPaths.get(row.categoryId) ?? "", normalizedQuery))
-      .slice(0, limit)
-      .map((row) => ({
-        productId: row.productId,
-        productPackageId: row.productPackageId,
-        displayName: row.productName,
-        brandName: row.brandName,
-        packageSummary: formatPackageSummary(row),
-        categoryPath: categoryPaths.get(row.categoryId) ?? "",
-        imageUrl: row.packageImageUrl,
-      }));
+  /** Find one active physical item with detail metadata. */
+  function findItem(itemId: string): PhysicalInventoryItemDetail | null {
+    const row = reader.findStockRows().find((candidate) => candidate.itemId === itemId);
+    if (row === undefined) return null;
+    const locations = projectLocationMetadata(reader.findAllLocations());
+    return projectItem(row, locations, buildPathMap(reader.findAllCategories()));
   }
 
-  return { listInventory, searchPackages };
+  /** Search selectable concrete products with known content. */
+  function searchProducts(query: string, limit: number): InventoryProductSearchResult[] {
+    const normalized = query.trim().toLocaleLowerCase("nl");
+    const categoryPaths = buildPathMap(reader.findAllCategories());
+    return reader.findProductsWithKnownContent()
+      .map((row) => projectProduct(row, categoryPaths))
+      .filter((product) => [product.displayName, product.brandName ?? "", product.categoryPath].join(" ").toLocaleLowerCase("nl").includes(normalized))
+      .slice(0, limit);
+  }
+
+  return { listInventory, findItem, searchProducts };
 }
 
-/**
- * Check one group against the lowercased search term across all documented fields.
- *
- * @param draft - Product-package group before response projection.
- * @param locationPaths - Resolved location paths keyed by location identifier.
- * @param query - Lowercased search term or null when no search is active.
- * @returns Whether the group matches the search term.
- */
-function matchesQuery(
-  draft: GroupDraft,
-  locationPaths: ReadonlyMap<number, string>,
-  query: string | null,
-): boolean {
-  if (query === null || query.length === 0) return true;
-  const haystack = [
-    draft.displayName,
-    draft.brandName ?? "",
-    draft.packageSummary,
-    draft.categoryPath,
-    ...draft.items.map((item) => locationPaths.get(item.locationId) ?? ""),
-  ]
-    .join(" ")
-    .toLowerCase();
-  return haystack.includes(query);
-}
-
-/**
- * Check one package choice against product, package, brand, and category text.
- *
- * @param row - Active package projection.
- * @param categoryPath - Derived category path for the package.
- * @param query - Normalized search query.
- * @returns Whether the package matches the query.
- */
-function packageMatchesQuery(row: InventoryPackageRow, categoryPath: string, query: string): boolean {
-  return [row.productName, row.brandName ?? "", formatPackageSummary(row), categoryPath]
-    .join(" ")
-    .toLocaleLowerCase("nl")
-    .includes(query);
-}
-
-/**
- * Project one group draft into the strict response contract.
- *
- * @param draft - Product-package group before response projection.
- * @param locationPaths - Resolved location paths keyed by location identifier.
- * @returns A strict inventory product group.
- */
-function toProductGroup(draft: GroupDraft, locationMetadata: ReadonlyMap<number, LocationMetadata>): InventoryProductGroup {
-  const items = [...draft.items].sort(compareBatches).map((row) => ({
-    id: row.itemId,
-    locationId: row.locationId,
-    locationPath: locationMetadata.get(row.locationId)?.path ?? "Onbekende locatie",
-    isLocationArchived: locationMetadata.get(row.locationId)?.isEffectivelyArchived ?? false,
-    expiryDate: row.expiryDate,
-    quantity: row.quantity,
-    version: row.version,
-  }));
+/** Project one concrete-product inventory group. */
+function projectGroup(
+  rows: ReadonlyArray<PhysicalInventoryStockRow>,
+  locations: ReturnType<typeof projectLocationMetadata>,
+  categoryPaths: ReadonlyMap<number, string>,
+  thresholds: ReadonlyMap<string, string>,
+  today: string,
+): PhysicalInventoryProductGroup {
+  const first = rows[0]!;
+  const maximum = maximumAmount(first);
+  let total = "0";
+  const fullByKey = new Map<string, { productId: string; locationId: number; locationPath: string; expiryDate: string | null; count: number; itemIds: string[] }>();
+  const partialItems: PhysicalInventoryItemDetail[] = [];
+  for (const row of [...rows].sort(compareRows)) {
+    total = addInventoryDecimals(total, row.remainingAmountBase);
+    if (compareInventoryDecimals(row.remainingAmountBase, maximum) === 0) {
+      const key = `${row.locationId}|${row.expiryDate ?? ""}`;
+      const current = fullByKey.get(key) ?? { productId: row.productId, locationId: row.locationId, locationPath: locations.get(row.locationId)?.path ?? "Onbekende locatie", expiryDate: row.expiryDate, count: 0, itemIds: [] };
+      current.count += 1;
+      current.itemIds.push(row.itemId);
+      fullByKey.set(key, current);
+    } else {
+      partialItems.push(projectItem(row, locations, categoryPaths));
+    }
+  }
+  const dates = rows.map((row) => row.expiryDate).filter((date): date is string => date !== null).sort();
+  const threshold = thresholds.get(first.productId) ?? null;
   return {
-    productId: draft.productId,
-    productPackageId: draft.productPackageId,
-    displayName: draft.displayName,
-    brandName: draft.brandName,
-    packageSummary: draft.packageSummary,
-    categoryPath: draft.categoryPath,
-    imageUrl: draft.imageUrl,
-    totalQuantity: draft.items.reduce((sum, row) => sum + row.quantity, 0),
-    earliestExpiryDate: earliestDate(draft.items),
-    archivedAt: draft.archivedAt,
-    items,
+    product: projectProduct(first, categoryPaths),
+    totalPackageEquivalent: packageEquivalent(total, maximum),
+    earliestExpiryStatus: deriveExpiryStatus(dates[0] ?? null, today),
+    isLowStock: threshold !== null && compareInventoryDecimals(total, threshold) <= 0,
+    lowStockAmountBase: threshold,
+    fullGroups: [...fullByKey.values()].sort(comparePresentationGroups),
+    partialItems,
   };
 }
 
-/**
- * Order batches from earliest expiry first and keep undated batches last.
- *
- * @param a - Left batch in the comparison.
- * @param b - Right batch in the comparison.
- * @returns A standard ascending sort comparison value.
- */
-function compareBatches(a: InventoryStockRow, b: InventoryStockRow): number {
-  if (a.expiryDate !== null && b.expiryDate !== null) {
-    if (a.expiryDate !== b.expiryDate) return a.expiryDate < b.expiryDate ? -1 : 1;
-    return a.locationId - b.locationId;
-  }
-  if (a.expiryDate !== null) return -1;
-  if (b.expiryDate !== null) return 1;
-  return a.locationId - b.locationId;
+/** Project one physical inventory item detail. */
+function projectItem(row: PhysicalInventoryStockRow, locations: ReturnType<typeof projectLocationMetadata>, categoryPaths: ReadonlyMap<number, string>): PhysicalInventoryItemDetail {
+  const maximum = maximumAmount(row);
+  return {
+    id: row.itemId,
+    productId: row.productId,
+    locationId: row.locationId,
+    expiryDate: row.expiryDate,
+    remainingAmountBase: row.remainingAmountBase,
+    maximumAmountBase: maximum,
+    remainingRatio: inventoryRatio(row.remainingAmountBase, maximum),
+    isFull: compareInventoryDecimals(row.remainingAmountBase, maximum) === 0,
+    version: row.version,
+    product: projectProduct(row, categoryPaths),
+    locationPath: locations.get(row.locationId)?.path ?? "Onbekende locatie",
+    isLocationArchived: locations.get(row.locationId)?.isEffectivelyArchived ?? false,
+  };
 }
 
-/**
- * Order groups from most urgent first and keep undated groups alphabetical last.
- *
- * @param a - Left product group in the comparison.
- * @param b - Right product group in the comparison.
- * @returns A standard ascending sort comparison value.
- */
-function compareGroups(a: InventoryProductGroup, b: InventoryProductGroup): number {
-  if (a.earliestExpiryDate !== null && b.earliestExpiryDate !== null) {
-    if (a.earliestExpiryDate !== b.earliestExpiryDate) return a.earliestExpiryDate < b.earliestExpiryDate ? -1 : 1;
-    return a.displayName.localeCompare(b.displayName);
-  }
-  if (a.earliestExpiryDate !== null) return -1;
-  if (b.earliestExpiryDate !== null) return 1;
-  return a.displayName.localeCompare(b.displayName);
+/** Project shared concrete-product presentation fields. */
+function projectProduct(row: InventoryProductRow, categoryPaths: ReadonlyMap<number, string>): InventoryProductSearchResult {
+  const packageSummary = formatPackageSummary({ packageTypeName: row.packageTypeName, contentAmount: row.contentAmount, contentUnitSymbol: row.contentUnitSymbol }) ?? "Onbekende inhoud";
+  return {
+    productId: row.productId,
+    displayName: formatConcreteProductDisplayName({ brandName: row.brandName, compositionName: row.compositionName, packageTypeName: row.packageTypeName, contentAmount: row.contentAmount, contentUnitSymbol: row.contentUnitSymbol }),
+    compositionName: row.compositionName,
+    brandName: row.brandName,
+    packageSummary,
+    categoryPath: categoryPaths.get(row.categoryId) ?? "",
+    imageUrl: row.imageUrl,
+    maximumAmountBase: maximumAmount(row),
+    baseUnitSymbol: row.dimension === "MASS" ? "g" : row.dimension === "VOLUME" ? "ml" : "st",
+    dimension: row.dimension,
+    archivedAt: row.archivedAt,
+  };
 }
 
-/**
- * Find the earliest known expiry date among one group's batches.
- *
- * @param rows - Stock rows belonging to one product-package group.
- * @returns The earliest ISO date or null when all batches are undated.
- */
-function earliestDate(rows: ReadonlyArray<InventoryStockRow>): string | null {
-  let earliest: string | null = null;
-  for (const row of rows) {
-    if (row.expiryDate === null) continue;
-    if (earliest === null || row.expiryDate < earliest) earliest = row.expiryDate;
-  }
-  return earliest;
+/** Calculate exact maximum content in the dimension's base unit. */
+function maximumAmount(row: Pick<InventoryProductRow, "contentAmount" | "conversionToBase">): string {
+  return multiplyInventoryDecimals(row.contentAmount, row.conversionToBase);
 }
 
-/**
- * Format complete package content for inventory presentation.
- *
- * @param row - Joined stock row containing package presentation fields.
- * @returns The human-readable package summary.
- */
-function formatPackageSummary(row: Pick<InventoryStockRow, "packageTypeName" | "contentAmount" | "contentUnitName">): string {
-  return `${row.packageTypeName} ${row.contentAmount} ${row.contentUnitName}`;
+/** Check free text against product, category, and every location path. */
+function matchesQuery(rows: ReadonlyArray<PhysicalInventoryStockRow>, locations: ReturnType<typeof projectLocationMetadata>, categories: ReadonlyMap<number, string>, query: string): boolean {
+  const product = projectProduct(rows[0]!, categories);
+  return [product.displayName, product.categoryPath, ...rows.map((row) => locations.get(row.locationId)?.path ?? "")].join(" ").toLocaleLowerCase("nl").includes(query);
 }
 
-/** Tree node shape accepted by the cycle-safe path builder. */
-type PathNode = { readonly id: number; readonly parentId: number | null; readonly name: string };
+/** Determine whether a group belongs in the nearly-expired filter. */
+function isExpiring(group: PhysicalInventoryProductGroup): boolean {
+  return ["EXPIRED", "TODAY", "URGENT", "SOON"].includes(group.earliestExpiryStatus);
+}
 
-/**
- * Build root-to-node display paths for one tree while bounding cyclic references.
- *
- * @param nodes - Flat tree nodes with parent identifiers.
- * @returns Display paths keyed by node identifier.
- */
-function buildPathMap(nodes: ReadonlyArray<PathNode>): Map<number, string> {
+/** Sort physical rows by expiry, with undated rows last. */
+function compareRows(left: PhysicalInventoryStockRow, right: PhysicalInventoryStockRow): number {
+  if (left.expiryDate === right.expiryDate) return left.itemId.localeCompare(right.itemId);
+  if (left.expiryDate === null) return 1;
+  if (right.expiryDate === null) return -1;
+  return left.expiryDate.localeCompare(right.expiryDate);
+}
+
+/** Sort full presentation groups by expiry, with undated groups last. */
+function comparePresentationGroups(left: { expiryDate: string | null }, right: { expiryDate: string | null }): number {
+  if (left.expiryDate === right.expiryDate) return 0;
+  if (left.expiryDate === null) return 1;
+  if (right.expiryDate === null) return -1;
+  return left.expiryDate.localeCompare(right.expiryDate);
+}
+
+/** Sort product groups by urgency and then display name. */
+function compareGroups(left: PhysicalInventoryProductGroup, right: PhysicalInventoryProductGroup): number {
+  const order = { EXPIRED: 0, TODAY: 1, URGENT: 2, SOON: 3, LATER: 4, NONE: 5 } as const;
+  return order[left.earliestExpiryStatus] - order[right.earliestExpiryStatus] || left.product.displayName.localeCompare(right.product.displayName, "nl");
+}
+
+/** Build cycle-safe root-to-node paths. */
+function buildPathMap(nodes: ReadonlyArray<{ readonly id: number; readonly parentId: number | null; readonly name: string }>): Map<number, string> {
   const byId = new Map(nodes.map((node) => [node.id, node]));
   const paths = new Map<number, string>();
   for (const node of nodes) {
-    if (paths.has(node.id)) continue;
-    const chain: PathNode[] = [];
+    const names: string[] = [];
     const visited = new Set<number>();
-    let current: PathNode | undefined = node;
-    while (current !== undefined && !visited.has(current.id) && !paths.has(current.id)) {
+    let current: typeof node | undefined = node;
+    while (current !== undefined && !visited.has(current.id)) {
       visited.add(current.id);
-      chain.unshift(current);
+      names.unshift(current.name);
       current = current.parentId === null ? undefined : byId.get(current.parentId);
     }
-    const prefix = current !== undefined && paths.has(current.id) ? paths.get(current.id)! : null;
-    let resolved = prefix;
-    for (const link of chain) {
-      resolved = resolved === null ? link.name : `${resolved} › ${link.name}`;
-      paths.set(link.id, resolved);
-    }
+    paths.set(node.id, names.join(" › "));
   }
   return paths;
 }

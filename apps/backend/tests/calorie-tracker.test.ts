@@ -1,5 +1,4 @@
 import { describe, expect, it } from "bun:test";
-import { productCreatedDtoSchema } from "@product-repos/contracts";
 import {
   calorieTrackerErrorResponseSchema,
   consumptionLogSchema,
@@ -7,9 +6,9 @@ import {
   deleteLogResultSchema,
   logListSchema,
   nutritionGoalSchema,
-  packageSearchResultSchema,
+  productSearchResultSchema,
 } from "@product-repos/contracts/calorie-tracker";
-import { app, executeTestSql, requestAsAdmin, requestAsOtherUser, requestAsUser, testCatalog } from "./test-app.ts";
+import { app, createTestProduct, executeTestSql, requestAsOtherUser, requestAsUser, testCatalog } from "./test-app.ts";
 
 /** Send JSON through the authenticated regular-user HTTP boundary. */
 function requestJson(path: string, method: "POST" | "PATCH" | "PUT", body: unknown): Promise<Response> {
@@ -20,44 +19,26 @@ function requestJson(path: string, method: "POST" | "PATCH" | "PUT", body: unkno
   });
 }
 
-/** Create a unique active package with a complete manual macro profile through the admin route. */
-async function createLoggablePackage(consumptionType: "FOOD" | "DRINK" | "SUPPLEMENT" = "FOOD"): Promise<number> {
-  const response = await requestAsAdmin("/products", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: `Calorie product ${crypto.randomUUID()}`,
-      categoryId: testCatalog.categoryId,
-      brandId: testCatalog.brandId,
-      consumptionType,
-      macroProfile: {
-        referenceBasis: "PER_100_G",
-        caloriesKcal: "200",
-        proteinG: "10",
-        carbohydratesG: "20",
-        fatG: "5",
-        caloriesSource: "MANUAL",
-      },
-      package: {
-        packageTypeId: testCatalog.packageTypeId,
-        amount: "100",
-        unitTypeId: testCatalog.massUnitTypeId,
-        portion: null,
-      },
-    }),
+/** Create a unique active concrete product with a complete macro profile. */
+async function createLoggablePackage(consumptionType: "FOOD" | "DRINK" | "SUPPLEMENT" = "FOOD"): Promise<string> {
+  const created = await createTestProduct({
+    name: "Calorie product",
+    consumptionType,
+    macroProfile: { referenceBasis: "PER_100_G", caloriesKcal: "200", proteinG: "10", carbohydratesG: "20", fatG: "5", caloriesSource: "MANUAL" },
+    amount: "100",
+    unitTypeId: testCatalog.massUnitTypeId,
   });
-  expect(response.status).toBe(201);
-  return productCreatedDtoSchema.parse(await response.json()).package.id;
+  return created.productId;
 }
 
 /** Build a valid create request for a recently consumed UTC instant. */
-function createLogBody(packageId: number, id = crypto.randomUUID()) {
+function createLogBody(productId: string, id = crypto.randomUUID()) {
   return {
     id,
     type: "PRODUCT",
-    packageId,
+    productId,
     quantity: "1.50",
-    inputMode: "PACKAGE",
+    inputMode: "FULL_PRODUCT",
     inputUnitTypeId: null,
     consumedAt: new Date(Date.now() - 60_000).toISOString(),
   } as const;
@@ -73,23 +54,23 @@ describe("Calorie Tracker authenticated route integration", () => {
   });
 
   it("requires a session and exposes package search and compatible input units", async () => {
-    const unauthenticated = await app.request("/calorie-tracker/packages/search");
+    const unauthenticated = await app.request("/calorie-tracker/products/search");
     expect(unauthenticated.status).toBe(401);
 
     const packageId = await createLoggablePackage("FOOD");
-    const search = await requestAsUser("/calorie-tracker/packages/search?query=Calorie&limit=10");
+    const search = await requestAsUser("/calorie-tracker/products/search?query=Calorie&limit=10");
     expect(search.status).toBe(200);
-    const packages = packageSearchResultSchema.array().parse(await search.json());
-    expect(packages.some((item) => item.packageId === packageId)).toBe(true);
+    const packages = productSearchResultSchema.array().parse(await search.json());
+    expect(packages.some((item) => item.productId === packageId)).toBe(true);
 
-    const units = await requestAsUser(`/calorie-tracker/packages/${packageId}/input-units`);
+    const units = await requestAsUser(`/calorie-tracker/products/${packageId}/input-units`);
     expect(units.status).toBe(200);
     expect(await units.json()).toEqual(expect.arrayContaining([
-      expect.objectContaining({ inputMode: "PACKAGE", unitType: null }),
+      expect.objectContaining({ inputMode: "FULL_PRODUCT", unitType: null }),
       expect.objectContaining({ inputMode: "CONTENT_UNIT", unitType: expect.objectContaining({ symbol: "g" }) }),
     ]));
 
-    const shortSearch = await requestAsUser("/calorie-tracker/packages/search?query=x");
+    const shortSearch = await requestAsUser("/calorie-tracker/products/search?query=x");
     expect(shortSearch.status).toBe(400);
     const unknownCreateField = await requestJson("/calorie-tracker/logs", "POST", { ...createLogBody(packageId), unknown: true });
     expect(unknownCreateField.status).toBe(400);
@@ -107,12 +88,12 @@ describe("Calorie Tracker authenticated route integration", () => {
     expect(retry.status).toBe(200);
     expect(consumptionLogSchema.parse(await retry.json()).id).toBe(created.id);
 
-    executeTestSql("UPDATE product_package SET archived_at = ? WHERE id = ?", new Date().toISOString(), packageId);
+    executeTestSql("UPDATE product SET archived_at = ? WHERE id = ?", new Date().toISOString(), packageId);
     const retryAfterCatalogArchive = await requestJson("/calorie-tracker/logs", "POST", createBody);
     expect(retryAfterCatalogArchive.status).toBe(200);
     expect(consumptionLogSchema.parse(await retryAfterCatalogArchive.json())).toMatchObject({
       id: created.id,
-      package: { packageArchived: true },
+      product: { archived: true },
     });
 
     const conflictingCreate = await requestJson("/calorie-tracker/logs", "POST", { ...createBody, quantity: "2" });
@@ -126,7 +107,7 @@ describe("Calorie Tracker authenticated route integration", () => {
     const updateBody = {
       expectedUpdatedAt: created.updatedAt,
       type: "PRODUCT",
-      packageId,
+      productId: packageId,
       quantity: "2",
       inputMode: "CONTENT_UNIT",
       inputUnitTypeId: testCatalog.massUnitTypeId,
@@ -134,9 +115,9 @@ describe("Calorie Tracker authenticated route integration", () => {
     } as const;
     const archivedInputChange = await requestJson(`/calorie-tracker/logs/${created.id}`, "PATCH", updateBody);
     expect(archivedInputChange.status).toBe(409);
-    expect(await archivedInputChange.json()).toMatchObject({ code: "PRODUCT_PACKAGE_ARCHIVED" });
+    expect(await archivedInputChange.json()).toMatchObject({ code: "PRODUCT_ARCHIVED" });
 
-    executeTestSql("UPDATE product_package SET archived_at = NULL WHERE id = ?", packageId);
+    executeTestSql("UPDATE product SET archived_at = NULL WHERE id = ?", packageId);
     const update = await requestJson(`/calorie-tracker/logs/${created.id}`, "PUT", updateBody);
     expect(update.status).toBe(200);
     const updated = consumptionLogSchema.parse(await update.json());
@@ -164,7 +145,7 @@ describe("Calorie Tracker authenticated route integration", () => {
 
   it("persists goals and calculates exact date-scoped totals through current catalog joins", async () => {
     const packageId = await createLoggablePackage("FOOD");
-    const createBody = createLogBody(packageId);
+    const createBody = { ...createLogBody(packageId), consumedAt: "2026-07-07T12:00:00.000Z" };
     const createdResponse = await requestJson("/calorie-tracker/logs", "POST", createBody);
     const created = consumptionLogSchema.parse(await createdResponse.json());
     const date = created.localDate;
@@ -194,8 +175,8 @@ describe("Calorie Tracker authenticated route integration", () => {
     expect(statistics.totals).toEqual({ caloriesKcal: "300", proteinG: "15", carbohydratesG: "30", fatG: "7.5" });
     expect(statistics.goals).toMatchObject({ caloriesKcal: 2200, proteinG: "120" });
 
-    const recentResponse = await requestAsUser("/calorie-tracker/packages/search?limit=5");
-    const recent = packageSearchResultSchema.array().parse(await recentResponse.json());
-    expect(recent[0]?.packageId).toBe(packageId);
+    const recentResponse = await requestAsUser("/calorie-tracker/products/search?limit=5");
+    const recent = productSearchResultSchema.array().parse(await recentResponse.json());
+    expect(recent[0]?.productId).toBe(packageId);
   });
 });

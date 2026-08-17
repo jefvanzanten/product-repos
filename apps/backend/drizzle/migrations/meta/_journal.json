@@ -85,6 +85,27 @@
       "when": 1786017600000,
       "tag": "0011_dishes_backend",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1786104000000,
+      "tag": "0012_product_model_v2_additive",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1786190400000,
+      "tag": "0013_product_model_v2_backfill",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1786276800000,
+      "tag": "0014_product_model_v2_cleanup",
+      "breakpoints": true
     }
   ]
 }

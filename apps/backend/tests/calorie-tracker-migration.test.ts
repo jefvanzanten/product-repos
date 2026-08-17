@@ -119,6 +119,9 @@ function verifyDishSplitMigration(): void {
       .run("20000000-0000-4000-8000-000000000002", "Rundergehakt", 1, "FOOD");
     database.query("INSERT INTO product_package (id, product_id, unit_content_id, package_type_id) VALUES (?, ?, ?, ?)")
       .run(20, "20000000-0000-4000-8000-000000000002", 1, 1);
+    database.query("INSERT INTO location (id, parent_id, name, normalized_name) VALUES (1, NULL, 'Koelkast', 'koelkast')").run();
+    database.query("INSERT INTO inventory_item (id, product_package_id, location_id, expiry_date, quantity, version) VALUES (?, ?, ?, ?, ?, ?)")
+      .run("20000000-0000-4000-8000-000000000004", 20, 1, "2026-02-01", 3, 0);
     database.query("INSERT INTO consumption_log (id, user_id, product_package_id, quantity, input_mode, input_unit_type_id, consumed_at, timezone, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, NULL)")
       .run("20000000-0000-4000-8000-000000000003", userId, 20, "1.5", "PACKAGE", "2026-01-01T12:00:00.000Z", "Europe/Amsterdam", "2026-01-01T12:00:00.000Z", "2026-01-01T12:00:00.000Z");
 
@@ -142,6 +145,28 @@ function verifyDishSplitMigration(): void {
     expect(readCount(database.query("SELECT count(*) AS count FROM dish").get())).toBe(0);
     expect(readCount(database.query("SELECT count(*) AS count FROM dish_version").get())).toBe(0);
     expect(readCount(database.query("SELECT count(*) AS count FROM dish_consumption").get())).toBe(0);
+
+    applyMigration(database, "0012_product_model_v2_additive");
+    applyMigration(database, "0013_product_model_v2_backfill");
+
+    expect(readCount(database.query("SELECT count(*) AS count FROM product_composition").get())).toBe(1);
+    expect(readCount(database.query("SELECT count(*) AS count FROM concrete_product").get())).toBe(1);
+    expect(readCount(database.query("SELECT count(*) AS count FROM legacy_product_package_map").get())).toBe(1);
+    expect(readCount(database.query("SELECT count(*) AS count FROM physical_inventory_item").get())).toBe(3);
+    expect(database.query("SELECT input_mode, product_id IS NOT NULL AS mapped FROM product_consumption").get()).toEqual({ input_mode: "FULL_PRODUCT", mapped: 1 });
+    expect(database.query("SELECT legacy_package_count, mapped_package_count, concrete_product_count, expected_physical_inventory_count, physical_inventory_count FROM product_model_v2_invariants").get()).toEqual({
+      legacy_package_count: 1,
+      mapped_package_count: 1,
+      concrete_product_count: 1,
+      expected_physical_inventory_count: 3,
+      physical_inventory_count: 3,
+    });
+
+    applyMigration(database, "0014_product_model_v2_cleanup");
+    expect(readCount(database.query("SELECT count(*) AS count FROM product").get())).toBe(1);
+    expect(database.query("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('product_package', 'legacy_product_package_map', 'inventory_item', 'concrete_product')").all()).toEqual([]);
+    expect(database.query("PRAGMA table_info(product_consumption)").all().some((column) => (column as { name?: string }).name === "product_package_id")).toBe(false);
+    expect(database.query("PRAGMA table_info(package_type)").all().some((column) => (column as { name?: string }).name === "name")).toBe(false);
     expect(database.query("PRAGMA foreign_key_check").all()).toEqual([]);
   } finally {
     database.close();

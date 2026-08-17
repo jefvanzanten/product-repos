@@ -14,15 +14,15 @@ import {
   localDateForInstant,
   parsePositiveDecimal,
 } from "../domain/calorie-tracker-domain.ts";
-import type { CatalogPackageRecord, ConsumptionCatalogReader } from "../../catalog/repositories/consumption-catalog-reader.ts";
+import type { CatalogProductRecord, ConsumptionCatalogReader } from "../../catalog/repositories/consumption-catalog.repository.ts";
 import type {
   ConsumptionLogRecord,
   ConsumptionLogRepository,
-  DishRepository,
   InsertConsumptionLogRecord,
   ProductConsumptionLogRecord,
   UpdateConsumptionLogRecord,
-} from "../repositories/calorie-tracker-store.ts";
+} from "../repositories/consumption-log.repository.ts";
+import type { DishRepository } from "../../recipes/repositories/dish.repository.ts";
 import { createConsumptionLogProjector, toQuantityPackage } from "./calorie-tracker-projections.ts";
 import {
   failure,
@@ -178,7 +178,12 @@ export function createConsumptionLogService(dependencies: {
   function parseCreateInput(userId: string, input: CreateConsumptionLog): CalorieTrackerResult<ParsedCreateContent> {
     if (input.type === "PRODUCT") return parseProductInput(input, undefined);
     const dishRow = dishRepository.findDishById(input.dishId);
-    if (dishRow === undefined || dishRow.userId !== userId || dishRow.deletedAt !== null) return failure("DISH_NOT_FOUND", "Dish not found");
+    if (
+      dishRow === undefined
+      || dishRow.archivedAt !== null
+      || dishRow.deletedAt !== null
+      || (dishRow.userId !== userId && dishRow.visibility !== "PUBLIC")
+    ) return failure("DISH_NOT_FOUND", "Dish not found");
     const version = dishRepository.findNewestVersion(dishRow.id);
     if (version === undefined) return projectionFailure();
     const quantity = parsePositiveDecimal(input.quantity);
@@ -189,17 +194,17 @@ export function createConsumptionLogService(dependencies: {
 
   /** Parse and validate a product create or update payload against current catalog rules. */
   function parseProductInput(
-    input: { readonly packageId: number; readonly quantity: string; readonly inputMode: ConsumptionInputMode; readonly inputUnitTypeId: number | null; readonly consumedAt: string },
+    input: { readonly productId: string; readonly quantity: string; readonly inputMode: ConsumptionInputMode; readonly inputUnitTypeId: number | null; readonly consumedAt: string },
     currentLog: ProductConsumptionLogRecord | undefined,
   ): CalorieTrackerResult<ProductContent> {
-    const packageRecord = catalogReader.findCatalogPackage(input.packageId);
-    if (packageRecord === undefined) return failure("PRODUCT_PACKAGE_NOT_FOUND", "Product package not found");
+    const packageRecord = catalogReader.findCatalogProduct(input.productId);
+    if (packageRecord === undefined) return failure("PRODUCT_NOT_FOUND", "Product not found");
     if (!isActivePackage(packageRecord)) {
       const keepsArchivedInput = currentLog !== undefined
-        && packageRecord.packageId === currentLog.productPackageId
+        && packageRecord.productId === currentLog.productId
         && input.inputMode === currentLog.inputMode
         && input.inputUnitTypeId === currentLog.inputUnitTypeId;
-      if (!keepsArchivedInput) return failure("PRODUCT_PACKAGE_ARCHIVED", "Archived package input cannot be replaced");
+      if (!keepsArchivedInput) return failure("PRODUCT_ARCHIVED", "Archived product input cannot be replaced");
     }
     const quantity = parsePositiveDecimal(input.quantity);
     if (!quantity.ok) return { ok: false, error: quantity.error };
@@ -213,7 +218,7 @@ export function createConsumptionLogService(dependencies: {
     if (!isAllowedConsumedAt(input.consumedAt, clock.now())) return failure("VALIDATION_ERROR", "Consumed instant cannot be in the future", { consumedAt: "Future instants are not allowed" });
     return success({
       type: "PRODUCT",
-      productPackageId: input.packageId,
+      productId: input.productId,
       quantity: quantity.value,
       inputMode: input.inputMode,
       inputUnitTypeId: input.inputUnitTypeId,
@@ -234,7 +239,7 @@ export function createConsumptionLogService(dependencies: {
     if (row.type === "PRODUCT") {
       if (input.type !== "PRODUCT") return success(false);
       return success(
-        row.productPackageId === input.productPackageId
+        row.productId === input.productId
         && canonicalDecimal(row.quantity) === input.quantity
         && row.inputMode === input.inputMode
         && row.inputUnitTypeId === input.inputUnitTypeId
@@ -259,7 +264,7 @@ export function createConsumptionLogService(dependencies: {
 /** Persisted product subtype content shared by create and update parsing. */
 type ProductContent = {
   readonly type: "PRODUCT";
-  readonly productPackageId: number;
+  readonly productId: string;
   readonly quantity: string;
   readonly inputMode: ConsumptionInputMode;
   readonly inputUnitTypeId: number | null;
@@ -289,18 +294,18 @@ type ParsedUpdateContent = ProductContent | DishUpdateContent;
 
 /** Canonical create-content comparison values for idempotent retries. */
 type CreateContent =
-  | { readonly type: "PRODUCT"; readonly productPackageId: number; readonly quantity: string; readonly inputMode: ConsumptionInputMode; readonly inputUnitTypeId: number | null; readonly consumedAt: string; readonly timezone: string }
+  | { readonly type: "PRODUCT"; readonly productId: string; readonly quantity: string; readonly inputMode: ConsumptionInputMode; readonly inputUnitTypeId: number | null; readonly consumedAt: string; readonly timezone: string }
   | { readonly type: "DISH"; readonly dishId: string; readonly quantity: string; readonly consumedAt: string; readonly timezone: string };
 
 /** Determine whether one projected log satisfies the requested type filter. */
 function logMatchesFilter(log: ConsumptionLog, filter: ConsumptionTypeFilter): boolean {
   if (log.type === "DISH") return filter === "food";
-  return log.package.consumptionType.toLowerCase() === filter;
+  return log.product.consumptionType.toLowerCase() === filter;
 }
 
-/** Determine whether both product and package are actively selectable. */
-function isActivePackage(row: CatalogPackageRecord): boolean {
-  return row.productArchivedAt === null && row.packageArchivedAt === null;
+/** Determine whether one concrete product is actively selectable. */
+function isActivePackage(row: CatalogProductRecord): boolean {
+  return row.productArchivedAt === null;
 }
 
 /** Canonicalize only immutable create-request fields without consulting mutable catalog data. */
@@ -310,7 +315,7 @@ function parseCreateRequestContent(input: CreateConsumptionLog, timezone: string
   if (input.type === "PRODUCT") {
     return success({
       type: "PRODUCT",
-      productPackageId: input.packageId,
+      productId: input.productId,
       quantity: quantity.value,
       inputMode: input.inputMode,
       inputUnitTypeId: input.inputUnitTypeId,

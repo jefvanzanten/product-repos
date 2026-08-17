@@ -33,6 +33,7 @@
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.6.25",
     "@product-repos/contracts": "workspace:*",
+    "@product-repos/shared": "workspace:*",
     "better-auth": "^1.6.25",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.7.0",

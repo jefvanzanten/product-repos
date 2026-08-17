@@ -50,7 +50,7 @@ corepack pnpm --filter @product-repos/backend db:seed
 
 ## Architectuur
 
-De composition root staat in `src/composition.ts`. Modules bezitten hun eigen routes, services en persistence-adapters; gedeelde API-shapes komen uit `packages/contracts`.
+De composition root staat in `src/composition.ts`. Modules bezitten hun eigen routes, services en repositories; gedeelde API-shapes komen uit `packages/contracts`.
 
 Lees verder in [Backendarchitectuur](../../docs/backend/BACKEND_ARCHITECTUUR.md).
 

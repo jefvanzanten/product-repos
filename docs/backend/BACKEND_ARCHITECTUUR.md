@@ -2,57 +2,70 @@
 
 ## Overzicht
 
-De backend is één modulaire Hono-monoliet met één SQLite-database. Code staat primair per functioneel domein onder `apps/backend/src/modules`:
+De backend is één modulaire Hono-monoliet met één SQLite-database. Functionele code staat onder `apps/backend/src/modules` in de modules `auth`, `catalog`, `calorie-tracker`, `health`, `inventory`, `locations` en `recipes`.
 
-- `auth`: Better Auth-adapter, sessieresolutie en autorisatiemiddleware;
-- `catalog`: producten, verpakkingen, merken, categorieën en referentiedata;
-- `calorie-tracker`: consumptielogs, voedingsdoelen en statistieken;
-- `health`: liveness en database-readiness.
+Een module gebruikt waar nodig deze indeling:
 
-`apps/backend/src/composition.ts` is de enige composition root. Deze maakt concrete resources en adapters, injecteert capabilities in services en routes en levert de samengestelde applicatie op. `index.ts` bezit de server- en resourcelevensduur.
+```text
+domain/         pure bedrijfsregels en berekeningen
+repositories/   persistencecapabilities, records, queries en transacties
+services/       use-cases en orchestration
+routes/         transportparsing en HTTP-mapping
+```
+
+Kleine modules krijgen geen lege lagen voor symmetrie. Better Auth blijft een externe adapter, productafbeeldingen blijven een filesystemservice en Health gebruikt een geïnjecteerde readinessprobe.
 
 ## Dependencyrichting
 
-De bedoelde richting is:
+De normatieve richting voor functionele endpoints is:
 
 ```text
-routes → services → domain
-                  → repositorycontracten
-composition → concrete repositories en adapters
+routes → services → repositories → database
+             ↓
+           domain
 ```
 
-Domeincode bevat pure TypeScript-regels. Routes verzorgen uitsluitend transportparsing, requestcontext en HTTP-mapping. Services orkestreren use-cases. Persistencecode voert gerichte queries en atomische transacties uit zonder HTTP-kennis.
+Routes ontvangen services of middleware en importeren geen repositories. Services ontvangen repositoryobjecten via dependency injection en importeren repositorytypen uitsluitend met `import type`. Services en domain importeren geen Hono, Drizzle of `src/db`; domain blijft volledig puur.
 
-Routes importeren geen database, Better Auth-adapter of concrete repository. Services importeren geen Hono, Drizzle of concrete `drizzle-*`-adapter. ESLint bewaakt deze grenzen en verbiedt applicatie-eigen classdeclaraties.
+Een repositorybestand bezit één samenhangende persistencecapability. Het bevat de capabilitytypen, expliciete persistence-records en de huidige Drizzle-implementatie. Bestand en factory zijn technologieneutraal benoemd, bijvoorbeeld `consumption-log.repository.ts` en `createConsumptionLogRepository(database)`. Een afzonderlijk contract- en implementatiebestand ontstaat pas bij een tweede productie-implementatie of onafhankelijke packagegrens.
+
+Repositories zijn functionele factories. Er zijn geen repositoryclasses, baserepository of DI-container. Een servicetest gebruikt een getypeerd objectliteral als fake.
+
+## Domein en persistence
+
+Pure validatie, canonicalisatie, decimaalberekeningen, datumregels, boomregels en invarianten horen onder `domain/`. Persistence-records, rowprojecties, queryhelpers en transaction-scoped capabilities horen in het bezittende repositorybestand. Atomische operaties over meerdere tabellen blijven één repositorymethode.
+
+`src/db/` bezit alleen gedeelde database-infrastructuur, schema's, migraties en seeds. Featurequeries staan bij de functionele module, ook wanneer zij Drizzle gebruiken. Repositories krijgen een bestaande `BackendDatabase` geïnjecteerd; zij openen of sluiten geen verbinding en lezen geen environment.
 
 ## Modulegrenzen
 
-De Calorie Tracker gebruikt drie gerichte capabilities:
+Calorie Tracker gebruikt `ConsumptionLogRepository`, `NutritionGoalRepository`, de consumptiongerichte catalogusreader en de door Recipes bezeten `DishRepository`. Recipes bezit de CRUD-lifecycle en persistence van gerechten; Calorie Tracker gebruikt die expliciete cross-modulecapability voor logprojecties en unified search.
 
-- `ConsumptionLogRepository` voor logs en retentiecleanup;
-- `NutritionGoalRepository` voor voedingsdoelen;
-- `ConsumptionCatalogReader` uit de catalogusmodule voor actuele product-, verpakking- en eenheidsprojecties.
+De consumptiongerichte catalogusrepository is de andere bewuste cross-moduleafhankelijkheid. Hij projecteert actuele concrete producten en eenheden voor Calorie Tracker en Recipes. Deze gerichte afhankelijkheden rechtvaardigen geen dubbele reader- of adapterlaag zolang er één productie-implementatie is.
 
-De catalogusreader is het expliciete contract voor de actuele moduleoverschrijdende read-afhankelijkheid. Andere cross-module-imports horen niet rechtstreeks naar interne persistencecode te wijzen.
+## Composition en resources
 
-## Configuratie en resources
+`apps/backend/src/composition.ts` is de enige production composition root:
 
-`loadBackendConfig(env)` leest en valideert de actuele host-, poort-, database-, CORS- en authconfiguratie. Buiten bootstrap- en jobentrypoints leest productiecode geen `process.env`.
+```text
+createDatabase(config)
+  → createXRepository(database)
+  → createXService(repository)
+  → xRoutes(service)
+```
 
-`createDatabase(config)` opent SQLite en retourneert Drizzle, de technische SQLiteverbinding en een idempotente `close()`. Better Auth ontstaat via een factory met de database en getypeerde configuratie. Imports openen geen resources.
-
-Production, tests en jobs gebruiken dezelfde factories. De testharness geeft een tijdelijke gemigreerde database en expliciete testconfiguratie aan de composition root.
+`index.ts` bezit de server- en resourcelevensduur. `loadBackendConfig(env)` leest en valideert runtimeconfiguratie. Buiten bootstrap- en technische jobentrypoints leest productiecode geen `process.env`. Tests gebruiken dezelfde factories met een tijdelijke gemigreerde database.
 
 ## Fouten en HTTP-shell
 
-`src/result.ts` bevat het gedeelde generieke `Result<T, E>` met `ok` en `err`. Verwachte fouten blijven modulelokaal en routes vertalen deze naar de bestaande statuscodes. Onverwachte defects bereiken de globale boundary in `app.ts`, die veilig logt en een correlation ID retourneert.
+`src/result.ts` bevat het gedeelde generieke `Result<T, E>`. Verwachte fouten blijven modulelokaal; services classificeren use-casefouten en routes vertalen die naar bestaande statuscodes. Onverwachte defects bereiken de globale boundary in `app.ts`, die veilig logt en een correlation ID retourneert.
 
-De globale shell configureert logging, CORS, Better Auth-paden, modulemounts, not-found en defectafhandeling. Catalogusautorisatie is alleen op cataloguspaden gemount; Calorie Tracker-sessieresolutie behoort tot de eigen router.
+De globale shell configureert logging, CORS, Better Auth-paden, modulemounts, not-found en defectafhandeling. Autorisatie en sessieresolutie worden als capabilities in routes geïnjecteerd.
 
 ## Conventies
 
-- Functienamen en docstrings zijn Engels.
+- Functienamen, comments en docstrings zijn Engels.
 - Dependencies staan in readonly dependencyobjecten.
-- Exporteer factories met een expliciete capability wanneer dit een actuele grens is.
-- Voeg geen modulebarrels, DI-container, base repository, eventbus of toekomstige lege module toe.
-- Bewaar publiek endpointgedrag en database-atomiciteit bij structurele wijzigingen.
+- Routes importeren geen repositories; services gebruiken alleen type-imports voor repositorytypen.
+- Voeg geen modulebarrels, DI-container, base repository, generieke tabelrepository, eventbus of toekomstige lege module toe.
+- Bewaar publiek endpointgedrag, foutcodes en database-atomiciteit bij structurele wijzigingen.

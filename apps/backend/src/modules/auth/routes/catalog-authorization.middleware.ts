@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from "hono";
 import type { SessionResolver } from "../services/session-resolution.service.ts";
 import { reportAuthenticationStoreUnavailable } from "../services/session-resolution.service.ts";
-import { hasAdminRole } from "../services/role.service.ts";
+import { hasAdminRole } from "../domain/role.ts";
 
 /** Create catalog authorization mounted only on the catalog router. */
 export function createCatalogAuthorization(sessionResolver: SessionResolver): MiddlewareHandler {

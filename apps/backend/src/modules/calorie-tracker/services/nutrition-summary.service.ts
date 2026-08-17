@@ -1,7 +1,9 @@
 import type { DailyStatistics, MacroValues, NutritionGoal, UpsertNutritionGoal } from "@product-repos/contracts/calorie-tracker";
 import { canonicalDecimal, localDateForInstant, sumMacroValues } from "../domain/calorie-tracker-domain.ts";
-import type { ConsumptionCatalogReader } from "../../catalog/repositories/consumption-catalog-reader.ts";
-import type { ConsumptionLogRepository, DishRepository, NutritionGoalRepository } from "../repositories/calorie-tracker-store.ts";
+import type { ConsumptionCatalogReader } from "../../catalog/repositories/consumption-catalog.repository.ts";
+import type { ConsumptionLogRepository } from "../repositories/consumption-log.repository.ts";
+import type { NutritionGoalRepository } from "../repositories/nutrition-goal.repository.ts";
+import type { DishRepository } from "../../recipes/repositories/dish.repository.ts";
 import { createConsumptionLogProjector, emptyGoals, toNutritionGoal } from "./calorie-tracker-projections.ts";
 import {
   nextTimestamp,

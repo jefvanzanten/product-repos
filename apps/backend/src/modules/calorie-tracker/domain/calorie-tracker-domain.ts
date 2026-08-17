@@ -194,13 +194,13 @@ export function deriveConsumptionQuantity(
   const quantity = parsePositiveDecimal(input.quantity);
   if (!quantity.ok) return quantity;
 
-  if (input.inputMode === "PACKAGE") {
+  if (input.inputMode === "FULL_PRODUCT") {
     if (input.inputUnit !== null) return invalidUnitSelection();
     const packageBase = multiplyDecimals(packageValue.contentAmount, packageValue.contentUnit.conversionToBase);
     return succeed({ baseAmount: multiplyDecimals(quantity.value, packageBase), label: `${quantity.value} ${packageValue.packageLabel}` });
   }
 
-  if (input.inputMode === "INDIVIDUAL_UNIT") {
+  if (input.inputMode === "PRODUCT_PORTION") {
     if (input.inputUnit !== null || packageValue.portion === null) return invalidUnitSelection();
     const portionBase = multiplyDecimals(packageValue.portion.contentAmount, packageValue.portion.contentUnit.conversionToBase);
     return succeed({ baseAmount: multiplyDecimals(quantity.value, portionBase), label: `${quantity.value} ${packageValue.portion.label}` });

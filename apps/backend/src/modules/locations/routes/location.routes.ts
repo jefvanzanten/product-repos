@@ -1,7 +1,7 @@
 import { createLocationRequestSchema, locationErrorResponseSchema, locationTreeNodeSchema, updateLocationRequestSchema, type LocationErrorCode } from "@product-repos/contracts/locations";
 import { Hono, type Context, type Next } from "hono";
 import { z } from "zod/v4";
-import { hasAdminRole } from "../../auth/services/role.service.ts";
+import { hasAdminRole } from "../../auth/domain/role.ts";
 import { reportAuthenticationStoreUnavailable, type SessionResolver } from "../../auth/services/session-resolution.service.ts";
 import type { LocationService, LocationServiceError } from "../services/location.service.ts";
 

@@ -4,6 +4,8 @@
 
 Uitgevoerd. De architectuur-, routeveiligheids-, projectie-, persistence- en lintfasen zijn verwerkt. De publieke basename en workspace-map blijven bewust ongewijzigd; die naamgevingsmigratie vereist nog steeds een afzonderlijk deploymentbesluit. Voor logupdates is `PUT` canoniek en blijft `PATCH` minimaal één releasecyclus als compatibiliteitsalias beschikbaar.
 
+> **Vervolgnotitie:** de hier ingevoerde persistence-port en Drizzle-adapter zijn later zonder gedragswijziging samengevoegd tot één technologieneutraal repositorybestand per capability. Zie [Backendrepositories en domeingrenzen vereenvoudigen](backend-repository-en-domainvereenvoudigingsplan.md).
+
 ## Bronnen
 
 - `docs/specs/calorie-tracker/calorie-tracker-specificatie.md`

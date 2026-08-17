@@ -7,7 +7,7 @@ import {
   projectLocationMetadata,
   type LocationDomainRow,
 } from "../domain/location-domain.ts";
-import type { LocationPersistenceRow, LocationStore } from "../repositories/location-store.ts";
+import type { LocationPersistenceRow, LocationRepository } from "../repositories/location.repository.ts";
 
 /** Expected location-management conflicts represented without exceptions. */
 export type LocationServiceError =
@@ -37,7 +37,7 @@ export type LocationService = {
  * @param now - ISO timestamp source used by writes.
  * @returns Location read and write operations.
  */
-export function createLocationService(store: LocationStore, now: () => string = () => new Date().toISOString()): LocationService {
+export function createLocationService(store: LocationRepository, now: () => string = () => new Date().toISOString()): LocationService {
   /** List only effectively active locations. */
   function listActiveLocations(): LocationTreeNode[] {
     return projectActiveLocationTree(store.findAll());

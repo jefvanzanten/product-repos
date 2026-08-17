@@ -2,7 +2,9 @@
 
 ## Status
 
-Voorstel, nog niet uitgevoerd. Dit plan maakt expliciete backendbrede architectuurkeuzes en is na goedkeuring de leidende doelarchitectuur voor nieuwe backendcode en de migratie van bestaande code.
+Uitgevoerde historische basis voor de functionele module-indeling en composition root.
+
+> **Vervolg en supersession:** de toen gekozen afzonderlijke repositorycontracten, `drizzle-*`-bestanden en bijbehorende dependencydiagrammen zijn vervangen door [Backendrepositories en domeingrenzen vereenvoudigen](backend-repository-en-domainvereenvoudigingsplan.md). De functionele module-indeling, services, dependency injection en composition root uit dit plan blijven van kracht.
 
 Dit plan vervangt voor de backend de structurele doelbeelden uit featureplannen die nog verwijzen naar globale mappen zoals `src/routes`, `src/services` en `src/repositories`. De functionele requirements, endpointcontracten, domeinregels en ERD's uit die documenten blijven ongewijzigd leidend.
 

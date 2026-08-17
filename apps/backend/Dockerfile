@@ -6,6 +6,7 @@ WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/backend/package.json apps/backend/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
+COPY packages/shared/package.json packages/shared/package.json
 RUN corepack pnpm install --filter @product-repos/backend... --frozen-lockfile
 
 FROM oven/bun:1.3.9-alpine AS build
@@ -13,6 +14,7 @@ WORKDIR /repo
 COPY --from=dependencies /repo /repo
 COPY apps/backend apps/backend
 COPY packages/contracts packages/contracts
+COPY packages/shared packages/shared
 RUN bun build apps/backend/src/index.ts --outfile apps/backend/dist/index.js --target bun \
     && bun build apps/backend/src/db/migrate.ts --outfile apps/backend/dist/migrate.js --target bun \
     && bun build apps/backend/src/db/seed.ts --outfile apps/backend/dist/seed.js --target bun \

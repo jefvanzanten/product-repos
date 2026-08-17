@@ -1,20 +1,20 @@
 import type { BackendDatabase } from "../index.ts";
 import { packageType } from "../schema.ts";
 
-const commonPackageTypes = [
-  "fles",
-  "blik",
-  "pot",
-  "zak",
-  "doos",
-  "pak",
-  "tube",
-  "bus",
-  "tray",
-  "multipack",
-  "los stuk",
-  "overig",
-].map((name) => ({ name }));
+const commonPackageTypes = ([
+  ["fles", "flessen"],
+  ["blik", "blikken"],
+  ["pot", "potten"],
+  ["zak", "zakken"],
+  ["doos", "dozen"],
+  ["pak", "pakken"],
+  ["tube", "tubes"],
+  ["bus", "bussen"],
+  ["tray", "trays"],
+  ["multipack", "multipacks"],
+  ["los stuk", "losse stuks"],
+  ["overig", "overige"],
+] as const).map(([singularName, pluralName]) => ({ singularName, pluralName }));
 
 /** Seed the reference package types used by the product catalog form. */
 export async function seedPackageTypes(database: BackendDatabase): Promise<number> {

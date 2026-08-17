@@ -30,7 +30,7 @@ sqlite.query("INSERT INTO brand (id, name) VALUES (?, ?)").run(brandId, "Testmer
 const unitTypeId = readInsertedId(sqlite.query("INSERT INTO unit_type (name, symbol, dimension, conversion_to_base) VALUES (?, ?, ?, ?) RETURNING id").get("liter", "l", "VOLUME", 1000));
 const massUnitTypeId = readInsertedId(sqlite.query("INSERT INTO unit_type (name, symbol, dimension, conversion_to_base) VALUES (?, ?, ?, ?) RETURNING id").get("gram", "g", "MASS", 1));
 const countUnitTypeId = readInsertedId(sqlite.query("INSERT INTO unit_type (name, symbol, dimension, conversion_to_base) VALUES (?, ?, ?, ?) RETURNING id").get("stuk", "st", "COUNT", 1));
-const packageTypeId = readInsertedId(sqlite.query("INSERT INTO package_type (name) VALUES (?) RETURNING id").get("fles"));
+const packageTypeId = readInsertedId(sqlite.query("INSERT INTO package_type (singular_name, plural_name) VALUES (?, ?) RETURNING id").get("fles", "flessen"));
 sqlite.close();
 
 /** Compose the migrated temporary backend and own its complete test cleanup. */
@@ -108,6 +108,25 @@ runtime.resources.sqlite
 /** Send an API request authenticated as the test administrator. */
 export function requestAsAdmin(path: string, init: RequestInit = {}): Promise<Response> {
   return requestWithSession(adminSessionCookie, path, init);
+}
+
+/** Create one composition and concrete product through the target admin API. */
+export async function createTestProduct(input: {
+  readonly name: string;
+  readonly consumptionType?: "FOOD" | "DRINK" | "SUPPLEMENT";
+  readonly macroProfile?: unknown;
+  readonly amount: string;
+  readonly unitTypeId: number;
+  readonly portion?: { readonly singularName: string; readonly pluralName: string; readonly amount: string; readonly unitTypeId: number; readonly portionsPerProduct: number | null } | null;
+}): Promise<{ readonly compositionId: string; readonly productId: string }> {
+  const headers = { "Content-Type": "application/json" };
+  const compositionResponse = await requestAsAdmin("/product-compositions", { method: "POST", headers, body: JSON.stringify({ name: `${input.name} ${crypto.randomUUID()}`, categoryId, brandId: null, consumptionType: input.consumptionType ?? "FOOD", macroProfile: input.macroProfile ?? null }) });
+  if (compositionResponse.status !== 201) throw new Error(`Unable to create test composition: ${compositionResponse.status}`);
+  const composition = await compositionResponse.json() as { readonly id: string };
+  const productResponse = await requestAsAdmin("/products", { method: "POST", headers, body: JSON.stringify({ productCompositionId: composition.id, packageTypeId, content: { amount: input.amount, unitTypeId: input.unitTypeId }, imageUrl: null, barcode: null, portion: input.portion ?? null }) });
+  if (productResponse.status !== 201) throw new Error(`Unable to create test product: ${productResponse.status}`);
+  const product = await productResponse.json() as { readonly productId: string };
+  return { compositionId: composition.id, productId: product.productId };
 }
 
 /** Send an API request authenticated as a regular test user. */

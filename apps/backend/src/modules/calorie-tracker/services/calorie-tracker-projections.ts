@@ -7,7 +7,7 @@ import type {
   DishSearchResult,
   MacroValues,
   NutritionGoal,
-  PackageSearchResult,
+  ProductSearchResult,
 } from "@product-repos/contracts/calorie-tracker";
 import {
   calculateMacroValues,
@@ -20,15 +20,16 @@ import {
   type QuantityPackage,
   type QuantityUnit,
 } from "../domain/calorie-tracker-domain.ts";
-import type { CatalogPackageRecord, ConsumptionCatalogReader, UnitTypeRecord } from "../../catalog/repositories/consumption-catalog-reader.ts";
+import { formatConcreteProductDisplayName, formatDutchDecimal, formatPackageSummary as formatSharedPackageSummary } from "@product-repos/shared/product-presentation";
+import type { CatalogProductRecord, ConsumptionCatalogReader, UnitTypeRecord } from "../../catalog/repositories/consumption-catalog.repository.ts";
+import type { ConsumptionLogRecord } from "../repositories/consumption-log.repository.ts";
+import type { NutritionGoalRecord } from "../repositories/nutrition-goal.repository.ts";
 import type {
-  ConsumptionLogRecord,
   DishIngredientRecord,
   DishRecord,
   DishRepository,
   DishVersionRecord,
-  NutritionGoalRecord,
-} from "../repositories/calorie-tracker-store.ts";
+} from "../../recipes/repositories/dish.repository.ts";
 
 /** Result of projecting persisted data into a strict response contract. */
 export type LogProjection =
@@ -37,7 +38,7 @@ export type LogProjection =
 
 /** Catalog and dish references required to project a collection of persisted logs. */
 export type ProjectionReferences = {
-  readonly packages: ReadonlyMap<number, CatalogPackageRecord>;
+  readonly packages: ReadonlyMap<string, CatalogProductRecord>;
   readonly units: ReadonlyMap<number, UnitTypeRecord>;
   readonly dishes: ReadonlyMap<string, DishRecord>;
   readonly versions: ReadonlyMap<string, DishVersionRecord>;
@@ -48,9 +49,9 @@ export type ProjectionReferences = {
 export function createConsumptionLogProjector(catalogReader: ConsumptionCatalogReader, dishRepository: DishRepository) {
   /** Read only current catalog and dish references required by found logs. */
   function readReferences(rows: ReadonlyArray<ConsumptionLogRecord>): ProjectionReferences {
-    const productPackageIds = rows.flatMap((row) => row.type === "PRODUCT" ? [row.productPackageId] : []);
+    const productIds = rows.flatMap((row) => row.type === "PRODUCT" ? [row.productId] : []);
     const versionIds = rows.flatMap((row) => row.type === "DISH" ? [row.dishVersionId] : []);
-    return readProjectionReferences(productPackageIds, rows.flatMap((row) => row.type === "PRODUCT" && row.inputUnitTypeId !== null ? [row.inputUnitTypeId] : []), versionIds);
+    return readProjectionReferences(productIds, rows.flatMap((row) => row.type === "PRODUCT" && row.inputUnitTypeId !== null ? [row.inputUnitTypeId] : []), versionIds);
   }
 
   /** Project one persistence log using optional preloaded references. */
@@ -61,7 +62,7 @@ export function createConsumptionLogProjector(catalogReader: ConsumptionCatalogR
   }
 
   /** Read all references required to project the supplied package, unit, and dish-version identifiers. */
-  function readProjectionReferences(packageIds: ReadonlyArray<number>, unitIds: ReadonlyArray<number>, versionIds: ReadonlyArray<string>): ProjectionReferences {
+  function readProjectionReferences(productIds: ReadonlyArray<string>, unitIds: ReadonlyArray<number>, versionIds: ReadonlyArray<string>): ProjectionReferences {
     const versions = new Map(dishRepository.findVersionsByIds(versionIds).map((version) => [version.id, version]));
     const ingredients = dishRepository.findIngredientsByVersionIds([...versions.keys()]);
     const ingredientsByVersion = new Map<string, DishIngredientRecord[]>();
@@ -75,10 +76,10 @@ export function createConsumptionLogProjector(catalogReader: ConsumptionCatalogR
       const storedDish = dishRepository.findDishById(dishId);
       return storedDish === undefined ? [] : [[storedDish.id, storedDish] as const];
     }));
-    const ingredientPackageIds = ingredients.map((ingredient) => ingredient.productPackageId);
+    const ingredientPackageIds = ingredients.map((ingredient) => ingredient.productId);
     const ingredientUnitIds = ingredients.flatMap((ingredient) => ingredient.inputUnitTypeId === null ? [] : [ingredient.inputUnitTypeId]);
     return {
-      packages: new Map(catalogReader.findCatalogPackagesByIds([...packageIds, ...ingredientPackageIds]).map((value) => [value.packageId, value])),
+      packages: new Map(catalogReader.findCatalogProductsByIds([...productIds, ...ingredientPackageIds]).map((value) => [value.productId, value])),
       units: new Map(catalogReader.findUnitTypesByIds([...unitIds, ...ingredientUnitIds]).map((value) => [value.id, value])),
       dishes,
       versions,
@@ -88,7 +89,7 @@ export function createConsumptionLogProjector(catalogReader: ConsumptionCatalogR
 
   /** Project one persisted product log using preloaded references. */
   function projectProductLog(row: Extract<ConsumptionLogRecord, { readonly type: "PRODUCT" }>, references: ProjectionReferences): LogProjection {
-    const packageRecord = references.packages.get(row.productPackageId);
+    const packageRecord = references.packages.get(row.productId);
     if (packageRecord === undefined) return { ok: false };
     const inputUnit = row.inputUnitTypeId === null ? null : references.units.get(row.inputUnitTypeId);
     if (row.inputUnitTypeId !== null && inputUnit === undefined) return { ok: false };
@@ -104,10 +105,9 @@ export function createConsumptionLogProjector(catalogReader: ConsumptionCatalogR
         value: {
           id: row.id,
           type: "PRODUCT",
-          package: {
-            ...toPackageSearchResult(packageRecord),
-            productArchived: packageRecord.productArchivedAt !== null,
-            packageArchived: packageRecord.packageArchivedAt !== null,
+          product: {
+            ...toProductSearchResult(packageRecord),
+            archived: packageRecord.productArchivedAt !== null,
           },
           quantity: canonicalDecimal(row.quantity),
           inputMode: row.inputMode,
@@ -144,10 +144,14 @@ export function createConsumptionLogProjector(catalogReader: ConsumptionCatalogR
         type: "DISH",
         dish: {
           id: storedDish.id,
+          userId: storedDish.userId,
           name: storedDish.name,
           imageUrl: storedDish.imageUrl,
           versionId: version.id,
           servings: canonicalDecimal(version.servings),
+          recipeAccessible: storedDish.archivedAt === null
+            && storedDish.deletedAt === null
+            && (storedDish.userId === row.userId || storedDish.visibility === "PUBLIC"),
         },
         quantity,
         consumedAt: row.consumedAt,
@@ -172,8 +176,12 @@ export function computeDishVersionMacrosPerServing(
 ): MacroValues | null | "invalid" {
   const contributions: Array<MacroValues | null> = [];
   for (const ingredient of ingredientRows) {
-    const packageRecord = references.packages.get(ingredient.productPackageId);
+    const packageRecord = references.packages.get(ingredient.productId);
     if (packageRecord === undefined) return "invalid";
+    if (packageRecord.macroProfile === null) {
+      contributions.push(null);
+      continue;
+    }
     const inputUnit = ingredient.inputUnitTypeId === null ? null : references.units.get(ingredient.inputUnitTypeId);
     if (ingredient.inputUnitTypeId !== null && inputUnit === undefined) return "invalid";
     const derived = deriveConsumptionQuantity(toQuantityPackage(packageRecord), {
@@ -234,7 +242,7 @@ export function createDishProjector(catalogReader: ConsumptionCatalogReader, dis
   }
 
   /** Project active dish stems into search rows including derived calories per serving. */
-  function projectDishSearchResults(stems: ReadonlyArray<DishRecord>): ReadonlyArray<DishSearchResult> {
+  function projectDishSearchResults(stems: ReadonlyArray<DishRecord>, viewerUserId: string): ReadonlyArray<DishSearchResult> {
     return stems.flatMap((stem) => {
       const version = dishRepository.findNewestVersion(stem.id);
       if (version === undefined) return [];
@@ -245,7 +253,10 @@ export function createDishProjector(catalogReader: ConsumptionCatalogReader, dis
       if (perServing === "invalid") return [];
       return [{
         id: stem.id,
+        userId: stem.userId,
         name: stem.name,
+        makerDisplayName: stem.userId === viewerUserId ? null : dishRepository.findMakerDisplayName(stem.userId),
+        isOwnedByViewer: stem.userId === viewerUserId,
         imageUrl: stem.imageUrl,
         servings: canonicalDecimal(version.servings),
         caloriesPerServing: perServing === null ? null : perServing.caloriesKcal,
@@ -256,7 +267,7 @@ export function createDishProjector(catalogReader: ConsumptionCatalogReader, dis
   /** Read catalog references required by one recipe version. */
   function readReferences(ingredientRows: ReadonlyArray<DishIngredientRecord>): Pick<ProjectionReferences, "packages" | "units"> | undefined {
     return {
-      packages: new Map(catalogReader.findCatalogPackagesByIds(ingredientRows.map((ingredient) => ingredient.productPackageId)).map((value) => [value.packageId, value])),
+      packages: new Map(catalogReader.findCatalogProductsByIds(ingredientRows.map((ingredient) => ingredient.productId)).map((value) => [value.productId, value])),
       units: new Map(catalogReader.findUnitTypesByIds(ingredientRows.flatMap((ingredient) => ingredient.inputUnitTypeId === null ? [] : [ingredient.inputUnitTypeId])).map((value) => [value.id, value])),
     };
   }
@@ -266,17 +277,23 @@ export function createDishProjector(catalogReader: ConsumptionCatalogReader, dis
 
 /** Project one persisted ingredient with its current catalog presentation. */
 function toDishIngredient(ingredient: DishIngredientRecord, references: Pick<ProjectionReferences, "packages" | "units">): DishIngredient {
-  const packageRecord = references.packages.get(ingredient.productPackageId);
+  const packageRecord = references.packages.get(ingredient.productId);
   if (packageRecord === undefined) throw new Error("Persisted dish ingredient references a missing package");
   const inputUnit = ingredient.inputUnitTypeId === null ? null : references.units.get(ingredient.inputUnitTypeId);
   return {
-    packageId: ingredient.productPackageId,
+    productId: ingredient.productId,
     productName: packageRecord.productName,
-    displayName: packageRecord.brandName === null ? packageRecord.productName : `${packageRecord.productName} - ${packageRecord.brandName}`,
+    displayName: formatConcreteProductDisplayName({
+      brandName: packageRecord.brandName,
+      compositionName: packageRecord.productName,
+      packageTypeName: packageRecord.packageTypeName,
+      contentAmount: canonicalDecimal(packageRecord.contentAmount),
+      contentUnitSymbol: packageRecord.contentUnitSymbol,
+    }),
     quantity: canonicalDecimal(ingredient.quantity),
     inputMode: ingredient.inputMode,
     inputUnitType: inputUnit === null || inputUnit === undefined ? null : toUnitType(inputUnit),
-    packageArchived: packageRecord.productArchivedAt !== null || packageRecord.packageArchivedAt !== null,
+    productArchived: packageRecord.productArchivedAt !== null,
   };
 }
 
@@ -292,12 +309,17 @@ export function toUnitType(row: UnitTypeRecord): CalorieTrackerUnitType {
 }
 
 /** Project joined package rows into the shared strict search contract. */
-export function toPackageSearchResult(row: CatalogPackageRecord): PackageSearchResult {
+export function toProductSearchResult(row: CatalogProductRecord): ProductSearchResult {
   return {
-    packageId: row.packageId,
     productId: row.productId,
     productName: row.productName,
-    displayName: row.brandName === null ? row.productName : `${row.productName} - ${row.brandName}`,
+    displayName: formatConcreteProductDisplayName({
+      brandName: row.brandName,
+      compositionName: row.productName,
+      packageTypeName: row.packageTypeName,
+      contentAmount: canonicalDecimal(row.contentAmount),
+      contentUnitSymbol: row.contentUnitSymbol,
+    }),
     brand: row.brandId === null || row.brandName === null ? null : { id: row.brandId, name: row.brandName },
     consumptionType: row.consumptionType,
     packageType: { id: row.packageTypeId, name: row.packageTypeName },
@@ -310,13 +332,13 @@ export function toPackageSearchResult(row: CatalogPackageRecord): PackageSearchR
       conversionToBase: canonicalDecimal(row.contentUnitConversionToBase),
     },
     portion: toCalorieTrackerPortion(row),
-    summary: packageSummary(row),
+    packageSummary: packageSummary(row),
     imageUrl: row.packageImageUrl,
   };
 }
 
 /** Project package data into pure quantity-conversion input. */
-export function toQuantityPackage(row: CatalogPackageRecord): QuantityPackage {
+export function toQuantityPackage(row: CatalogProductRecord): QuantityPackage {
   return {
     contentAmount: canonicalDecimal(row.contentAmount),
     contentUnit: {
@@ -348,16 +370,20 @@ export function emptyGoals(): NutritionGoal {
 }
 
 /** Format total package content and optional portion data for compact selection. */
-function packageSummary(row: CatalogPackageRecord): string {
-  const total = `${row.packageTypeName} ${canonicalDecimal(row.contentAmount)} ${row.contentUnitSymbol}`;
+function packageSummary(row: CatalogProductRecord): string {
+  const total = formatSharedPackageSummary({
+    packageTypeName: row.packageTypeName,
+    contentAmount: canonicalDecimal(row.contentAmount),
+    contentUnitSymbol: row.contentUnitSymbol,
+  }) ?? "";
   const portion = toCalorieTrackerPortion(row);
   if (portion === null) return total;
   const count = portion.portionsPerPackage === null ? "" : `${portion.portionsPerPackage} × `;
-  return `${total} (${count}${canonicalDecimal(portion.contentAmount)} ${portion.contentUnit.symbol} per ${portion.name})`;
+  return `${total} (${count}${formatDutchDecimal(portion.contentAmount)} ${portion.contentUnit.symbol} per ${portion.name})`;
 }
 
 /** Project complete optional portion joins into the strict Calorie Tracker contract. */
-function toCalorieTrackerPortion(row: CatalogPackageRecord): CalorieTrackerPortion | null {
+function toCalorieTrackerPortion(row: CatalogProductRecord): CalorieTrackerPortion | null {
   if (row.portionName === null) return null;
   if (
     row.portionContentAmount === null
@@ -377,12 +403,12 @@ function toCalorieTrackerPortion(row: CatalogPackageRecord): CalorieTrackerPorti
       dimension: row.portionContentUnitDimension,
       conversionToBase: canonicalDecimal(row.portionContentUnitConversionToBase),
     },
-    portionsPerPackage: row.portionsPerPackage,
+    portionsPerPackage: row.portionsPerProduct,
   };
 }
 
 /** Project an optional package portion into pure quantity-conversion input. */
-function toQuantityPortion(row: CatalogPackageRecord): QuantityPackage["portion"] {
+function toQuantityPortion(row: CatalogProductRecord): QuantityPackage["portion"] {
   const portion = toCalorieTrackerPortion(row);
   if (portion === null) return null;
   return {

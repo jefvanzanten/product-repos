@@ -2,7 +2,7 @@ import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-o
 import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 import { uuid } from "./helper.ts";
-import { productPackage } from "./products.schema.ts";
+import { concreteProduct } from "./products.schema.ts";
 import { user } from "./auth.schema.ts";
 
 /** Reusable storage location organized as a parent/child tree. */
@@ -42,76 +42,45 @@ export const location = sqliteTable(
   }),
 );
 
-/** One stock batch: whole packages of one product package at one location. */
-export const inventoryItem = sqliteTable(
-  "inventory_item",
-  {
-    id: uuid("id"),
-    productPackageId: integer("product_package_id")
-      .notNull()
-      .references(() => productPackage.id),
-    locationId: integer("location_id")
-      .notNull()
-      .references(() => location.id, { onDelete: "restrict" }),
-    expiryDate: text("expiry_date"),
-    quantity: integer("quantity").notNull(),
-    version: integer("version").notNull().default(0),
-    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  },
-  (table) => ({
-    quantityNonNegative: check(
-      "inventory_item_quantity_non_negative",
-      sql`${table.quantity} >= 0`,
-    ),
-    versionNonNegative: check(
-      "inventory_item_version_non_negative",
-      sql`${table.version} >= 0`,
-    ),
-    // SQLite treats NULL as distinct, so dated and undated batch identities
-    // need complementary unique indexes.
-    packageLocationExpiryUnique: uniqueIndex(
-      "inventory_item_package_location_expiry_unique",
-    ).on(table.productPackageId, table.locationId, table.expiryDate),
-    packageLocationNoExpiryUnique: uniqueIndex(
-      "inventory_item_package_location_no_expiry_unique",
-    ).on(table.productPackageId, table.locationId).where(sql`${table.expiryDate} IS NULL`),
-    packageIdx: index("inventory_item_package_idx").on(table.productPackageId),
-    locationIdx: index("inventory_item_location_idx").on(table.locationId),
-  }),
-);
+/** One physical v2 inventory package with independently tracked remaining content. */
+export const physicalInventoryItem = sqliteTable("physical_inventory_item", {
+  id: uuid("id"),
+  productId: text("product_id").notNull().references(() => concreteProduct.id),
+  locationId: integer("location_id").notNull().references(() => location.id, { onDelete: "restrict" }),
+  expiryDate: text("expiry_date"),
+  remainingAmountBase: text("remaining_amount_base").notNull(),
+  version: integer("version").notNull().default(0),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  check("physical_inventory_remaining_non_negative", sql`CAST(${table.remainingAmountBase} AS REAL) >= 0`),
+  check("physical_inventory_version_non_negative", sql`${table.version} >= 0`),
+  index("physical_inventory_product_idx").on(table.productId),
+  index("physical_inventory_location_idx").on(table.locationId),
+]);
 
-/** Immutable audit row describing one applied stock mutation. */
-export const inventoryMutation = sqliteTable(
-  "inventory_mutation",
-  {
-    id: uuid("id"),
-    inventoryItemId: text("inventory_item_id")
-      .notNull()
-      .references(() => inventoryItem.id),
-    kind: text("kind", {
-      enum: ["ADD", "REMOVE", "SET", "MOVE", "DATE_CHANGE"],
-    }).notNull(),
-    quantityDelta: integer("quantity_delta"),
-    resultingQuantity: integer("resulting_quantity").notNull(),
-    fromLocationId: integer("from_location_id").references(() => location.id, { onDelete: "restrict" }),
-    toLocationId: integer("to_location_id").references(() => location.id, { onDelete: "restrict" }),
-    fromExpiryDate: text("from_expiry_date"),
-    toExpiryDate: text("to_expiry_date"),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id),
-    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  },
-  (table) => ({
-    resultingNonNegative: check(
-      "inventory_mutation_resulting_non_negative",
-      sql`${table.resultingQuantity} >= 0`,
-    ),
-    kindValid: check(
-      "inventory_mutation_kind_valid",
-      sql`${table.kind} IN ('ADD', 'REMOVE', 'SET', 'MOVE', 'DATE_CHANGE')`,
-    ),
-    itemIdx: index("inventory_mutation_item_idx").on(table.inventoryItemId),
-  }),
-);
+/** Optional low-stock threshold configured per concrete product. */
+export const productStockThreshold = sqliteTable("product_stock_threshold", {
+  productId: text("product_id").primaryKey().references(() => concreteProduct.id, { onDelete: "cascade" }),
+  lowStockAmountBase: text("low_stock_amount_base").notNull(),
+  movementClass: text("movement_class", { enum: ["SLOW", "MEDIUM", "FAST"] }),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [check("product_stock_threshold_non_negative", sql`CAST(${table.lowStockAmountBase} AS REAL) >= 0`)]);
+
+/** Immutable audit row describing one physical inventory mutation. */
+export const physicalInventoryMutation = sqliteTable("physical_inventory_mutation", {
+  id: uuid("id"),
+  inventoryItemId: text("inventory_item_id").notNull().references(() => physicalInventoryItem.id),
+  kind: text("kind", { enum: ["ADD", "CONTENT_SET", "MOVE", "DATE_CHANGE", "REMOVE"] }).notNull(),
+  amountDeltaBase: text("amount_delta_base"),
+  resultingAmountBase: text("resulting_amount_base").notNull(),
+  fromLocationId: integer("from_location_id").references(() => location.id, { onDelete: "restrict" }),
+  toLocationId: integer("to_location_id").references(() => location.id, { onDelete: "restrict" }),
+  fromExpiryDate: text("from_expiry_date"),
+  toExpiryDate: text("to_expiry_date"),
+  userId: text("user_id").notNull().references(() => user.id),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  check("physical_inventory_mutation_result_non_negative", sql`CAST(${table.resultingAmountBase} AS REAL) >= 0`),
+  index("physical_inventory_mutation_item_idx").on(table.inventoryItemId),
+]);
