@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./backend-response": "./backend-response.ts",
     "./bottom-tab-bar": "./components/bottom-tab-bar/bottom-tab-bar.tsx",
     "./public-app-path": "./routing/public-app-path.ts",
     "./recipe-path": "./routing/public-app-path.ts",
