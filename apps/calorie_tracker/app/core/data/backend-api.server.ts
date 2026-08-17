@@ -1,7 +1,6 @@
-const apiBaseUrl = process.env.API_URL ?? "http://localhost:3000";
-const apiUrl = apiBaseUrl.replace(/\/$/, "");
+import { sendBackendRequest as sendSharedBackendRequest, type BackendMethod } from "@product-repos/shared/backend-api";
 
-type BackendMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+const apiUrl = process.env.API_URL ?? "http://localhost:3000";
 
 /** Request metadata needed by the backend data adapter. */
 export type BackendRequestContext = {
@@ -28,14 +27,13 @@ export async function sendBackendRequest(
   context: BackendRequestContext,
   options: BackendRequestOptions = {},
 ): Promise<Response> {
-  const headers = new Headers({ "X-Browser-Timezone": context.timezone });
-  if (context.cookie !== null) headers.set("cookie", context.cookie);
-  if (options.body !== undefined) headers.set("Content-Type", "application/json");
-
-  return fetch(`${apiUrl}${path}`, {
-    method: options.method ?? "GET",
-    headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+  return sendSharedBackendRequest(apiUrl, path, {
+    method: options.method,
+    headers: {
+      "X-Browser-Timezone": context.timezone,
+      ...(context.cookie === null ? {} : { cookie: context.cookie }),
+    },
+    body: options.body,
     signal: context.signal,
   });
 }
