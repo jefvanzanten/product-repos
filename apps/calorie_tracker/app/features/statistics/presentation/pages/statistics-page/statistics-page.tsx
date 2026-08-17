@@ -6,7 +6,7 @@ import { StatusPanel } from "../../../../../core/presentation/components/status-
 import { getTodayDate } from "../../../../../core/domain/dates-and-timezones";
 import type { StatisticsLoaderData } from "../../types/statistics.types";
 import { GoalsDialog } from "../../components/goals-dialog";
-import type { GoalDraft } from "../../view-models/goals-draft";
+import type { GoalDraft } from "../../goal-draft";
 import { StatisticsGrid } from "../../components/statistic-card";
 import styles from "./statistics-page.module.css";
 

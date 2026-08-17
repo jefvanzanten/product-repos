@@ -5,7 +5,7 @@ import { ConsumptionTypeBadge } from "../../../../../core/presentation/component
 import { Icon } from "../../../../../core/presentation/components/icon/icon";
 import { ProductImage } from "../../../../../core/presentation/components/product-image/product-image";
 import { logDetailPath, type LogbookRouteState } from "../../../../../core/presentation/routing/calorie-tracker-routes";
-import { formatLogbookQuantity, presentConsumptionLog } from "../../view-models/log-presentation";
+import { formatLogbookQuantity, presentConsumptionLog } from "../../log-display";
 import styles from "../../pages/logbook-page/logbook-page.module.css";
 
 /**

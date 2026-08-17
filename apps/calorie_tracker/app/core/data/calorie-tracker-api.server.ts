@@ -2,6 +2,7 @@ import {
   calorieTrackerErrorResponseSchema,
   type CalorieTrackerErrorResponse,
 } from "@product-repos/contracts/calorie-tracker";
+import { readUnknownJson } from "@product-repos/shared/backend-response";
 import { sendBackendRequest, type BackendRequestContext } from "./backend-api.server";
 
 type ProtocolSchema<T> = {
@@ -69,17 +70,3 @@ export async function requestCalorieTrackerJson<T>(
   return schema.parse(raw);
 }
 
-/**
- * Read an untrusted JSON response without asserting its protocol shape.
- *
- * @param response - Backend response.
- * @returns Parsed JSON or null for an invalid response body.
- */
-async function readUnknownJson(response: Response): Promise<unknown> {
-  try {
-    const value: unknown = await response.json();
-    return value;
-  } catch {
-    return null;
-  }
-}

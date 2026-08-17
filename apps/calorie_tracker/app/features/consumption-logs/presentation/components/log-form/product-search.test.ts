@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getProductSearchMode } from "./search-mode";
+import { getProductSearchMode } from "./product-search";
 
 describe("product search presentation mode", () => {
   it("uses recents for an empty trimmed term", () => {

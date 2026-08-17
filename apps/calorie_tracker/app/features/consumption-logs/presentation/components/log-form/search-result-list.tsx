@@ -3,7 +3,7 @@ import type { ProductConsumptionLog, UnifiedSearchResult } from "../../../domain
 import type { ReactNode } from "react";
 import { Icon } from "../../../../../core/presentation/components/icon/icon";
 import { ProductImage } from "../../../../../core/presentation/components/product-image/product-image";
-import type { ProductSearchMode } from "../../view-models/search-mode";
+import type { ProductSearchMode } from "./product-search";
 import styles from "./search-result-list.module.css";
 
 /** Combined-search row supplied to the list, tagged by kind. */

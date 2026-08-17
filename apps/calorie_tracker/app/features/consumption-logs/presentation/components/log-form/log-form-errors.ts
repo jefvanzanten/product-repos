@@ -1,4 +1,4 @@
-import type { LogFormSubmissionError } from "../../domain/log-form-submission";
+import type { LogFormSubmissionError } from "../../../domain/log-form-submission";
 
 /** Translate a domain log-form failure into Dutch presentation copy. */
 export function presentLogFormSubmissionError(error: LogFormSubmissionError): string {

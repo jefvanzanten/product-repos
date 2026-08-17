@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { ConsumptionLog } from "../../domain/consumption-log";
-import { formatLogbookQuantity, formatOriginalLogQuantity, presentConsumptionLog } from "./log-presentation";
+import type { ConsumptionLog } from "../domain/consumption-log";
+import { formatLogbookQuantity, formatOriginalLogQuantity, presentConsumptionLog } from "./log-display";
 
 const productLog: ConsumptionLog = {
   id: "10000000-0000-4000-8000-000000000001",

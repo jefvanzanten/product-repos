@@ -4,8 +4,8 @@ import { useFetcher } from "react-router";
 import { ModalDialog } from "../../../../core/presentation/components/modal-dialog/modal-dialog";
 import { Icon } from "../../../../core/presentation/components/icon/icon";
 import type { StatisticsActionResult } from "../types/statistics.types";
-import { createGoalDraft, parseGoalDraft, type GoalDraft } from "../view-models/goals-draft";
-import { STATISTICS } from "../view-models/statistic-definitions";
+import { createGoalDraft, parseGoalDraft, type GoalDraft } from "../goal-draft";
+import { STATISTICS } from "../statistics";
 import styles from "../pages/statistics-page/statistics-page.module.css";
 
 /**

@@ -1,7 +1,7 @@
 import { data, type LoaderFunctionArgs } from "react-router";
 import { getUnifiedSearch } from "../../features/consumption-logs/data/consumption-log-api.server";
 import { requireUser } from "../../core/presentation/auth/auth.server";
-import { getProductSearchMode } from "../../features/consumption-logs/presentation/view-models/search-mode";
+import { getProductSearchMode } from "../../features/consumption-logs/presentation/components/log-form/product-search";
 import { readBrowserTimezone } from "../../core/data/timezone.server";
 import { createBackendRequestContext } from "../../core/presentation/backend-request-context.server";
 

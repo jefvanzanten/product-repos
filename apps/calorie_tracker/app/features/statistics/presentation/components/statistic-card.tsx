@@ -2,7 +2,7 @@ import type { DailyStatistics } from "../../domain/statistics";
 import type { ReactNode } from "react";
 import { deriveGoalProgress } from "../../domain/goal-progress";
 import { formatDecimal } from "../../../../core/presentation/formatting/numbers";
-import { STATISTICS, type StatisticDefinition } from "../view-models/statistic-definitions";
+import { STATISTICS, type StatisticDefinition } from "../statistics";
 import styles from "../pages/statistics-page/statistics-page.module.css";
 
 /**

@@ -1,4 +1,4 @@
-import type { ConsumptionLog } from "../../domain/consumption-log";
+import type { ConsumptionLog } from "../domain/consumption-log";
 
 /** Presentation data shared by logbook items and log detail. */
 export type LogPresentation = {

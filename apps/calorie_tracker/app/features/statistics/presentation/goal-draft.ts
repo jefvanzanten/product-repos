@@ -1,6 +1,6 @@
-import type { NutritionGoal, UpsertNutritionGoal } from "../../domain/statistics";
-import { parsePositiveDecimal } from "../../../../core/domain/quantities";
-import { STATISTICS, type StatisticDefinition } from "../view-models/statistic-definitions";
+import type { NutritionGoal, UpsertNutritionGoal } from "../domain/statistics";
+import { parsePositiveDecimal } from "../../../core/domain/quantities";
+import { STATISTICS, type StatisticDefinition } from "./statistics";
 
 /** Editable goal toggles and retained input values. */
 export type GoalDraft = {

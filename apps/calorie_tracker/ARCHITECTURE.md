@@ -4,7 +4,7 @@ The application is organized by feature. Each feature uses three layers:
 
 - `domain`: framework-independent models and business rules.
 - `data`: backend transport, contract validation, command parsing, and DTO mapping.
-- `presentation`: React components, route data types, formatting, localized copy, and view models.
+- `presentation`: React components, route data types, formatting, localized copy, and supporting UI logic colocated with the area that owns it.
 
 Cross-feature code lives under `app/core` and follows the same layer boundaries. `core` is only for Calorie Tracker-wide concerns; workspace-wide reusable code belongs in `packages/shared`.
 

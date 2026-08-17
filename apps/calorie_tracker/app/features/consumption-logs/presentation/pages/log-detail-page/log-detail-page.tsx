@@ -10,7 +10,7 @@ import { formatLocalDate } from "../../../../../core/presentation/formatting/dat
 import { formatDecimal } from "../../../../../core/presentation/formatting/numbers";
 import { editLogPath, logbookPath } from "../../../../../core/presentation/routing/calorie-tracker-routes";
 import type { LogDetailActionResult, LogDetailLoaderData } from "../../types/log-detail.types";
-import { formatOriginalLogQuantity, presentConsumptionLog } from "../../view-models/log-presentation";
+import { formatOriginalLogQuantity, presentConsumptionLog } from "../../log-display";
 import styles from "./log-detail-page.module.css";
 
 /**
