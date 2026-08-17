@@ -13,9 +13,9 @@ export type AuthenticatedSession = {
 
 /** Explicit outcomes produced while resolving an incoming request's session. */
 export type SessionLookupResult =
-  | { readonly _tag: "Authenticated"; readonly session: AuthenticatedSession }
-  | { readonly _tag: "Unauthenticated" }
-  | { readonly _tag: "Unavailable"; readonly status: number };
+  | { readonly tag: "Authenticated"; readonly session: AuthenticatedSession }
+  | { readonly tag: "Unauthenticated" }
+  | { readonly tag: "Unavailable"; readonly status: number };
 
 /** Configuration for server-side session lookup. */
 export type SessionLookupOptions = {
@@ -64,16 +64,16 @@ export async function lookupSession(
       signal: request.signal,
     });
   } catch {
-    return { _tag: "Unavailable", status: 503 };
+    return { tag: "Unavailable", status: 503 };
   }
 
-  if (response.status === 401) return { _tag: "Unauthenticated" };
-  if (!response.ok) return { _tag: "Unavailable", status: response.status };
+  if (response.status === 401) return { tag: "Unauthenticated" };
+  if (!response.ok) return { tag: "Unavailable", status: response.status };
 
   const body: unknown = await response.json().catch(() => null);
-  if (body === null) return { _tag: "Unauthenticated" };
+  if (body === null) return { tag: "Unauthenticated" };
   const session = parseSession(body);
   return session
-    ? { _tag: "Authenticated", session }
-    : { _tag: "Unavailable", status: 502 };
+    ? { tag: "Authenticated", session }
+    : { tag: "Unavailable", status: 502 };
 }
