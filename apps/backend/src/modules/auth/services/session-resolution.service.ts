@@ -6,13 +6,13 @@ export type AuthenticatedPrincipal = {
 
 /** Expected outcomes of resolving request credentials against Better Auth. */
 export type SessionResolution =
-  | { readonly _tag: "Authenticated"; readonly principal: AuthenticatedPrincipal }
-  | { readonly _tag: "Unauthenticated" }
-  | { readonly _tag: "Unavailable"; readonly error: AuthenticationStoreUnavailable };
+  | { readonly tag: "Authenticated"; readonly principal: AuthenticatedPrincipal }
+  | { readonly tag: "Unauthenticated" }
+  | { readonly tag: "Unavailable"; readonly error: AuthenticationStoreUnavailable };
 
 /** Classified Better Auth or persistence failure encountered during session lookup. */
 export type AuthenticationStoreUnavailable = {
-  readonly _tag: "AuthenticationStoreUnavailable";
+  readonly tag: "AuthenticationStoreUnavailable";
   readonly operation: "resolveSession";
   readonly cause: unknown;
 };
@@ -28,7 +28,7 @@ function authenticationStoreUnavailable(
   operation: AuthenticationStoreUnavailable["operation"],
   cause: unknown,
 ): AuthenticationStoreUnavailable {
-  return { _tag: "AuthenticationStoreUnavailable", operation, cause };
+  return { tag: "AuthenticationStoreUnavailable", operation, cause };
 }
 
 /** Session resolution capability exposed to authentication middleware. */
@@ -58,9 +58,9 @@ export function createSessionResolver(auth: {
   async function resolveSession(headers: Headers): Promise<SessionResolution> {
     try {
       const session = await auth.api.getSession({ headers });
-      if (session === null) return { _tag: "Unauthenticated" };
+      if (session === null) return { tag: "Unauthenticated" };
       return {
-        _tag: "Authenticated",
+        tag: "Authenticated",
         principal: {
           userId: session.user.id,
           role: session.user.role,
@@ -68,7 +68,7 @@ export function createSessionResolver(auth: {
       };
     } catch (cause: unknown) {
       return {
-        _tag: "Unavailable",
+        tag: "Unavailable",
         error: authenticationStoreUnavailable("resolveSession", cause),
       };
     }
@@ -92,7 +92,7 @@ export function reportAuthenticationStoreUnavailable(
   console.error("Authentication store unavailable", {
     operation: error.operation,
     boundary,
-    errorTag: error._tag,
+    errorTag: error.tag,
     causeName: readCauseName(error.cause),
     correlationId,
   });

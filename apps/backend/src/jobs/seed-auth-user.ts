@@ -6,7 +6,7 @@ import { createAuthAdapter } from "../modules/auth/adapters/better-auth.adapter.
 
 type SeedRole = "admin" | "user";
 type SeedUserConfig = { readonly email: string; readonly name: string; readonly password: string; readonly role: SeedRole };
-type SeedConfigResult = { readonly _tag: "Valid"; readonly config: SeedUserConfig } | { readonly _tag: "Invalid"; readonly message: string };
+type SeedConfigResult = { readonly tag: "Valid"; readonly config: SeedUserConfig } | { readonly tag: "Invalid"; readonly message: string };
 
 /** Parse seed-user configuration without exposing credential values. */
 function parseConfig(env: Readonly<Record<string, string | undefined>>): SeedConfigResult {
@@ -14,10 +14,10 @@ function parseConfig(env: Readonly<Record<string, string | undefined>>): SeedCon
   const name = env.AUTH_SEED_NAME?.trim();
   const password = env.AUTH_SEED_PASSWORD;
   const role = env.AUTH_SEED_ROLE?.trim() ?? "user";
-  if (!email || !name || !password) return { _tag: "Invalid", message: "AUTH_SEED_EMAIL, AUTH_SEED_NAME and AUTH_SEED_PASSWORD are required" };
-  if (password.length < 8) return { _tag: "Invalid", message: "AUTH_SEED_PASSWORD must be at least 8 characters" };
-  if (role !== "admin" && role !== "user") return { _tag: "Invalid", message: "AUTH_SEED_ROLE must be admin or user" };
-  return { _tag: "Valid", config: { email, name, password, role } };
+  if (!email || !name || !password) return { tag: "Invalid", message: "AUTH_SEED_EMAIL, AUTH_SEED_NAME and AUTH_SEED_PASSWORD are required" };
+  if (password.length < 8) return { tag: "Invalid", message: "AUTH_SEED_PASSWORD must be at least 8 characters" };
+  if (role !== "admin" && role !== "user") return { tag: "Invalid", message: "AUTH_SEED_ROLE must be admin or user" };
+  return { tag: "Valid", config: { email, name, password, role } };
 }
 
 /** Create an initial Better Auth user, or update the role of an existing user. */
@@ -41,7 +41,7 @@ async function seedUser(seedConfig: SeedUserConfig): Promise<void> {
 }
 
 const parsed = parseConfig(process.env);
-if (parsed._tag === "Invalid") {
+if (parsed.tag === "Invalid") {
   console.error(parsed.message);
   process.exit(1);
 }

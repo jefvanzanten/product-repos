@@ -15,11 +15,11 @@ export type InventoryEnvironment = { Variables: InventoryVariables };
 /** Require an authenticated inventory session. */
 async function requireInventorySession(sessionResolver: SessionResolver, context: Context<InventoryEnvironment>, next: Next): Promise<Response | void> {
   const session = await sessionResolver.resolveSession(context.req.raw.headers);
-  if (session._tag === "Unavailable") {
+  if (session.tag === "Unavailable") {
     const correlationId = reportAuthenticationStoreUnavailable(session.error, "inventory");
     return context.json({ code: "AUTH_UNAVAILABLE", message: "Authentication is temporarily unavailable", fields: { correlationId } }, 503);
   }
-  if (session._tag === "Unauthenticated") return context.json({ code: "UNAUTHENTICATED", message: "Authentication is required" }, 401);
+  if (session.tag === "Unauthenticated") return context.json({ code: "UNAUTHENTICATED", message: "Authentication is required" }, 401);
   context.set("inventoryUserId", session.principal.userId);
   context.set("inventoryIsAdmin", hasAdminRole(session.principal.role));
   await next();

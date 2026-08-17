@@ -87,11 +87,11 @@ async function requireLocationAccess(
   next: Next,
 ): Promise<Response | void> {
   const session = await sessionResolver.resolveSession(context.req.raw.headers);
-  if (session._tag === "Unavailable") {
+  if (session.tag === "Unavailable") {
     const correlationId = reportAuthenticationStoreUnavailable(session.error, "locations");
     return context.json({ code: "AUTH_UNAVAILABLE", message: "Authentication is temporarily unavailable", fields: { correlationId } }, 503);
   }
-  if (session._tag === "Unauthenticated") {
+  if (session.tag === "Unauthenticated") {
     return context.json({ code: "UNAUTHENTICATED", message: "Authentication is required" }, 401);
   }
   const isAdmin = hasAdminRole(session.principal.role);

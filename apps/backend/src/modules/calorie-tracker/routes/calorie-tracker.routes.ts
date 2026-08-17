@@ -66,7 +66,7 @@ async function requireCalorieTrackerSession(
   next: Next,
 ): Promise<Response | void> {
   const session = await sessionResolver.resolveSession(context.req.raw.headers);
-  if (session._tag === "Unavailable") {
+  if (session.tag === "Unavailable") {
     const correlationId = reportAuthenticationStoreUnavailable(session.error, "calorieTracker");
     return context.json(
       {
@@ -77,7 +77,7 @@ async function requireCalorieTrackerSession(
       503,
     );
   }
-  if (session._tag === "Unauthenticated") {
+  if (session.tag === "Unauthenticated") {
     return context.json({ code: "UNAUTHENTICATED", message: "Authentication is required" }, 401);
   }
   context.set("calorieTrackerUserId", session.principal.userId);

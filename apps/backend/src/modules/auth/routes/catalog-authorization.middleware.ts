@@ -8,11 +8,11 @@ export function createCatalogAuthorization(sessionResolver: SessionResolver): Mi
   /** Require a session for catalog reads and an administrator for mutations. */
   async function requireCatalogAccess(context: Parameters<MiddlewareHandler>[0], next: Parameters<MiddlewareHandler>[1]): Promise<Response | void> {
     const session = await sessionResolver.resolveSession(context.req.raw.headers);
-    if (session._tag === "Unavailable") {
+    if (session.tag === "Unavailable") {
       const correlationId = reportAuthenticationStoreUnavailable(session.error, "catalog");
       return context.json({ code: "AUTH_UNAVAILABLE", message: "Authentication is temporarily unavailable", fields: { correlationId } }, 503);
     }
-    if (session._tag === "Unauthenticated") {
+    if (session.tag === "Unauthenticated") {
       return context.json({ code: "UNAUTHENTICATED", message: "Authentication is required" }, 401);
     }
     const isReadRequest = context.req.method === "GET" || context.req.method === "HEAD";

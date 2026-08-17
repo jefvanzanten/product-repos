@@ -133,11 +133,11 @@ export function recipeRoutes(dependencies: {
 /** Resolve an optional session while keeping anonymous public reads available. */
 async function resolveOptionalSession(sessionResolver: SessionResolver, context: Context<RecipeEnvironment>, next: Next): Promise<Response | void> {
   const session = await sessionResolver.resolveSession(context.req.raw.headers);
-  if (session._tag === "Unavailable") {
+  if (session.tag === "Unavailable") {
     const correlationId = reportAuthenticationStoreUnavailable(session.error, "recipes");
     return context.json({ code: "AUTH_UNAVAILABLE", message: "Authentication is temporarily unavailable", fields: { correlationId } }, 503);
   }
-  context.set("recipeViewerUserId", session._tag === "Authenticated" ? session.principal.userId : undefined);
+  context.set("recipeViewerUserId", session.tag === "Authenticated" ? session.principal.userId : undefined);
   await next();
 }
 
