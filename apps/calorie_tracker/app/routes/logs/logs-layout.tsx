@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { Outlet, useLoaderData, useMatches, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { LogbookPage } from "../../features/consumption-logs/pages/logbook-page/logbook-page";
-import type { LogbookActionResult, LogbookLoaderData } from "../../features/consumption-logs/types/logbook.types";
-import type { CalorieTrackerRouteHandle } from "../../routing/calorie-tracker-routes";
+import { LogbookPage } from "../../features/consumption-logs/presentation/pages/logbook-page/logbook-page";
+import type { LogbookActionResult, LogbookLoaderData } from "../../features/consumption-logs/presentation/types/logbook.types";
+import type { CalorieTrackerRouteHandle } from "../../core/presentation/routing/calorie-tracker-routes";
 import { handleLogsRouteAction, loadLogsRoute } from "./logs-route.server";
 
 /** Route metadata keeps logbook shell behavior out of pathname checks. */

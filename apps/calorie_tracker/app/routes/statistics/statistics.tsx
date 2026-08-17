@@ -1,7 +1,7 @@
 import { useLoaderData, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { StatisticsPage } from "../../features/statistics/pages/statistics-page/statistics-page";
-import type { StatisticsActionResult, StatisticsLoaderData } from "../../features/statistics/types/statistics.types";
-import type { CalorieTrackerRouteHandle } from "../../routing/calorie-tracker-routes";
+import { StatisticsPage } from "../../features/statistics/presentation/pages/statistics-page/statistics-page";
+import type { StatisticsActionResult, StatisticsLoaderData } from "../../features/statistics/presentation/types/statistics.types";
+import type { CalorieTrackerRouteHandle } from "../../core/presentation/routing/calorie-tracker-routes";
 import { handleStatisticsRouteAction, loadStatisticsRoute } from "./statistics-route.server";
 
 /** Route metadata enables the shared tracker date header without path matching. */

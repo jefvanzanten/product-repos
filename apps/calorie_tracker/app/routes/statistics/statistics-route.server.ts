@@ -1,12 +1,13 @@
-import { upsertNutritionGoalSchema } from "@product-repos/contracts/calorie-tracker";
+import { parseUpsertNutritionGoal } from "../../features/statistics/data/nutrition-goal-command-parser";
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { CalorieTrackerApiError, getDailyStatistics, putNutritionGoals } from "../../api/calorie-tracker-api.server";
-import { requireUser } from "../../auth/auth.server";
-import { canonicalizeTrackerUrl } from "../../domain/consumption-types";
-import { getTodayInTimezone } from "../../domain/dates-and-timezones";
-import type { StatisticsActionResult, StatisticsLoaderData } from "../../features/statistics/types/statistics.types";
-import { toCalorieTrackerInternalPath } from "../../routing/calorie-tracker-routes";
-import { readBrowserTimezone } from "../../timezone.server";
+import { CalorieTrackerApiError, getDailyStatistics, putNutritionGoals } from "../../features/statistics/data/statistics-api.server";
+import { requireUser } from "../../core/presentation/auth/auth.server";
+import { canonicalizeTrackerUrl } from "../../core/presentation/routing/tracker-url-state";
+import { getTodayDate } from "../../core/domain/dates-and-timezones";
+import type { StatisticsActionResult, StatisticsLoaderData } from "../../features/statistics/presentation/types/statistics.types";
+import { toCalorieTrackerInternalPath } from "../../core/presentation/routing/calorie-tracker-routes";
+import { readBrowserTimezone } from "../../core/data/timezone.server";
+import { createBackendRequestContext } from "../../core/presentation/backend-request-context.server";
 
 /**
  * Load canonical daily statistics after authentication and timezone registration.
@@ -22,25 +23,26 @@ export async function loadStatisticsRoute({ request }: LoaderFunctionArgs): Prom
   }
 
   const url = new URL(request.url);
+  const dateValue = url.searchParams.get("date");
+  const typeValue = url.searchParams.get("type");
+  const carriesDate = url.searchParams.has("date");
   const carriesType = url.searchParams.has("type");
-  const canonical = canonicalizeTrackerUrl(
-    url.searchParams.get("date"),
-    url.searchParams.get("type"),
-    getTodayInTimezone(timezone),
-  );
-  const requiresRedirect = url.searchParams.get("date") !== canonical.state.date
-    || (carriesType && url.searchParams.get("type") !== canonical.state.type);
+  const canonical = canonicalizeTrackerUrl(dateValue, typeValue, getTodayDate(timezone));
+  const requiresRedirect = (carriesDate && dateValue !== canonical.state.date)
+    || (carriesType && typeValue !== canonical.state.type);
   if (requiresRedirect) {
-    const search = new URLSearchParams({ date: canonical.state.date });
+    const search = new URLSearchParams();
+    if (carriesDate && dateValue === canonical.state.date) search.set("date", canonical.state.date);
     if (carriesType) search.set("type", canonical.state.type);
-    throw redirect(`${toCalorieTrackerInternalPath(url.pathname)}?${search}`);
+    const query = search.toString();
+    throw redirect(`${toCalorieTrackerInternalPath(url.pathname)}${query.length > 0 ? `?${query}` : ""}`);
   }
 
   try {
     return {
       timezone,
       routeState: canonical.state,
-      statistics: await getDailyStatistics(canonical.state.date, timezone, request),
+      statistics: await getDailyStatistics(canonical.state.date, createBackendRequestContext(request, timezone)),
       loadFailed: false,
     };
   } catch {
@@ -68,11 +70,11 @@ export async function handleStatisticsRouteAction({ request }: ActionFunctionArg
   } catch {
     return { ok: false, error: "Controleer de ingevulde doelen." };
   }
-  const parsed = upsertNutritionGoalSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Controleer de ingevulde doelen." };
+  const parsed = parseUpsertNutritionGoal(input);
+  if (parsed === null) return { ok: false, error: "Controleer de ingevulde doelen." };
 
   try {
-    await putNutritionGoals(parsed.data, timezone, request);
+    await putNutritionGoals(parsed, createBackendRequestContext(request, timezone));
     return { ok: true };
   } catch (error: unknown) {
     const fallbackMessage = "Doelen opslaan lukt niet. Probeer opnieuw.";

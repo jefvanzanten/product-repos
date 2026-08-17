@@ -3,18 +3,18 @@ import { SessionMonitor } from "@product-repos/auth-client/session-monitor";
 import { BottomTabBar } from "@product-repos/shared/bottom-tab-bar";
 import { useEffect, useRef, type ReactNode } from "react";
 import { Link, Outlet, useFetcher, useLoaderData, useMatches, type LoaderFunctionArgs } from "react-router";
-import { authClient } from "../../auth/auth-client";
-import { requireUser } from "../../auth/auth.server";
-import { CALORIE_TRACKER_BASE_PATH } from "../../auth/public-paths";
-import { CalorieTrackerNavbar } from "../../features/tracker-shell/components/calorie-tracker-navbar/calorie-tracker-navbar";
-import { useBrowserTimezone } from "../../hooks/use-browser-timezone";
+import { authClient } from "../../core/data/auth/auth-client";
+import { requireUser } from "../../core/presentation/auth/auth.server";
+import { CALORIE_TRACKER_BASE_PATH } from "../../core/presentation/routing/public-paths";
+import { CalorieTrackerNavbar } from "../../core/presentation/tracker-shell/components/calorie-tracker-navbar/calorie-tracker-navbar";
+import { useBrowserTimezone } from "../../core/presentation/hooks/use-browser-timezone";
 import {
   loginPath,
   productManagementAdminPath,
   toCalorieTrackerPublicPath,
   type CalorieTrackerRouteHandle,
-} from "../../routing/calorie-tracker-routes";
-import { readBrowserTimezone } from "../../timezone.server";
+} from "../../core/presentation/routing/calorie-tracker-routes";
+import { readBrowserTimezone } from "../../core/data/timezone.server";
 import styles from "./layout.module.css";
 
 /**

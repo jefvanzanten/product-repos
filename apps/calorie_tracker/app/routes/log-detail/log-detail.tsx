@@ -1,7 +1,7 @@
 import { useLoaderData, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { LogDetailPage } from "../../features/consumption-logs/pages/log-detail-page/log-detail-page";
-import type { LogDetailActionResult, LogDetailLoaderData } from "../../features/consumption-logs/types/log-detail.types";
-import type { CalorieTrackerRouteHandle } from "../../routing/calorie-tracker-routes";
+import { LogDetailPage } from "../../features/consumption-logs/presentation/pages/log-detail-page/log-detail-page";
+import type { LogDetailActionResult, LogDetailLoaderData } from "../../features/consumption-logs/presentation/types/log-detail.types";
+import type { CalorieTrackerRouteHandle } from "../../core/presentation/routing/calorie-tracker-routes";
 import { handleLogDetailRouteAction, loadLogDetailRoute } from "./log-detail-route.server";
 
 /** Route metadata presents detail independently while retaining its parent route context. */

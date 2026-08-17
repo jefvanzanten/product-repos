@@ -1,11 +1,12 @@
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { CalorieTrackerApiError, deleteConsumptionLog, getConsumptionLog } from "../../api/calorie-tracker-api.server";
-import { requireUser } from "../../auth/auth.server";
-import { canonicalizeTrackerUrl } from "../../domain/consumption-types";
-import { getTodayInTimezone } from "../../domain/dates-and-timezones";
-import type { LogDetailActionResult, LogDetailLoaderData } from "../../features/consumption-logs/types/log-detail.types";
-import { toCalorieTrackerInternalPath } from "../../routing/calorie-tracker-routes";
-import { readBrowserTimezone } from "../../timezone.server";
+import { CalorieTrackerApiError, deleteConsumptionLog, getConsumptionLog } from "../../features/consumption-logs/data/consumption-log-api.server";
+import { requireUser } from "../../core/presentation/auth/auth.server";
+import { canonicalizeTrackerUrl } from "../../core/presentation/routing/tracker-url-state";
+import { getTodayDate } from "../../core/domain/dates-and-timezones";
+import type { LogDetailActionResult, LogDetailLoaderData } from "../../features/consumption-logs/presentation/types/log-detail.types";
+import { toCalorieTrackerInternalPath } from "../../core/presentation/routing/calorie-tracker-routes";
+import { readBrowserTimezone } from "../../core/data/timezone.server";
+import { createBackendRequestContext } from "../../core/presentation/backend-request-context.server";
 
 /**
  * Load one protected log detail after canonicalizing its route context.
@@ -18,7 +19,7 @@ export async function loadLogDetailRoute({ request, params }: LoaderFunctionArgs
   const timezone = readBrowserTimezone(request);
   if (timezone === null) return emptyDetailData();
   const url = new URL(request.url);
-  const canonical = canonicalizeTrackerUrl(url.searchParams.get("date"), url.searchParams.get("type"), getTodayInTimezone(timezone));
+  const canonical = canonicalizeTrackerUrl(url.searchParams.get("date"), url.searchParams.get("type"), getTodayDate(timezone));
   if (canonical.requiresReplace) {
     throw redirect(`${toCalorieTrackerInternalPath(url.pathname)}?${new URLSearchParams(canonical.state)}`);
   }
@@ -26,7 +27,13 @@ export async function loadLogDetailRoute({ request, params }: LoaderFunctionArgs
   if (logId === undefined) throw new Response("Log niet gevonden.", { status: 404 });
 
   try {
-    return { timezone, routeState: canonical.state, log: await getConsumptionLog(logId, timezone, request), notFound: false, loadFailed: false };
+    return {
+      timezone,
+      routeState: canonical.state,
+      log: await getConsumptionLog(logId, createBackendRequestContext(request, timezone)),
+      notFound: false,
+      loadFailed: false,
+    };
   } catch (error: unknown) {
     const notFound = error instanceof CalorieTrackerApiError && error.status === 404;
     return { timezone, routeState: canonical.state, log: null, notFound, loadFailed: !notFound };
@@ -45,7 +52,7 @@ export async function handleLogDetailRouteAction({ request, params }: ActionFunc
   const logId = params.logId;
   if (timezone === null || logId === undefined) return { ok: false, error: "Verwijderen lukt niet. Probeer opnieuw." };
   try {
-    return { ok: true, result: await deleteConsumptionLog(logId, timezone, request) };
+    return { ok: true, result: await deleteConsumptionLog(logId, createBackendRequestContext(request, timezone)) };
   } catch (error: unknown) {
     return {
       ok: false,

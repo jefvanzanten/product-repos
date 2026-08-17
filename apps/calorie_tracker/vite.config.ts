@@ -1,6 +1,6 @@
 import { reactRouter } from "@react-router/dev/vite";
 import { defineConfig, type Connect, type Plugin } from "vite";
-import { CALORIE_TRACKER_BASE_PATH } from "./app/routing/calorie-tracker-routes";
+import { CALORIE_TRACKER_BASE_PATH } from "./app/core/presentation/routing/calorie-tracker-routes";
 
 /** Redirect the slashless public app root before Vite's base-path middleware handles it. */
 function redirectAppRoot(basePath: string): Plugin {

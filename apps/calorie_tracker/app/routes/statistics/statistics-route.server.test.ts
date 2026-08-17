@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getDailyStatistics } from "../../api/calorie-tracker-api.server";
+import { getDailyStatistics } from "../../features/statistics/data/statistics-api.server";
+import { getTodayDate } from "../../core/domain/dates-and-timezones";
 import { loadStatisticsRoute } from "./statistics-route.server";
 
-vi.mock("../../auth/auth.server", () => ({ requireUser: vi.fn().mockResolvedValue({ id: "user" }) }));
-vi.mock("../../api/calorie-tracker-api.server", () => ({
+vi.mock("../../core/presentation/auth/auth.server", () => ({ requireUser: vi.fn().mockResolvedValue({ id: "user" }) }));
+vi.mock("../../features/statistics/data/statistics-api.server", () => ({
   CalorieTrackerApiError: class extends Error {},
   getDailyStatistics: vi.fn(),
   putNutritionGoals: vi.fn(),
@@ -48,15 +49,35 @@ describe("statistics route server boundary", () => {
     expect(getDailyStatistics).not.toHaveBeenCalled();
   });
 
-  it("uses an app-internal path when canonicalizing a public URL", async () => {
+  it("loads the current date without adding it to the URL", async () => {
+    vi.mocked(getDailyStatistics).mockResolvedValue(statistics);
     const request = new Request("https://example.test/calorie-tracker/", {
+      headers: { cookie: "calorie_tracker_timezone=UTC" },
+    });
+    const today = getTodayDate("UTC");
+
+    await expect(loadStatisticsRoute({ request } as never)).resolves.toMatchObject({
+      timezone: "UTC",
+      routeState: { date: today, type: "all" },
+      statistics,
+      loadFailed: false,
+    });
+    expect(getDailyStatistics).toHaveBeenCalledWith(today, expect.objectContaining({
+      cookie: "calorie_tracker_timezone=UTC",
+      timezone: "UTC",
+      signal: request.signal,
+    }));
+  });
+
+  it("uses an app-internal path and omits the fallback date when canonicalizing an invalid date", async () => {
+    const request = new Request("https://example.test/calorie-tracker/?date=invalid", {
       headers: { cookie: "calorie_tracker_timezone=UTC" },
     });
 
     const response = await captureRedirect(request);
 
     expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toMatch(/^\/\?date=\d{4}-\d{2}-\d{2}$/);
+    expect(response.headers.get("Location")).toBe("/");
   });
 
   it("loads parsed statistics with the registered timezone", async () => {
@@ -70,6 +91,10 @@ describe("statistics route server boundary", () => {
       statistics,
       loadFailed: false,
     });
-    expect(getDailyStatistics).toHaveBeenCalledWith("2024-02-29", "Europe/Amsterdam", request);
+    expect(getDailyStatistics).toHaveBeenCalledWith("2024-02-29", expect.objectContaining({
+      cookie: "calorie_tracker_timezone=Europe%2FAmsterdam",
+      timezone: "Europe/Amsterdam",
+      signal: request.signal,
+    }));
   });
 });

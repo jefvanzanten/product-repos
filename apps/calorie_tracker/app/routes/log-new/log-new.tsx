@@ -1,7 +1,7 @@
 import { useLoaderData, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { LogFormPage } from "../../features/consumption-logs/pages/log-form-page";
-import type { LogFormActionResult, LogFormLoaderData } from "../../features/consumption-logs/types/log-form.types";
-import type { CalorieTrackerRouteHandle } from "../../routing/calorie-tracker-routes";
+import { LogFormPage } from "../../features/consumption-logs/presentation/pages/log-form-page";
+import type { LogFormActionResult, LogFormLoaderData } from "../../features/consumption-logs/presentation/types/log-form.types";
+import type { CalorieTrackerRouteHandle } from "../../core/presentation/routing/calorie-tracker-routes";
 import { handleNewLogRouteAction, loadNewLogRoute } from "../log-form/log-form-route.server";
 
 /** Route metadata keeps the mounted logbook inert behind this overlay. */

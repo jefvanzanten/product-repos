@@ -220,16 +220,21 @@ test.describe("Calorie Tracker acceptance slice", function calorieTrackerAccepta
     await page.getByRole("button", { name: "Alles" }).click();
     await expect(page.getByRole("link", { name: /0,5x/ })).toBeVisible();
 
+    const headers = { "X-Browser-Timezone": "Europe/Amsterdam" };
+    const searchResponse = await page.request.get(`${BACKEND_ORIGIN}/calorie-tracker/products/search?query=Volkoren`, { headers });
+    const searchResults = await searchResponse.json() as ReadonlyArray<{ readonly productId: string }>;
+    const productId = searchResults[0]?.productId;
+    expect(productId).toBeDefined();
+    if (productId === undefined) throw new Error("Expected a loggable concrete product");
     const createBody = {
       id: LOGS.idempotent,
       type: "PRODUCT",
-      packageId: CATALOG.foodPackageId,
+      productId,
       quantity: "1.25",
-      inputMode: "PACKAGE",
+      inputMode: "FULL_PRODUCT",
       inputUnitTypeId: null,
       consumedAt: `${previousDate}T06:00:00.000Z`,
     } as const;
-    const headers = { "X-Browser-Timezone": "Europe/Amsterdam" };
     const first = await page.request.post(`${BACKEND_ORIGIN}/calorie-tracker/logs`, { data: createBody, headers });
     const retry = await page.request.post(`${BACKEND_ORIGIN}/calorie-tracker/logs`, { data: createBody, headers });
     expect(first.status()).toBe(201);
@@ -296,6 +301,8 @@ test.describe("Calorie Tracker acceptance slice", function calorieTrackerAccepta
     await loginThroughUi(page);
     await page.goto(appPath(`/logs?date=${date}&type=all`));
 
+    await expect(page.getByRole("link", { name: "Recepten" })).toHaveCount(0);
+
     if (testInfo.project.name === "mobile-chromium") {
       const callToAction = page.getByRole("link", { name: "Log toevoegen" }).last();
       const tabBar = page.getByRole("navigation", { name: "Hoofdnavigatie" });
@@ -306,11 +313,11 @@ test.describe("Calorie Tracker acceptance slice", function calorieTrackerAccepta
       if (actionBox !== null && tabBarBox !== null) expect(actionBox.y + actionBox.height).toBeLessThanOrEqual(tabBarBox.y);
       await captureScenario(page, testInfo, "mobile-logbook-no-overlap");
       await callToAction.click();
-      const mobileDialogBox = await page.getByRole("dialog", { name: "Consumptielog aanmaken" }).boundingBox();
+      const mobileDialogBox = await page.getByRole("dialog", { name: "Log toevoegen" }).boundingBox();
       expect(mobileDialogBox?.width ?? 0).toBeGreaterThanOrEqual(350);
     } else {
       await page.getByRole("link", { name: "Log toevoegen" }).first().click();
-      const dialog = page.getByRole("dialog", { name: "Consumptielog aanmaken" });
+      const dialog = page.getByRole("dialog", { name: "Log toevoegen" });
       const dialogBox = await dialog.boundingBox();
       expect(dialogBox?.width ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(640);
       const firstControl = page.getByRole("button", { name: "Sluiten" });

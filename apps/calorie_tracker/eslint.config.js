@@ -33,7 +33,60 @@ export default defineConfig([
       'react-refresh/only-export-components': [
         'warn',
         {
-          allowExportNames: ['action', 'headers', 'links', 'loader', 'meta', 'middleware'],
+          allowExportNames: ['action', 'handle', 'headers', 'links', 'loader', 'meta', 'middleware'],
+        },
+      ],
+    },
+  },
+  {
+    files: ['app/**/*.{ts,tsx}'],
+    ignores: ['app/**/data/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@product-repos/contracts/calorie-tracker',
+              message: 'API contracts belong in the data layer. Import a domain or presentation model instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['app/core/domain/**/*.{ts,tsx}', 'app/features/*/domain/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            { name: 'react', message: 'Domain code must remain framework-independent.' },
+            { name: 'react-router', message: 'Domain code must remain framework-independent.' },
+            { name: '@product-repos/contracts/calorie-tracker', message: 'Transport contracts belong in data.' },
+          ],
+          patterns: [
+            { group: ['**/data/**'], message: 'Domain code cannot depend on data.' },
+            { group: ['**/presentation/**'], message: 'Domain code cannot depend on presentation.' },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['app/core/data/**/*.{ts,tsx}', 'app/features/*/data/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            { name: 'react', message: 'Data code must remain independent of React.' },
+            { name: 'react-router', message: 'Data code must remain independent of React Router.' },
+          ],
+          patterns: [
+            { group: ['**/presentation/**'], message: 'Data code cannot depend on presentation.' },
+          ],
         },
       ],
     },

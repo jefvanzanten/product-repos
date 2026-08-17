@@ -1,11 +1,12 @@
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { CalorieTrackerApiError, getConsumptionLogs, restoreConsumptionLog } from "../../api/calorie-tracker-api.server";
-import { requireUser } from "../../auth/auth.server";
-import { canonicalizeTrackerUrl } from "../../domain/consumption-types";
-import { getTodayInTimezone, sortChronologically } from "../../domain/dates-and-timezones";
-import type { LogbookActionResult, LogbookLoaderData } from "../../features/consumption-logs/types/logbook.types";
-import { toCalorieTrackerInternalPath } from "../../routing/calorie-tracker-routes";
-import { readBrowserTimezone } from "../../timezone.server";
+import { CalorieTrackerApiError, getConsumptionLogs, restoreConsumptionLog } from "../../features/consumption-logs/data/consumption-log-api.server";
+import { requireUser } from "../../core/presentation/auth/auth.server";
+import { canonicalizeTrackerUrl } from "../../core/presentation/routing/tracker-url-state";
+import { getTodayDate, sortChronologically } from "../../core/domain/dates-and-timezones";
+import type { LogbookActionResult, LogbookLoaderData } from "../../features/consumption-logs/presentation/types/logbook.types";
+import { toCalorieTrackerInternalPath } from "../../core/presentation/routing/calorie-tracker-routes";
+import { readBrowserTimezone } from "../../core/data/timezone.server";
+import { createBackendRequestContext } from "../../core/presentation/backend-request-context.server";
 
 /**
  * Load one canonical date- and filter-scoped logbook projection.
@@ -24,30 +25,31 @@ export async function loadLogsRoute({ request }: LoaderFunctionArgs): Promise<Lo
   const canonical = canonicalizeTrackerUrl(
     url.searchParams.get("date"),
     url.searchParams.get("type"),
-    getTodayInTimezone(timezone),
+    getTodayDate(timezone),
   );
   if (canonical.requiresReplace) {
     throw redirect(`${toCalorieTrackerInternalPath(url.pathname)}?${new URLSearchParams(canonical.state)}`);
   }
 
   try {
-    const logs = await getConsumptionLogs(canonical.state.date, canonical.state.type, timezone, request);
+    const context = createBackendRequestContext(request, timezone);
+    const logs = await getConsumptionLogs(canonical.state.date, canonical.state.type, context);
     if (logs.items.length > 0) {
       return {
         timezone,
         routeState: canonical.state,
-        content: { _tag: "Ready", items: sortChronologically(logs.items) },
+        content: { tag: "Ready", items: sortChronologically(logs.items) },
         loadFailed: false,
       };
     }
     if (canonical.state.type === "all") {
-      return { timezone, routeState: canonical.state, content: { _tag: "EmptyDate" }, loadFailed: false };
+      return { timezone, routeState: canonical.state, content: { tag: "EmptyDate" }, loadFailed: false };
     }
-    const unfiltered = await getConsumptionLogs(canonical.state.date, "all", timezone, request);
+    const unfiltered = await getConsumptionLogs(canonical.state.date, "all", context);
     return {
       timezone,
       routeState: canonical.state,
-      content: { _tag: unfiltered.items.length === 0 ? "EmptyDate" : "EmptyFilter" },
+      content: { tag: unfiltered.items.length === 0 ? "EmptyDate" : "EmptyFilter" },
       loadFailed: false,
     };
   } catch {
@@ -71,7 +73,7 @@ export async function handleLogsRouteAction({ request }: ActionFunctionArgs): Pr
     return { ok: false, error: "De log kan niet worden hersteld." };
   }
   try {
-    return { ok: true, log: await restoreConsumptionLog(logId, timezone, request) };
+    return { ok: true, log: await restoreConsumptionLog(logId, createBackendRequestContext(request, timezone)) };
   } catch (error: unknown) {
     const fallbackMessage = "Herstellen lukt niet meer.";
     return {

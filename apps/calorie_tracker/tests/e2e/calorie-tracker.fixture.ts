@@ -100,35 +100,35 @@ function seedCatalog(sqlite: Database): void {
     contentStatement.run(104, 101, "250");
     contentStatement.run(105, 101, "75");
 
-    const packageTypeStatement = sqlite.query("INSERT INTO package_type (id, name) VALUES (?, ?)");
-    packageTypeStatement.run(101, "Reep");
-    packageTypeStatement.run(102, "Fles");
-    packageTypeStatement.run(103, "Pot");
-    packageTypeStatement.run(104, "Zak");
-    packageTypeStatement.run(105, "Doos");
+    const packageTypeStatement = sqlite.query("INSERT INTO package_type (id, singular_name, plural_name) VALUES (?, ?, ?)");
+    packageTypeStatement.run(101, "reep", "repen");
+    packageTypeStatement.run(102, "fles", "flessen");
+    packageTypeStatement.run(103, "pot", "potten");
+    packageTypeStatement.run(104, "zak", "zakken");
+    packageTypeStatement.run(105, "doos", "dozen");
 
-    const productStatement = sqlite.query("INSERT INTO product (id, name, category_id, brand_id, consumption_type, archived_at, created_at, updated_at) VALUES (?, ?, 101, ?, ?, ?, ?, ?)");
     const catalogTimestamp = "2024-01-01T00:00:00.000Z";
     const brandId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
-    productStatement.run("aaaaaaaa-0001-4000-8000-000000000001", "Volkoren reep", brandId, "FOOD", null, catalogTimestamp, catalogTimestamp);
-    productStatement.run("aaaaaaaa-0002-4000-8000-000000000002", "Bronwater", brandId, "DRINK", null, catalogTimestamp, catalogTimestamp);
-    productStatement.run("aaaaaaaa-0003-4000-8000-000000000003", "Testcapsule", brandId, "SUPPLEMENT", null, catalogTimestamp, catalogTimestamp);
-    productStatement.run("aaaaaaaa-0004-4000-8000-000000000004", "Archiefmix", brandId, "FOOD", null, catalogTimestamp, catalogTimestamp);
-    productStatement.run("aaaaaaaa-0005-4000-8000-000000000005", "Privéproduct", brandId, "FOOD", null, catalogTimestamp, catalogTimestamp);
+    const compositionStatement = sqlite.query("INSERT INTO product_composition (id, name, category_id, brand_id, consumption_type, created_at, updated_at) VALUES (?, ?, 101, ?, ?, ?, ?)");
+    compositionStatement.run("bbbbbbbb-0001-4000-8000-000000000001", "Volkoren reep", brandId, "FOOD", catalogTimestamp, catalogTimestamp);
+    compositionStatement.run("bbbbbbbb-0002-4000-8000-000000000002", "Bronwater", brandId, "DRINK", catalogTimestamp, catalogTimestamp);
+    compositionStatement.run("bbbbbbbb-0003-4000-8000-000000000003", "Testcapsule", brandId, "SUPPLEMENT", catalogTimestamp, catalogTimestamp);
+    compositionStatement.run("bbbbbbbb-0004-4000-8000-000000000004", "Archiefmix", brandId, "FOOD", catalogTimestamp, catalogTimestamp);
+    compositionStatement.run("bbbbbbbb-0005-4000-8000-000000000005", "Privéproduct", brandId, "FOOD", catalogTimestamp, catalogTimestamp);
 
-    const packageStatement = sqlite.query("INSERT INTO product_package (id, product_id, unit_content_id, package_type_id, archived_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    packageStatement.run(CATALOG.foodPackageId, "aaaaaaaa-0001-4000-8000-000000000001", 101, 101, null, catalogTimestamp, catalogTimestamp);
-    packageStatement.run(CATALOG.drinkPackageId, "aaaaaaaa-0002-4000-8000-000000000002", 102, 102, null, catalogTimestamp, catalogTimestamp);
-    packageStatement.run(CATALOG.supplementPackageId, "aaaaaaaa-0003-4000-8000-000000000003", 103, 103, null, catalogTimestamp, catalogTimestamp);
-    packageStatement.run(CATALOG.archivedPackageId, "aaaaaaaa-0004-4000-8000-000000000004", 104, 104, catalogTimestamp, catalogTimestamp, catalogTimestamp);
-    packageStatement.run(CATALOG.privatePackageId, "aaaaaaaa-0005-4000-8000-000000000005", 105, 105, null, catalogTimestamp, catalogTimestamp);
+    const productStatement = sqlite.query("INSERT INTO product (id, product_composition_id, unit_content_id, package_type_id, archived_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    productStatement.run(CATALOG.foodProductId, "bbbbbbbb-0001-4000-8000-000000000001", 101, 101, null, catalogTimestamp, catalogTimestamp);
+    productStatement.run(CATALOG.drinkProductId, "bbbbbbbb-0002-4000-8000-000000000002", 102, 102, null, catalogTimestamp, catalogTimestamp);
+    productStatement.run(CATALOG.supplementProductId, "bbbbbbbb-0003-4000-8000-000000000003", 103, 103, null, catalogTimestamp, catalogTimestamp);
+    productStatement.run(CATALOG.archivedProductId, "bbbbbbbb-0004-4000-8000-000000000004", 104, 104, catalogTimestamp, catalogTimestamp, catalogTimestamp);
+    productStatement.run(CATALOG.privateProductId, "bbbbbbbb-0005-4000-8000-000000000005", 105, 105, null, catalogTimestamp, catalogTimestamp);
 
-    const macroStatement = sqlite.query("INSERT INTO product_macro_profile (product_id, reference_basis, calories_kcal, protein_g, carbohydrates_g, fat_g, calories_source, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 'MANUAL', ?, ?)");
-    macroStatement.run("aaaaaaaa-0001-4000-8000-000000000001", "PER_100_G", "240", "8", "36", "7", catalogTimestamp, catalogTimestamp);
-    macroStatement.run("aaaaaaaa-0002-4000-8000-000000000002", "PER_100_ML", "10", "0", "2", "0", catalogTimestamp, catalogTimestamp);
-    macroStatement.run("aaaaaaaa-0003-4000-8000-000000000003", "PER_UNIT", "25", "4", "1", "1", catalogTimestamp, catalogTimestamp);
-    macroStatement.run("aaaaaaaa-0004-4000-8000-000000000004", "PER_100_G", "100", "5", "10", "3", catalogTimestamp, catalogTimestamp);
-    macroStatement.run("aaaaaaaa-0005-4000-8000-000000000005", "PER_100_G", "180", "6", "20", "5", catalogTimestamp, catalogTimestamp);
+    const macroStatement = sqlite.query("INSERT INTO product_macro_profile (product_composition_id, reference_basis, calories_kcal, protein_g, carbohydrates_g, fat_g, calories_source, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 'MANUAL', ?, ?)");
+    macroStatement.run("bbbbbbbb-0001-4000-8000-000000000001", "PER_100_G", "240", "8", "36", "7", catalogTimestamp, catalogTimestamp);
+    macroStatement.run("bbbbbbbb-0002-4000-8000-000000000002", "PER_100_ML", "10", "0", "2", "0", catalogTimestamp, catalogTimestamp);
+    macroStatement.run("bbbbbbbb-0003-4000-8000-000000000003", "PER_UNIT", "25", "4", "1", "1", catalogTimestamp, catalogTimestamp);
+    macroStatement.run("bbbbbbbb-0004-4000-8000-000000000004", "PER_100_G", "100", "5", "10", "3", catalogTimestamp, catalogTimestamp);
+    macroStatement.run("bbbbbbbb-0005-4000-8000-000000000005", "PER_100_G", "180", "6", "20", "5", catalogTimestamp, catalogTimestamp);
     sqlite.exec("COMMIT");
   } catch (cause: unknown) {
     sqlite.exec("ROLLBACK");
@@ -157,21 +157,21 @@ function resetScenario(sqlite: Database, date: string): void {
   sqlite.exec("BEGIN IMMEDIATE");
   try {
     sqlite.exec("DELETE FROM user_nutrition_goal; DELETE FROM product_consumption; DELETE FROM dish_consumption; DELETE FROM dish_ingredient; DELETE FROM dish_version; DELETE FROM dish; DELETE FROM consumption_log;");
-    sqlite.query("UPDATE product_package SET archived_at = NULL WHERE id IN (?, ?, ?, ?)").run(CATALOG.foodPackageId, CATALOG.drinkPackageId, CATALOG.supplementPackageId, CATALOG.privatePackageId);
-    sqlite.query("UPDATE product_package SET archived_at = ? WHERE id = ?").run("2024-01-01T00:00:00.000Z", CATALOG.archivedPackageId);
+    sqlite.query("UPDATE product SET archived_at = NULL WHERE id IN (?, ?, ?, ?)").run(CATALOG.foodProductId, CATALOG.drinkProductId, CATALOG.supplementProductId, CATALOG.privateProductId);
+    sqlite.query("UPDATE product SET archived_at = ? WHERE id = ?").run("2024-01-01T00:00:00.000Z", CATALOG.archivedProductId);
 
     const logStatement = sqlite.query("INSERT INTO consumption_log (id, user_id, type, consumed_at, timezone, created_at, updated_at, deleted_at) VALUES (?, ?, 'PRODUCT', ?, 'Europe/Amsterdam', ?, ?, NULL)");
-    const productStatement = sqlite.query("INSERT INTO product_consumption (consumption_log_id, product_package_id, quantity, input_mode, input_unit_type_id) VALUES (?, ?, ?, 'PACKAGE', NULL)");
+    const productStatement = sqlite.query("INSERT INTO product_consumption (consumption_log_id, product_id, quantity, input_mode, input_unit_type_id) VALUES (?, ?, ?, 'FULL_PRODUCT', NULL)");
     logStatement.run(LOGS.earlyFood, userAId, instant(date, "06"), instant(date, "05"), instant(date, "05"));
-    productStatement.run(LOGS.earlyFood, CATALOG.foodPackageId, "1");
+    productStatement.run(LOGS.earlyFood, CATALOG.foodProductId, "1");
     logStatement.run(LOGS.lateDrink, userAId, instant(date, "09"), instant(date, "05"), instant(date, "05"));
-    productStatement.run(LOGS.lateDrink, CATALOG.drinkPackageId, "1");
+    productStatement.run(LOGS.lateDrink, CATALOG.drinkProductId, "1");
     logStatement.run(LOGS.supplement, userAId, instant(date, "11"), instant(date, "05"), instant(date, "05"));
-    productStatement.run(LOGS.supplement, CATALOG.supplementPackageId, "2");
+    productStatement.run(LOGS.supplement, CATALOG.supplementProductId, "2");
     logStatement.run(LOGS.archived, userAId, instant(date, "13"), instant(date, "05"), instant(date, "05"));
-    productStatement.run(LOGS.archived, CATALOG.archivedPackageId, "1");
+    productStatement.run(LOGS.archived, CATALOG.archivedProductId, "1");
     logStatement.run(LOGS.otherUser, userBId, instant(date, "08"), instant(date, "05"), instant(date, "05"));
-    productStatement.run(LOGS.otherUser, CATALOG.privatePackageId, "1");
+    productStatement.run(LOGS.otherUser, CATALOG.privateProductId, "1");
     sqlite.query("INSERT INTO user_nutrition_goal (user_id, calories_kcal, protein_g, carbohydrates_g, fat_g, created_at, updated_at) VALUES (?, 250, '100', NULL, NULL, ?, ?)").run(userAId, instant(date, "04"), instant(date, "04"));
     sqlite.exec("COMMIT");
   } catch (cause: unknown) {

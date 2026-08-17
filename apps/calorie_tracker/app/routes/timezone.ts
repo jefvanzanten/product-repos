@@ -1,6 +1,6 @@
 import { data, type ActionFunctionArgs } from "react-router";
-import { requireUser } from "../auth/auth.server";
-import { parseBrowserTimezone, serializeBrowserTimezone } from "../timezone.server";
+import { requireUser } from "../core/presentation/auth/auth.server";
+import { parseBrowserTimezone, serializeBrowserTimezone } from "../core/data/timezone.server";
 
 /**
  * Register the validated browser timezone and trigger protected loader revalidation.

@@ -1,12 +1,13 @@
-import { createConsumptionLogSchema, updateConsumptionLogSchema } from "@product-repos/contracts/calorie-tracker";
+import { parseCreateConsumptionLog, parseUpdateConsumptionLog } from "../../features/consumption-logs/data/consumption-log-command-parser";
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { CalorieTrackerApiError, createConsumptionLog, getConsumptionLog, getDish, getUnifiedSearch, updateConsumptionLog } from "../../api/calorie-tracker-api.server";
-import { requireUser } from "../../auth/auth.server";
-import { canonicalizeTrackerUrl } from "../../domain/consumption-types";
-import { getTodayInTimezone } from "../../domain/dates-and-timezones";
-import type { LogFormActionResult, LogFormLoaderData } from "../../features/consumption-logs/types/log-form.types";
-import { toCalorieTrackerInternalPath } from "../../routing/calorie-tracker-routes";
-import { readBrowserTimezone } from "../../timezone.server";
+import { CalorieTrackerApiError, createConsumptionLog, getConsumptionLog, getUnifiedSearch, updateConsumptionLog } from "../../features/consumption-logs/data/consumption-log-api.server";
+import { requireUser } from "../../core/presentation/auth/auth.server";
+import { canonicalizeTrackerUrl } from "../../core/presentation/routing/tracker-url-state";
+import { getTodayDate } from "../../core/domain/dates-and-timezones";
+import type { LogFormActionResult, LogFormLoaderData } from "../../features/consumption-logs/presentation/types/log-form.types";
+import { toCalorieTrackerInternalPath } from "../../core/presentation/routing/calorie-tracker-routes";
+import { readBrowserTimezone } from "../../core/data/timezone.server";
+import { createBackendRequestContext } from "../../core/presentation/backend-request-context.server";
 
 /**
  * Load canonical create-log form data after timezone registration.
@@ -63,22 +64,20 @@ async function loadLogFormRoute(
   const timezone = readBrowserTimezone(request);
   if (timezone === null) return pendingFormData();
   const url = new URL(request.url);
-  const canonical = canonicalizeTrackerUrl(url.searchParams.get("date"), url.searchParams.get("type"), getTodayInTimezone(timezone));
+  const canonical = canonicalizeTrackerUrl(url.searchParams.get("date"), url.searchParams.get("type"), getTodayDate(timezone));
   if (canonical.requiresReplace) {
     throw redirect(`${toCalorieTrackerInternalPath(url.pathname)}?${new URLSearchParams(canonical.state)}`);
   }
 
   try {
-    const initialResultsPromise = getUnifiedSearch(null, timezone, request);
+    const context = createBackendRequestContext(request, timezone);
+    const initialResultsPromise = getUnifiedSearch(null, context);
     if (mode === "Create") {
-      const requestedDishId = url.searchParams.get("dish");
-      const initialDish = requestedDishId === null ? null : await getDish(requestedDishId, timezone, request);
       return {
         timezone,
         routeState: canonical.state,
-        mode: { _tag: "Create" },
+        mode: { tag: "Create" },
         initialResults: await initialResultsPromise,
-        initialDish,
         notFound: false,
         loadFailed: false,
       };
@@ -87,12 +86,12 @@ async function loadLogFormRoute(
     if (logId === undefined) throw new Response("Log niet gevonden.", { status: 404 });
     const [initialResults, log] = await Promise.all([
       initialResultsPromise,
-      getConsumptionLog(logId, timezone, request),
+      getConsumptionLog(logId, context),
     ]);
-    return { timezone, routeState: canonical.state, mode: { _tag: "Edit", log }, initialResults, initialDish: null, notFound: false, loadFailed: false };
+    return { timezone, routeState: canonical.state, mode: { tag: "Edit", log }, initialResults, notFound: false, loadFailed: false };
   } catch (error: unknown) {
     const notFound = error instanceof CalorieTrackerApiError && error.status === 404;
-    return { timezone, routeState: canonical.state, mode: null, initialResults: [], initialDish: null, notFound, loadFailed: !notFound };
+    return { timezone, routeState: canonical.state, mode: null, initialResults: [], notFound, loadFailed: !notFound };
   }
 }
 
@@ -121,15 +120,16 @@ async function handleLogFormRouteAction(
   }
 
   try {
+    const context = createBackendRequestContext(request, timezone);
     if (mode === "Create") {
-      const parsed = createConsumptionLogSchema.safeParse(payload);
-      if (!parsed.success) return { ok: false, error: "Controleer de ingevulde gegevens." };
-      return { ok: true, log: await createConsumptionLog(parsed.data, timezone, request) };
+      const parsed = parseCreateConsumptionLog(payload);
+      if (parsed === null) return { ok: false, error: "Controleer de ingevulde gegevens." };
+      return { ok: true, log: await createConsumptionLog(parsed, context) };
     }
     const logId = params.logId;
-    const parsed = updateConsumptionLogSchema.safeParse(payload);
-    if (logId === undefined || !parsed.success) return { ok: false, error: "Controleer de ingevulde gegevens." };
-    return { ok: true, log: await updateConsumptionLog(logId, parsed.data, timezone, request) };
+    const parsed = parseUpdateConsumptionLog(payload);
+    if (logId === undefined || parsed === null) return { ok: false, error: "Controleer de ingevulde gegevens." };
+    return { ok: true, log: await updateConsumptionLog(logId, parsed, context) };
   } catch (error: unknown) {
     if (error instanceof CalorieTrackerApiError && error.response?.code === "LOG_UPDATE_CONFLICT") {
       return { ok: false, error: "Dit log is intussen gewijzigd. Herlaad de actuele gegevens voordat je opnieuw opslaat." };
@@ -150,5 +150,5 @@ async function handleLogFormRouteAction(
  * @returns The function result.
  */
 function pendingFormData(): LogFormLoaderData {
-  return { timezone: null, routeState: null, mode: null, initialResults: [], initialDish: null, notFound: false, loadFailed: false };
+  return { timezone: null, routeState: null, mode: null, initialResults: [], notFound: false, loadFailed: false };
 }

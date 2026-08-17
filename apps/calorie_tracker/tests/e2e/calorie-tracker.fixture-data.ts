@@ -24,11 +24,11 @@ export const USER_B = {
 
 /** Stable catalog identifiers in the temporary E2E database. */
 export const CATALOG = {
-  foodPackageId: 101,
-  drinkPackageId: 102,
-  supplementPackageId: 103,
-  archivedPackageId: 104,
-  privatePackageId: 105,
+  foodProductId: "aaaaaaaa-0001-4000-8000-000000000001",
+  drinkProductId: "aaaaaaaa-0002-4000-8000-000000000002",
+  supplementProductId: "aaaaaaaa-0003-4000-8000-000000000003",
+  archivedProductId: "aaaaaaaa-0004-4000-8000-000000000004",
+  privateProductId: "aaaaaaaa-0005-4000-8000-000000000005",
 } as const;
 
 /** Stable consumption-log identifiers in the temporary E2E database. */

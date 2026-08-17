@@ -56,13 +56,14 @@ De app gebruikt gedeelde authenticatie uit `packages/auth-client`, API-contracte
 
 ## Architectuur
 
-- `app/routes` bevat dunne React Router-routes, loaders, actions en routegebonden servercoördinatie;
-- `app/features` bevat pagina's, componenten, types en pure featurelogica;
-- `app/api` bevat uitsluitend server-side backend-adapters en contractvalidatie;
+- `app/features` is per feature verdeeld in `domain`, `data` en `presentation`;
+- `app/core` bevat Calorie Tracker-brede code met dezelfde laagindeling;
+- `app/routes` bevat dunne React Router-routes en vormt de compositiegrens tussen presentation en data;
+- API-contracten worden uitsluitend in de data-laag gevalideerd en naar frontend-domeinmodellen vertaald;
 - reads lopen via loaders en mutaties via actions of resource-routes;
 - de gevalideerde IANA-browsertijdzone wordt als HTTP-only cookie geregistreerd voordat tijdzoneafhankelijke loaders de backend aanroepen.
 
-React Router verzorgt loader-revalidatie na mutaties. Componenten roepen de backend niet rechtstreeks aan.
+De importgrenzen worden door ESLint bewaakt. Zie [ARCHITECTURE.md](./ARCHITECTURE.md) voor de volledige regels. React Router verzorgt loader-revalidatie na mutaties. Componenten roepen de backend niet rechtstreeks aan.
 
 ## Specificaties
 
