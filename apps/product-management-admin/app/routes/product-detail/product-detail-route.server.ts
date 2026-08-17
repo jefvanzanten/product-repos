@@ -1,111 +1,86 @@
+import { readFormText } from "../../core/data/form-data";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { parseAdminSourceFromSearch, withAdminSource } from "../../admin-navigation";
-import { preserveProductFormValues } from "../../features/product-catalog/server/product-form-data";
-import { submitUpdateProductForm } from "../../features/product-catalog/server/product-mutations.server";
-import {
-  createBrand,
-  getCategories,
-  getProduct,
-  isNotFound,
-  mapApiError,
-  updateProduct,
-} from "../../api/admin-dashboard-api.server";
-import type {
-  ProductDetailActionResult,
-  ProductDetailDto,
-  ProductDetailEditIntent,
-  ProductDetailLoaderData,
-} from "../../features/product-catalog/types/product-detail.types";
+import type { BackendRequestContext } from "../../core/data/backend-api.server";
+import { createBackendRequestContext } from "../../core/presentation/backend-request-context.server";
+import { parseAdminSourceFromSearch, withAdminSource } from "../../core/presentation/routing/admin-navigation";
+import { parseConcreteProduct } from "../../features/product-catalog/data/concrete-product-command-parser";
+import { preserveProductFormValues, projectProductFormData } from "../../features/product-catalog/data/product-form-command-parser";
+import { archiveConcreteProduct, createBrand, getBrands, getCategories, getConcreteProduct, getPackageTypes, getUnitTypes, isNotFound, restoreConcreteProduct, updateConcreteProduct, updateProductComposition, updateProductCompositionMacroProfile } from "../../features/product-catalog/data/product-catalog-api.server";
+import type { ProductDetailActionResult, ProductDetailEditIntent, ProductDetailLoaderData } from "../../features/product-catalog/presentation/types/product-detail.types";
+import { mapProductApiError } from "../../features/product-catalog/presentation/product-error-messages";
 
-/**
- * Load a product and its edit reference data.
- *
- * @param args - React Router loader arguments.
- * @returns Product detail data or a not-found state.
- */
+/** Load concrete product detail and all edit references. */
 export async function loadProductDetailRoute({ params, request }: LoaderFunctionArgs): Promise<ProductDetailLoaderData> {
   const backUrl = buildBackUrl(new URL(request.url));
+  const context = createBackendRequestContext(request);
   try {
-    return {
-      found: true,
-      product: await getProduct(String(params.productId), request),
-      categories: await getCategories(request),
-      backUrl,
-    };
+    const [product, categories, brands, packageTypes, unitTypes] = await Promise.all([
+      getConcreteProduct(String(params.productId), context), getCategories(context), getBrands("", context), getPackageTypes(context), getUnitTypes(context),
+    ]);
+    return { found: true, product, categories, brands, packageTypes, unitTypes, backUrl };
   } catch (error) {
     if (isNotFound(error)) return { found: false, backUrl };
     throw error;
   }
 }
 
-/**
- * Handle product detail edits.
- *
- * @param args - React Router action arguments.
- * @returns The updated product or form errors.
- */
+/** Mutate exactly one shared, local, nutrition, or archive compartment. */
 export async function handleProductDetailRouteAction({ params, request }: ActionFunctionArgs): Promise<ProductDetailActionResult> {
   const form = await request.formData();
-  const intent = form.get("intent") === "nutrition" ? "nutrition" : "product";
+  const context = createBackendRequestContext(request);
+  const intent = parseIntent(form.get("intent"));
   const values = preserveProductFormValues(form);
+  const productId = String(params.productId);
   try {
-    const productId = String(params.productId);
-    enforceCompartmentBoundary(form, intent, await getProduct(productId, request));
-    const submission = await submitUpdateProductForm(productId, form, {
-      createBrand: (input) => createBrand(input, request),
-      updateProduct: (productId, input) => updateProduct(productId, input, request),
-    });
-    if (!submission.ok) return { intent, errors: submission.errors, values };
-    return { intent, ok: true, product: submission.product };
+    const current = await getConcreteProduct(productId, context);
+    if (intent === "archive") return { intent, ok: true, product: await archiveConcreteProduct(productId, context) };
+    if (intent === "restore") return { intent, ok: true, product: await restoreConcreteProduct(productId, context) };
+    if (intent === "product") {
+      const parsed = parseConcreteProduct(form, current.productCompositionId);
+      if ("errors" in parsed) return { intent, errors: parsed.errors, values };
+      const { productCompositionId: _compositionId, ...input } = parsed.value;
+      return { intent, ok: true, product: await updateConcreteProduct(productId, input, context) };
+    }
+
+    const projection = projectProductFormData(form);
+    if (!projection.ok) return { intent, errors: projection.errors, values };
+    if (form.get("confirmSharedImpact") !== "on") return { intent, errors: { form: "Bevestig dat deze wijziging alle gekoppelde producten raakt." }, values };
+    if (intent === "nutrition") {
+      if (projection.value.macroProfile === null) return { intent, errors: { macroProfile: "Vul een macroprofiel in." }, values };
+      await updateProductCompositionMacroProfile(current.productCompositionId, projection.value.macroProfile, context);
+    } else {
+      const brandId = await resolveBrandId(form, context);
+      await updateProductComposition(current.productCompositionId, {
+        name: projection.value.name, categoryId: projection.value.categoryId, brandId, consumptionType: projection.value.consumptionType, macroProfile: current.composition.macroProfile,
+      }, context);
+    }
+    return { intent, ok: true, product: await getConcreteProduct(productId, context) };
   } catch (error) {
-    return { intent, errors: mapApiError(error), values };
+    return { intent, errors: mapProductApiError(error), values };
   }
 }
 
-/**
- * Prevent one edit compartment from changing fields owned by another compartment.
- *
- * @param form - Submitted compartment form, mutated with canonical retained values.
- * @param intent - Compartment that owns the submitted mutation.
- * @param product - Current persisted product used to protect other fields.
- * @returns Nothing.
- */
-function enforceCompartmentBoundary(form: FormData, intent: ProductDetailEditIntent, product: ProductDetailDto): void {
-  if (intent === "nutrition") {
-    form.set("categoryId", String(product.category.id));
-    form.set("productName", product.name);
-    form.set("brandId", product.brand?.id ?? "");
-    form.delete("brandName");
-    form.set("consumptionType", product.consumptionType);
-    return;
-  }
-
-  const profile = product.macroProfile;
-  if (profile === null) {
-    form.delete("macroEnabled");
-    return;
-  }
-  form.set("macroEnabled", "on");
-  form.set("referenceBasis", profile.referenceBasis);
-  form.set("caloriesKcal", profile.caloriesKcal ?? "");
-  form.set("proteinG", profile.proteinG ?? "");
-  form.set("carbohydratesG", profile.carbohydratesG ?? "");
-  form.set("fatG", profile.fatG ?? "");
-  form.set("caloriesSource", profile.caloriesSource ?? "");
-  form.set("caloriesChanged", "false");
+/** Parse a supported detail mutation intent. */
+function parseIntent(value: FormDataEntryValue | null): ProductDetailEditIntent {
+  if (value === "composition" || value === "nutrition" || value === "archive" || value === "restore") return value;
+  return "product";
 }
 
-/**
- * Build the product-catalog return URL from route context.
- *
- * @param url - Current product detail URL.
- * @returns The matching catalog context URL.
- */
+/** Resolve an existing or newly entered brand for a shared composition edit. */
+async function resolveBrandId(form: FormData, context: BackendRequestContext): Promise<string | null> {
+  const newName = readFormText(form, "brandName").trim();
+  if (newName) return (await createBrand({ name: newName }, context)).id;
+  return readFormText(form, "brandId").trim() || null;
+}
+
+/** Build the product-catalog return URL from route context. */
 function buildBackUrl(url: URL): string {
   const source = parseAdminSourceFromSearch(url.searchParams);
-  const categoryId = url.searchParams.get("categoryId");
-  if (categoryId) return withAdminSource(`/product-catalogus?categoryId=${categoryId}`, source);
-  const brandId = url.searchParams.get("brandId");
-  if (brandId) return withAdminSource(`/product-catalogus?brandId=${brandId}`, source);
-  return withAdminSource("/product-catalogus", source);
+  const params = new URLSearchParams();
+  for (const key of ["q", "categoryId", "brandId", "archived"] as const) {
+    const value = url.searchParams.get(key);
+    if (value) params.set(key, value);
+  }
+  const path = params.size > 0 ? `/product-catalogus?${params.toString()}` : "/product-catalogus";
+  return withAdminSource(path, source);
 }

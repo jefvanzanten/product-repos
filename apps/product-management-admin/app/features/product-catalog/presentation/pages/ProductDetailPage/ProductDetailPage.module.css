@@ -1,0 +1,245 @@
+.page {
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: column;
+  gap: 24px;
+  width: min(100%, 672px);
+  min-height: 0;
+  overflow-y: auto;
+  padding: 27px 0 32px;
+  scrollbar-width: none;
+}
+
+.page::-webkit-scrollbar {
+  width: 0;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.header a {
+  color: #bfece5;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.header h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 23px;
+}
+
+.card,
+.editCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  color: #111425;
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+.card h2,
+.editCard h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 18px;
+}
+
+.cardHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardHeading span {
+  color: #176b5a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.definitionList {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.definitionList div {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+}
+
+.definitionList dt {
+  color: #34384a;
+  font-weight: 700;
+}
+
+.definitionList dd {
+  min-width: 0;
+  margin: 0;
+  color: #111425;
+}
+
+.productImage {
+  width: 88px;
+  height: 88px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.primaryLink,
+.secondaryButton,
+.dangerButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: max-content;
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 8px;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 8%);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.primaryLink {
+  color: #ffffff;
+  background: #20a489;
+  border: 0;
+}
+
+.secondaryButton {
+  color: #111425;
+  background: #ffffff;
+  border: 1px solid #d9deea;
+}
+
+.dangerButton {
+  color: #ffffff;
+  background: #b42318;
+  border: 0;
+}
+
+.archivedBadge {
+  padding: 5px 8px;
+  color: #7f1d1d;
+  font-size: 11px;
+  font-weight: 700;
+  background: #fee2e2;
+  border-radius: 999px;
+}
+
+.muted {
+  margin: 0;
+  color: #505466;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.editCard {
+  gap: 24px;
+  width: 100%;
+  padding: 0;
+  color: #ffffff;
+  background: transparent;
+}
+
+.editCard h2 {
+  color: #ffffff;
+  font-size: 30px;
+  line-height: 36px;
+}
+
+.impact {
+  margin: 0;
+  padding: 12px;
+  color: #713f12;
+  font-size: 13px;
+  font-weight: 700;
+  background: #fef3c7;
+  border-radius: 8px;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.label input,
+.label select {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  color: #111425;
+  font-size: 14px;
+  background: #ffffff;
+  border: 1px solid #d9deea;
+  border-radius: 8px;
+}
+
+.label small {
+  color: #fecaca;
+  font-size: 12px;
+}
+
+.twoColumns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.check input {
+  width: 18px;
+  height: 18px;
+}
+
+.formError {
+  margin: 0;
+  padding: 12px;
+  color: #7f1d1d;
+  font-size: 14px;
+  background: #fee2e2;
+  border-radius: 8px;
+}
+
+@media (max-width: 639px) {
+  .page {
+    padding-top: 16px;
+  }
+
+  .definitionList div,
+  .twoColumns {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .cardHeading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -1,7 +1,9 @@
-import { createLocationRequestSchema, updateLocationRequestSchema } from "@product-repos/contracts/locations";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { archiveLocation, createLocation, getLocationTree, mapLocationApiError, restoreLocation, updateLocation } from "../api/location-management-api.server";
-import type { LocationActionName, LocationActionResult, LocationLoaderData } from "../features/storage-management/location-management.types";
+import { createBackendRequestContext } from "../core/presentation/backend-request-context.server";
+import { parseCreateLocation, parseUpdateLocation } from "../features/storage-management/data/location-command-parser";
+import { archiveLocation, createLocation, getLocationTree, restoreLocation, updateLocation } from "../features/storage-management/data/location-management-api.server";
+import type { LocationActionName, LocationActionResult, LocationLoaderData } from "../features/storage-management/presentation/types/location-management.types";
+import { mapLocationApiError } from "../features/storage-management/presentation/location-error-messages";
 
 /**
  * Load the active tree or explicit archived forest.
@@ -16,7 +18,7 @@ export async function loadLocationsRoute({ request }: LoaderFunctionArgs): Promi
     throw new Response("Ongeldig opbergplaatsenfilter.", { status: 400 });
   }
   const status = rawStatus === "archived" ? "archived" : "active";
-  return { status, locations: await getLocationTree(status, request) };
+  return { status, locations: await getLocationTree(status, createBackendRequestContext(request)) };
 }
 
 /**
@@ -27,40 +29,41 @@ export async function loadLocationsRoute({ request }: LoaderFunctionArgs): Promi
  */
 export async function handleLocationsRouteAction({ request }: ActionFunctionArgs): Promise<LocationActionResult> {
   const formData = await request.formData();
+  const context = createBackendRequestContext(request);
   const action = parseActionName(formData.get("_action"));
   if (action === null) return invalidAction(null, "Ongeldige beheeractie.");
 
   try {
     switch (action) {
       case "create": {
-        const input = createLocationRequestSchema.safeParse({
+        const input = parseCreateLocation({
           name: readText(formData, "name"),
           parentId: parseNullableId(formData.get("parentId")),
         });
-        if (!input.success) return invalidAction(action, "Controleer de naam en bovenliggende opbergplaats.");
-        return { ok: true, action, location: await createLocation(input.data, request) };
+        if (input === null) return invalidAction(action, "Controleer de naam en bovenliggende opbergplaats.");
+        return { ok: true, action, location: await createLocation(input, context) };
       }
       case "rename": {
         const id = parseRequiredId(formData.get("locationId"));
-        const input = updateLocationRequestSchema.safeParse({ name: readText(formData, "name") });
-        if (id === null || !input.success) return invalidAction(action, "Controleer de opbergplaats en naam.");
-        return { ok: true, action, location: await updateLocation(id, input.data, request) };
+        const input = parseUpdateLocation({ name: readText(formData, "name") });
+        if (id === null || input === null) return invalidAction(action, "Controleer de opbergplaats en naam.");
+        return { ok: true, action, location: await updateLocation(id, input, context) };
       }
       case "move": {
         const id = parseRequiredId(formData.get("locationId"));
-        const input = updateLocationRequestSchema.safeParse({ parentId: parseNullableId(formData.get("parentId")) });
-        if (id === null || !input.success) return invalidAction(action, "Kies een geldige bestemming.");
-        return { ok: true, action, location: await updateLocation(id, input.data, request) };
+        const input = parseUpdateLocation({ parentId: parseNullableId(formData.get("parentId")) });
+        if (id === null || input === null) return invalidAction(action, "Kies een geldige bestemming.");
+        return { ok: true, action, location: await updateLocation(id, input, context) };
       }
       case "archive": {
         const id = parseRequiredId(formData.get("locationId"));
         if (id === null) return invalidAction(action, "Ongeldige opbergplaats.");
-        return { ok: true, action, location: await archiveLocation(id, request) };
+        return { ok: true, action, location: await archiveLocation(id, context) };
       }
       case "restore": {
         const id = parseRequiredId(formData.get("locationId"));
         if (id === null) return invalidAction(action, "Ongeldige opbergplaats.");
-        return { ok: true, action, location: await restoreLocation(id, request) };
+        return { ok: true, action, location: await restoreLocation(id, context) };
       }
     }
   } catch (error: unknown) {

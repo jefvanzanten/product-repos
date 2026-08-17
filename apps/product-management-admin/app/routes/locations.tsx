@@ -1,8 +1,8 @@
 import { isRouteErrorResponse, useLoaderData, useRouteError, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { AdminLink } from "../admin-source-context";
-import { requireAdministrator } from "../auth.server";
-import StorageManagementPage from "../features/storage-management/components/StorageManagementPage/StorageManagementPage";
-import type { LocationActionResult, LocationLoaderData } from "../features/storage-management/location-management.types";
+import { AdminLink } from "../core/presentation/routing/admin-source-context";
+import { requireAdministrator } from "../core/presentation/auth/auth.server";
+import StorageManagementPage from "../features/storage-management/presentation/components/StorageManagementPage/StorageManagementPage";
+import type { LocationActionResult, LocationLoaderData } from "../features/storage-management/presentation/types/location-management.types";
 import { handleLocationsRouteAction, loadLocationsRoute } from "./locations-route.server";
 
 /**

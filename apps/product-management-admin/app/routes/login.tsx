@@ -2,13 +2,13 @@ import { isAdministrator } from "@product-repos/auth-client/roles";
 import { LoginPage } from "@product-repos/auth-client/login-page";
 import { lookupSession } from "@product-repos/auth-client/session.server";
 import { data, redirect, useLoaderData, type LoaderFunctionArgs } from "react-router";
-import { authClient } from "../auth-client";
+import { authClient } from "../core/data/auth/auth-client";
 import {
   parseAdminReturnPath,
   toAdminRedirectPath,
-} from "../admin-navigation";
-import { buildAdminLoginSuccessPath } from "../auth.server";
-import { resolveAdminSource } from "../admin-source.server";
+} from "../core/presentation/routing/admin-navigation";
+import { buildAdminLoginSuccessPath } from "../core/presentation/auth/auth.server";
+import { resolveAdminSource } from "../core/data/admin-source-cookie.server";
 
 /**
  * Resolve a safe login destination and redirect an existing administrator.
@@ -22,14 +22,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const successPath = buildAdminLoginSuccessPath(requestUrl, resolvedSource.source);
   const sessionResult = await lookupSession(request);
 
-  if (sessionResult._tag === "Authenticated") {
+  if (sessionResult.tag === "Authenticated") {
     if (!isAdministrator(sessionResult.session.user.role)) {
       throw new Response("Beheerderstoegang vereist.", { status: 403 });
     }
     const returnPath = parseAdminReturnPath(requestUrl.searchParams.get("returnTo"));
     throw redirect(toAdminRedirectPath(returnPath, resolvedSource.source));
   }
-  if (sessionResult._tag === "Unavailable") {
+  if (sessionResult.tag === "Unavailable") {
     throw new Response("Authenticatie is tijdelijk niet beschikbaar.", {
       status: sessionResult.status,
     });

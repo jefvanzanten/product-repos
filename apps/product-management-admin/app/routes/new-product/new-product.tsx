@@ -4,8 +4,8 @@ import {
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router";
-import { requireAdministrator } from "../../auth.server";
-import { NewProductPage } from "../../features/product-catalog/pages/NewProductPage/NewProductPage";
+import { requireAdministrator } from "../../core/presentation/auth/auth.server";
+import { NewProductPage } from "../../features/product-catalog/presentation/pages/NewProductPage/NewProductPage";
 import {
   handleNewProductRouteAction,
   loadNewProductRoute,
@@ -13,7 +13,7 @@ import {
 import type {
   NewProductActionResult,
   NewProductLoaderData,
-} from "../../features/product-catalog/types/new-product.types";
+} from "../../features/product-catalog/presentation/types/new-product.types";
 
 /** Return metadata for the new-product route. */
 export function meta(): ReadonlyArray<{ readonly title: string }> {

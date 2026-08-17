@@ -46,12 +46,24 @@ Maak `apps/product-management-admin/.env` op basis van `.env.example` wanneer lo
 ## Verificatie
 
 ```bash
+corepack pnpm --filter product-management-admin lint
 corepack pnpm --filter product-management-admin typecheck
 corepack pnpm --filter product-management-admin test
 corepack pnpm --filter product-management-admin build
 ```
 
 De app gebruikt gedeelde authenticatie uit `packages/auth-client`, API-contracten uit `packages/contracts` en de applicatieshell uit `packages/shared`.
+
+## Architectuur
+
+- `app/features` is per feature verdeeld in `domain`, `data` en `presentation`;
+- `app/core` bevat app-brede code met dezelfde laagindeling;
+- `app/routes` vormt de compositiegrens tussen React Router, featuredata en presentatie;
+- backendcontracten worden uitsluitend in de data-laag geïmporteerd en gevalideerd;
+- data-adapters ontvangen een framework-neutrale requestcontext;
+- ESLint bewaakt de importgrenzen.
+
+Zie [ARCHITECTURE.md](./ARCHITECTURE.md) voor de volledige regels.
 
 ## Specificaties
 

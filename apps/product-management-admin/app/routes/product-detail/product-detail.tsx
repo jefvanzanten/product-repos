@@ -4,8 +4,8 @@ import {
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router";
-import { requireAdministrator } from "../../auth.server";
-import { ProductDetailPage } from "../../features/product-catalog/pages/ProductDetailPage/ProductDetailPage";
+import { requireAdministrator } from "../../core/presentation/auth/auth.server";
+import { ProductDetailPage } from "../../features/product-catalog/presentation/pages/ProductDetailPage/ProductDetailPage";
 import {
   handleProductDetailRouteAction,
   loadProductDetailRoute,
@@ -13,7 +13,7 @@ import {
 import type {
   ProductDetailActionResult,
   ProductDetailLoaderData,
-} from "../../features/product-catalog/types/product-detail.types";
+} from "../../features/product-catalog/presentation/types/product-detail.types";
 
 /** Return metadata for the product-detail route. */
 export function meta(): ReadonlyArray<{ readonly title: string }> {

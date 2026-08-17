@@ -4,15 +4,15 @@ import {
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router";
-import { requireAdministrator } from "../../auth.server";
+import { requireAdministrator } from "../../core/presentation/auth/auth.server";
 import {
   handleProductCatalogRouteAction,
   loadProductCatalogRoute,
 } from "./product-catalog-route.server";
-import { ProductCatalogPage } from "../../features/product-catalog/pages/ProductCatalogPage/ProductCatalogPage";
-import type { ActionResult, LoaderData } from "../../features/product-catalog/types/product-catalog.types";
+import { ProductCatalogPage } from "../../features/product-catalog/presentation/pages/ProductCatalogPage/ProductCatalogPage";
+import type { ActionResult, LoaderData } from "../../features/product-catalog/presentation/types/product-catalog.types";
 
-export type { ActionResult, LoaderData } from "../../features/product-catalog/types/product-catalog.types";
+export type { ActionResult, LoaderData } from "../../features/product-catalog/presentation/types/product-catalog.types";
 
 /** Load protected product-catalog browse and search data. */
 export async function loader(args: LoaderFunctionArgs): Promise<LoaderData> {

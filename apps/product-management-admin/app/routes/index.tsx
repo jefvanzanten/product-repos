@@ -1,6 +1,6 @@
 import { redirect, type LoaderFunctionArgs } from "react-router";
-import { parseAdminSourceFromSearch, toAdminRedirectPath } from "../admin-navigation";
-import { requireAdministrator } from "../auth.server";
+import { parseAdminSourceFromSearch, toAdminRedirectPath } from "../core/presentation/routing/admin-navigation";
+import { requireAdministrator } from "../core/presentation/auth/auth.server";
 
 /** Return metadata for the Product Management Admin root route. */
 export function meta(): ReadonlyArray<{ readonly title: string }> {

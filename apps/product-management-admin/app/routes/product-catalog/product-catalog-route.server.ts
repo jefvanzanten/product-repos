@@ -1,7 +1,7 @@
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { parseAdminSourceFromSearch, toAdminRedirectPath } from "../../admin-navigation";
+import { parseAdminSourceFromSearch, toAdminRedirectPath } from "../../core/presentation/routing/admin-navigation";
 import { handleProductCatalogAction, loadProductCatalog } from "./product-catalog.server";
-import type { ActionResult, LoaderData } from "../../features/product-catalog/types/product-catalog.types";
+import type { ActionResult, LoaderData } from "../../features/product-catalog/presentation/types/product-catalog.types";
 
 /**
  * Load catalog browse or search data for the product catalog route.

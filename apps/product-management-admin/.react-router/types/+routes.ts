@@ -20,6 +20,9 @@ type Pages = {
   "/brand-lookup": {
     params: {};
   };
+  "/composition-lookup": {
+    params: {};
+  };
   "/product-catalogus": {
     params: {};
   };
@@ -30,17 +33,6 @@ type Pages = {
   };
   "/product-catalogus/nieuw": {
     params: {};
-  };
-  "/product-catalogus/:productId/verpakkingen/nieuw": {
-    params: {
-      "productId": string;
-    };
-  };
-  "/product-catalogus/:productId/verpakkingen/:packageId": {
-    params: {
-      "productId": string;
-      "packageId": string;
-    };
   };
   "/product-catalogus/:productId": {
     params: {
@@ -55,7 +47,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/login" | "/brand-lookup" | "/product-catalogus" | "/product-catalogus/categorieen/:categoryId/bewerken" | "/product-catalogus/nieuw" | "/product-catalogus/:productId/verpakkingen/nieuw" | "/product-catalogus/:productId/verpakkingen/:packageId" | "/product-catalogus/:productId" | "/locations";
+    page: "/" | "/login" | "/brand-lookup" | "/composition-lookup" | "/product-catalogus" | "/product-catalogus/categorieen/:categoryId/bewerken" | "/product-catalogus/nieuw" | "/product-catalogus/:productId" | "/locations";
   };
   "routes/login.tsx": {
     id: "routes/login";
@@ -63,7 +55,7 @@ type RouteFiles = {
   };
   "routes/layout/layout.tsx": {
     id: "routes/layout/layout";
-    page: "/" | "/brand-lookup" | "/product-catalogus" | "/product-catalogus/categorieen/:categoryId/bewerken" | "/product-catalogus/nieuw" | "/product-catalogus/:productId/verpakkingen/nieuw" | "/product-catalogus/:productId/verpakkingen/:packageId" | "/product-catalogus/:productId" | "/locations";
+    page: "/" | "/brand-lookup" | "/composition-lookup" | "/product-catalogus" | "/product-catalogus/categorieen/:categoryId/bewerken" | "/product-catalogus/nieuw" | "/product-catalogus/:productId" | "/locations";
   };
   "routes/index.tsx": {
     id: "routes/index";
@@ -72,6 +64,10 @@ type RouteFiles = {
   "routes/brand-lookup.ts": {
     id: "routes/brand-lookup";
     page: "/brand-lookup";
+  };
+  "routes/composition-lookup.ts": {
+    id: "routes/composition-lookup";
+    page: "/composition-lookup";
   };
   "routes/product-catalog/product-catalog.tsx": {
     id: "routes/product-catalog/product-catalog";
@@ -84,14 +80,6 @@ type RouteFiles = {
   "routes/new-product/new-product.tsx": {
     id: "routes/new-product/new-product";
     page: "/product-catalogus/nieuw";
-  };
-  "routes/product-package/package-form.tsx": {
-    id: "routes/product-package/package-form";
-    page: "/product-catalogus/:productId/verpakkingen/nieuw";
-  };
-  "routes/product-package/package-edit.tsx": {
-    id: "routes/product-package/package-edit";
-    page: "/product-catalogus/:productId/verpakkingen/:packageId";
   };
   "routes/product-detail/product-detail.tsx": {
     id: "routes/product-detail/product-detail";
@@ -109,11 +97,10 @@ type RouteModules = {
   "routes/layout/layout": typeof import("./app/routes/layout/layout.tsx");
   "routes/index": typeof import("./app/routes/index.tsx");
   "routes/brand-lookup": typeof import("./app/routes/brand-lookup.ts");
+  "routes/composition-lookup": typeof import("./app/routes/composition-lookup.ts");
   "routes/product-catalog/product-catalog": typeof import("./app/routes/product-catalog/product-catalog.tsx");
   "routes/product-catalog/edit-category": typeof import("./app/routes/product-catalog/edit-category.tsx");
   "routes/new-product/new-product": typeof import("./app/routes/new-product/new-product.tsx");
-  "routes/product-package/package-form": typeof import("./app/routes/product-package/package-form.tsx");
-  "routes/product-package/package-edit": typeof import("./app/routes/product-package/package-edit.tsx");
   "routes/product-detail/product-detail": typeof import("./app/routes/product-detail/product-detail.tsx");
   "routes/locations": typeof import("./app/routes/locations.tsx");
 };

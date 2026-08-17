@@ -5,20 +5,13 @@ export default [
   layout("routes/layout/layout.tsx", [
     index("routes/index.tsx"),
     route("brand-lookup", "routes/brand-lookup.ts"),
+    route("composition-lookup", "routes/composition-lookup.ts"),
     route("product-catalogus", "routes/product-catalog/product-catalog.tsx"),
     route(
       "product-catalogus/categorieen/:categoryId/bewerken",
       "routes/product-catalog/edit-category.tsx",
     ),
     route("product-catalogus/nieuw", "routes/new-product/new-product.tsx"),
-    route(
-      "product-catalogus/:productId/verpakkingen/nieuw",
-      "routes/product-package/package-form.tsx",
-    ),
-    route(
-      "product-catalogus/:productId/verpakkingen/:packageId",
-      "routes/product-package/package-edit.tsx",
-    ),
     route(
       "product-catalogus/:productId",
       "routes/product-detail/product-detail.tsx",

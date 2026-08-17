@@ -5,19 +5,19 @@ import {
   useLoaderData,
   type LoaderFunctionArgs,
 } from "react-router";
-import { AdminBottomTabs } from "../../admin-bottom-tabs";
+import { AdminBottomTabs } from "../../core/presentation/admin-shell/components/admin-bottom-tabs/admin-bottom-tabs";
 import {
   AdminNavLink,
   AdminSourceProvider,
-} from "../../admin-source-context";
-import { resolveAdminSource } from "../../admin-source.server";
+} from "../../core/presentation/routing/admin-source-context";
+import { resolveAdminSource } from "../../core/data/admin-source-cookie.server";
 import {
   ADMIN_BASE_PATH,
   toAdminPublicPath,
   withAdminSource,
-} from "../../admin-navigation";
-import { authClient } from "../../auth-client";
-import { requireAdministrator } from "../../auth.server";
+} from "../../core/presentation/routing/admin-navigation";
+import { authClient } from "../../core/data/auth/auth-client";
+import { requireAdministrator } from "../../core/presentation/auth/auth.server";
 import styles from "./layout.module.css";
 
 /**
