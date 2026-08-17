@@ -24,7 +24,7 @@ export const calorieTrackerConsumptionTypeSchema = z.enum(["FOOD", "DRINK", "SUP
 export const consumptionTypeFilterSchema = z.enum(["all", "food", "drink", "supplement"]);
 
 /** Ways a consumed quantity can be expressed relative to a package. */
-export const consumptionInputModeSchema = z.enum(["PACKAGE", "INDIVIDUAL_UNIT", "CONTENT_UNIT"]);
+export const consumptionInputModeSchema = z.enum(["FULL_PRODUCT", "PRODUCT_PORTION", "CONTENT_UNIT"]);
 
 /** Unit dimensions exposed by package and log projections. */
 export const calorieTrackerUnitDimensionSchema = z.enum(["MASS", "VOLUME", "COUNT"]);
@@ -33,8 +33,9 @@ export const calorieTrackerUnitDimensionSchema = z.enum(["MASS", "VOLUME", "COUN
 export const calorieTrackerErrorCodeSchema = z.enum([
   "VALIDATION_ERROR",
   "REFERENCE_NOT_FOUND",
-  "PRODUCT_PACKAGE_NOT_FOUND",
-  "PRODUCT_PACKAGE_ARCHIVED",
+  "PRODUCT_NOT_FOUND",
+  "PRODUCT_ARCHIVED",
+  "DISH_UNAVAILABLE",
   "LOG_NOT_FOUND",
   "LOG_ALREADY_EXISTS",
   "LOG_CREATE_CONFLICT",
@@ -84,9 +85,8 @@ export const calorieTrackerPortionSchema = z.object({
   portionsPerPackage: z.number().int().positive().nullable(),
 }).strict();
 
-/** Active package returned by recent-package and package-search endpoints. */
-export const packageSearchResultSchema = z.object({
-  packageId: z.number().int().positive(),
+/** Active concrete product returned by recent-product and product-search endpoints. */
+export const productSearchResultSchema = z.object({
   productId: z.string().uuid(),
   productName: z.string(),
   displayName: z.string(),
@@ -96,7 +96,7 @@ export const packageSearchResultSchema = z.object({
   contentAmount: calorieTrackerPositiveDecimalSchema,
   contentUnit: calorieTrackerUnitTypeSchema,
   portion: calorieTrackerPortionSchema.nullable(),
-  summary: z.string(),
+  packageSummary: z.string(),
   imageUrl: z.string().url().nullable(),
 }).strict();
 
@@ -107,8 +107,8 @@ export const availableInputUnitSchema = z.object({
   label: z.string(),
 }).strict();
 
-/** Strict package-search result list returned by the HTTP boundary. */
-export const packageSearchResultsSchema = z.array(packageSearchResultSchema);
+/** Strict concrete-product search result list returned by the HTTP boundary. */
+export const productSearchResultsSchema = z.array(productSearchResultSchema);
 
 /** Strict available-input-unit list returned by the HTTP boundary. */
 export const availableInputUnitsSchema = z.array(availableInputUnitSchema);
@@ -122,9 +122,8 @@ export const macroValuesSchema = z.object({
 }).strict();
 
 /** Package projection embedded in an existing consumption log. */
-export const consumptionLogPackageSchema = packageSearchResultSchema.extend({
-  productArchived: z.boolean(),
-  packageArchived: z.boolean(),
+export const consumptionLogProductSchema = productSearchResultSchema.extend({
+  archived: z.boolean(),
 }).strict();
 
 /** Persistence kind of one consumption log. */
@@ -146,16 +145,18 @@ const consumptionLogBaseSchema = z.object({
 /** Pinned dish reference embedded in an existing dish consumption log. */
 export const dishConsumptionReferenceSchema = z.object({
   id: z.string().uuid(),
+  userId: z.string(),
   name: z.string(),
   imageUrl: z.string().url().nullable(),
   versionId: z.string().uuid(),
   servings: calorieTrackerPositiveDecimalSchema,
+  recipeAccessible: z.boolean(),
 }).strict();
 
 /** Complete product consumption-log response with current catalog-derived data. */
 export const productConsumptionLogSchema = consumptionLogBaseSchema.extend({
   type: z.literal("PRODUCT"),
-  package: consumptionLogPackageSchema,
+  product: consumptionLogProductSchema,
   inputMode: consumptionInputModeSchema,
   inputUnitType: calorieTrackerUnitTypeSchema.nullable(),
 }).strict();
@@ -181,7 +182,7 @@ export const logListSchema = z.object({
 export const createProductConsumptionLogSchema = z.object({
   id: z.string().uuid(),
   type: z.literal("PRODUCT"),
-  packageId: z.number().int().positive(),
+  productId: z.string().uuid(),
   quantity: calorieTrackerPositiveDecimalSchema,
   inputMode: consumptionInputModeSchema,
   inputUnitTypeId: z.number().int().positive().nullable(),
@@ -204,7 +205,7 @@ export const createConsumptionLogSchema = z.discriminatedUnion("type", [createPr
 export const updateProductConsumptionLogSchema = z.object({
   expectedUpdatedAt: z.iso.datetime({ offset: true }),
   type: z.literal("PRODUCT"),
-  packageId: z.number().int().positive(),
+  productId: z.string().uuid(),
   quantity: calorieTrackerPositiveDecimalSchema,
   inputMode: consumptionInputModeSchema,
   inputUnitTypeId: z.number().int().positive().nullable(),
@@ -224,13 +225,13 @@ export const updateConsumptionLogSchema = z.discriminatedUnion("type", [updatePr
 
 /** One ingredient persisted inside an immutable dish recipe version. */
 export const dishIngredientSchema = z.object({
-  packageId: z.number().int().positive(),
+  productId: z.string().uuid(),
   productName: z.string(),
   displayName: z.string(),
   quantity: calorieTrackerPositiveDecimalSchema,
   inputMode: consumptionInputModeSchema,
   inputUnitType: calorieTrackerUnitTypeSchema.nullable(),
-  packageArchived: z.boolean(),
+  productArchived: z.boolean(),
 }).strict();
 
 /** Complete user-owned dish with its newest recipe version. */
@@ -249,7 +250,7 @@ export const dishSchema = z.object({
 
 /** One ingredient supplied when creating or replacing a dish recipe. */
 export const createDishIngredientSchema = z.object({
-  packageId: z.number().int().positive(),
+  productId: z.string().uuid(),
   quantity: calorieTrackerPositiveDecimalSchema,
   inputMode: consumptionInputModeSchema,
   inputUnitTypeId: z.number().int().positive().nullable(),
@@ -274,15 +275,18 @@ export const updateDishSchema = z.object({
 /** Dish search result row in the combined log-flow search. */
 export const dishSearchResultSchema = z.object({
   id: z.string().uuid(),
+  userId: z.string(),
   name: z.string(),
+  makerDisplayName: z.string().nullable(),
+  isOwnedByViewer: z.boolean(),
   imageUrl: z.string().url().nullable(),
   servings: calorieTrackerPositiveDecimalSchema,
   caloriesPerServing: calorieTrackerDecimalSchema.nullable(),
 }).strict();
 
 /** Package search result row tagged for the combined log-flow search. */
-export const packageUnifiedSearchResultSchema = packageSearchResultSchema.extend({
-  kind: z.literal("PACKAGE"),
+export const productUnifiedSearchResultSchema = productSearchResultSchema.extend({
+  kind: z.literal("PRODUCT"),
 }).strict();
 
 /** Dish search result row tagged for the combined log-flow search. */
@@ -291,7 +295,7 @@ export const dishUnifiedSearchResultSchema = dishSearchResultSchema.extend({
 }).strict();
 
 /** Combined package-and-dish search result discriminated by kind. */
-export const unifiedSearchResultSchema = z.discriminatedUnion("kind", [packageUnifiedSearchResultSchema, dishUnifiedSearchResultSchema]);
+export const unifiedSearchResultSchema = z.discriminatedUnion("kind", [productUnifiedSearchResultSchema, dishUnifiedSearchResultSchema]);
 
 /** Result returned after soft-deleting a dish without a restore flow. */
 export const deleteDishResultSchema = z.object({
@@ -351,13 +355,13 @@ export type CalorieTrackerUnitType = z.infer<typeof calorieTrackerUnitTypeSchema
 /** An optional portion available for a catalog package. */
 export type CalorieTrackerPortion = z.infer<typeof calorieTrackerPortionSchema>;
 /** A package available for a new consumption log. */
-export type PackageSearchResult = z.infer<typeof packageSearchResultSchema>;
+export type ProductSearchResult = z.infer<typeof productSearchResultSchema>;
 /** An input unit available for a selected package. */
 export type AvailableInputUnit = z.infer<typeof availableInputUnitSchema>;
 /** Derived nullable calorie and macro values. */
 export type MacroValues = z.infer<typeof macroValuesSchema>;
 /** A package embedded in an existing consumption log. */
-export type ConsumptionLogPackage = z.infer<typeof consumptionLogPackageSchema>;
+export type ConsumptionLogProduct = z.infer<typeof consumptionLogProductSchema>;
 /** A persisted consumption-log kind. */
 export type ConsumptionLogType = z.infer<typeof consumptionLogTypeSchema>;
 /** A pinned dish reference inside a dish consumption log. */

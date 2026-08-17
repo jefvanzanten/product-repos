@@ -5,9 +5,12 @@
   "type": "module",
   "exports": {
     "./bottom-tab-bar": "./components/bottom-tab-bar/bottom-tab-bar.tsx",
-    "./public-app-path": "./routing/public-app-path.ts"
+    "./public-app-path": "./routing/public-app-path.ts",
+    "./recipe-path": "./routing/public-app-path.ts",
+    "./product-presentation": "./product-presentation.ts"
   },
   "scripts": {
+    "test": "vitest --run",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "peerDependencies": {
@@ -16,6 +19,7 @@
   },
   "devDependencies": {
     "@types/react": "^19.2.14",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.2"
   }
 }

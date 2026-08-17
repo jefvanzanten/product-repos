@@ -1,8 +1,5 @@
 import { z } from "zod/v4";
 import { brandDtoSchema } from "./brands.ts";
-import { categoryDtoSchema } from "./categories.ts";
-import { packageTypeDtoSchema } from "./package-types.ts";
-import { unitContentDtoSchema } from "./unit-types.ts";
 
 const nullableDecimalSchema = z.string().regex(/^(?:0|[1-9]\d*)(?:\.\d+)?$/).nullable();
 
@@ -13,7 +10,7 @@ export const macroReferenceBasisSchema = z.enum(["PER_100_G", "PER_100_ML", "PER
 /** Origins supported for a stored calorie value. */
 export const caloriesSourceSchema = z.enum(["AUTOMATIC", "MANUAL"]);
 
-/** Macro profile protocol shape shared by product requests and responses. */
+/** Macro profile shared by every product in one composition. */
 export const macroProfileSchema = z.object({
   referenceBasis: macroReferenceBasisSchema,
   caloriesKcal: nullableDecimalSchema,
@@ -23,172 +20,82 @@ export const macroProfileSchema = z.object({
   caloriesSource: caloriesSourceSchema.nullable(),
 }).strict();
 
-/** Optional portion definition returned with a product package. */
-export const productPackagePortionDtoSchema = z.object({
+/** Shared product-composition mutation input. */
+export const productCompositionInputSchema = z.object({
   name: z.string(),
-  unitContent: unitContentDtoSchema,
-  portionsPerPackage: z.number().int().positive().nullable(),
-}).strict();
-
-/** Product package returned by the catalog API. */
-export const productPackageDtoSchema = z.object({
-  id: z.number().int(),
-  imageUrl: z.string().url().nullable(),
-  packageType: packageTypeDtoSchema,
-  unitContent: unitContentDtoSchema,
-  portion: productPackagePortionDtoSchema.nullable(),
-  summary: z.string(),
-}).strict();
-
-/** Product creation response. */
-export const productCreatedDtoSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-  consumptionType: consumptionTypeSchema,
-  category: categoryDtoSchema,
-  brand: brandDtoSchema.nullable(),
-  macroProfile: macroProfileSchema.nullable(),
-  package: productPackageDtoSchema,
-}).strict();
-
-/** Complete product detail response. */
-export const productDetailDtoSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-  displayName: z.string(),
-  consumptionType: consumptionTypeSchema,
-  category: categoryDtoSchema,
-  categoryPath: z.array(categoryDtoSchema),
-  brand: brandDtoSchema.nullable(),
-  macroProfile: macroProfileSchema.nullable(),
-  packages: z.array(productPackageDtoSchema),
-}).strict();
-
-/** Product row returned by catalog browse and search endpoints. */
-export const catalogProductRowSchema = z.object({
-  id: z.string().uuid(),
-  displayName: z.string(),
-  brand: brandDtoSchema.nullable(),
-  consumptionType: consumptionTypeSchema,
-  categoryPath: z.string(),
-  packageSummary: z.string(),
-}).strict();
-
-/** Category row returned by catalog browse and search endpoints. */
-export const catalogCategoryRowSchema = categoryDtoSchema.extend({
-  path: z.string(),
-  productCount: z.number().int(),
-}).strict();
-
-/** Catalog browse response. */
-export const catalogBrowseResponseSchema = z.discriminatedUnion("state", [
-  z.object({ state: z.literal("root"), categories: z.array(catalogCategoryRowSchema), isEmpty: z.boolean() }).strict(),
-  z.object({
-    state: z.literal("category"),
-    category: catalogCategoryRowSchema,
-    categoryPath: z.array(categoryDtoSchema),
-    subcategories: z.array(catalogCategoryRowSchema),
-    products: z.object({ items: z.array(catalogProductRowSchema), hasMore: z.boolean(), cursor: z.string().nullable() }).strict(),
-  }).strict(),
-  z.object({
-    state: z.literal("brand"),
-    brand: brandDtoSchema,
-    productGroups: z.array(z.object({ category: categoryDtoSchema, categoryPath: z.string(), products: z.array(catalogProductRowSchema) }).strict()),
-    hasMore: z.boolean(),
-    cursor: z.string().nullable(),
-  }).strict(),
-]);
-
-/** Catalog search response. */
-export const catalogSearchResponseSchema = z.object({
-  products: z.array(catalogProductRowSchema),
-  brands: z.array(brandDtoSchema.extend({ productCount: z.number().int() })),
-  categories: z.array(catalogCategoryRowSchema),
-  hasMore: z.object({ products: z.boolean(), brands: z.boolean(), categories: z.boolean() }).strict(),
-}).strict();
-
-/** Optional portion definition accepted with a package mutation. */
-export const productPackagePortionRequestSchema = z.object({
-  name: z.string(),
-  amount: z.string(),
-  unitTypeId: z.number().int().positive(),
-  portionsPerPackage: z.number().int().positive().nullable(),
-}).strict();
-
-/** Product package mutation request. */
-export const productPackageRequestSchema = z.object({
-  packageTypeId: z.number().int().positive(),
-  imageUrl: z.string().url().nullable().optional(),
-  amount: z.string(),
-  unitTypeId: z.number().int().positive(),
-  portion: productPackagePortionRequestSchema.nullable(),
-}).strict();
-
-/** Product creation request. */
-export const createProductRequestSchema = z.object({
-  name: z.string(),
-  categoryId: z.number().int(),
+  categoryId: z.number().int().positive(),
   brandId: z.string().uuid().nullable().optional(),
   consumptionType: consumptionTypeSchema,
   macroProfile: macroProfileSchema.nullable().optional(),
-  package: productPackageRequestSchema,
 }).strict();
 
-/** Product update request. */
-export const updateProductRequestSchema = z.object({
+/** Optional concrete-product content input. */
+export const concreteProductContentInputSchema = z.object({
+  amount: z.string(),
+  unitTypeId: z.number().int().positive(),
+}).strict();
+
+/** Optional portion input belonging to one concrete product. */
+export const productPortionInputSchema = z.object({
+  singularName: z.string(),
+  pluralName: z.string(),
+  amount: z.string(),
+  unitTypeId: z.number().int().positive(),
+  portionsPerProduct: z.number().int().positive().nullable().optional(),
+}).strict();
+
+/** Concrete-product mutation input. */
+export const concreteProductInputSchema = z.object({
+  productCompositionId: z.string().uuid(),
+  packageTypeId: z.number().int().positive().nullable().optional(),
+  content: concreteProductContentInputSchema.nullable().optional(),
+  imageUrl: z.string().url().nullable().optional(),
+  barcode: z.string().trim().min(1).nullable().optional(),
+  portion: productPortionInputSchema.nullable().optional(),
+}).strict();
+
+/** Product-composition detail returned by catalog operations. */
+export const productCompositionDetailSchema = z.object({
+  id: z.string().uuid(),
   name: z.string(),
-  categoryId: z.number().int(),
-  brandId: z.string().uuid().nullable(),
+  categoryId: z.number().int().positive(),
+  categoryPath: z.string(),
+  brand: brandDtoSchema.nullable(),
   consumptionType: consumptionTypeSchema,
   macroProfile: macroProfileSchema.nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
 }).strict();
 
-/** Product consumption type. */
-export type ConsumptionType = z.infer<typeof consumptionTypeSchema>;
-/** Macro profile reference basis. */
-export type MacroReferenceBasis = z.infer<typeof macroReferenceBasisSchema>;
-/** Calorie value origin. */
-export type CaloriesSource = z.infer<typeof caloriesSourceSchema>;
-/** Product macro profile protocol value. */
-export type MacroProfile = z.infer<typeof macroProfileSchema>;
-/** Optional package portion protocol value. */
-export type ProductPackagePortionDto = z.infer<typeof productPackagePortionDtoSchema>;
-/** Product package protocol value. */
-export type ProductPackageDto = z.infer<typeof productPackageDtoSchema>;
-/** Product creation protocol response. */
-export type ProductCreatedDto = z.infer<typeof productCreatedDtoSchema>;
-/** Product detail protocol response. */
-export type ProductDetailDto = z.infer<typeof productDetailDtoSchema>;
-/** Catalog product protocol row. */
-export type CatalogProductRow = z.infer<typeof catalogProductRowSchema>;
-/** Catalog category protocol row. */
-export type CatalogCategoryRow = z.infer<typeof catalogCategoryRowSchema>;
-/** Catalog browse protocol response. */
-export type CatalogBrowseResponse = z.infer<typeof catalogBrowseResponseSchema>;
-/** Catalog search protocol response. */
-export type CatalogSearchResponse = z.infer<typeof catalogSearchResponseSchema>;
-/** Product creation protocol request. */
-export type CreateProductRequest = z.infer<typeof createProductRequestSchema>;
-/** Product update protocol request. */
-export type UpdateProductRequest = z.infer<typeof updateProductRequestSchema>;
-/** Optional package portion mutation protocol request. */
-export type ProductPackagePortionRequest = z.infer<typeof productPackagePortionRequestSchema>;
-/** Product package mutation protocol request. */
-export type ProductPackageRequest = z.infer<typeof productPackageRequestSchema>;
+/** Concrete-product list and detail summary. */
+export const concreteProductSummarySchema = z.object({
+  productId: z.string().uuid(),
+  productCompositionId: z.string().uuid(),
+  displayName: z.string(),
+  compositionName: z.string(),
+  brandName: z.string().nullable(),
+  categoryPath: z.string(),
+  consumptionType: consumptionTypeSchema,
+  packageSummary: z.string().nullable(),
+  imageUrl: z.string().url().nullable(),
+  barcode: z.string().nullable(),
+  archivedAt: z.string().nullable(),
+}).strict();
 
-/** Backward-compatible product selection schema. */
-export const productSelectSchema = productCreatedDtoSchema;
-/** Backward-compatible product insertion schema. */
-export const productInsertSchema = createProductRequestSchema;
-/** Backward-compatible product update schema. */
-export const productUpdateSchema = updateProductRequestSchema;
-/** Backward-compatible product relation schema. */
-export const productWithRelationsSchema = productDetailDtoSchema;
-/** Backward-compatible product alias. */
-export type Product = ProductCreatedDto;
-/** Backward-compatible product creation alias. */
-export type CreateProductInput = CreateProductRequest;
-/** Backward-compatible product update alias. */
-export type UpdateProductInput = UpdateProductRequest;
-/** Backward-compatible product detail alias. */
-export type ProductWithRelations = ProductDetailDto;
+/** Cursor page of concrete products. */
+export const concreteProductPageSchema = z.object({
+  items: z.array(concreteProductSummarySchema),
+  cursor: z.string().nullable(),
+  hasMore: z.boolean(),
+}).strict();
+
+export type ConsumptionType = z.infer<typeof consumptionTypeSchema>;
+export type MacroReferenceBasis = z.infer<typeof macroReferenceBasisSchema>;
+export type CaloriesSource = z.infer<typeof caloriesSourceSchema>;
+export type MacroProfile = z.infer<typeof macroProfileSchema>;
+export type ProductCompositionDetail = z.infer<typeof productCompositionDetailSchema>;
+export type ProductCompositionInput = z.infer<typeof productCompositionInputSchema>;
+export type ConcreteProductInput = z.infer<typeof concreteProductInputSchema>;
+export type ConcreteProductSummary = z.infer<typeof concreteProductSummarySchema>;
+export type ConcreteProductPage = z.infer<typeof concreteProductPageSchema>;
+export type ProductPortionInput = z.infer<typeof productPortionInputSchema>;
