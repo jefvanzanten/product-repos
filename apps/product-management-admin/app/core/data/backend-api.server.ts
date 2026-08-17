@@ -1,7 +1,6 @@
-const apiBaseUrl = process.env.API_URL ?? "http://localhost:3000";
-const apiUrl = apiBaseUrl.replace(/\/$/, "");
+import { sendBackendRequest as sendSharedBackendRequest, type BackendMethod } from "@product-repos/shared/backend-api";
 
-type BackendMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+const apiUrl = process.env.API_URL ?? "http://localhost:3000";
 
 type BackendRequestOptions = {
   readonly method?: BackendMethod;
@@ -27,22 +26,10 @@ async function sendBackendRequest(
   context: BackendRequestContext,
   options: BackendRequestOptions = {},
 ): Promise<Response> {
-  const headers = new Headers();
-  if (context.cookie !== null) headers.set("cookie", context.cookie);
-
-  const isFormData = options.body instanceof FormData;
-  if (options.body !== undefined && !isFormData) {
-    headers.set("Content-Type", "application/json");
-  }
-
-  return fetch(`${apiUrl}${path}`, {
-    method: options.method ?? "GET",
-    headers,
-    body: options.body === undefined
-      ? undefined
-      : isFormData
-        ? options.body
-        : JSON.stringify(options.body),
+  return sendSharedBackendRequest(apiUrl, path, {
+    method: options.method,
+    headers: context.cookie === null ? undefined : { cookie: context.cookie },
+    body: options.body,
     signal: context.signal,
   });
 }
