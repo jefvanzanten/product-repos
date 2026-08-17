@@ -1,4 +1,6 @@
-# Specificatie - product aanmaken
+# Specificatie - product aanmaken (huidige v1-flow)
+
+> De structurele doel-flow staat in [productmodel-v2-specificatie.md](./productmodel-v2-specificatie.md). Verplichte eerste verpakking en root-productgedrag hieronder beschrijven alleen de huidige implementatie en worden vervangen door samenstelling + concreet product.
 
 ## Status
 

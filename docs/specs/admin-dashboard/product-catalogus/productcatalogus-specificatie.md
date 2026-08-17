@@ -1,66 +1,42 @@
-# Spec-index - admin productcatalogus
+# Spec-index — admin productcatalogus
 
-Dit bestand is alleen een index. Gedrag staat per feature in losse specs, zodat oude flows niet door elkaar blijven lopen.
+## Doelmodel
 
-## Actuele specs
+De structurele bron van waarheid voor de catalogusrevamp is [productmodel-v2-specificatie.md](./productmodel-v2-specificatie.md). In het doelmodel:
 
-| Feature | Functionele spec | UI-specificatie | Status |
-| --- | --- | --- | --- |
-| Product aanmaken | [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md) | [product-aanmaken-ui-specificatie.md](./product-aanmaken-ui-specificatie.md) | Huidige vertical slice |
-| Product zoeken | [product-zoeken-specificatie.md](./product-zoeken-specificatie.md) | [product-zoeken-ui-specificatie.md](./product-zoeken-ui-specificatie.md) | Geimplementeerd |
-| Browsbare productcatalogus | [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md) | [productcatalogus-browsen-ui-specificatie.md](./productcatalogus-browsen-ui-specificatie.md) | Geimplementeerd |
-| Productdetail en verpakkingen | [product-detail-specificatie.md](./product-detail-specificatie.md) | [product-detail-ui-specificatie.md](./product-detail-ui-specificatie.md) | Geïmplementeerde basis; uitbreiding concept |
-| Producten en verpakkingen archiveren | [product-archiveren-specificatie.md](./product-archiveren-specificatie.md) | [product-archiveren-ui-specificatie.md](./product-archiveren-ui-specificatie.md) | Concept |
+- één `product_composition` deelt naam, merk, categorie, consumptietype en macroprofiel;
+- iedere concrete verpakking/uitvoering is één rechtstreeks selecteerbaar `product`;
+- catalogusresultaten zijn een platte lijst concrete producten;
+- `product_package` verdwijnt als zelfstandig domein- en selectieniveau.
 
-## Applicatie, routes en autorisatie
+## Specs
 
-- Product Management Admin is een zelfstandige applicatie onder het publieke basispad `/product-management-admin`.
-- De productcatalogusimplementatie, routes, loaders, actions, server-adapters en featurecomponenten staan rechtstreeks onder `apps/product-management-admin`.
-- Er is geen afzonderlijk `packages/admin-dashboard`-package en Calorie Tracker en Inventory importeren geen adminfeaturecode.
-- De routes in deze spec en de onderliggende featurespecificaties zijn app-interne routes; de publieke URL ontstaat door `/product-management-admin` ervoor te plaatsen.
-- Alle routes onder `/product-catalogus` vereisen een ingelogde gebruiker met de beheerdersrol.
-- Alleen ingelogd zijn is niet voldoende.
-- De beheerder krijgt via deze routes geen toegang tot persoonlijke consumptielogs of doelen van andere gebruikers.
-- De optionele queryparameter `source` bevat uitsluitend `inventory` of `calorie-tracker` en bepaalt de terugkeertab van de admin-app.
-- Iedere interne link, GET-formulieractie, mutation en redirect behoudt een geldige `source` naast featureparameters zoals `q`, `categoryId`, `brandId` en `status`.
-- Routevoorbeelden in de productcatalogusspecificaties laten `source` alleen voor leesbaarheid weg; wanneer de admin-app met een geldige broncontext is geopend, blijft die parameter wel aanwezig.
-
-## UI-specificaties
-
-Dit bestand is alleen een functionele index. Presentatie-eisen staan in de gekoppelde `*-ui-specificatie.md`-bestanden van de onderliggende features.
-
-## Onderliggende documenten
-
-- [Productcatalogus domeinregels](../../../domein/productcatalogus-domeinregels.md)
-- [Admin dashboard endpoints](../../../backend/Endpoints/ADMIN_DASHBOARD_ENDPOINTS.md)
-- [Product ERD](../../../backend/ERD/PRODUCT_ERD.md)
-
-## Productcatalogus-routes
-
-| App-interne route | Hoort bij | Status |
+| Feature | Specificatie | Status |
 | --- | --- | --- |
-| `/product-catalogus` | zoeken + browsen + rootcategorie aanmaken | geimplementeerd |
-| `/product-catalogus/categorieen/nieuw` | rootcategorie aanmaken | geimplementeerd |
-| `/product-catalogus/nieuw` | product aanmaken vanuit expliciete context | geimplementeerd |
-| `/product-catalogus/:productId` | productdetail | geimplementeerd |
-| `/product-catalogus/:productId/verpakkingen/nieuw` | verpakking toevoegen | geimplementeerd |
-| `/product-catalogus/:productId/verpakkingen/:packageId` | verpakkingdetail | geimplementeerd |
+| Productmodel v2 | [productmodel-v2-specificatie.md](./productmodel-v2-specificatie.md) | Doelmodel, leidend voor migratie |
+| Product aanmaken | [product-aanmaken-specificatie.md](./product-aanmaken-specificatie.md) | Huidige v1-flow; te vervangen door v2-slices |
+| Product zoeken | [product-zoeken-specificatie.md](./product-zoeken-specificatie.md) | Huidige UI; resultaten migreren naar concrete producten |
+| Browsen | [productcatalogus-browsen-specificatie.md](./productcatalogus-browsen-specificatie.md) | Huidige UI; resultaten migreren naar concrete producten |
+| Productdetail | [product-detail-specificatie.md](./product-detail-specificatie.md) | Huidige root/package-flow; te migreren |
+| Archiveren | [product-archiveren-specificatie.md](./product-archiveren-specificatie.md) | Concrete producten archiveren in v2 |
 
-## Leidende termen
+## Applicatie en routes
 
-Gebruik in de UI en specs alleen deze catalogustermen:
+Product Management Admin blijft zelfstandig gemount onder `/product-management-admin`; app-interne productcatalogusroutes beginnen met `/product-catalogus`. Beheerdersautorisatie en geldige `source=inventory|calorie-tracker`-context blijven ongewijzigd.
 
-- categorie;
-- merk;
-- product/productnaam;
-- verpakking/verpakkingstype;
-- inhoud/inhoudseenheid;
-- aantal per verpakking;
-- product- en verpakkingsafbeelding;
-- consumptietype;
-- macroprofiel;
-- actief/gearchiveerd.
+De v2-routes gebruiken concrete `productId`'s:
 
-Producten en verpakkingen worden nooit definitief verwijderd. Archiveren en heractiveren staan in [product-archiveren-specificatie.md](./product-archiveren-specificatie.md).
+| Route | Doel |
+| --- | --- |
+| `/product-catalogus` | concrete producten zoeken en browsen |
+| `/product-catalogus/nieuw` | samenstelling kiezen/maken en concreet product aanmaken |
+| `/product-catalogus/:productId` | concreet productdetail plus gedeelde samenstellingsdata |
 
-Verwijderde productmanagementmodellen horen niet terug in deze specs. Nieuwe requirements horen in de feature-spec waar ze bij horen.
+Oude package-detailroutes verdwijnen na een compatibiliteitsperiode.
+
+## Bronnen
+
+- [Product ERD](../../../backend/ERD/PRODUCT_ERD.md)
+- [Productcatalogus domeinregels](../../../domein/productcatalogus-domeinregels.md)
+- [Productcatalogus v2 endpoints](../../../backend/Endpoints/PRODUCT_CATALOG_V2_ENDPOINTS.md)
+- [Migratie- en appplannen](../../../plans/productmodel-v2-masterplan.md)

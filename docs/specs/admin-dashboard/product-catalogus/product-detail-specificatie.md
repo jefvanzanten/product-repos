@@ -1,4 +1,6 @@
-# Specificatie - productdetail en verpakkingen
+# Specificatie - productdetail en verpakkingen (huidige v1-flow)
+
+> De structurele bron van waarheid voor het doelmodel is [productmodel-v2-specificatie.md](./productmodel-v2-specificatie.md). Package-subroutes en root-productdetail hieronder worden gemigreerd naar één concreet productdetail met gedeelde `product_composition`-velden.
 
 ## Status
 

@@ -1,89 +1,59 @@
-# Domeinregels - Calorie Tracker
-
-## Status
-
-- Type: gedeeld domeindocument
-- Algemene spec: [Calorie Tracker specificatie](../specs/calorie-tracker/calorie-tracker-specificatie.md)
-- Datamodel: [Calorie Tracker ERD](../backend/ERD/CALORIE_TRACKER_ERD.md)
-- Backendcontract: [Calorie Tracker endpoints](../backend/Endpoints/CALORIE_TRACKER_ENDPOINTS.md)
-- Gedeelde catalogusregels: [Productcatalogus domeinregels](./productcatalogus-domeinregels.md)
-
-## Doel
-
-Dit document bewaart gedeelde Calorie Tracker-domeinkennis die door dashboard, logboek, mutaties, endpoints en ERD's wordt gebruikt. ERD's blijven beperkt tot opslagstructuur. Endpointdocumenten blijven beperkt tot HTTP-contracten.
+# Domeinregels — Calorie Tracker en gerechten
 
 ## Gebruikers en gegevensscheiding
 
-- De Calorie Tracker vereist authenticatie.
-- Iedere gebruiker ziet en beheert uitsluitend de eigen consumptielogs en doelen.
-- Een onbekend log-ID en een log van een andere gebruiker worden functioneel hetzelfde behandeld.
-- Een beheerder kan de gedeelde productcatalogus beheren, maar krijgt daardoor geen toegang tot persoonlijke logs of doelen van andere gebruikers.
+- De Calorie Tracker vereist authenticatie; iedere gebruiker beheert uitsluitend eigen logs en doelen.
+- Receptbeheer vindt plaats in de recepten-app. In de Calorie Tracker heet hetzelfde backendobject een `gerecht`.
+- Een beheerder kan catalogusdata beheren maar krijgt geen toegang tot persoonlijke logs of doelen.
 
 ## Consumptielogs
 
-- Een consumptielog hoort bij exact één gebruiker en één catalogusverpakking of één gepinde gerechtversie.
-- Een log bewaart de oorspronkelijke hoeveelheid, invoermodus, invoereenheid, het consumptiemoment en de gebruikte browsertijdzone.
-- Logs bewaren geen product-, verpakking- of voedingssnapshot.
-- Actuele catalogusdata bepaalt de zichtbare productinformatie, afgeleide hoeveelheden en voedingswaarden.
-- Correcties aan product-, verpakking- of voedingsdata werken daardoor door in historische logs en statistieken.
-- Nieuwe logs gebruiken alleen actief selecteerbare producten en verpakkingen.
-- Een bestaand log met een gearchiveerd product of gearchiveerde verpakking blijft leesbaar en berekenbaar.
+- Een log verwijst naar exact één concreet `product` of één gepinde `dish_version`.
+- Logs bewaren oorspronkelijke hoeveelheid, invoermodus, invoereenheid, consumptiemoment en browsertijdzone.
+- Product-, samenstellings- en voedingsdata wordt niet gesnapshot.
+- Correcties aan namen, productinhoud of macroprofielen werken direct door in historische logs en statistieken.
+- Nieuwe productlogs gebruiken alleen actieve producten; bestaande logs met een gearchiveerd product blijven leesbaar.
 
-## Invoermodi en hoeveelheden
+## Invoermodi
 
-- `PACKAGE` gebruikt de expliciete volledige actuele verpakkingsinhoud.
-- `INDIVIDUAL_UNIT` is alleen geldig wanneer de verpakking een portiedefinitie heeft en gebruikt de expliciete actuele portiegrootte, onafhankelijk van de volledige verpakkingsinhoud.
-- `CONTENT_UNIT` gebruikt een expliciete massa-, volume- of teleenheid.
-- `CONTENT_UNIT` moet dezelfde dimensie hebben als de verpakking en het macroprofiel.
-- Een log bevat exact één hoeveelheid en één invoermodus.
-- Samengestelde invoer, zoals `2 stuks en 100 g`, bestaat niet; de gebruiker maakt daarvoor meerdere logs.
-- Interne berekeningen bewaren hogere precisie. Afronding gebeurt pas voor presentatie.
+- `FULL_PRODUCT` gebruikt de volledige actuele productinhoud.
+- `PRODUCT_PORTION` gebruikt de optionele actuele productportie.
+- `CONTENT_UNIT` gebruikt een expliciete compatibele massa-, volume- of teleenheid.
+- Een log bevat één hoeveelheid en één invoermodus; samengestelde invoer vereist meerdere logs.
+- Berekeningen behouden precisie en ronden alleen voor presentatie af.
 
-## Gerechten
+## Recepten en gerechten
 
-- Gerechten zijn privé per gebruiker.
-- Gerechten gebruiken versiebeheer: een receptwijziging maakt een nieuwe immutable versie en bestaande versies worden nooit bewerkt of verwijderd.
-- Een dish-consumptielog pint de versie van het log-moment; latere receptwijzigingen veranderen de historie niet.
-- Naam en afbeelding horen bij de stam; een naamswijziging werkt terug in de historie.
-- Namen worden getrimd en zijn case-insensitief uniek per gebruiker onder de niet-verwijderde gerechten.
-- Het aantal porties is een decimaal getal groter dan nul en hoort bij de versie.
-- Een gerecht heeft minimaal één ingrediënt.
-- Ingrediënten gebruiken dezelfde drie invoermodi en combinatieregels als productlogs.
-- Nieuwe en bewerkte gerechtversies kiezen uitsluitend actieve verpakkingen.
-- Bestaande ingrediënten met een inmiddels gearchiveerde verpakking blijven berekenbaar en mogen ongewijzigd mee naar een nieuwe versie.
-- Macro's per portie: de som van de actuele ingrediëntbijdragen gedeeld door het aantal porties van de versie; de gelogde porties vermenigvuldigen dat resultaat.
-- Ingrediënten zonder macroprofiel dragen stil niets bij; het gerecht blijft logbaar.
-- Decimale portiehoeveelheden groter dan nul zijn toegestaan bij het loggen.
-- Verwijderen is een soft delete op de stam zonder restore-flow; versies blijven behouden voor gepinde logs.
-- Afbeeldingen zijn optioneel en volgen het gedeelde uploadpatroon: PNG/JPEG/WebP, maximaal 5 MB, server-side validatie, immutable serving.
-- Dish-logs vallen onder het food-filter en tonen het consumptietype voeding.
+- `dish` is de backendnaam; de recepten-app toont `recept` en de Calorie Tracker `gerecht`.
+- Naam, maker, zichtbaarheid en archiefstatus staan live op `dish`.
+- Ingrediënten, hoeveelheden, porties en optionele vrije bereidingsinstructies staan op immutable `dish_version`.
+- Een inhoudelijke wijziging maakt een nieuwe versie. Een consumptielog pint de nieuwste versie van het logmoment.
+- Naamscorrecties zijn direct zichtbaar in bestaande logs; latere receptwijzigingen veranderen de gepinde receptstructuur niet.
+- Voedingswaarden van een gepinde versie worden altijd uit de actuele productdata berekend en zijn geen snapshot.
+- Een recept heeft minimaal één actief productingrediënt en een positief aantal porties.
+- Ingrediënten verwijzen rechtstreeks naar concrete producten en kunnen volledige producten, productporties of compatibele inhoudseenheden gebruiken.
+- De recepten-app toont geen calorieën of macro's; de Calorie Tracker gebruikt ze voor gerechtlogs en statistieken.
+- Receptnamen zijn case-insensitief uniek per maker onder niet-gearchiveerde recepten.
+- Standaardzichtbaarheid is `PRIVATE`; de maker kan `PUBLIC` kiezen en later wijzigen.
+- Publieke recepten zijn zonder login leesbaar en voor ingelogde gebruikers logbaar. Privérecepten zijn alleen voor de maker toegankelijk.
+- Anderen kunnen publieke recepten niet wijzigen, archiveren of kopiëren in de MVP.
+- Archiveren is omkeerbaar. Gearchiveerde recepten verdwijnen uit lijsten, directe publieke toegang en nieuwe logkeuzes, maar bestaande logs blijven leesbaar zonder receptlink.
+- Herstellen gebruikt de laatst ingestelde zichtbaarheid.
+- Een publiek recept dat privé wordt, verdwijnt voor anderen uit nieuwe keuzes; bestaande logs blijven bestaan.
+- Gerechten als ingrediënt van andere gerechten zijn niet toegestaan.
 
-## Lokale dagen en tijdzones
+## Productarchivering in recepten
 
-- De client stuurt een geldige IANA-browsertijdzone mee, bijvoorbeeld `Europe/Amsterdam`.
-- Het log bewaart het consumptiemoment technisch als UTC-tijdstip en bewaart daarnaast de gebruikte browsertijdzone.
-- De lokale kalenderdatum wordt afgeleid door het consumptiemoment in de opgeslagen browsertijdzone te interpreteren.
-- Een latere wijziging van de browsertijdzone verplaatst bestaande logs niet naar een andere lokale kalenderdatum.
-- Toekomstige consumpties zijn niet toegestaan in de meegestuurde browsertijdzone.
+- Bestaande receptversies met een gearchiveerd product blijven zichtbaar, logbaar en berekenbaar.
+- Het gearchiveerde product blijft in bestaand receptdetail herkenbaar.
+- Bij een inhoudelijke bewerking moet een gearchiveerd ingrediënt worden vervangen voordat de nieuwe versie kan worden opgeslagen.
 
-## Calorieën, macro's en doelen
+## Tijd, berekeningen en bewaren
 
-- Producten zonder macroprofiel kunnen worden gelogd, maar dragen niet bij aan calorie- of macrototalen.
-- Een gedeeltelijk macroprofiel draagt alleen bij met de beschikbare waarden.
-- Alleen aanwezige calorie- en macrowaarden tellen mee voor hun eigen totaal.
-- Expliciet opgeslagen calorieën zijn leidend.
-- Wanneer calorieën ontbreken, mogen ze alleen automatisch worden berekend wanneer eiwit, koolhydraten en vet alle drie aanwezig zijn.
-- Dagtotalen worden pas na optellen afgerond.
-- Persoonlijke doelen zijn actuele instellingen zonder historische versies.
-- Caloriestatistieken kunnen vandaag of één eerdere lokale kalenderdag tonen.
-- Een nieuw of gewijzigd doel geldt direct voor iedere daarna getoonde dagvergelijking, ook voor een eerdere geselecteerde datum.
-
-## Mutaties, retries en bewaren
-
-- De client genereert een consumptielog-ID vóór het aanmaken.
-- Een retry met dezelfde create-inhoud en hetzelfde ID maakt maximaal één log aan.
-- Een retry met hetzelfde ID maar afwijkende create-inhoud is een conflict.
-- Updates gebruiken de laatst gelezen `updated_at`-waarde om stil overschrijven te voorkomen.
-- Verwijderen zet een technisch verwijdermoment; normale UI- en API-states behandelen het log daarna als niet-bestaand.
-- Herstellen is kort na verwijdering mogelijk via de undo-flow.
-- Technisch verwijderde logs worden na de bewaartermijn definitief gewist.
+- Tijdstippen worden als UTC plus gebruikte IANA-browsertijdzone opgeslagen; die tijdzone bepaalt blijvend de lokale logdag.
+- Toekomstige consumpties zijn niet toegestaan.
+- Dishmacro's per portie zijn de som van actuele productbijdragen van de gepinde versie, gedeeld door het versieaantal porties.
+- Ontbrekende productmacro's dragen voor onbekende waarden niets bij; het gerecht blijft logbaar.
+- Log-create gebruikt een clientgegenereerd ID en is idempotent bij identieke retries.
+- Logverwijdering is technisch herstelbaar binnen de undo-termijn; recepten gebruiken afzonderlijk archiveren/herstellen.
+- Consumptielogs wijzigen voorraad niet automatisch.

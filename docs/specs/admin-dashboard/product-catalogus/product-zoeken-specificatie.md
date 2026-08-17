@@ -1,5 +1,7 @@
 # Specificatie - product en merk zoeken
 
+> Voor het doelmodel retourneert cataloguszoeken concrete producten volgens [productmodel-v2-specificatie.md](./productmodel-v2-specificatie.md). Verwijzingen hieronder naar root-productresultaten of package-subresultaten beschrijven de huidige v1-implementatie.
+
 ## Status
 
 - Onderdeel: admin dashboard > productcatalogus

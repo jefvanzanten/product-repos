@@ -29,30 +29,27 @@ De responsive routepresentatie en detailopbouw staan in [log-detail-bewerken-ui-
 
 Het detail toont voor een productlog:
 
-- actuele productnaam en merk;
-- productafbeelding of fallback;
-- actuele verpakkingsomschrijving;
+- actuele gedeelde productweergavenaam en productafbeelding of fallback;
 - oorspronkelijke hoeveelheid en gekozen eenheid;
 - afgeleide hoeveelheid voor berekening;
 - datum en tijd;
 - consumptietype;
 - alle actuele beschikbare calorie- en macrowaarden;
-- status `Gearchiveerd` wanneer product of verpakking niet meer actief is;
+- status `Gearchiveerd` wanneer het concrete product niet meer actief is;
 - acties `Bewerken` en `Verwijderen`.
 
 Het detail toont voor een dish-log:
 
 - gerechtnaam;
-- gerecht-afbeelding of fallback;
 - oorspronkelijke hoeveelheid in porties;
 - datum en tijd;
 - consumptietype voeding;
-- calorie- en macrowaarden berekend uit de gepinde gerechtversie;
-- acties `Bewerken` en `Verwijderen`.
+- calorie- en macrowaarden berekend uit de gepinde receptstructuur en actuele productmacro's;
+- acties `Recept bekijken` wanneer nog toegankelijk, `Bewerken` en `Verwijderen`.
 
-Het dish-detail toont geen ingrediëntenlijst en geen verwijzing naar het gerecht zelf. De macro's horen bij de gepinde versie; latere receptwijzigingen veranderen het detail niet.
+Het dish-detail toont geen ingrediëntenlijst. Latere receptwijzigingen veranderen de gepinde versie niet; product- en macrocorrecties werken wel live door.
 
-De catalogus is de bron van waarheid. Correcties aan product-, verpakking- of voedingsdata verschijnen zonder snapshot- of synchronisatieactie in het detail van productlogs.
+De catalogus is de bron van waarheid. Correcties aan product- of voedingsdata verschijnen zonder snapshot- of synchronisatieactie in het detail van productlogs.
 
 ## Niet gevonden en gegevensscheiding
 
@@ -70,7 +67,7 @@ Bewerken van een productlog gebruikt dezelfde productzoek- en hoeveelheidsregels
 
 Bewerkbare waarden voor een productlog:
 
-- productverpakking;
+- concreet product;
 - hoeveelheid;
 - invoereenheid;
 - datum;
@@ -90,15 +87,15 @@ Bij een gearchiveerd product:
 
 - datum, tijd, hoeveelheid en bestaande eenheid blijven bewerkbaar;
 - het gearchiveerde product blijft als huidige keuze zichtbaar;
-- productzoeken voor vervanging toont alleen actieve verpakkingen.
+- productzoeken voor vervanging toont alleen actieve concrete producten.
 
 ### Cataloguscorrecties
 
 Omdat geen snapshot wordt gebruikt:
 
-- `1 verpakking` rekent met de actuele verpakkingsinhoud;
+- `1 volledig product` rekent met de actuele productinhoud;
 - een expliciete invoer zoals `100 g` blijft `100 g`;
-- `3 blikjes` rekent met de actuele inhoud per blikje;
+- `3` benoemde productporties rekenen met de actuele portiegrootte;
 - actuele voedingswaarden bepalen de statistieken.
 
 ### Gelijktijdige wijzigingen

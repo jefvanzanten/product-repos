@@ -1,5 +1,7 @@
 # Specificatie - browsbare productcatalogus
 
+> De bestaande browsepresentatie blijft zoveel mogelijk intact, maar productresultaten migreren naar concrete producten volgens [productmodel-v2-specificatie.md](./productmodel-v2-specificatie.md). Structurele root/package-regels hieronder zijn v1-gedrag.
+
 ## Status
 
 - Onderdeel: admin dashboard > productcatalogus

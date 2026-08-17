@@ -1,11 +1,6 @@
-# Storage / inventory ERD
+# Storage / inventory ERD — doelmodel
 
-<!--
-Documentatieregel: houd ERD's beperkt tot persistente tabellen, relaties en harde databaseconstraints.
-Domeinregels, UI-gedrag, endpointcontracten en rationale horen in specs of domeindocs; verwijs hier alleen kort wanneer dat nodig is.
--->
-
-Dit document beschrijft de persistente structuur van opbergplaatsen en voorraad. Gedeelde locatieregels staan in [opbergplaatsen-domeinregels.md](../../domein/opbergplaatsen-domeinregels.md); voorraadgedrag staat in de [inventory client-specificaties](../../specs/inventory-client/inventory-client-specificatie.md).
+Dit document beschrijft opbergplaatsen en voorraad na de productcatalogusrevamp. Gedragsregels staan in [inventory-domeinregels.md](../../domein/inventory-domeinregels.md). Iedere `inventory_item` is één fysieke gekochte verpakking. De UI mag volledige identieke items groeperen, maar persistente items blijven afzonderlijk aanpasbaar.
 
 ```yaml
 location
@@ -17,40 +12,33 @@ location
     created_at: timestamp with time zone NOT NULL
     updated_at: timestamp with time zone NOT NULL
 
-    # normalized_name is de door de write-laag gecanonicaliseerde naam voor
-    # hoofdletterongevoelige sibling-uniciteit, inclusief rootlocaties.
     CHECK (length(name) BETWEEN 1 AND 100)
     CHECK (length(normalized_name) BETWEEN 1 AND 100)
     CHECK (parent_id IS NULL OR parent_id <> id)
-    UNIQUE location_root_normalized_name_unique (normalized_name) WHERE parent_id IS NULL
-    UNIQUE location_sibling_normalized_name_unique (parent_id, normalized_name) WHERE parent_id IS NOT NULL
+    UNIQUE (normalized_name) WHERE parent_id IS NULL
+    UNIQUE (parent_id, normalized_name) WHERE parent_id IS NOT NULL
 
 inventory_item
     id: uuid PK
-    product_package_id: int FK -> product_package.id NOT NULL
+    product_id: uuid FK -> product.id NOT NULL
     location_id: int FK -> location.id ON DELETE RESTRICT NOT NULL
     expiry_date: date NULL
-    quantity: int NOT NULL
+    remaining_amount_base: decimal NOT NULL
     version: int NOT NULL
     created_at: timestamp with time zone NOT NULL
     updated_at: timestamp with time zone NOT NULL
 
-    # Quantity counts complete packages; it is a positive whole number while a
-    # batch exists and may remain at 0 as a hidden, reusable row.
-    CHECK (quantity >= 0)
+    # Stored in the base unit of the product content dimension: g, ml or count.
+    # The maximum is derived live from product.unit_content_id.
+    CHECK (remaining_amount_base > 0)
     CHECK (version >= 0)
-
-    # A batch is unique per product package + location + expiry date. `NULL`
-    # means no known expiry date and needs a complementary partial index.
-    UNIQUE (product_package_id, location_id, expiry_date)
-    UNIQUE (product_package_id, location_id) WHERE expiry_date IS NULL
 
 inventory_mutation
     id: uuid PK
     inventory_item_id: uuid FK -> inventory_item.id NOT NULL
-    kind: enum(ADD, REMOVE, SET, MOVE, DATE_CHANGE) NOT NULL
-    quantity_delta: int NULL
-    resulting_quantity: int NOT NULL
+    kind: enum(ADD, CONTENT_SET, MOVE, DATE_CHANGE, REMOVE) NOT NULL
+    amount_delta_base: decimal NULL
+    resulting_amount_base: decimal NOT NULL
     from_location_id: int FK -> location.id ON DELETE RESTRICT NULL
     to_location_id: int FK -> location.id ON DELETE RESTRICT NULL
     from_expiry_date: date NULL
@@ -58,10 +46,15 @@ inventory_mutation
     user_id: text FK -> user.id NOT NULL
     created_at: timestamp with time zone NOT NULL
 
-    # Moves and date changes are recorded on the source batch with the target
-    # values in the to_* columns; the target-side merge records its own row.
-    CHECK (resulting_quantity >= 0)
-    CHECK (kind IN ('ADD', 'REMOVE', 'SET', 'MOVE', 'DATE_CHANGE'))
+    CHECK (resulting_amount_base >= 0)
+    CHECK (kind IN ('ADD', 'CONTENT_SET', 'MOVE', 'DATE_CHANGE', 'REMOVE'))
+
+product_stock_threshold
+    product_id: uuid PK FK -> product.id ON DELETE CASCADE
+    low_stock_amount_base: decimal NOT NULL
+    movement_class: enum(SLOW, MEDIUM, FAST) NULL
+    updated_at: timestamp with time zone NOT NULL
+    CHECK (low_stock_amount_base >= 0)
 ```
 
 ## Relaties
@@ -70,11 +63,12 @@ inventory_mutation
 erDiagram
     LOCATION ||--o{ LOCATION : contains
     LOCATION ||--o{ INVENTORY_ITEM : stores
-    PRODUCT_PACKAGE ||--o{ INVENTORY_ITEM : stocked_as
+    PRODUCT ||--o{ INVENTORY_ITEM : stocked_as
     INVENTORY_ITEM ||--o{ INVENTORY_MUTATION : changes
     USER ||--o{ INVENTORY_MUTATION : performs
+    PRODUCT ||--o| PRODUCT_STOCK_THRESHOLD : configures
 ```
 
-## Legacy-opslag
+## Migratie
 
-Migratie `0009_inventory_backend` vervangt de legacytabel `storage_record` door `inventory_item`. Legacyregels verwijzen alleen naar een product en bevatten geen eenduidige productverpakking; daarom worden ze niet automatisch geconverteerd.
+Een oude partij met `quantity = N` wordt uitgebreid naar `N` fysieke `inventory_item`-rijen. Iedere rij verwijst via de migratiemapping van `product_package.id` naar het nieuwe `product.id`, behoudt locatie en THT en start met de volledige productinhoud als `remaining_amount_base`.

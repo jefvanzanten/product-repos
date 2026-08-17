@@ -14,6 +14,7 @@ Dit document is de bron van waarheid voor de Calorie Tracker-specifieke opbouw b
 ## Datumheader en navbar
 
 - Caloriestatistieken en Consumptielogboek delen dezelfde datumheader en Calorie Tracker-navbar.
+- De navbar bevat een gewone cross-app link `Recepten` naar `/recepten`; recepten zijn geen bottom-tab en worden niet in de Calorie Tracker beheerd.
 - Op desktop staan de datumselector en navbar in de normale documentflow onder elkaar.
 - De navbarlinks staan horizontaal gecentreerd.
 - De navbar gebruikt `2em` bovenpadding en `1em` onderpadding.

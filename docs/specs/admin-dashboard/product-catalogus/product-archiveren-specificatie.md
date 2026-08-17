@@ -1,4 +1,6 @@
-# Specificatie - producten en verpakkingen archiveren
+# Specificatie - producten archiveren
+
+> In het doelmodel wordt uitsluitend het concrete `product` gearchiveerd. Afzonderlijke root- en package-archivering hieronder beschrijft v1 en wordt vervangen door [productmodel-v2-specificatie.md](./productmodel-v2-specificatie.md).
 
 ## Status
 

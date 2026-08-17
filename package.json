@@ -6,6 +6,7 @@
   "scripts": {
     "build": "corepack pnpm -r --if-present run build",
     "dev": "corepack pnpm --filter \"./apps/*\" --parallel run dev",
+    "dev:docker": "corepack pnpm backend:docker:start && corepack pnpm --filter \"./apps/*\" --filter '!@product-repos/backend' --parallel run dev",
     "lint": "corepack pnpm -r --if-present run lint",
     "typecheck": "corepack pnpm -r --if-present run typecheck",
     "test": "corepack pnpm -r --if-present run test",
@@ -13,6 +14,8 @@
     "backend:build": "corepack pnpm --filter @product-repos/backend build",
     "backend:dev": "corepack pnpm --filter @product-repos/backend dev",
     "backend:start": "corepack pnpm --filter @product-repos/backend start",
+    "backend:docker:build": "docker build -f apps/backend/Dockerfile -t product-repos-backend .",
+    "backend:docker:start": "if docker container inspect product-repos-backend >/dev/null 2>&1; then if [ \"$(docker inspect -f '{{.State.Running}}' product-repos-backend)\" = \"true\" ]; then echo 'Backendcontainer draait al.'; else docker start product-repos-backend; fi; else docker run -d --name product-repos-backend -p 3000:3000 -v product-repos-backend-data:/data --env-file apps/backend/.env -e DATABASE_URL=/data/sqlite.db product-repos-backend; fi",
     "backend:typecheck": "corepack pnpm --filter @product-repos/backend typecheck",
     "ct:build": "corepack pnpm --filter calorie_tracker build",
     "ct:dev": "corepack pnpm --filter calorie_tracker dev --host 0.0.0.0",
@@ -31,7 +34,11 @@
     "inventory:build": "corepack pnpm --filter inventory build",
     "inventory:dev": "corepack pnpm --filter inventory dev --host 0.0.0.0",
     "inventory:start": "corepack pnpm --filter inventory start",
-    "inventory:typecheck": "corepack pnpm --filter inventory typecheck"
+    "inventory:typecheck": "corepack pnpm --filter inventory typecheck",
+    "recipe:build": "corepack pnpm --filter recipe build",
+    "recipe:dev": "corepack pnpm --filter recipe dev --host 0.0.0.0",
+    "recipe:start": "corepack pnpm --filter recipe start",
+    "recipe:typecheck": "corepack pnpm --filter recipe typecheck"
   },
   "keywords": [],
   "author": "",

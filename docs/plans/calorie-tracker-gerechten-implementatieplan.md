@@ -1,4 +1,6 @@
-# Implementatieplan — Calorie Tracker gerechten
+# Implementatieplan — Calorie Tracker gerechten (historisch uitgevoerd)
+
+> Dit plan beschrijft de eerdere implementatie in de Calorie Tracker. Het doelmodel verplaatst beheer naar de Recepten-app; zie [productmodel-v2-calorie-tracker-plan.md](./productmodel-v2-calorie-tracker-plan.md) en [recepten-app-implementatieplan.md](./recepten-app-implementatieplan.md).
 
 > Status: uitgevoerd. Backend (78 tests), frontend (66 tests), typechecks en build zijn groen. Alleen optionele dish-afbeeldingupload in de UI en Playwright-acceptatie staan nog open als vervolg.
 

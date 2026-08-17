@@ -1,141 +1,92 @@
-# Specificatie — voorraad inzien
-
-## Status
-
-- Onderdeel: inventory client
-- Route: `/`
-- Status: gepland / huidige pagina is nog placeholderachtig
+# Specificatie — Voorraad inzien en filteren
 
 ## Doel
 
-Een gebruiker kan in de inventory client snel zien welke voorraad er is, hoeveel ervan aanwezig is, hoe lang die nog houdbaar is en waar die ligt.
+De gebruiker ziet concrete producten gegroepeerd met daaronder de werkelijke verdeling over fysieke verpakkingen, locaties, THT-data en resterende inhoud.
 
-## Rollen
+## Productgerichte lijst
 
-- Iedere ingelogde gebruiker kan de voorraad inzien en doorzoeken.
-- Alleen een ingelogde beheerder kan voorraad toevoegen of aanpassen. Mutatie-UI is uitsluitend voor beheerders zichtbaar en de bijbehorende backendendpoints weigeren niet-beheerders zelfstandig.
-- Voorraad is gedeeld: alle ingelogde gebruikers zien dezelfde voorraad. Er is geen voorraad per gebruiker of huishouden.
+- Hoofdgroepen zijn concrete producten, niet locations of productsamenstellingen.
+- De hoofdregel gebruikt de gedeelde productweergavenaam.
+- Totaal is de som van `remaining_amount / actuele productinhoud`, getoond als verpakkingsequivalent met maximaal één decimaal.
+- De onderliggende regels blijven exact en maken afronding controleerbaar.
 
-## Binnen scope
+Voorbeeld:
 
-- Voorraadlijst tonen op de inventory-tab.
-- Productnaam, merk en verpakking herkenbaar tonen.
-- Totaal aantal verpakkingen per productverpakking tonen.
-- Uitklapbare partijregels per opbergplaats en houdbaarheidsdatum.
-- Houdbaarheidsstatuslabels tonen.
-- Zoeken binnen voorraad met gegroepeerde suggesties.
-- Infinite scroll voor grote voorraden.
-- Actie om voorraad toe te voegen openen via een knop op deze pagina (alleen beheerders).
+```text
+Jong belegen kaasplakken — Zuivelmeester · 3,7 verpakkingen
+├── 1× volledig · 16-08-2026 · Berging › Koelkast
+├── 2× volledig · 22-08-2026 · Berging › Koelkast
+├── 80 / 120 g · 24-08-2026 · Huiskamer › Koelkast
+└── 40 / 120 g · 24-08-2026 · Berging › Koelkast
+```
 
-## Buiten scope
+## Presentatiegroepering
 
-- Catalogusstamdata of opbergplaatsen beheren.
-- Voorraadmutaties zelf; die staan in [voorraad-aanpassen-specificatie.md](./voorraad-aanpassen-specificatie.md).
-- Mutatiegeschiedenis in de UI.
-- Uitgebreide rapportages.
-- Barcode-scanning, tenzij later expliciet gespecificeerd.
-
-## Domeinmodel
-
-- Voorraad wordt geregistreerd als een **geheel aantal gekozen verpakkingen**. `3` bij `Melk — pak 1 liter` betekent drie pakken van één liter; decimalen en inhoudseenheden worden niet gebruikt.
-- Een voorraadpartij wordt uniek bepaald door de combinatie **productverpakking + opbergplaats + houdbaarheidsdatum**. `Geen datum` is een eigen waarde.
-- Dezelfde combinatie wordt samengevoegd tot één partij met opgeteld aantal. Een andere datum of een andere locatie is een afzonderlijke partij.
-- De houdbaarheidsdatum is optioneel en wordt bewaard als kalenderdatum (`YYYY-MM-DD`) zonder tijdstip of tijdzone.
-- Opbergplaats is altijd verplicht. Zonder opbergplaats kan geen voorraad bestaan; locatiebeheer is de verantwoordelijkheid van de beheerder in Product Management Admin.
-- Opbergplaatsen vormen een boom van concrete fysieke plaatsen. Namen zoals `Lade 1` mogen onder meerdere ouders voorkomen, maar iedere fysieke plaats heeft een eigen ID. Voorraad mag op ieder knooppunt in de boom liggen.
-- Naam-, hiërarchie- en archiefregels staan in [opbergplaatsen-domeinregels.md](../../domein/opbergplaatsen-domeinregels.md).
-- Verschillende verpakkingen van hetzelfde product zijn afzonderlijke voorraadregels en worden niet naar inhoud of naar elkaar omgerekend.
-- Het persistente datamodel staat in het [Storage/Inventory ERD](../../backend/ERD/STORAGE_ERD.md).
-
-## UI-specificatie
-
-De schermopbouw, productregels en uitgeklapte partijregels staan in [voorraad-inzien-ui-specificatie.md](./voorraad-inzien-ui-specificatie.md).
-
-De lijst is productgericht, niet locatiegericht. De locatieboom wordt uitsluitend gebruikt bij het kiezen van een opbergplaats. Mutatieacties zijn alleen voor beheerders beschikbaar op concrete partijregels; hun gedrag staat in [voorraad-aanpassen-specificatie.md](./voorraad-aanpassen-specificatie.md). De toevoegactie opent de flow uit [voorraad-toevoegen-bottom-sheet-specificatie.md](./voorraad-toevoegen-bottom-sheet-specificatie.md) zonder een nieuwe pagina te openen.
+Volledige items mogen als `N× volledig` worden samengevoegd wanneer product, locatie en THT gelijk zijn. Aangebroken verpakkingen blijven afzonderlijk, ook bij gelijke resterende inhoud. Groepering verandert geen persistente IDs.
 
 ## Sortering
 
-- Productregels worden gesorteerd op de vroegste bekende houdbaarheidsdatum van hun partijen.
-- Verlopen partijen komen volledig bovenaan.
-- Binnen een uitgeklapt product staan partijen van vroeg naar laat.
-- Producten zonder enige datum komen onderaan, alfabetisch op productnaam.
+- Productgroepen met verlopen of vroegst verlopende voorraad eerst; datumloze groepen daarna alfabetisch.
+- Binnen een productgroep THT oplopend; datumloos onderaan.
+- Locatiepad staat op iedere onderliggende regel.
 
-## Houdbaarheidsstatuslabels
+## Resterende inhoud
 
-Statussen worden berekend ten opzichte van de kalenderdatum in de applicatietijdzone (configureerbaar, standaard `Europe/Amsterdam`), zodat alle gebruikers van de gedeelde voorraad dezelfde status zien:
+- Maximale inhoud komt van het concrete product.
+- Resterende inhoud wordt in dezelfde dimensie berekend en mag binnen MASS (`g`/`kg`) of VOLUME (`ml`/`cl`/`l`) worden gepresenteerd.
+- COUNT gebruikt uitsluitend gehele stuks.
+- Een progressbar visualiseert hoeveel van de fysieke verpakking resteert; een volle balk betekent volledig.
+- De precieze keuze tussen percentage en `resterend / totaal`, plus sliderstappen voor massa/volume, blijft een open UI-tweak. De exacte hoeveelheid blijft beschikbaar.
 
-| Situatie | Label |
+## Verloopstatus
+
+Status wordt bepaald tegen vandaag in de applicatietijdzone:
+
+| Situatie | Status |
 | --- | --- |
-| Verlopen | rood label, bijvoorbeeld `3 dagen verlopen` |
-| Verloopt vandaag | rood label `Verloopt vandaag` |
-| Verloopt binnen 7 dagen | oranje label, bijvoorbeeld `Nog 4 dagen` |
-| Verloopt later | neutraal met de concrete datum |
-| Geen datum | `Geen datum` |
+| THT vóór vandaag | Verlopen |
+| THT vandaag | Verloopt vandaag; nog consumeerbaar |
+| THT over 1–3 dagen | Urgent |
+| THT over 4–7 dagen | Binnenkort |
+| THT later dan 7 dagen | Later |
+| Geen THT | Geen datum |
 
-Verlopen voorraad wordt nooit automatisch verwijderd of op `0` gezet; alleen de beheerder past de voorraad aan.
+`Bijna verlopen` toont verlopen, vandaag, urgent en binnenkort, in die urgentievolgorde. Grenzen zijn configureerbaar.
 
-## Zoeken
+## Lage voorraad
 
-- Zoeken start vanaf twee ingevoerde tekens en is server-side.
-- De vrije zoektekst matcht op productnaam, merk, verpakkingsomschrijving, categoriepad en het volledige locatiepad.
-- Het consumptietype (`FOOD`, `DRINK`, `SUPPLEMENT`) speelt geen rol in het zoeken; het categoriepad is de enige taxonomie.
-- Er zijn geen aparte filters en geen combinatie van meerdere suggesties: één gekozen suggestie of één vrije zoekterm tegelijk.
-- Vanaf twee tekens verschijnen gegroepeerde suggesties: producten/verpakkingen, categorieën, merken en opbergplaatsen.
-- Een gekozen suggestie gebruikt een stabiel ID en filtert exact op die betekenis: de categorie `Sauzen` omvat ook subcategorieën; een gekozen opbergplaats toont alleen voorraad op die plaats.
-- Zoekterm of gekozen suggestie, laadpositie en scrollpositie worden hersteld wanneer de gebruiker terugkeert naar de lijst.
+- Lage voorraad kijkt naar totale resterende inhoud en niet alleen naar aantallen verpakkingen.
+- Per concreet product bestaat een handmatig instelbare drempel.
+- Zonder drempel verschijnt een product niet in het filter `Lage voorraad`.
+- Een voorgestelde drempel op basis van slow/medium/fast-moving is Should have; beginheuristieken zoals 10%/25%/50% van één productinhoud moeten in gebruik worden getweakt.
 
-## Infinite scroll en paginering
+## Filters
 
-- De lijst laadt server-side in pagina's van circa 30 productgroepen.
-- Er is geen `Meer laden`-knop; nieuwe pagina's laden automatisch via een scroll-observer vóór het einde van de lijst.
-- Er is een laadindicator tijdens het laden en een duidelijke eindstatus wanneer alles geladen is.
-- Het laden van de eerste pagina toont bij mislukken een foutstate met een nieuwe poging.
+Minimaal:
 
-## Lege toestand
+- Alles;
+- Lage voorraad;
+- Bijna verlopen.
 
-Gegeven dat er geen voorraadpartijen bestaan, toont de pagina een lege toestand. Een beheerder kan vanuit de lege toestand voorraad toevoegen; een gewone gebruiker ziet alleen de lege toestand.
+Filters mogen gecombineerd worden met vrije product-, merk-, categorie- en locatiezoektekst.
 
 ## Acceptatiecriteria
 
-### AC-01 — Voorraadlijst tonen
+### AC-01 — Exacte fysieke verdeling
 
-Gegeven dat er voorraadpartijen bestaan  
-Wanneer de gebruiker de inventory-tab opent  
-Dan ziet de gebruiker een productgerichte lijst met productnaam, merk, verpakking, totaal aantal verpakkingen en vroegste houdbaarheidsstatus.
+Gegeven meerdere volledige en aangebroken verpakkingen
+Dan toont de hoofdregel één afgerond totaal
+En tonen onderliggende regels de exacte locatie, THT en resterende inhoud.
 
-### AC-02 — Partijen uitklappen
+### AC-02 — Veilige groepering
 
-Gegeven dat een product partijen over meerdere locaties of datums heeft  
-Wanneer de gebruiker de productregel uitklapt  
-Dan ziet de gebruiker afzonderlijke partijregels met volledig locatiepad, datum of statuslabel en aantal.
+Gegeven twee volledige items met dezelfde locatie en THT
+Dan mogen zij als `2× volledig` verschijnen
+Maar blijven zij afzonderlijke inventory-itemrecords.
 
-### AC-03 — Lege voorraad
+### AC-03 — THT-dag
 
-Gegeven dat er nog geen voorraadpartijen bestaan  
-Wanneer de gebruiker de inventory-tab opent  
-Dan ziet de gebruiker een lege toestand  
-En kan een beheerder voorraad toevoegen.
-
-### AC-04 — Toevoegen openen
-
-Gegeven dat een beheerder op de inventory-tab staat  
-Wanneer de beheerder de toevoegknop kiest  
-Dan opent de voorraad-toevoegen-bottomsheet.
-
-### AC-05 — Read-only voor gewone gebruikers
-
-Gegeven dat een ingelogde gebruiker geen beheerder is  
-Dan ziet de gebruiker geen mutatieacties en geen toevoegknop  
-En weigeren de voorraadmutatie-endpoints deze gebruiker zelfstandig.
-
-### AC-06 — Zoeken
-
-Gegeven dat de gebruiker minimaal twee tekens invoert in het zoekveld  
-Dan toont de app gegroepeerde suggesties voor producten, categorieën, merken en opbergplaatsen  
-En filtert de lijst na keuze exact op de gekozen betekenis.
-
-### AC-07 — Verlopen voorraad
-
-Gegeven dat een partij is verlopen  
-Dan blijft die partij zichtbaar met een rood label dat het aantal verlopen dagen toont  
-En wordt de partij niet automatisch verwijderd of op nul gezet.
+Gegeven dat THT vandaag is
+Dan toont de UI `Verloopt vandaag`
+En niet `Verlopen`.

@@ -1,42 +1,33 @@
-# Spec-index — inventory client
+# Spec-index — Inventory client doelmodel
 
-Dit is de index voor de client/inventarisatiekant van de app. Dit is niet de admin productcatalogus.
+## Doel
 
-## Actuele specs
+Inventory beheert fysieke voorraad op basis van concrete catalogusproducten. Iedere gekochte verpakking is één `inventory_item` met eigen locatie, THT en resterende inhoud. Volledige identieke items worden alleen in de presentatie gegroepeerd.
+
+## Specs
 
 | Feature | Functionele spec | UI-specificatie | Status |
 | --- | --- | --- | --- |
-| Voorraad inzien | [voorraad-inzien-specificatie.md](./voorraad-inzien-specificatie.md) | [voorraad-inzien-ui-specificatie.md](./voorraad-inzien-ui-specificatie.md) | Gepland / te herwerken |
-| Voorraad toevoegen | [voorraad-toevoegen-bottom-sheet-specificatie.md](./voorraad-toevoegen-bottom-sheet-specificatie.md) | [voorraad-toevoegen-bottom-sheet-ui-specificatie.md](./voorraad-toevoegen-bottom-sheet-ui-specificatie.md) | Geïmplementeerd |
-| Voorraad aanpassen | [voorraad-aanpassen-specificatie.md](./voorraad-aanpassen-specificatie.md) | [voorraad-aanpassen-ui-specificatie.md](./voorraad-aanpassen-ui-specificatie.md) | Gepland |
+| Voorraad inzien en filteren | [voorraad-inzien-specificatie.md](./voorraad-inzien-specificatie.md) | [voorraad-inzien-ui-specificatie.md](./voorraad-inzien-ui-specificatie.md) | Doelmodel |
+| Voorraad toevoegen | [voorraad-toevoegen-bottom-sheet-specificatie.md](./voorraad-toevoegen-bottom-sheet-specificatie.md) | [voorraad-toevoegen-bottom-sheet-ui-specificatie.md](./voorraad-toevoegen-bottom-sheet-ui-specificatie.md) | Te migreren |
+| Voorraad aanpassen | [voorraad-aanpassen-specificatie.md](./voorraad-aanpassen-specificatie.md) | [voorraad-aanpassen-ui-specificatie.md](./voorraad-aanpassen-ui-specificatie.md) | Doelmodel |
 
-## Rollen
+## Bronnen
 
-Iedere ingelogde gebruiker kan de voorraad inzien en doorzoeken. Alleen beheerders kunnen voorraad toevoegen en aanpassen; mutatie-endpoints weigeren niet-beheerders zelfstandig. Voorraad is gedeeld over alle ingelogde gebruikers. Product- en locatiebeheer blijft in Product Management Admin. De gedeelde locatieregels staan in [opbergplaatsen-domeinregels.md](../../domein/opbergplaatsen-domeinregels.md).
+- [Inventory domeinregels](../../domein/inventory-domeinregels.md)
+- [Storage ERD](../../backend/ERD/STORAGE_ERD.md)
+- [Inventory endpoints](../../backend/Endpoints/INVENTORY_ENDPOINTS.md)
+- [Productcatalogus domeinregels](../../domein/productcatalogus-domeinregels.md)
 
-## UI-specificaties
+## Rollen en routes
 
-Featurepresentatie staat in de gekoppelde UI-specificaties van de onderliggende features. De overkoepelende navigatie volgt de [functionele specificatie](../shared/bottom-tabbar-specificatie.md) en [UI-specificatie](../shared/bottom-tabbar-ui-specificatie.md) voor de gedeelde bottom-tabbar en applicatieshell.
+Iedere ingelogde gebruiker kan voorraad inzien. Alleen beheerders kunnen toevoegen of aanpassen. De app blijft gemount op `/inventory`; Product Management Admin blijft bereikbaar via `/product-management-admin/product-catalogus?source=inventory`.
 
-## Routes en adminnavigatie
+## Leidende regels
 
-De React Router-routes van deze app worden in productie onder het publieke basispad `/inventory` gemount.
-
-| Bestemming | App-interne route | Publieke bestemming |
-| --- | --- | --- |
-| Inventory client / inventarisatie-tab | `/` | `/inventory` |
-| Product Management Admin | niet van toepassing | `/product-management-admin/product-catalogus?source=inventory` |
-
-De adminbestemming is voor een ingelogde beheerder een gewone browserlink naar een andere deployment. Product Management Admin gebruikt `source=inventory` om in zijn bottom-tabbar een terugkeertab naar `/inventory` te tonen. Inventory bevat zelf geen inhoudelijke adminroutes. De regels voor bronbehoud staan in de [gedeelde bottom-tabbar- en applicatieshellspecificatie](../shared/bottom-tabbar-specificatie.md).
-
-## Richting
-
-De inventory client is bedoeld voor voorraad gebruiken en bijwerken. Voorraad is een geheel aantal gekozen verpakkingen per combinatie productverpakking + opbergplaats + houdbaarheidsdatum; opbergplaats is altijd verplicht. Catalogusbeheer blijft in Product Management Admin. Inventory toont geen cross-app links; wanneer een product of opbergplaats ontbreekt, ziet de gebruiker alleen een neutrale melding of een disabled toevoegflow.
-
-## Overkoepelend acceptatiecriterium — zelfstandige adminnavigatie
-
-Gegeven dat een ingelogde beheerder Inventory gebruikt
-Wanneer die Product Management Admin opent
-Dan verlaat de browser de Inventory-deployment
-En opent `/product-management-admin/product-catalogus?source=inventory`
-En bevat Inventory zelf geen inhoudelijke adminroute.
+- Inventory verwijst rechtstreeks naar concreet `product.id`; `product_package_id` vervalt.
+- Eén persistente rij is één fysieke verpakking.
+- Maximale inhoud wordt live afgeleid van het product; voorraad bewaart resterende inhoud in de basiseenheid.
+- Een leeg item verdwijnt uit actieve voorraad maar mutatiehistorie blijft bewaard.
+- Verschillende fysieke geopende verpakkingen kunnen tegelijk bestaan, ook op verschillende locaties en met verschillende resterende inhoud.
+- Consumptielogs muteren voorraad niet automatisch.

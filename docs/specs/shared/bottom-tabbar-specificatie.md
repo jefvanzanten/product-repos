@@ -8,7 +8,7 @@
 
 ## Doel
 
-Calorie Tracker, Inventory en Product Management Admin gebruiken dezelfde bottom-tabbarpresentatie. Iedere applicatie blijft eigenaar van haar links, actieve status en autorisatie. Calorie Tracker en Inventory openen één zelfstandig gedeployed admin-dashboard. Het admin-dashboard toont als terugkeertab de applicatie van waaruit de beheerder het dashboard heeft geopend.
+Calorie Tracker, Inventory en Product Management Admin gebruiken dezelfde bottom-tabbarpresentatie. De Recepten-app is in de MVP een afzonderlijke bestemming onder `/recepten`, maar geen nieuwe bottom-tab; Calorie Tracker mag er via een gewone cross-app link naartoe navigeren. Iedere applicatie blijft eigenaar van haar links, actieve status en autorisatie. Calorie Tracker en Inventory openen één zelfstandig gedeployed admin-dashboard. Het admin-dashboard toont als terugkeertab de applicatie van waaruit de beheerder het dashboard heeft geopend.
 
 ## Publieke applicatieroutes
 

@@ -1,28 +1,22 @@
-# Productcatalogus ERD
+# Productcatalogus ERD — doelmodel
 
 <!--
 Documentatieregel: houd ERD's beperkt tot persistente tabellen, relaties en harde databaseconstraints.
-Domeinregels, UI-gedrag, endpointcontracten en rationale horen in specs of domeindocs; verwijs hier alleen kort wanneer dat nodig is.
+Domeinregels, UI-gedrag, endpointcontracten en rationale horen in specs of domeindocs.
 -->
 
-Dit document beschrijft de persistente structuur van de gedeelde productcatalogus. Domeinregels staan in [productcatalogus-domeinregels.md](../../domein/productcatalogus-domeinregels.md). Calorie Tracker-logs en persoonlijke doelen staan in [CALORIE_TRACKER_ERD.md](./CALORIE_TRACKER_ERD.md).
+Dit document beschrijft het doelmodel na de catalogusrevamp. Eén `product` is één concreet koopbaar en selecteerbaar item. De gedeelde inhoudelijke samenstelling staat in `product_composition`; er bestaat in het doelmodel geen afzonderlijke `product_package`-laag.
 
 ```yaml
 brand
     id: uuid PK
     name: text NOT NULL
-
-    # Preserve the original display name, but prevent case/trim duplicates.
     UNIQUE (lower(trim(name)))
 
 category
     id: int PK
     parent_id: int FK -> category.id NULL
     name: text NOT NULL
-
-    # Category names are unique among siblings, case-insensitive after trim.
-    # Use database-specific partial/expression indexes so nullable parent_id
-    # behaves correctly.
     UNIQUE (parent_id, lower(trim(name))) WHERE parent_id IS NOT NULL
     UNIQUE (lower(trim(name))) WHERE parent_id IS NULL
 
@@ -32,9 +26,6 @@ unit_type
     symbol: text NOT NULL
     dimension: enum(MASS, VOLUME, COUNT) NOT NULL
     conversion_to_base: decimal NOT NULL
-
-    # Reference data is seeded or managed by an administrator. Base units are
-    # gram for MASS, millilitre for VOLUME, and one item/dose for COUNT.
     CHECK (conversion_to_base > 0)
     UNIQUE (lower(trim(name)))
     UNIQUE (lower(trim(symbol)))
@@ -43,60 +34,32 @@ unit_content
     id: int PK autoincrement
     unit_type_id: int FK -> unit_type.id NOT NULL
     amount: decimal NOT NULL
-
-    # Decimal values are canonicalized before insert/find-or-create, so 1.5,
-    # 1.50, and 01.500 refer to the same content amount.
     CHECK (amount > 0)
     UNIQUE (unit_type_id, amount)
 
 package_type
     id: int PK autoincrement
-    name: text NOT NULL
+    singular_name: text NOT NULL
+    plural_name: text NOT NULL
+    CHECK (length(trim(singular_name)) > 0)
+    CHECK (length(trim(plural_name)) > 0)
+    UNIQUE (lower(trim(singular_name)))
+    UNIQUE (lower(trim(plural_name)))
 
-    # Reference data is seeded or managed by an administrator.
-    UNIQUE (lower(trim(name)))
-
-product
+product_composition
     id: uuid PK
     name: text NOT NULL
     category_id: int FK -> category.id NOT NULL
     brand_id: uuid FK -> brand.id NULL
     consumption_type: enum(FOOD, DRINK, SUPPLEMENT) NOT NULL
-    archived_at: timestamp with time zone NULL
     created_at: timestamp with time zone NOT NULL
     updated_at: timestamp with time zone NOT NULL
 
-    # Preserve the product display name, but detect duplicates after trim and
-    # case normalization. Use partial indexes for nullable brand_id.
     UNIQUE (brand_id, category_id, lower(trim(name))) WHERE brand_id IS NOT NULL
     UNIQUE (category_id, lower(trim(name))) WHERE brand_id IS NULL
 
-product_package
-    id: int PK autoincrement
-    product_id: uuid FK -> product.id NOT NULL
-    unit_content_id: int FK -> unit_content.id NOT NULL
-    package_type_id: int FK -> package_type.id NOT NULL
-    archived_at: timestamp with time zone NULL
-    created_at: timestamp with time zone NOT NULL
-    updated_at: timestamp with time zone NOT NULL
-
-    # unit_content_id always represents the complete package content.
-    UNIQUE (product_id, package_type_id, unit_content_id)
-
-product_package_portion
-    product_package_id: int PK FK -> product_package.id ON DELETE CASCADE
-    name: text NOT NULL
-    unit_content_id: int FK -> unit_content.id NOT NULL
-    portions_per_package: int NULL
-
-    # The portion amount is explicit and independent from complete package
-    # content. Rounded label values therefore do not have to multiply exactly
-    # to the complete package amount.
-    CHECK (length(trim(name)) > 0)
-    CHECK (portions_per_package IS NULL OR portions_per_package > 0)
-
 product_macro_profile
-    product_id: uuid PK FK -> product.id
+    product_composition_id: uuid PK FK -> product_composition.id ON DELETE CASCADE
     reference_basis: enum(PER_100_G, PER_100_ML, PER_UNIT) NOT NULL
     calories_kcal: decimal NULL
     protein_g: decimal NULL
@@ -120,22 +83,50 @@ product_macro_profile
         (calories_kcal IS NULL AND calories_source IS NULL) OR
         (calories_kcal IS NOT NULL AND calories_source IS NOT NULL)
     )
+
+product
+    id: uuid PK
+    product_composition_id: uuid FK -> product_composition.id NOT NULL
+    package_type_id: int FK -> package_type.id NULL
+    unit_content_id: int FK -> unit_content.id NULL
+    image_url: text NULL
+    barcode: text NULL
+    archived_at: timestamp with time zone NULL
+    created_at: timestamp with time zone NOT NULL
+    updated_at: timestamp with time zone NOT NULL
+
+    UNIQUE (barcode) WHERE barcode IS NOT NULL
+    UNIQUE (product_composition_id, package_type_id, unit_content_id)
+        WHERE package_type_id IS NOT NULL AND unit_content_id IS NOT NULL
+
+product_portion
+    product_id: uuid PK FK -> product.id ON DELETE CASCADE
+    singular_name: text NOT NULL
+    plural_name: text NOT NULL
+    unit_content_id: int FK -> unit_content.id NOT NULL
+    portions_per_product: int NULL
+
+    CHECK (length(trim(singular_name)) > 0)
+    CHECK (length(trim(plural_name)) > 0)
+    CHECK (portions_per_product IS NULL OR portions_per_product > 0)
 ```
 
 ## Relaties
 
 ```mermaid
 erDiagram
-    BRAND ||--o{ PRODUCT : identifies
+    BRAND ||--o{ PRODUCT_COMPOSITION : identifies
     CATEGORY ||--o{ CATEGORY : contains
-    CATEGORY ||--o{ PRODUCT : classifies
-    PRODUCT ||--|{ PRODUCT_PACKAGE : offers
-    PRODUCT ||--o| PRODUCT_MACRO_PROFILE : has
-    PRODUCT_PACKAGE ||--o| PRODUCT_PACKAGE_PORTION : defines
-    PACKAGE_TYPE ||--o{ PRODUCT_PACKAGE : outer_type
+    CATEGORY ||--o{ PRODUCT_COMPOSITION : classifies
+    PRODUCT_COMPOSITION ||--o| PRODUCT_MACRO_PROFILE : has
+    PRODUCT_COMPOSITION ||--|{ PRODUCT : sold_as
+    PRODUCT ||--o| PRODUCT_PORTION : defines
+    PACKAGE_TYPE ||--o{ PRODUCT : packages
     UNIT_TYPE ||--o{ UNIT_CONTENT : expresses
-    UNIT_CONTENT ||--o{ PRODUCT_PACKAGE : total_size
-    UNIT_CONTENT ||--o{ PRODUCT_PACKAGE_PORTION : portion_size
+    UNIT_CONTENT ||--o{ PRODUCT : total_size
+    UNIT_CONTENT ||--o{ PRODUCT_PORTION : portion_size
 ```
 
-Gedragsregels voor consumptietype, macroprofiel, archivering, selecteerbaarheid en cataloguscorrecties staan in [productcatalogus-domeinregels.md](../../domein/productcatalogus-domeinregels.md).
+## Migratiebron
+
+Het oude `product` wordt standaard één `product_composition`; iedere oude `product_package` wordt één nieuw `product`. Het oude macroprofiel verhuist naar `product_macro_profile.product_composition_id`. Voor roots met meerdere verpakkingen wordt vóór migratie een rapport gemaakt om afwijkende samenstellingen handmatig te kunnen splitsen.

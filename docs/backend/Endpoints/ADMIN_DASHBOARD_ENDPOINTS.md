@@ -1,11 +1,13 @@
-# Admin dashboard endpointcontracten — productcatalogus
+# Admin dashboard endpointcontracten — productcatalogus v1
+
+> Dit document beschrijft het momenteel geïmplementeerde root-plus-verpakkingencontract. Het leidende doelcontract voor de catalogusrevamp staat in [PRODUCT_CATALOG_V2_ENDPOINTS.md](./PRODUCT_CATALOG_V2_ENDPOINTS.md). Structurele package-routes en `productPackageId` uit dit document vervallen na migratie.
 
 <!--
 Documentatieregel: houd endpointdocs als compacte contract-DSL: routes, auth, params, body, responses, errorcodes en API-specifieke shapes.
 Domeinregels, UI-gedrag, datamodeluitleg, voorbeelden en rationale horen in specs, ERD's of domeindocs; verwijs hier alleen kort wanneer dat nodig is.
 -->
 
-Dit document beschrijft alleen het HTTP-contract. Opslagvelden staan in [PRODUCT_ERD.md](../ERD/PRODUCT_ERD.md). Domeinregels staan in [productcatalogus-domeinregels.md](../../domein/productcatalogus-domeinregels.md).
+Dit document bewaart het v1-contract tijdens de overgang. De actuele doelvelden staan in [PRODUCT_ERD.md](../ERD/PRODUCT_ERD.md); zij corresponderen met het v2-contract en niet met de legacy package-shapes hieronder. Domeinregels staan in [productcatalogus-domeinregels.md](../../domein/productcatalogus-domeinregels.md).
 
 ## Contractconventies
 

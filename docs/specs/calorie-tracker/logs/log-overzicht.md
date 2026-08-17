@@ -89,18 +89,18 @@ De primaire actie blijft bereikbaar en mag geen logs bedekken. Het logboekpaneel
 
 Ieder logitem toont:
 
-- verpakkingsafbeelding of gerecht-afbeelding, anders placeholder;
+- productafbeelding bij een productlog of een vaste gerechtplaceholder bij een dish-log;
 - tijd;
-- actuele productnaam en merk bij een productlog, of gerechtnaam zonder merk bij een dish-log;
-- oorspronkelijke geconsumeerde hoeveelheid als vermenigvuldiger met de gekozen eenheid, of als porties bij een dish-log;
+- actuele gedeelde productweergavenaam bij een productlog, of gerechtnaam bij een dish-log;
+- oorspronkelijke geconsumeerde hoeveelheid met gekozen eenheid, of receptporties bij een dish-log;
 - tekstueel consumptietype;
 - een aanwijzing dat het item geopend kan worden.
 
-Dish-logs tonen het consumptietype voeding. De verpakkingsomschrijving, volledige verpakkingsinhoud, portiedefinitie, calorieën en macro's staan niet in het compacte logitem. De responsive plaatsing staat in de UI-specificatie. Het consumptietype wordt nooit uitsluitend met kleur gecommuniceerd.
+Dish-logs tonen het consumptietype voeding. Volledige productinhoud, portiedefinitie, calorieën en macro's staan niet in het compacte logitem. Het consumptietype wordt nooit uitsluitend met kleur gecommuniceerd.
 
 ## Gearchiveerde catalogusdata
 
-- Een gearchiveerd product of een gearchiveerde verpakking blijft via de actuele catalogusrelatie zichtbaar in bestaande logs.
+- Een gearchiveerd concreet product blijft via de actuele catalogusrelatie zichtbaar in bestaande logs.
 - Het logitem mag een label `Gearchiveerd` tonen.
 - Archivering verandert de oorspronkelijke consumptie-invoer niet.
 
