@@ -77,6 +77,31 @@
   font-size: 12px;
 }
 
+.filters {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.filters button {
+  min-height: 36px;
+  padding: 0 13px;
+  color: #596473;
+  font-weight: 700;
+  white-space: nowrap;
+  background: #fff;
+  border: 1px solid #cdd3dd;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.filters button[aria-pressed="true"] {
+  color: #fff;
+  background: #3b7dd8;
+  border-color: #3b7dd8;
+}
+
 .scrollRegion {
   flex: 1 1 auto;
   min-height: 0;

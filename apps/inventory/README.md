@@ -43,10 +43,14 @@ Maak indien nodig `apps/inventory/.env` op basis van `.env.example`.
 
 ```bash
 corepack pnpm --filter inventory typecheck
+corepack pnpm --filter inventory lint
+corepack pnpm --filter inventory test --run
 corepack pnpm --filter inventory build
 ```
 
-Inventory gebruikt gedeelde authenticatie uit `packages/auth-client` en de applicatieshell uit `packages/shared`.
+Inventory gebruikt gedeelde authenticatie uit `packages/auth-client`, runtimecontracten uit `packages/contracts` en de applicatieshell uit `packages/shared`.
+
+De frontendgrenzen en afhankelijkheidsrichting staan beschreven in [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## Specificaties
 
@@ -68,5 +72,6 @@ Voor Inventory bestaat nog geen afzonderlijke Coolify-resource. Zodra die wordt 
 
 - `apps/inventory/**`;
 - `packages/auth-client/**`;
+- `packages/contracts/**`;
 - `packages/shared/**`;
 - gedeelde workspace- en buildbestanden.

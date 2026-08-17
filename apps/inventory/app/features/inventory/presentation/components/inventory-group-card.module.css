@@ -186,6 +186,63 @@
   text-align: right;
 }
 
+.partialButton {
+  width: 100%;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  cursor: pointer;
+}
+
+.progressTrack {
+  width: min(240px, 100%);
+  height: 7px;
+  overflow: hidden;
+  background: #dfe4eb;
+  border-radius: 999px;
+}
+
+.progressTrack > span {
+  display: block;
+  height: 100%;
+  background: #3b7dd8;
+  border-radius: inherit;
+}
+
+.itemActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.thresholdButton {
+  width: 100%;
+  min-height: 42px;
+  color: #2e67b7;
+  font-weight: 700;
+  text-align: left;
+  background: #f4f7fb;
+  border: 0;
+  border-top: 1px solid #e0e5eb;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.itemActions button {
+  min-width: 30px;
+  min-height: 30px;
+  color: #2e67b7;
+  font-weight: 700;
+  background: #fff;
+  border: 1px solid #cdd8e8;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
 .statusChip {
   display: inline-block;
   padding: 3px 8px;

@@ -8,9 +8,10 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 import { isAdministrator } from "@product-repos/auth-client/roles";
-import { authClient } from "../../auth-client";
-import { requireUser } from "../../auth.server";
-import { INVENTORY_BASE_PATH, toInventoryPublicPath } from "../../public-paths";
+import { authClient } from "../../core/data/auth/auth-client";
+import { requireUser } from "../../core/presentation/auth/auth.server";
+import { inventoryLoginPath, productManagementAdminPath } from "../../core/presentation/routing/inventory-routes";
+import { INVENTORY_BASE_PATH, toInventoryPublicPath } from "../../core/presentation/routing/public-paths";
 import styles from "./layout.module.css";
 
 /** Auth-derived capabilities exposed to protected Inventory routes. */
@@ -42,7 +43,7 @@ export default function BottomTabsLayout(): ReactNode {
       <SessionMonitor
         appBasePath={INVENTORY_BASE_PATH}
         authClient={authClient}
-        loginPath={toInventoryPublicPath("/login")}
+        loginPath={toInventoryPublicPath(inventoryLoginPath())}
       />
       <Outlet context={{ isAdmin } satisfies InventoryOutletContext} />
       <BottomTabBar>
@@ -50,7 +51,7 @@ export default function BottomTabsLayout(): ReactNode {
           Inventarisatie
         </NavLink>
         {isAdmin ? (
-          <a href="/product-management-admin/product-catalogus?source=inventory">
+          <a href={productManagementAdminPath()}>
             Admin dashboard
           </a>
         ) : null}

@@ -1,6 +1,7 @@
 import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, type Connect, type Plugin } from "vite";
+import { INVENTORY_BASE_PATH } from "./app/core/presentation/routing/inventory-routes";
 
 /** Redirect the slashless public app root before Vite's base-path middleware handles it. */
 function redirectAppRoot(basePath: string): Plugin {
@@ -68,9 +69,9 @@ function proxyCrossAppCriticalCss(publicBasePath: string, targetOrigin: string):
 }
 
 export default defineConfig({
-  base: "/inventory/",
+  base: `${INVENTORY_BASE_PATH}/`,
   plugins: [
-    redirectAppRoot("/inventory"),
+    redirectAppRoot(INVENTORY_BASE_PATH),
     proxyCrossAppCriticalCss("/calorie-tracker", "http://127.0.0.1:5173"),
     proxyCrossAppCriticalCss("/product-management-admin", "http://127.0.0.1:5174"),
     tailwindcss(),

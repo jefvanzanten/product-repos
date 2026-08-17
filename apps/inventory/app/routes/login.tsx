@@ -1,22 +1,22 @@
 import { LoginPage } from "@product-repos/auth-client/login-page";
 import { lookupSession } from "@product-repos/auth-client/session.server";
 import { data, redirect, useLoaderData, type LoaderFunctionArgs } from "react-router";
-import { authClient } from "../auth-client";
+import { authClient } from "../core/data/auth/auth-client";
 import {
   parseInventoryReturnPath,
   toInventoryPublicPath,
   toInventoryRedirectPath,
-} from "../public-paths";
+} from "../core/presentation/routing/public-paths";
 
 /** Redirect an already authenticated visitor away from the login page. */
 export async function loader({ request }: LoaderFunctionArgs) {
   const requestUrl = new URL(request.url);
   const returnTo = parseInventoryReturnPath(requestUrl.searchParams.get("returnTo"));
   const result = await lookupSession(request);
-  if (result._tag === "Authenticated") {
+  if (result.tag === "Authenticated") {
     throw redirect(toInventoryRedirectPath(returnTo));
   }
-  if (result._tag === "Unavailable") {
+  if (result.tag === "Unavailable") {
     throw new Response("Authenticatie is tijdelijk niet beschikbaar.", { status: result.status });
   }
   return data({ successPath: toInventoryPublicPath(returnTo) });
