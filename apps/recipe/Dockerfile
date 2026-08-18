@@ -27,7 +27,7 @@ ENV VITE_API_URL="$VITE_API_URL"
 COPY apps/recipe apps/recipe
 COPY packages/auth-client packages/auth-client
 COPY packages/contracts packages/contracts
-COPY packages/shared/package.json packages/shared/package.json
+COPY packages/shared packages/shared
 
 RUN corepack pnpm --filter recipe build
 
