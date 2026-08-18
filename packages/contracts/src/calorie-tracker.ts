@@ -35,6 +35,7 @@ export const calorieTrackerErrorCodeSchema = z.enum([
   "REFERENCE_NOT_FOUND",
   "PRODUCT_NOT_FOUND",
   "PRODUCT_ARCHIVED",
+  "PRODUCT_NOT_CONSUMABLE",
   "DISH_UNAVAILABLE",
   "LOG_NOT_FOUND",
   "LOG_ALREADY_EXISTS",
@@ -123,6 +124,7 @@ export const macroValuesSchema = z.object({
 
 /** Package projection embedded in an existing consumption log. */
 export const consumptionLogProductSchema = productSearchResultSchema.extend({
+  consumptionType: calorieTrackerConsumptionTypeSchema.nullable(),
   archived: z.boolean(),
 }).strict();
 

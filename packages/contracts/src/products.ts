@@ -13,7 +13,7 @@ export const macroReferenceBasisSchema = z.enum(["PER_100_G", "PER_100_ML", "PER
 /** Origins supported for a stored calorie value. */
 export const caloriesSourceSchema = z.enum(["AUTOMATIC", "MANUAL"]);
 
-/** Macro profile shared by every product in one composition. */
+/** Macro values shared by every product in one composition. */
 export const macroProfileSchema = z.object({
   referenceBasis: macroReferenceBasisSchema,
   caloriesKcal: nullableDecimalSchema,
@@ -23,6 +23,17 @@ export const macroProfileSchema = z.object({
   caloriesSource: caloriesSourceSchema.nullable(),
 }).strict();
 
+/** A persisted macro profile including whether calculations may use it. */
+export const storedMacroProfileSchema = macroProfileSchema.extend({
+  enabled: z.boolean(),
+}).strict();
+
+/** Explicit activation or non-destructive deactivation of macro values. */
+export const macroProfileMutationSchema = z.discriminatedUnion("enabled", [
+  z.object({ enabled: z.literal(true), profile: macroProfileSchema }).strict(),
+  z.object({ enabled: z.literal(false) }).strict(),
+]);
+
 /** A composition returned by autocomplete and composition mutations. */
 export const productCompositionDtoSchema = z.object({
   id: z.string().uuid(),
@@ -30,8 +41,8 @@ export const productCompositionDtoSchema = z.object({
   brand: brandDtoSchema.nullable(),
   category: categoryDtoSchema,
   categoryPath: z.array(categoryDtoSchema),
-  consumptionType: consumptionTypeSchema,
-  macroProfile: macroProfileSchema.nullable(),
+  consumptionType: consumptionTypeSchema.nullable(),
+  macroProfile: storedMacroProfileSchema.nullable(),
   productCount: z.number().int().nonnegative(),
   activeProductCount: z.number().int().nonnegative().optional(),
 }).strict();
@@ -41,12 +52,12 @@ export const createProductCompositionSchema = z.object({
   name: z.string(),
   brandId: z.string().uuid().nullable().optional(),
   categoryId: z.number().int().positive(),
-  consumptionType: consumptionTypeSchema,
+  consumptionType: consumptionTypeSchema.nullable(),
   macroProfile: macroProfileSchema.nullable().optional(),
 }).strict();
 
-/** Input for updating shared product-composition fields. */
-export const updateProductCompositionSchema = createProductCompositionSchema.strict();
+/** Input for updating shared product-composition identity and classification fields. */
+export const updateProductCompositionSchema = createProductCompositionSchema.omit({ macroProfile: true }).strict();
 
 /** A product-specific portion. */
 export const concreteProductPortionDtoSchema = z.object({
@@ -73,7 +84,7 @@ export const concreteProductSummarySchema = z.object({
   compositionName: z.string(),
   brandName: z.string().nullable(),
   categoryPath: z.string(),
-  consumptionType: consumptionTypeSchema,
+  consumptionType: consumptionTypeSchema.nullable(),
   packageSummary: z.string().nullable(),
   imageUrl: z.string().url().nullable(),
   barcode: z.string().nullable(),
@@ -115,6 +126,8 @@ export type ConsumptionType = z.infer<typeof consumptionTypeSchema>;
 export type MacroReferenceBasis = z.infer<typeof macroReferenceBasisSchema>;
 export type CaloriesSource = z.infer<typeof caloriesSourceSchema>;
 export type MacroProfile = z.infer<typeof macroProfileSchema>;
+export type StoredMacroProfile = z.infer<typeof storedMacroProfileSchema>;
+export type MacroProfileMutation = z.infer<typeof macroProfileMutationSchema>;
 export type ProductCompositionDto = z.infer<typeof productCompositionDtoSchema>;
 export type CreateProductComposition = z.infer<typeof createProductCompositionSchema>;
 export type UpdateProductComposition = z.infer<typeof updateProductCompositionSchema>;

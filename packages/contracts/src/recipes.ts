@@ -5,6 +5,27 @@ import {
   consumptionInputModeSchema,
 } from "./calorie-tracker.ts";
 
+/** Stable expected recipe API error codes. */
+export const recipeErrorCodeSchema = z.enum([
+  "VALIDATION_ERROR",
+  "REFERENCE_NOT_FOUND",
+  "DISH_NOT_FOUND",
+  "DISH_ALREADY_EXISTS",
+  "PRODUCT_ARCHIVED",
+  "PRODUCT_NOT_CONSUMABLE",
+  "DISH_UPDATE_CONFLICT",
+  "UNAUTHENTICATED",
+  "AUTH_UNAVAILABLE",
+  "INTERNAL_ERROR",
+]);
+
+/** Strict expected recipe API error response. */
+export const recipeErrorResponseSchema = z.object({
+  code: recipeErrorCodeSchema,
+  message: z.string().min(1),
+  fields: z.record(z.string(), z.string()).optional(),
+}).strict();
+
 /** Visibility levels supported by recipes. */
 export const recipeVisibilitySchema = z.enum(["PRIVATE", "PUBLIC"]);
 
@@ -117,6 +138,8 @@ export const recipeIngredientInputOptionsSchema = z.object({
   }).strict()),
 }).strict();
 
+export type RecipeErrorCode = z.infer<typeof recipeErrorCodeSchema>;
+export type RecipeErrorResponse = z.infer<typeof recipeErrorResponseSchema>;
 export type RecipeVisibility = z.infer<typeof recipeVisibilitySchema>;
 export type RecipeSort = z.infer<typeof recipeSortSchema>;
 export type RecipeOwnerActions = z.infer<typeof recipeOwnerActionsSchema>;
