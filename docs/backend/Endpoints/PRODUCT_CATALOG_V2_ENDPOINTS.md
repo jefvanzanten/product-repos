@@ -22,9 +22,12 @@ PUT /product-compositions/:compositionId:
 
 PUT /product-compositions/:compositionId/macro-profile:
   auth: admin
-  body: ProductMacroProfileInput
-  behavior: live correction for every child product and dependent domain
-  returns: 200 ProductMacroProfile
+  body: ProductMacroProfileMutation
+  behavior:
+    enabled=true => validate and activate supplied values
+    enabled=false => deactivate while preserving stored values
+    live correction affects every child product and dependent domain
+  returns: 200 ProductMacroProfile|null
   errors: 409 [REFERENCE_BASIS_IN_USE]
 
 GET /products:
@@ -63,8 +66,28 @@ CreateProductComposition:
   name: string
   brandId?: uuid|null
   categoryId: int
-  consumptionType: FOOD|DRINK|SUPPLEMENT
-  macroProfile?: ProductMacroProfileInput|null
+  consumptionType: FOOD|DRINK|SUPPLEMENT|null
+  macroProfile?: ProductMacroProfileInput|null # supplied profile starts active
+
+UpdateProductComposition:
+  name: string
+  brandId?: uuid|null
+  categoryId: int
+  consumptionType: FOOD|DRINK|SUPPLEMENT|null
+  behavior: setting consumptionType=null deactivates but does not delete a stored macro profile
+
+ProductMacroProfileMutation:
+  enabled: boolean
+  profile?: ProductMacroProfileInput # required when enabling; omitted when disabling preserves stored values
+
+ProductMacroProfile:
+  enabled: boolean
+  referenceBasis: PER_100_G|PER_100_ML|PER_UNIT
+  caloriesKcal: decimal-string|null
+  proteinG: decimal-string|null
+  carbohydratesG: decimal-string|null
+  fatG: decimal-string|null
+  caloriesSource: AUTOMATIC|MANUAL|null
 
 ProductCompositionDto:
   id: uuid
@@ -72,7 +95,7 @@ ProductCompositionDto:
   brand: Brand|null
   category: Category
   categoryPath: Category[]
-  consumptionType: FOOD|DRINK|SUPPLEMENT
+  consumptionType: FOOD|DRINK|SUPPLEMENT|null
   macroProfile: ProductMacroProfile|null
   productCount: int
   activeProductCount?: int
@@ -106,7 +129,7 @@ ConcreteProductSummary:
   compositionName: string
   brandName: string|null
   categoryPath: string
-  consumptionType: FOOD|DRINK|SUPPLEMENT
+  consumptionType: FOOD|DRINK|SUPPLEMENT|null
   packageSummary: string|null
   imageUrl: string|null
   barcode: string|null

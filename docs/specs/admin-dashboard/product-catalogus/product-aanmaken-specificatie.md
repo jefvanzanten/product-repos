@@ -22,8 +22,8 @@ Een beheerder kan zonder verplichte zoekstap een product aanmaken met:
 3. een productnaam;
 4. precies één eerste verpakking;
 5. optioneel een product- en verpakkingsafbeelding;
-6. een verplicht consumptietype;
-7. optioneel een macroprofiel.
+6. een bewuste keuze of het een consumptieproduct is en, zo ja, een verplicht consumptietype;
+7. optioneel actieve voedingswaarden.
 
 Opslaan maakt transactioneel één `product`, één eerste `product_package` en eventuele Calorie Tracker-data aan. Na succesvol opslaan navigeert de UI naar productdetail van het nieuwe product.
 
@@ -39,8 +39,9 @@ Opslaan maakt transactioneel één `product`, één eerste `product_package` en 
 - Merk optioneel zoeken, kiezen of vanuit het merkveld aanmaken.
 - Productnaam invullen.
 - Een optionele productafbeelding kiezen.
-- Exact één consumptietype kiezen: voeding, drinken of supplement.
-- Optioneel een macroprofiel op productniveau toevoegen.
+- `Consumptieproduct` aan- of uitzetten; de toggle start aan.
+- Bij een consumptieproduct exact één type kiezen: voeding, drinken of supplement.
+- Optioneel voedingswaarden op samenstellingsniveau activeren.
 - Eerste verpakking en een optionele verpakkingsafbeelding invullen.
 - Product opslaan via `POST /products`.
 - Na succesvol opslaan redirecten naar productdetail.
@@ -118,18 +119,20 @@ Als de route wordt geopend met `brandId` of `categoryId`, worden deze alleen geb
 - Weergavenaam is alleen UI: `<merk> <productnaam>` of alleen productnaam.
 - `displayName` wordt niet naar de backend gestuurd.
 
-### Consumptietype
+### Consumptieproduct en consumptietype
 
-- Ieder product heeft exact één consumptietype: `voeding`, `drinken` of `supplement`.
-- Het consumptietype is verplicht bij opslaan.
-- Archivering bepaalt of een product of verpakking in productzoeken van de Calorie Tracker verschijnt.
-- Een macroprofiel is niet verplicht om het product te kunnen loggen.
-- Een product zonder macroprofiel draagt niet bij aan calorie- of macrototalen.
+- De toggle `Consumptieproduct` staat bij een nieuw product standaard aan.
+- Er is niet automatisch een type geselecteerd; opslaan met ingeschakelde toggle vereist exact `voeding`, `drinken` of `supplement`.
+- Bij uitschakelen verdwijnen de type-opties en wordt `consumptionType=null` opgeslagen.
+- `null` betekent niet voor consumptieregistratie en is geen vierde type `OTHER`.
+- Alleen een actief concreet product met een gekozen consumptietype verschijnt in productzoeken van de Calorie Tracker en recepten-app.
+- Voedingswaarden zijn niet verplicht om het product te kunnen loggen.
+- Een product zonder actieve voedingswaarden draagt niet bij aan calorie- of macrototalen.
 
-### Optioneel macroprofiel
+### Optionele voedingswaarden
 
-- Het macroprofiel hoort bij het product en niet bij een afzonderlijke verpakking.
-- De sectie staat standaard uit.
+- Het macroprofiel hoort bij de productsamenstelling en niet bij een afzonderlijke verpakking.
+- De sectie staat standaard uit en kan alleen actief zijn voor een consumptieproduct.
 - De beheerder kiest een expliciete referentiebasis: `100 g`, `100 ml` of `1 stuk/dosis`.
 - `100 g` is de standaardkeuze.
 - Calorieën, eiwit, koolhydraten en vet zijn ieder afzonderlijk optioneel.
@@ -182,7 +185,7 @@ UI-invoer met komma, bijvoorbeeld `1,5`, wordt voor verzending omgezet naar `1.5
 - `brandId` mag ontbreken of `null` zijn.
 - Categorie, merk, verpakkingstype en eenheid moeten bestaan wanneer ze worden ingestuurd.
 - `unit_content` wordt gevonden of aangemaakt voor `(unitTypeId, canonicalAmount)`.
-- Product, eerste verpakking, afbeeldingenmetadata, consumptietype en een eventueel macroprofiel worden in één transactie opgeslagen.
+- Product, eerste verpakking, afbeeldingenmetadata, nullable consumptietype en eventuele actieve voedingswaarden worden in één transactie opgeslagen.
 - Bij falen blijft er geen half opgeslagen product of macroprofiel over.
 - Succesresponse bevat voldoende informatie om naar productdetail te navigeren.
 
@@ -190,8 +193,8 @@ UI-invoer met komma, bijvoorbeeld `1,5`, wordt voor verzending omgezet naar `1.5
 
 Het endpoint- en datamodel beschrijven voor deze slice:
 
-- verplicht consumptietype;
-- macroprofiel, referentiebasis, voedingswaarden en bron van calorieën;
+- nullable consumptietype met de invariant dat een ingeschakeld consumptieproduct exact één type heeft;
+- voedingswaardenstatus, macroprofiel, referentiebasis, voedingswaarden en bron van calorieën;
 - transactionele validatie van de compatibiliteit tussen macroprofiel en verpakking;
 - rekenbare inhoudseenheden;
 - een optionele portiedefinitie naast de expliciete volledige verpakkingsinhoud.
@@ -279,11 +282,13 @@ En scrolt de categorieboom direct naar de geselecteerde categorierij
 En kan de beheerder deze waarden nog wijzigen voor opslaan  
 En wordt de breadcrumb direct bijgewerkt na een andere categorieselectie.
 
-### AC-09 - Consumptietype
+### AC-09 - Consumptieproduct en consumptietype
 
 Gegeven dat de beheerder een product aanmaakt
-Dan is exact één consumptietype verplicht
-En kan het product zonder macroprofiel worden opgeslagen.
+Dan staat `Consumptieproduct` standaard aan zonder vooraf geselecteerd type
+En is bij ingeschakelde toggle exact één consumptietype verplicht
+En slaat een uitgeschakelde toggle `consumptionType=null` op
+En kan een consumptieproduct zonder actieve voedingswaarden worden opgeslagen.
 
 ### AC-10 - Optioneel macroprofiel
 

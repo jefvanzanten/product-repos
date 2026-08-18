@@ -33,8 +33,10 @@ Merk, optioneel
 - bestaand merk kiezen
 - nieuw merk aanmaken
 
-Consumptietype
-- voeding, drinken of supplement
+Consumptieproduct, standaard aan
+- toggle aan/uit
+- bij aan: voeding, drinken of supplement; initieel niets geselecteerd
+- bij uit: geen type-opties
 
 Verpakking
 - verpakkingstype
@@ -47,6 +49,7 @@ Verpakking
 - optionele verpakkingsafbeelding
 
 Voedingswaarden, standaard uit
+- toggle aan/uit; uitgeschakeld wanneer Consumptieproduct uit staat
 - macroprofiel toevoegen
 - referentiebasis
 - optionele calorieën, eiwit, koolhydraten en vet
@@ -67,6 +70,8 @@ Voedingswaarden, standaard uit
 - Formulierkaarten hebben een radius van `18px`; invoervelden, selecties en radiotegels zijn `44px` hoog.
 - Tussen de hoofdkaarten zit afhankelijk van de ontwerpsectie `40px` tot `42px` verticale ruimte.
 - Onder de desktopbreedte stapelen consumptietype-, referentiebasis- en macrovelden verticaal zonder horizontale overflow.
+- `Consumptieproduct` gebruikt hetzelfde togglepatroon als `Voedingswaarden`, staat initieel aan en toont alleen dan de drie type-opties.
 - Het macroprofiel staat initieel uit. De ingeschakelde ontwerpweergave beschrijft de uitgeklapte toestand na activering.
-- De schakelaar voor voedingswaarden staat volledig binnen de formulierkaart, uitgelijnd in de rechterbovenhoek.
+- Wanneer `Consumptieproduct` uitgaat, gaat `Voedingswaarden` ook uit en verdwijnt de inhoud; eerder bewaarde waarden worden niet gewist.
+- De schakelaars staan volledig binnen hun formulierkaart, uitgelijnd in de rechterbovenhoek.
 - De primaire knop `Product opslaan` gebruikt `1rem` verticale padding.

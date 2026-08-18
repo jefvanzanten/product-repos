@@ -41,7 +41,7 @@ POST /recipes:
   body: CreateRecipe
   returns: 201 RecipeDetail
   errors: 400 [VALIDATION_ERROR, REFERENCE_NOT_FOUND]
-          409 [DISH_ALREADY_EXISTS, PRODUCT_ARCHIVED]
+          409 [DISH_ALREADY_EXISTS, PRODUCT_ARCHIVED, PRODUCT_NOT_CONSUMABLE]
 
 PUT /recipes/:dishId:
   auth: owner
@@ -50,7 +50,7 @@ PUT /recipes/:dishId:
     name/visibility update stem; changed recipe content creates immutable version
   returns: 200 RecipeDetail
   errors: 404 [DISH_NOT_FOUND]
-          409 [DISH_ALREADY_EXISTS, PRODUCT_ARCHIVED, DISH_UPDATE_CONFLICT]
+          409 [DISH_ALREADY_EXISTS, PRODUCT_ARCHIVED, PRODUCT_NOT_CONSUMABLE, DISH_UPDATE_CONFLICT]
 
 POST /recipes/:dishId/archive:
   auth: owner
@@ -69,7 +69,7 @@ POST /recipes/:dishId/restore:
 GET /recipes/products/search:
   auth: user
   query: { query: string, limit?: int }
-  behavior: active concrete products; match composition name and brand
+  behavior: active concrete products with FOOD, DRINK, or SUPPLEMENT; match composition name and brand
   returns: 200 RecipeProductSearchResult[]
 
 GET /recipes/products/:productId/input-units:

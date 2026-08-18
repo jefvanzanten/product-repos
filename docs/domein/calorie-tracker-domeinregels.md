@@ -12,7 +12,10 @@
 - Logs bewaren oorspronkelijke hoeveelheid, invoermodus, invoereenheid, consumptiemoment en browsertijdzone.
 - Product-, samenstellings- en voedingsdata wordt niet gesnapshot.
 - Correcties aan namen, productinhoud of macroprofielen werken direct door in historische logs en statistieken.
-- Nieuwe productlogs gebruiken alleen actieve producten; bestaande logs met een gearchiveerd product blijven leesbaar.
+- Nieuwe productlogs gebruiken alleen actieve producten met `FOOD`, `DRINK` of `SUPPLEMENT`.
+- Producten waarvan `consumption_type` later `NULL` wordt verdwijnen uit nieuwe keuzes; bestaande logs blijven leesbaar en tellen mee in historische statistieken.
+- Een historische log van een niet langer consumeerbaar product heeft geen actueel consumptietype en verschijnt daarom alleen onder het filter `all`.
+- Bestaande logs met een gearchiveerd product blijven leesbaar.
 
 ## Invoermodi
 
@@ -29,7 +32,7 @@
 - Ingrediënten, hoeveelheden, porties en optionele vrije bereidingsinstructies staan op immutable `dish_version`.
 - Een inhoudelijke wijziging maakt een nieuwe versie. Een consumptielog pint de nieuwste versie van het logmoment.
 - Naamscorrecties zijn direct zichtbaar in bestaande logs; latere receptwijzigingen veranderen de gepinde receptstructuur niet.
-- Voedingswaarden van een gepinde versie worden altijd uit de actuele productdata berekend en zijn geen snapshot.
+- Voedingswaarden van een gepinde versie worden altijd uit het actuele actieve productmacroprofiel berekend en zijn geen snapshot.
 - Een recept heeft minimaal één actief productingrediënt en een positief aantal porties.
 - Ingrediënten verwijzen rechtstreeks naar concrete producten en kunnen volledige producten, productporties of compatibele inhoudseenheden gebruiken.
 - De recepten-app toont geen calorieën of macro's; de Calorie Tracker gebruikt ze voor gerechtlogs en statistieken.
@@ -42,18 +45,19 @@
 - Een publiek recept dat privé wordt, verdwijnt voor anderen uit nieuwe keuzes; bestaande logs blijven bestaan.
 - Gerechten als ingrediënt van andere gerechten zijn niet toegestaan.
 
-## Productarchivering in recepten
+## Productbeschikbaarheid in recepten
 
-- Bestaande receptversies met een gearchiveerd product blijven zichtbaar, logbaar en berekenbaar.
-- Het gearchiveerde product blijft in bestaand receptdetail herkenbaar.
-- Bij een inhoudelijke bewerking moet een gearchiveerd ingrediënt worden vervangen voordat de nieuwe versie kan worden opgeslagen.
+- Alleen actieve producten met een consumptietype zijn selecteerbaar voor nieuwe receptingrediënten.
+- Bestaande receptversies met een gearchiveerd of later niet-consumeerbaar product blijven zichtbaar, logbaar en berekenbaar.
+- Het niet meer selecteerbare product blijft in bestaand receptdetail herkenbaar.
+- Bij een inhoudelijke bewerking moet een gearchiveerd of niet-consumeerbaar ingrediënt worden vervangen voordat de nieuwe versie kan worden opgeslagen.
 
 ## Tijd, berekeningen en bewaren
 
 - Tijdstippen worden als UTC plus gebruikte IANA-browsertijdzone opgeslagen; die tijdzone bepaalt blijvend de lokale logdag.
 - Toekomstige consumpties zijn niet toegestaan.
 - Dishmacro's per portie zijn de som van actuele productbijdragen van de gepinde versie, gedeeld door het versieaantal porties.
-- Ontbrekende productmacro's dragen voor onbekende waarden niets bij; het gerecht blijft logbaar.
+- Ontbrekende of inactieve productmacro's dragen voor onbekende waarden niets bij; het gerecht blijft logbaar.
 - Log-create gebruikt een clientgegenereerd ID en is idempotent bij identieke retries.
 - Logverwijdering is technisch herstelbaar binnen de undo-termijn; recepten gebruiken afzonderlijk archiveren/herstellen.
 - Consumptielogs wijzigen voorraad niet automatisch.

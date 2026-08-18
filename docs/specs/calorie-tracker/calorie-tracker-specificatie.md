@@ -45,7 +45,7 @@ De app blijft gemount onder `/calorie-tracker`.
 
 ## Catalogus en zoeken
 
-- Productresultaten zijn concrete actieve `product`-records; `product_package` is geen selectieniveau meer.
+- Productresultaten zijn concrete actieve `product`-records waarvan `consumptionType` `FOOD`, `DRINK` of `SUPPLEMENT` is; `product_package` is geen selectieniveau meer.
 - Productweergave gebruikt de gedeelde formattering met merk, naam, verpakkingstype en inhoud.
 - Zoekresultaten voor gerechten bevatten eigen actieve private/publieke recepten en actieve publieke recepten van anderen.
 - De Calorie Tracker kan geen recept aanmaken, bewerken, archiveren of herstellen.
@@ -56,9 +56,10 @@ De app blijft gemount onder `/calorie-tracker`.
 
 - Productlogs verwijzen naar `product.id`; gerechtlogs pinnen een `dish_version`.
 - Receptstructuur van een oud log blijft gepind.
-- Namen, productgegevens en macroprofielen blijven live en zijn geen snapshot; correcties werken direct door in historische logs en statistieken.
-- Gearchiveerde producten of recepten blijven in bestaande logs leesbaar en berekenbaar.
-- Nieuwe selecties sluiten gearchiveerde data uit.
+- Namen, productgegevens en actieve macroprofielen blijven live en zijn geen snapshot; correcties werken direct door in historische logs en statistieken.
+- Gearchiveerde producten, niet-consumptieproducten of recepten blijven in bestaande logs leesbaar en berekenbaar.
+- Een historische productlog met actueel `consumptionType=null` verschijnt alleen onder het filter `all`.
+- Nieuwe selecties sluiten gearchiveerde data en producten zonder consumptietype uit.
 - Consumptielogs wijzigen voorraad niet automatisch.
 
 ## Buiten scope
@@ -77,11 +78,12 @@ Gegeven de log-toevoegenflow
 Dan bestaat daarin geen formulier of actie om een gerecht aan te maken
 En kan de gebruiker via `Recepten` de afzonderlijke app openen.
 
-### AC-02 — Concrete producten
+### AC-02 — Concrete consumptieproducten
 
 Gegeven productzoeken
-Dan retourneert ieder resultaat één concreet product-ID
-En geen combinatie van root-product plus package-ID.
+Dan retourneert ieder resultaat één actief concreet product-ID met een niet-null consumptietype
+En geen combinatie van root-product plus package-ID
+En verschijnt een niet-consumptieproduct niet als nieuwe keuze.
 
 ### AC-03 — Recept bekijken
 

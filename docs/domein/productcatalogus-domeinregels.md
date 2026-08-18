@@ -7,7 +7,7 @@ De catalogus scheidt een gedeelde inhoudelijke productsamenstelling van ieder co
 ## Productsamenstelling
 
 - Ieder `product` hoort bij exact één `product_composition`, ook wanneer die samenstelling maar één concreet product heeft.
-- De samenstelling draagt naam, optioneel merk, categorie, consumptietype en optioneel macroprofiel.
+- De samenstelling draagt naam, optioneel merk, categorie, een nullable consumptietype en een optioneel bewaard macroprofiel.
 - De combinatie merk, categorie en getrimde case-insensitieve naam is uniek.
 - `product_composition` is geen zoekresultaat voor consumptie, recepten of voorraad en is niet zelfstandig archiveerbaar.
 - Een samenstelling zonder actieve producten blijft in admin-autocomplete vindbaar om een nieuw product eraan toe te voegen.
@@ -32,15 +32,26 @@ De catalogus scheidt een gedeelde inhoudelijke productsamenstelling van ieder co
 - Basiseenheden zijn gram, milliliter en één stuk/dosis.
 - Verpakkingstypen en productporties bewaren expliciete enkelvouds- en meervoudsnamen.
 
+## Consumptieclassificatie
+
+- `consumption_type` is `FOOD`, `DRINK`, `SUPPLEMENT` of `NULL` en blijft eigendom van `product_composition`.
+- `NULL` betekent expliciet dat de samenstelling geen consumptieproduct is; het betekent niet `OTHER` of een onbekende classificatie.
+- Alleen actieve concrete producten met een niet-null consumptietype zijn beschikbaar voor nieuwe Calorie Tracker-logs en nieuwe receptingrediënten.
+- Categorie en consumptietype blijven onafhankelijk: categorie classificeert de algemene catalogus, consumptietype uitsluitend consumptieregistratie.
+- Een wijziging naar `NULL` verwijdert geen bestaande logs, receptversies of voedingswaarden. Historische relaties blijven leesbaar en berekenbaar.
+
 ## Macroprofiel
 
 - `product_macro_profile` behoudt zijn naam en hoort één-op-één bij `product_composition` via `product_composition_id` als primary key.
-- Alle concrete producten binnen dezelfde samenstelling gebruiken automatisch hetzelfde profiel.
-- Een wijziging werkt direct door naar alle gekoppelde producten, recepten, logs en statistieken.
+- Een bewaard profiel heeft afzonderlijk een actieve/inactieve status. Uitschakelen verwijdert de waarden niet.
+- Alle concrete producten binnen dezelfde samenstelling gebruiken automatisch hetzelfde actieve profiel.
+- Alleen een actief profiel wordt gelezen door voedingsberekeningen; een inactief of ontbrekend profiel draagt niets bij.
+- Een wijziging aan actieve waarden werkt direct door naar alle gekoppelde producten, recepten, logs en statistieken.
 - Een afwijkende receptuur hoort in een andere productsamenstelling.
 - Referentiebasis is `PER_100_G`, `PER_100_ML` of `PER_UNIT`.
-- Een profiel is optioneel; een product zonder profiel blijft selecteerbaar en draagt niet bij aan onbekende voedingswaarden.
-- `NULL` betekent onbekend en `0` een bekende nulwaarde.
+- Een consumptieproduct zonder actief profiel blijft selecteerbaar en draagt niet bij aan onbekende voedingswaarden.
+- Wanneer een samenstelling geen consumptieproduct meer is, wordt het profiel inactief; opnieuw inschakelen van het consumptieproduct activeert het profiel niet automatisch.
+- `NULL` in een voedingswaarde betekent onbekend en `0` een bekende nulwaarde.
 - Calorieën mogen uit complete eiwit-, koolhydraat- en vetwaarden met 4/4/9 worden berekend; handmatig gecorrigeerde calorieën worden niet automatisch overschreven.
 - Een wijziging van referentiedimensie wordt geblokkeerd wanneer bestaande receptingrediënten daarmee incompatibel worden.
 

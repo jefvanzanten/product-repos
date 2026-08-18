@@ -91,14 +91,14 @@ Iedere inhoudelijke wijziging maakt een immutable versie. Het receptdetail toont
 ## Ingrediënten
 
 - Een recept heeft minimaal één ingrediënt.
-- Ingrediënten verwijzen rechtstreeks naar actieve concrete `product`-records uit de vernieuwde catalogus.
+- Ingrediënten verwijzen rechtstreeks naar actieve concrete `product`-records met een niet-null consumptietype uit de vernieuwde catalogus.
 - De maker ziet concrete productnaam en merk; verpakkingsinformatie blijft herkenbaar in de afgeleide productnaam.
 - Invoer kan via compatibele massa-, volume- of teleenheid, of via de optionele productportie.
 - Wanneer voedingsbasis bekend is, toont de eenheidskeuze alleen compatibele eenheden.
 - Zonder bekende voedingsbasis toont zij alle actieve eenheden gegroepeerd per dimensie.
-- Producten zonder macroprofiel zijn toegestaan.
+- Consumptieproducten zonder actief macroprofiel zijn toegestaan.
 - Recepthoeveelheid is onafhankelijk van verpakkingsinhoud. Vanaf één volledige verpakking mag de UI informatief `1 blik`, `1,5 blik` of `2 blikken` tonen; de opgeslagen bron blijft hoeveelheid + eenheid.
-- Gearchiveerde producten blijven in bestaande versies zichtbaar en logbaar, maar moeten bij een inhoudelijke bewerking worden vervangen.
+- Gearchiveerde of later niet-consumeerbaar gemaakte producten blijven in bestaande versies zichtbaar en logbaar, maar moeten bij een inhoudelijke bewerking worden vervangen.
 
 ## Zichtbaarheid en autorisatie
 
@@ -151,7 +151,7 @@ En ziet de eigenaar daar publieke en privé-recepten.
 
 ### AC-03 — Recept maken
 
-Gegeven een ingelogde gebruiker met naam, positief aantal porties en minimaal één actief product
+Gegeven een ingelogde gebruiker met naam, positief aantal porties en minimaal één actief consumptieproduct
 Wanneer die opslaat
 Dan ontstaan één dishstam en één immutable versie
 En is de standaardzichtbaarheid privé.

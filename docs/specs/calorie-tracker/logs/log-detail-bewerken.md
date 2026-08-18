@@ -33,8 +33,8 @@ Het detail toont voor een productlog:
 - oorspronkelijke hoeveelheid en gekozen eenheid;
 - afgeleide hoeveelheid voor berekening;
 - datum en tijd;
-- consumptietype;
-- alle actuele beschikbare calorie- en macrowaarden;
+- actueel consumptietype, of `-` wanneer het product later niet-consumeerbaar is gemaakt;
+- alle actuele beschikbare actieve calorie- en macrowaarden;
 - status `Gearchiveerd` wanneer het concrete product niet meer actief is;
 - acties `Bewerken` en `Verwijderen`.
 
@@ -83,11 +83,11 @@ Het gerecht of de gepinde versie zelf is niet vervangbaar; een ander gerecht log
 
 Het wijzigen van een log verandert nooit de productcatalogus.
 
-Bij een gearchiveerd product:
+Bij een gearchiveerd of later niet-consumeerbaar product:
 
 - datum, tijd, hoeveelheid en bestaande eenheid blijven bewerkbaar;
-- het gearchiveerde product blijft als huidige keuze zichtbaar;
-- productzoeken voor vervanging toont alleen actieve concrete producten.
+- het bestaande product blijft als huidige keuze zichtbaar;
+- productzoeken voor vervanging toont alleen actieve concrete producten met een niet-null consumptietype.
 
 ### Cataloguscorrecties
 
@@ -160,11 +160,11 @@ Gegeven dat de gebruiker een log verwijdert
 Dan verdwijnt het direct uit lijst en statistieken
 En kan de gebruiker het gedurende vijf seconden ongedaan maken.
 
-### AC-07 - Gearchiveerd product
+### AC-07 - Niet meer selecteerbaar product
 
-Gegeven dat het gekoppelde product is gearchiveerd
+Gegeven dat het gekoppelde product is gearchiveerd of later niet-consumeerbaar is gemaakt
 Dan blijft het log leesbaar en beperkt bewerkbaar
-En kan het gearchiveerde product niet voor een nieuw log worden geselecteerd.
+En kan het product niet voor een nieuw log worden geselecteerd.
 
 ### AC-08 - Dish-log
 

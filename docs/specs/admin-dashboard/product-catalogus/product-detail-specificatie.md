@@ -41,8 +41,8 @@ Een beheerder kan een bestaand product openen, controleren en beheren. Productde
 - Categorie wijzigen.
 - Merk wijzigen of leeg maken.
 - Productnaam en optionele productafbeelding wijzigen.
-- Consumptietype beheren.
-- Een optioneel macroprofiel toevoegen, wijzigen of uitschakelen.
+- Consumptieproduct en nullable consumptietype beheren.
+- Voedingswaarden toevoegen, wijzigen, activeren of niet-destructief uitschakelen.
 - Merk vanuit het merkveld aanmaken tijdens product bewerken.
 - Categorie inline aanmaken vanuit product bewerken.
 - Verpakkingenlijst tonen op productdetail.
@@ -77,9 +77,9 @@ Productdetail toont minimaal:
 - merk wanneer aanwezig;
 - productnaam en afgeleide weergavenaam;
 - actieve of gearchiveerde status;
-- consumptietype;
+- consumptietype, of `-` wanneer het geen consumptieproduct is;
 - productafbeelding of fallback;
-- het optionele macroprofiel met referentiebasis en alle bekende waarden;
+- de status van voedingswaarden en, alleen wanneer actief, referentiebasis en alle bekende waarden;
 - alle verpakkingen van het product.
 
 Iedere verpakking toont minimaal:
@@ -95,9 +95,9 @@ Iedere verpakking toont minimaal:
 
 Productdetail schakelt op dezelfde pagina naar bewerkmodus. Er is geen aparte product-edit-route in MVP.
 
-De productgegevens-bewerkmodus bevat uitsluitend categorie, productnaam, merk en consumptietype; voedingswaarden zijn daarin niet zichtbaar of wijzigbaar. De responsive kaart- en actieopbouw staat in de UI-specificatie.
+De productgegevens-bewerkmodus bevat uitsluitend categorie, productnaam, merk en `Consumptieproduct` met de conditionele consumptietype-opties; voedingswaarden zijn daarin niet zichtbaar of handmatig wijzigbaar. Uitschakelen van `Consumptieproduct` deactiveert bij opslaan wel automatisch de voedingswaarden. De responsive kaart- en actieopbouw staat in de UI-specificatie.
 
-De actie in de voedingswaardenkaart opent afzonderlijk `Voedingswaarden bewerken`. Alleen de optionele macroprofielschakelaar, referentiebasis en voedingswaarden zijn daar zichtbaar en wijzigbaar. Productgegevens en verpakkingen blijven bij deze mutatie ongewijzigd.
+De actie in de voedingswaardenkaart opent afzonderlijk `Voedingswaarden bewerken`. Alleen de voedingswaardenschakelaar, referentiebasis en voedingswaarden zijn daar zichtbaar en wijzigbaar. De schakelaar kan alleen aan wanneer de samenstelling een consumptietype heeft. Uitschakelen bewaart bestaande waarden; opnieuw inschakelen herstelt ze in het formulier. Productgegevens en verpakkingen blijven bij deze mutatie ongewijzigd.
 
 Verpakkingen worden niet in product-bewerkmodus bewerkt. Verpakkingen hebben eigen routes en acties.
 
@@ -105,7 +105,10 @@ Verpakkingen worden niet in product-bewerkmodus bewerkt. Verpakkingen hebben eig
 
 Productgegevens bewerken gebruikt voor zijn eigen velden dezelfde regels als product aanmaken:
 
-- ieder product heeft exact één consumptietype;
+- `consumptionType` is `FOOD`, `DRINK`, `SUPPLEMENT` of `null`;
+- bij ingeschakeld `Consumptieproduct` is exact één niet-null type verplicht;
+- uitschakelen deactiveert bewaarde voedingswaarden zonder ze te verwijderen;
+- opnieuw inschakelen activeert voedingswaarden niet automatisch;
 - een ontbrekende productafbeelding blokkeert opslaan niet;
 - categorie is verplicht;
 - productnaam is verplicht;
@@ -116,7 +119,8 @@ Productgegevens bewerken gebruikt voor zijn eigen velden dezelfde regels als pro
 
 Voedingswaarden bewerken gebruikt afzonderlijk de macroprofielregels:
 
-- een ingeschakeld macroprofiel heeft een expliciete basis en minimaal één voedingswaarde groter dan nul;
+- ingeschakelde voedingswaarden vereisen een consumptietype, een expliciete basis en minimaal één voedingswaarde groter dan nul;
+- uitschakelen bewaart profielwaarden maar sluit ze uit van alle berekeningen;
 - de macroprofielbasis blijft compatibel met alle verpakkingen;
 - een automatisch berekende caloriewaarde wordt bij gewijzigde macro's opnieuw berekend;
 - een handmatig gecorrigeerde caloriewaarde wordt bij gewijzigde macro's niet automatisch overschreven.
@@ -234,7 +238,7 @@ En toont productdetail geen afzonderlijke link `Terug naar productcatalogus`.
 Gegeven dat een productdetail geopend is  
 Wanneer de beheerder `Productgegevens bewerken` kiest
 Dan schakelt de pagina naar de afgeschermde productgegevens-bewerkmodus
-En kan de beheerder categorie, merk, productnaam en consumptietype aanpassen
+En kan de beheerder categorie, merk, productnaam, Consumptieproduct en conditioneel consumptietype aanpassen
 
 En kan die bewerkmodus geen voedingswaarden of verpakkingen wijzigen.
 
@@ -280,7 +284,8 @@ En toont zij afhankelijk van de status een archiveer- of herstelactie.
 Gegeven dat productdetail geopend is
 Wanneer de beheerder de actie in de voedingswaardenkaart kiest
 Dan opent de afgeschermde voedingswaarden-bewerkmodus
-En kan de beheerder een optioneel macroprofiel toevoegen, wijzigen of uitschakelen
+En kan de beheerder voedingswaarden toevoegen, wijzigen, activeren of uitschakelen
+En bewaart uitschakelen bestaande profielwaarden
 En kunnen productgegevens en verpakkingen vanuit die modus niet worden gewijzigd
 En blijft het profiel gekoppeld aan het product in plaats van een verpakking.
 

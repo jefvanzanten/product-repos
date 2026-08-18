@@ -73,6 +73,7 @@ De primaire actie blijft bereikbaar en mag geen logs bedekken. Het logboekpaneel
 - Maximaal één filter is actief.
 - De lijst wordt direct na een filterkeuze bijgewerkt.
 - Dish-logs vallen onder het food-filter.
+- Een historische productlog waarvan het actuele consumptietype `null` is, valt alleen onder `Alles`.
 - De pagina toont geen aparte teller voor het aantal zichtbare logs.
 - De pagina toont geen calorie-, macro- of micronutriënttotalen.
 
@@ -96,13 +97,13 @@ Ieder logitem toont:
 - tekstueel consumptietype;
 - een aanwijzing dat het item geopend kan worden.
 
-Dish-logs tonen het consumptietype voeding. Volledige productinhoud, portiedefinitie, calorieën en macro's staan niet in het compacte logitem. Het consumptietype wordt nooit uitsluitend met kleur gecommuniceerd.
+Dish-logs tonen het consumptietype voeding. Een historische productlog met actueel `consumptionType=null` toont `-` in plaats van een typebadge. Volledige productinhoud, portiedefinitie, calorieën en macro's staan niet in het compacte logitem. Een aanwezig consumptietype wordt nooit uitsluitend met kleur gecommuniceerd.
 
-## Gearchiveerde catalogusdata
+## Niet meer selecteerbare catalogusdata
 
-- Een gearchiveerd concreet product blijft via de actuele catalogusrelatie zichtbaar in bestaande logs.
-- Het logitem mag een label `Gearchiveerd` tonen.
-- Archivering verandert de oorspronkelijke consumptie-invoer niet.
+- Een gearchiveerd of later niet-consumeerbaar concreet product blijft via de actuele catalogusrelatie zichtbaar in bestaande logs.
+- Het logitem mag een label `Gearchiveerd` tonen; een ontbrekend actueel consumptietype wordt als `-` weergegeven.
+- Archivering of herclassificatie verandert de oorspronkelijke consumptie-invoer niet.
 
 ## Lege, laad- en fouttoestanden
 

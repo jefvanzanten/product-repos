@@ -18,6 +18,8 @@ De catalogusrevamp, fysieke voorraad en Recepten-app overschrijven de structurel
 
 Historische plannen blijven bruikbaar als implementatieverslag, maar hun root/package- en Calorie-Tracker-gerechtbeheerkeuzes zijn niet langer leidend.
 
+Actieve cross-domain wijziging op het gerealiseerde v2-model: [optioneel-consumptietype-en-voedingswaardenstatus-plan.md](./optioneel-consumptietype-en-voedingswaardenstatus-plan.md). Dit plan is leidend waar oudere plannen een verplicht consumptietype of destructief uitschakelen van macroprofielen voorschrijven.
+
 ## Coverage
 
 | Spec | Plan | Type | Inschatting huidige status |

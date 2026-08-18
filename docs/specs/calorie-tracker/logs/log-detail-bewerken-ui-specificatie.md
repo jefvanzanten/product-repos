@@ -18,7 +18,7 @@ Dit document is de bron van waarheid voor de responsive presentatie van logdetai
 
 ## Detailinhoud
 
-Het productlogdetail presenteert de actuele gedeelde productweergavenaam, productafbeelding of fallback, oorspronkelijke en afgeleide hoeveelheid, datum/tijd, consumptietype, actuele macro's, eventuele archiefstatus en mutatieacties.
+Het productlogdetail presenteert de actuele gedeelde productweergavenaam, productafbeelding of fallback, oorspronkelijke en afgeleide hoeveelheid, datum/tijd, actueel consumptietype of `-`, actuele actieve macro's, eventuele archiefstatus en mutatieacties.
 
 Het dish-logdetail presenteert gerechtnaam, receptporties, datum/tijd, consumptietype voeding en macro's uit de gepinde receptstructuur met actuele productwaarden. `Recept bekijken` verschijnt alleen wanneer het recept nog toegankelijk is; het detail gebruikt geen receptafbeelding.
 

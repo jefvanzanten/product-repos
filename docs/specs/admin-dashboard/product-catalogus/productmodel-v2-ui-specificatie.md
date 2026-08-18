@@ -18,7 +18,7 @@ Er is geen geneste package-lijst nodig om een selecteerbaar resultaat te bereike
 
 Het detail scheidt visueel:
 
-- `Gedeelde samenstelling`: naam, merk, categorie, consumptietype en macroprofiel;
+- `Gedeelde samenstelling`: naam, merk, categorie, consumptieproduct met optioneel type en bewaarde voedingswaarden;
 - `Dit product`: verpakkingstype, inhoud, afbeelding, barcode, portie en archiefstatus.
 
 Een gedeelde edit vermeldt vóór opslaan hoeveel concrete producten worden geraakt.

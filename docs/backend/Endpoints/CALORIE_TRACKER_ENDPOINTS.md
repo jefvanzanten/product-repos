@@ -15,7 +15,7 @@ GET /calorie-tracker/search:
   behavior:
     no query => recent consumed concrete products and accessible dishes mixed by recency
     query => products then dishes, alphabetical within type
-    products => active concrete products
+    products => active concrete products whose composition has FOOD, DRINK, or SUPPLEMENT
     dishes => own non-archived plus public non-archived
   returns: 200 ConsumableSearchResult[]
 
@@ -39,7 +39,7 @@ POST /calorie-tracker/logs:
   body: CreateConsumptionLog
   returns: 201 ConsumptionLog | 200 ConsumptionLog # identical retry
   errors: 404 [PRODUCT_NOT_FOUND, DISH_NOT_FOUND]
-          409 [PRODUCT_ARCHIVED, DISH_UNAVAILABLE, LOG_ALREADY_EXISTS, LOG_CREATE_CONFLICT]
+          409 [PRODUCT_ARCHIVED, PRODUCT_NOT_CONSUMABLE, DISH_UNAVAILABLE, LOG_ALREADY_EXISTS, LOG_CREATE_CONFLICT]
 
 GET /calorie-tracker/logs/:logId:
   returns: 200 ConsumptionLog
@@ -50,7 +50,7 @@ PUT /calorie-tracker/logs/:logId:
   body: UpdateConsumptionLog
   returns: 200 ConsumptionLog
   errors: 404 [LOG_NOT_FOUND, PRODUCT_NOT_FOUND]
-          409 [PRODUCT_ARCHIVED, LOG_UPDATE_CONFLICT]
+          409 [PRODUCT_ARCHIVED, PRODUCT_NOT_CONSUMABLE, LOG_UPDATE_CONFLICT]
 
 DELETE /calorie-tracker/logs/:logId:
   returns: 200 DeleteLogResult
@@ -80,6 +80,7 @@ PUT /calorie-tracker/goals:
 
 ```yaml
 ProductSearchResult:
+  # Search results are narrowed before projection, so consumptionType stays non-null.
   type: PRODUCT
   productId: uuid
   displayName: derived
@@ -115,5 +116,13 @@ CreateDishLog:
   quantity: decimal-string # recipe servings
   consumedAt: timestamp
 
+ConsumptionLogProduct:
+  productId: uuid
+  displayName: derived current value
+  consumptionType: FOOD|DRINK|SUPPLEMENT|null # nullable only after historical reclassification
+  macroProfile: derived current active profile|null
+
 CreateConsumptionLog: CreateProductLog|CreateDishLog
 ```
+
+Historical productlogs remain readable and included in statistics when their composition is later changed to `consumptionType=null`. Such logs appear only for `type=all`; typed filters match only a current non-null type.

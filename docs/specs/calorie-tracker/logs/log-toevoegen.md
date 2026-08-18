@@ -21,7 +21,7 @@ Een ingelogde gebruiker logt één concreet catalogusproduct of één toegankeli
 
 ## Zoeken
 
-- Productresultaten zijn actieve concrete producten en bevatten één `productId`.
+- Productresultaten zijn actieve concrete producten met `FOOD`, `DRINK` of `SUPPLEMENT` en bevatten één `productId`.
 - Zoektekst matcht samenstellingsnaam en merk; resultaatweergave bevat verpakkingstype en inhoud wanneer bekend.
 - Gerechtresultaten zijn eigen niet-gearchiveerde recepten plus publieke niet-gearchiveerde recepten van anderen.
 - Met zoekterm: eerst producten en daarna gerechten, alfabetisch binnen type.
@@ -61,9 +61,12 @@ En is `Recepten` een cross-app navigatielink.
 
 ### AC-02 — Productlog
 
-Gegeven een actief concreet product
+Gegeven een actief concreet product met een niet-null consumptietype
 Wanneer een geldige hoeveelheid en invoermodus worden opgeslagen
 Dan verwijst het log naar `product.id`.
+
+Gegeven een product zonder consumptietype
+Dan ontbreekt het in zoeken en wordt een directe nieuwe logpoging geweigerd.
 
 ### AC-03 — Publiek gerecht
 

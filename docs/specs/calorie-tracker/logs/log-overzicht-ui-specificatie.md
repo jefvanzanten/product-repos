@@ -72,4 +72,4 @@ Voeding
 
 Op desktop gebruikt elk item vaste kolommen voor afbeelding/placeholder, tijd, product of gerecht, hoeveelheid en eenheid, consumptietype en chevron. Op mobiel gebruikt hetzelfde item twee compacte tekstregels naast de afbeelding/placeholder, met de chevron in een vaste eindkolom. Lange namen mogen de overige slots niet verschuiven.
 
-Het consumptietype krijgt een herkenbare kleur naast het verplichte tekstlabel.
+Een aanwezig consumptietype krijgt een herkenbare kleur naast het tekstlabel. Een historische productlog met actueel `consumptionType=null` toont in hetzelfde slot alleen `-`, zonder typekleur.

@@ -11,7 +11,7 @@
 
 ## Doel
 
-Iedere concrete verpakking/uitvoering wordt één rechtstreeks selecteerbaar `product`. Gedeelde naam-, merk-, categorie-, consumptietype- en voedingsdata staat in `product_composition`.
+Iedere concrete verpakking/uitvoering wordt één rechtstreeks selecteerbaar `product`. Gedeelde naam-, merk-, categorie-, nullable consumptietype- en voedingsdata staat in `product_composition`.
 
 ## Catalogusresultaten
 
@@ -23,8 +23,8 @@ Iedere concrete verpakking/uitvoering wordt één rechtstreeks selecteerbaar `pr
 ## Aanmaken
 
 1. Beheerder zoekt via autocomplete een bestaande productsamenstelling op naam en merk.
-2. Bij selectie worden naam, merk, categorie, consumptietype en macroprofiel gedeeld.
-3. Zonder match maakt de beheerder een nieuwe samenstelling en optioneel macroprofiel.
+2. Bij selectie worden naam, merk, categorie, consumptietype, voedingswaardenstatus en macroprofiel gedeeld.
+3. Zonder match maakt de beheerder een nieuwe samenstelling, kiest die bewust of het een consumptieproduct is en voegt die optioneel voedingswaarden toe.
 4. Daarna voert die productspecifiek verpakkingstype, inhoud, afbeelding, barcode en optionele portie in.
 5. Een actie `Nieuw product met dezelfde samenstelling` versnelt extra verpakkingsformaten.
 
@@ -33,8 +33,11 @@ Geen koppeling wordt uitsluitend door tekstsimilariteit automatisch opgeslagen.
 ## Bewerken
 
 - Gedeelde velden tonen expliciet dat alle producten binnen de samenstelling worden geraakt.
+- `Consumptieproduct` staat aan wanneer `consumption_type` gevuld is. Uitschakelen zet het type op `NULL` en verwijdert de samenstelling uit nieuwe consumptie- en receptselecties.
+- Inschakelen vereist bewust `FOOD`, `DRINK` of `SUPPLEMENT`; er bestaat geen `OTHER`.
 - Productvelden wijzigen alleen het concrete product.
-- Macrocorrecties werken live door in alle producten van de samenstelling en alle afgeleide domeinen.
+- Voedingswaarden hebben naast bewaarde waarden een actieve status. Uitschakelen bewaart de waarden; alleen actieve waarden werken live door.
+- Een niet-consumptieproduct heeft altijd inactieve voedingswaarden. Opnieuw inschakelen activeert die waarden niet automatisch.
 - Een product dat werkelijk anders is samengesteld wordt in de MVP gearchiveerd en opnieuw onder een nieuwe samenstelling aangemaakt.
 
 ## Archiveren

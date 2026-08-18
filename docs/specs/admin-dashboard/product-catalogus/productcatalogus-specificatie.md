@@ -4,7 +4,7 @@
 
 De structurele bron van waarheid voor de catalogusrevamp is [productmodel-v2-specificatie.md](./productmodel-v2-specificatie.md). In het doelmodel:
 
-- één `product_composition` deelt naam, merk, categorie, consumptietype en macroprofiel;
+- één `product_composition` deelt naam, merk, categorie, nullable consumptietype en bewaarde voedingswaardenstatus;
 - iedere concrete verpakking/uitvoering is één rechtstreeks selecteerbaar `product`;
 - catalogusresultaten zijn een platte lijst concrete producten;
 - `product_package` verdwijnt als zelfstandig domein- en selectieniveau.

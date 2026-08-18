@@ -51,7 +51,7 @@ product_composition
     name: text NOT NULL
     category_id: int FK -> category.id NOT NULL
     brand_id: uuid FK -> brand.id NULL
-    consumption_type: enum(FOOD, DRINK, SUPPLEMENT) NOT NULL
+    consumption_type: enum(FOOD, DRINK, SUPPLEMENT) NULL
     created_at: timestamp with time zone NOT NULL
     updated_at: timestamp with time zone NOT NULL
 
@@ -61,6 +61,7 @@ product_composition
 product_macro_profile
     product_composition_id: uuid PK FK -> product_composition.id ON DELETE CASCADE
     reference_basis: enum(PER_100_G, PER_100_ML, PER_UNIT) NOT NULL
+    is_active: boolean NOT NULL DEFAULT true
     calories_kcal: decimal NULL
     protein_g: decimal NULL
     carbohydrates_g: decimal NULL
@@ -69,6 +70,7 @@ product_macro_profile
     created_at: timestamp with time zone NOT NULL
     updated_at: timestamp with time zone NOT NULL
 
+    CHECK (is_active IN (false, true))
     CHECK (calories_kcal IS NULL OR calories_kcal >= 0)
     CHECK (protein_g IS NULL OR protein_g >= 0)
     CHECK (carbohydrates_g IS NULL OR carbohydrates_g >= 0)
@@ -129,4 +131,4 @@ erDiagram
 
 ## Migratiebron
 
-Het oude `product` wordt standaard één `product_composition`; iedere oude `product_package` wordt één nieuw `product`. Het oude macroprofiel verhuist naar `product_macro_profile.product_composition_id`. Voor roots met meerdere verpakkingen wordt vóór migratie een rapport gemaakt om afwijkende samenstellingen handmatig te kunnen splitsen.
+Het oude `product` wordt standaard één `product_composition`; iedere oude `product_package` wordt één nieuw `product`. Bestaande consumptietypen blijven ongewijzigd. Het oude macroprofiel verhuist naar `product_macro_profile.product_composition_id` en start actief. Voor roots met meerdere verpakkingen wordt vóór migratie een rapport gemaakt om afwijkende samenstellingen handmatig te kunnen splitsen.

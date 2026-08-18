@@ -37,12 +37,13 @@ Productnaam: Zero Sugar
 Weergavenaam: Coca-Cola Zero Sugar
 Status: Actief
 Consumptietype: Drinken
+of: Consumptietype: -
 Afbeelding: <afbeelding of placeholder>
 ```
 
 Een ontbrekend merk wordt als `-` gepresenteerd. De bewerkactie gebruikt een potloodicoon of editknop met het toegankelijke label `Productgegevens bewerken`.
 
-De middelste kaart heet `Voedingswaarden`. Zonder profiel toont zij `Geen macroprofiel toegevoegd.` en de actie `Macroprofiel toevoegen`. Met profiel toont zij de referentiebasis en alleen bekende waarden; een bekende nulwaarde blijft zichtbaar.
+De middelste kaart heet `Voedingswaarden`. Zonder bewaarde waarden toont zij `Geen macroprofiel toegevoegd.` en de actie `Macroprofiel toevoegen`. Bij inactieve bewaarde waarden toont zij geen waarden maar `Voedingswaarden uit`; de bewerkactie kan de oude waarden herstellen. Met een actief profiel toont zij de referentiebasis en alleen bekende waarden; een bekende nulwaarde blijft zichtbaar.
 
 ## Verpakkingenlijst
 
@@ -73,7 +74,7 @@ De afgeschermde productgegevens-bewerkmodus gebruikt dezelfde afzonderlijke form
 1. `Categorie`;
 2. `Productnaam`;
 3. `Merk`;
-4. `Consumptietype`.
+4. `Consumptieproduct`, met alleen bij inschakeling de drie opties onder `Consumptietype`.
 
 De desktopcontent is `650px` breed. Tussen de hoofdkaarten zit `42px` verticale ruimte. Op smalle schermen stapelen radioselecties zonder horizontale overflow.
 
@@ -81,7 +82,7 @@ De acties staan onder de kaarten. Op desktop is `Annuleren` `180px` breed en vul
 
 ## Voedingswaarden bewerken
 
-Deze afgeschermde modus toont uitsluitend de optionele macroprofielschakelaar, referentiebasis en voedingswaarden. De schakelaar staat volledig binnen de formulierkaart, uitgelijnd in de rechterbovenhoek.
+Deze afgeschermde modus toont uitsluitend de voedingswaardenschakelaar, referentiebasis en voedingswaarden. De schakelaar staat volledig binnen de formulierkaart, uitgelijnd in de rechterbovenhoek. Zij is uitgeschakeld wanneer `Consumptieproduct` uit staat. Uitschakelen verbergt de velden zonder de bewaarde waarden te wissen; opnieuw inschakelen toont die waarden weer.
 
 ## Verpakking bewerken
 
