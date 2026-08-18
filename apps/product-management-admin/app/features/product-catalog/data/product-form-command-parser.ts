@@ -1,21 +1,25 @@
 import { readFormText, readFormEntryText } from "../../../core/data/form-data";
-import type { CaloriesSource, ConsumptionType, MacroProfile, MacroReferenceBasis } from "../domain/product-catalog";
+import type { CaloriesSource, ConsumptionType, MacroProfile, MacroProfileMutation, MacroReferenceBasis } from "../domain/product-catalog";
 
-/** Common product fields projected from create and edit forms. */
-export type ProductFormProjection = {
+/** Composition identity and nullable consumption classification from a form. */
+export type CompositionFormProjection = {
   readonly name: string;
   readonly categoryId: number;
-  readonly consumptionType: ConsumptionType;
+  readonly consumptionType: ConsumptionType | null;
+};
+
+/** Create-form projection combining composition identity with optional active nutrition. */
+export type ProductFormProjection = CompositionFormProjection & {
   readonly macroProfile: MacroProfile | null;
 };
 
 /** Result of projecting browser FormData into product application input. */
-export type ProductFormProjectionResult =
-  | { readonly ok: true; readonly value: ProductFormProjection }
+export type ProductFormProjectionResult<T = ProductFormProjection> =
+  | { readonly ok: true; readonly value: T }
   | { readonly ok: false; readonly errors: Record<string, string> };
 
-/** Project shared product FormData while preserving null versus a known zero value. */
-export function projectProductFormData(form: FormData): ProductFormProjectionResult {
+/** Project composition identity and its explicit consumable toggle. */
+export function projectCompositionFormData(form: FormData): ProductFormProjectionResult<CompositionFormProjection> {
   const errors: Record<string, string> = {};
   const name = readFormText(form, "productName").trim();
   if (!name) errors.productName = "Vul een productnaam in.";
@@ -23,12 +27,33 @@ export function projectProductFormData(form: FormData): ProductFormProjectionRes
   const categoryId = Number(form.get("categoryId"));
   if (!Number.isInteger(categoryId) || categoryId < 1) errors.categoryId = "Kies een categorie.";
 
-  const consumptionType = parseConsumptionType(form.get("consumptionType"));
-  if (consumptionType === null) errors.consumptionType = "Kies precies één consumptietype.";
+  const consumable = readFormText(form, "consumableEnabled") === "on";
+  const consumptionType = consumable ? parseConsumptionType(form.get("consumptionType")) : null;
+  if (consumable && consumptionType === null) errors.consumptionType = "Kies precies één consumptietype.";
 
-  const macroProfile = parseMacroProfile(form, errors);
-  if (Object.keys(errors).length > 0 || consumptionType === null) return { ok: false, errors };
-  return { ok: true, value: { name, categoryId, consumptionType, macroProfile } };
+  if (Object.keys(errors).length > 0) return { ok: false, errors };
+  return { ok: true, value: { name, categoryId, consumptionType } };
+}
+
+/** Project an explicit nutrition activation or non-destructive deactivation. */
+export function projectMacroProfileMutation(form: FormData): ProductFormProjectionResult<MacroProfileMutation> {
+  if (readFormText(form, "macroEnabled") !== "on") return { ok: true, value: { enabled: false } };
+  const errors: Record<string, string> = {};
+  const profile = parseMacroProfile(form, errors);
+  if (Object.keys(errors).length > 0 || profile === null) return { ok: false, errors };
+  return { ok: true, value: { enabled: true, profile } };
+}
+
+/** Project all fields needed when creating a new composition. */
+export function projectProductFormData(form: FormData): ProductFormProjectionResult {
+  const composition = projectCompositionFormData(form);
+  if (!composition.ok) return composition;
+  const mutation = projectMacroProfileMutation(form);
+  if (!mutation.ok) return mutation;
+  if (composition.value.consumptionType === null && mutation.value.enabled) {
+    return { ok: false, errors: { macroProfile: "Voedingswaarden vereisen een consumptieproduct." } };
+  }
+  return { ok: true, value: { ...composition.value, macroProfile: mutation.value.enabled ? mutation.value.profile : null } };
 }
 
 /** Convert all submitted values to strings so React Router can restore the form. */
@@ -42,10 +67,8 @@ function parseConsumptionType(value: FormDataEntryValue | null): ConsumptionType
   return null;
 }
 
-/** Parse an optional macro profile and attach field-specific errors. */
+/** Parse enabled macro values and attach field-specific errors. */
 function parseMacroProfile(form: FormData, errors: Record<string, string>): MacroProfile | null {
-  if (readFormText(form, "macroEnabled") !== "on") return null;
-
   const referenceBasis = parseReferenceBasis(form.get("referenceBasis"));
   if (referenceBasis === null) errors.referenceBasis = "Kies een referentiebasis.";
   const caloriesKcal = parseNullableDecimal(form.get("caloriesKcal"), "caloriesKcal", errors);

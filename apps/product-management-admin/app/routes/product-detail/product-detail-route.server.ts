@@ -4,7 +4,7 @@ import type { BackendRequestContext } from "../../core/data/backend-api.server";
 import { createBackendRequestContext } from "../../core/presentation/backend-request-context.server";
 import { parseAdminSourceFromSearch, withAdminSource } from "../../core/presentation/routing/admin-navigation";
 import { parseConcreteProduct } from "../../features/product-catalog/data/concrete-product-command-parser";
-import { preserveProductFormValues, projectProductFormData } from "../../features/product-catalog/data/product-form-command-parser";
+import { preserveProductFormValues, projectCompositionFormData, projectMacroProfileMutation } from "../../features/product-catalog/data/product-form-command-parser";
 import { archiveConcreteProduct, createBrand, getBrands, getCategories, getConcreteProduct, getPackageTypes, getUnitTypes, isNotFound, restoreConcreteProduct, updateConcreteProduct, updateProductComposition, updateProductCompositionMacroProfile } from "../../features/product-catalog/data/product-catalog-api.server";
 import type { ProductDetailActionResult, ProductDetailEditIntent, ProductDetailLoaderData } from "../../features/product-catalog/presentation/types/product-detail.types";
 import { mapProductApiError } from "../../features/product-catalog/presentation/product-error-messages";
@@ -43,16 +43,17 @@ export async function handleProductDetailRouteAction({ params, request }: Action
       return { intent, ok: true, product: await updateConcreteProduct(productId, input, context) };
     }
 
-    const projection = projectProductFormData(form);
-    if (!projection.ok) return { intent, errors: projection.errors, values };
     if (form.get("confirmSharedImpact") !== "on") return { intent, errors: { form: "Bevestig dat deze wijziging alle gekoppelde producten raakt." }, values };
     if (intent === "nutrition") {
-      if (projection.value.macroProfile === null) return { intent, errors: { macroProfile: "Vul een macroprofiel in." }, values };
-      await updateProductCompositionMacroProfile(current.productCompositionId, projection.value.macroProfile, context);
+      const mutation = projectMacroProfileMutation(form);
+      if (!mutation.ok) return { intent, errors: mutation.errors, values };
+      await updateProductCompositionMacroProfile(current.productCompositionId, mutation.value, context);
     } else {
+      const projection = projectCompositionFormData(form);
+      if (!projection.ok) return { intent, errors: projection.errors, values };
       const brandId = await resolveBrandId(form, context);
       await updateProductComposition(current.productCompositionId, {
-        name: projection.value.name, categoryId: projection.value.categoryId, brandId, consumptionType: projection.value.consumptionType, macroProfile: current.composition.macroProfile,
+        name: projection.value.name, categoryId: projection.value.categoryId, brandId, consumptionType: projection.value.consumptionType,
       }, context);
     }
     return { intent, ok: true, product: await getConcreteProduct(productId, context) };

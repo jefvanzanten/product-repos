@@ -7,7 +7,7 @@ export type MacroReferenceBasis = "PER_100_G" | "PER_100_ML" | "PER_UNIT";
 /** Origin of a stored calorie value. */
 export type CaloriesSource = "AUTOMATIC" | "MANUAL";
 
-/** Frontend-owned macro profile. */
+/** Frontend-owned macro values. */
 export type MacroProfile = {
   readonly referenceBasis: MacroReferenceBasis;
   readonly caloriesKcal: string | null;
@@ -16,6 +16,14 @@ export type MacroProfile = {
   readonly fatG: string | null;
   readonly caloriesSource: CaloriesSource | null;
 };
+
+/** Persisted macro values and their calculation status. */
+export type StoredMacroProfile = MacroProfile & { readonly enabled: boolean };
+
+/** Explicit nutrition activation or non-destructive deactivation. */
+export type MacroProfileMutation =
+  | { readonly enabled: true; readonly profile: MacroProfile }
+  | { readonly enabled: false };
 
 /** Frontend-owned brand model. */
 export type Brand = { readonly id: string; readonly name: string };
@@ -45,8 +53,8 @@ export type ProductComposition = {
   readonly brand: Brand | null;
   readonly category: Category;
   readonly categoryPath: ReadonlyArray<Category>;
-  readonly consumptionType: ConsumptionType;
-  readonly macroProfile: MacroProfile | null;
+  readonly consumptionType: ConsumptionType | null;
+  readonly macroProfile: StoredMacroProfile | null;
   readonly productCount: number;
   readonly activeProductCount?: number;
 };
@@ -59,7 +67,7 @@ export type ConcreteProductSummary = {
   readonly compositionName: string;
   readonly brandName: string | null;
   readonly categoryPath: string;
-  readonly consumptionType: ConsumptionType;
+  readonly consumptionType: ConsumptionType | null;
   readonly packageSummary: string | null;
   readonly imageUrl: string | null;
   readonly barcode: string | null;
@@ -89,12 +97,12 @@ export type CreateProductComposition = {
   readonly name: string;
   readonly brandId?: string | null;
   readonly categoryId: number;
-  readonly consumptionType: ConsumptionType;
+  readonly consumptionType: ConsumptionType | null;
   readonly macroProfile?: MacroProfile | null;
 };
 
-/** Input for updating a shared composition. */
-export type UpdateProductComposition = CreateProductComposition;
+/** Input for updating shared composition identity and classification. */
+export type UpdateProductComposition = Omit<CreateProductComposition, "macroProfile">;
 
 /** Product-specific portion mutation input. */
 export type ConcreteProductPortionInput = {

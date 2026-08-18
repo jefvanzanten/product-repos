@@ -3,7 +3,7 @@ import type { BackendRequestContext } from "../../../core/data/backend-api.serve
 import { createProductCatalogApi, type BackendRequestSender } from "./product-catalog-api.server";
 
 const sendBackendRequest = vi.fn<BackendRequestSender>();
-const { getConcreteProduct, searchProductCompositions } = createProductCatalogApi(sendBackendRequest);
+const { getConcreteProduct, searchProductCompositions, updateProductCompositionMacroProfile } = createProductCatalogApi(sendBackendRequest);
 
 const composition = {
   id: "00000000-0000-4000-8000-000000000020",
@@ -54,11 +54,21 @@ describe("product catalog API contracts", () => {
   });
 
   it("reads canonical composition search results without frontend enrichment", async () => {
-    sendBackendRequest.mockResolvedValue(Response.json([composition]));
+    sendBackendRequest.mockResolvedValue(Response.json([{ ...composition, consumptionType: null }]));
 
     const products = await searchProductCompositions("Tomatenpuree", context);
 
-    expect(products).toEqual([composition]);
+    expect(products[0]?.consumptionType).toBeNull();
     expect(sendBackendRequest).toHaveBeenCalledOnce();
+  });
+
+  it("sends explicit macro status mutations and parses preserved inactive values", async () => {
+    const storedProfile = { enabled: false, referenceBasis: "PER_100_G" as const, caloriesKcal: "42", proteinG: null, carbohydratesG: null, fatG: null, caloriesSource: "MANUAL" as const };
+    sendBackendRequest.mockResolvedValue(Response.json(storedProfile));
+
+    const result = await updateProductCompositionMacroProfile(composition.id, { enabled: false }, context);
+
+    expect(result).toEqual(storedProfile);
+    expect(sendBackendRequest).toHaveBeenCalledWith(`/product-compositions/${composition.id}/macro-profile`, context, { method: "PUT", body: { enabled: false } });
   });
 });

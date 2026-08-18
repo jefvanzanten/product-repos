@@ -3,14 +3,15 @@ import {
   categoryDtoSchema,
   concreteProductDetailSchema,
   concreteProductPageSchema,
-  macroProfileSchema,
+  macroProfileMutationSchema,
+  storedMacroProfileSchema,
   packageTypeDtoSchema,
   productCompositionDtoSchema,
   unitTypeDtoSchema,
 } from "@product-repos/contracts";
 import { z, type ZodType } from "zod/v4";
 import { sendBackendRequest, type BackendMethod, type BackendRequestContext } from "../../../core/data/backend-api.server";
-import type { Brand, Category, ConcreteProductDetail, ConcreteProductPage, CreateConcreteProduct, CreateProductComposition, MacroProfile, PackageType, ProductComposition, UnitType, UpdateConcreteProduct, UpdateProductComposition } from "../domain/product-catalog";
+import type { Brand, Category, ConcreteProductDetail, ConcreteProductPage, CreateConcreteProduct, CreateProductComposition, MacroProfileMutation, PackageType, ProductComposition, StoredMacroProfile, UnitType, UpdateConcreteProduct, UpdateProductComposition } from "../domain/product-catalog";
 import { mapBrand, mapCategory, mapConcreteProductDetail, mapConcreteProductPage, mapPackageType, mapProductComposition, mapUnitType } from "./product-catalog-mappers";
 
 const brandListSchema = brandDtoSchema.array();
@@ -25,7 +26,7 @@ const apiErrorSchema = z.object({
 });
 type ApiError = z.infer<typeof apiErrorSchema>;
 type BackendRequestSender = typeof sendBackendRequest;
-type CatalogRequestBody = CreateConcreteProduct | CreateProductComposition | UpdateConcreteProduct | MacroProfile | { readonly name: string; readonly parentId?: number | null };
+type CatalogRequestBody = CreateConcreteProduct | CreateProductComposition | UpdateConcreteProduct | UpdateProductComposition | MacroProfileMutation | { readonly name: string; readonly parentId?: number | null };
 
 /**
  * Create a product-catalog API backed by the provided request transport.
@@ -119,8 +120,9 @@ async function updateProductComposition(compositionId: string, input: UpdateProd
 }
 
 /** Update a shared composition macro profile. */
-async function updateProductCompositionMacroProfile(compositionId: string, input: MacroProfile, context: BackendRequestContext): Promise<MacroProfile> {
-  return requestJson(`/product-compositions/${compositionId}/macro-profile`, context, macroProfileSchema, "PUT", input);
+async function updateProductCompositionMacroProfile(compositionId: string, input: MacroProfileMutation, context: BackendRequestContext): Promise<StoredMacroProfile | null> {
+  macroProfileMutationSchema.parse(input);
+  return requestJson(`/product-compositions/${compositionId}/macro-profile`, context, storedMacroProfileSchema.nullable(), "PUT", input);
 }
 
 /** Update fields owned by one concrete product. */

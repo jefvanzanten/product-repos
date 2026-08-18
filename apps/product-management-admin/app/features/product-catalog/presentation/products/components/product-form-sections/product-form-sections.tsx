@@ -5,9 +5,9 @@ import styles from "./product-form-sections.module.css";
 /** Form values restored after a failed mutation. */
 export type ProductFormValues = Readonly<Record<string, string>>;
 
-/** Render one dark Figma product-form card. */
-export function ProductFormCard({ children, title }: { readonly children: React.ReactNode; readonly title: string }): React.ReactNode {
-  return <fieldset className={styles.card}><legend className={styles.legend}>{title}</legend>{children}</fieldset>;
+/** Group related product fields within the continuous form. */
+export function ProductFormCard({ children, headerControl, title }: { readonly children: React.ReactNode; readonly headerControl?: React.ReactNode; readonly title: string }): React.ReactNode {
+  return <fieldset className={styles.card}><legend className={styles.visuallyHidden}>{title}</legend><div className={styles.sectionHeader}><span className={styles.legend}>{title}</span>{headerControl}</div>{children}</fieldset>;
 }
 
 /** Render the shared product-name form card. */
@@ -20,34 +20,49 @@ export function ProductNameSection({ error, value }: { readonly error?: string; 
   );
 }
 
-/** Render the required consumption-type radio tile group. */
-export function ConsumptionTypeSection({ error, value }: { readonly error?: string; readonly value?: string }): React.ReactNode {
+/** Render the consumable toggle and its conditionally required type options. */
+export function ConsumptionTypeSection({ error, initiallyEnabled, onEnabledChange, value }: { readonly error?: string; readonly initiallyEnabled: boolean; readonly onEnabledChange?: (enabled: boolean) => void; readonly value?: string | null }): React.ReactNode {
+  const [enabled, setEnabled] = useState(initiallyEnabled);
+  const [selectedType, setSelectedType] = useState<ConsumptionType | undefined>(value === "FOOD" || value === "DRINK" || value === "SUPPLEMENT" ? value : undefined);
   const options: ReadonlyArray<{ readonly value: ConsumptionType; readonly label: string }> = [
     { value: "FOOD", label: "Voeding" },
     { value: "DRINK", label: "Drinken" },
     { value: "SUPPLEMENT", label: "Supplement" },
   ];
+  /** Update local visibility and inform the coordinating composition form. */
+  function changeEnabled(nextEnabled: boolean): void {
+    setEnabled(nextEnabled);
+    onEnabledChange?.(nextEnabled);
+  }
   return (
-    <ProductFormCard title="Consumptietype">
-      <p className={styles.help}>Kies precies één consumptietype.</p>
-      <div className={styles.radioGrid} role="radiogroup" aria-label="Consumptietype">
-        {options.map((option) => (
-          <label className={styles.radioTile} key={option.value}>
-            <input defaultChecked={value === option.value} name="consumptionType" required type="radio" value={option.value} />
-            <span aria-hidden="true" className={styles.radioIcon} />
-            <span>{option.label}</span>
-          </label>
-        ))}
-      </div>
+    <ProductFormCard
+      title="Consumptieproduct"
+      headerControl={<label className={styles.toggleLabel}>
+        <span className={styles.visuallyHidden}>Consumptieproduct</span>
+        <input checked={enabled} name="consumableEnabled" onChange={(event) => changeEnabled(event.currentTarget.checked)} type="checkbox" />
+        <span aria-hidden="true" className={styles.toggleVisual} />
+      </label>}
+    >
+      {enabled ? <>
+        <div className={styles.radioGrid} role="radiogroup" aria-label="Consumptietype">
+          {options.map((option) => (
+            <label className={styles.radioTile} key={option.value}>
+              <input checked={selectedType === option.value} name="consumptionType" onChange={() => setSelectedType(option.value)} required type="radio" value={option.value} />
+              <span>{option.label}</span>
+            </label>
+          ))}
+        </div>
+      </> : null}
       {error ? <span className={styles.error}>{error}</span> : null}
     </ProductFormCard>
   );
 }
 
 /** Render the optional macro-profile toggle, reference basis, and values. */
-export function MacroProfileSection({ errors, profile, values }: { readonly errors?: Readonly<Record<string, string>>; readonly profile?: MacroProfile | null; readonly values?: ProductFormValues }): React.ReactNode {
-  const initiallyEnabled = values?.macroEnabled === "on" || (values?.macroEnabled === undefined && profile !== null && profile !== undefined);
+export function MacroProfileSection({ available = true, errors, profile, values }: { readonly available?: boolean; readonly errors?: Readonly<Record<string, string>>; readonly profile?: (MacroProfile & { readonly enabled?: boolean }) | null; readonly values?: ProductFormValues }): React.ReactNode {
+  const initiallyEnabled = values?.macroEnabled === "on" || (values?.macroEnabled === undefined && profile !== null && profile !== undefined && profile.enabled !== false);
   const [enabled, setEnabled] = useState(initiallyEnabled);
+  const active = available && enabled;
   const [caloriesChanged, setCaloriesChanged] = useState(values?.caloriesChanged === "true");
   const value = (field: keyof MacroProfile): string => values?.[field] ?? String(profile?.[field] ?? "");
   const referenceBasis = values?.referenceBasis ?? profile?.referenceBasis ?? "PER_100_G";
@@ -58,13 +73,16 @@ export function MacroProfileSection({ errors, profile, values }: { readonly erro
   ] as const;
 
   return (
-    <ProductFormCard title="Voedingswaarden (optioneel)">
-      <label className={styles.toggleLabel}>
+    <ProductFormCard
+      title="Voedingswaarden (optioneel)"
+      headerControl={<label className={`${styles.toggleLabel} ${styles.nutritionToggleLabel}`}>
         <span className={styles.visuallyHidden}>Macroprofiel inschakelen</span>
-        <input checked={enabled} name="macroEnabled" onChange={(event) => setEnabled(event.currentTarget.checked)} type="checkbox" />
+        <input checked={active} disabled={!available} name="macroEnabled" onChange={(event) => setEnabled(event.currentTarget.checked)} type="checkbox" />
         <span aria-hidden="true" className={styles.toggleVisual} />
-      </label>
-      {enabled ? (
+      </label>}
+    >
+      {!available ? <p className={styles.help}>Voedingswaarden kunnen alleen actief zijn voor een consumptieproduct.</p> : null}
+      {active ? (
         <div className={styles.macroContent}>
           <strong className={styles.fieldLabel}>Referentiebasis</strong>
           <div className={styles.radioGrid} role="radiogroup" aria-label="Referentiebasis">
@@ -93,11 +111,11 @@ export function MacroProfileSection({ errors, profile, values }: { readonly erro
 }
 
 /** Render shared create or edit form actions. */
-export function ProductFormActions({ busy = false, onCancel }: { readonly busy?: boolean; readonly onCancel?: () => void }): React.ReactNode {
+export function ProductFormActions({ busy = false, disabled = false, onCancel }: { readonly busy?: boolean; readonly disabled?: boolean; readonly onCancel?: () => void }): React.ReactNode {
   return (
     <div className={onCancel ? styles.actions : styles.createActions}>
       {onCancel ? <button className={styles.cancelButton} type="button" onClick={onCancel}>Annuleren</button> : null}
-      <button className={styles.saveButton} disabled={busy} type="submit">{busy ? "Opslaan..." : onCancel ? "Wijzigingen opslaan" : "Product opslaan"}</button>
+      <button className={styles.saveButton} disabled={busy || disabled} type="submit">{busy ? "Opslaan..." : onCancel ? "Wijzigingen opslaan" : "Product opslaan"}</button>
     </div>
   );
 }

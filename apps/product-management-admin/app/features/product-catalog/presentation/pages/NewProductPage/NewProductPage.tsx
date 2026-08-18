@@ -17,8 +17,20 @@ export function NewProductPage({ actionData, loaderData }: { readonly actionData
   const busy = useNavigation().state !== "idle";
   const [composition, setComposition] = useState<ProductComposition | null>(loaderData.selectedComposition);
   const [suggestions, setSuggestions] = useState<ReadonlyArray<ProductComposition>>([]);
+  const [formValid, setFormValid] = useState(false);
   const requestSequence = useRef(0);
   const values = actionData?.values ?? {};
+  const defaultCategoryId = values.categoryId ?? loaderData.categoryId ?? "";
+  const category = useNewProductCategory({ categories: loaderData.categories, defaultCategoryId });
+
+  /** Recheck validity after React has applied the current form interaction. */
+  function updateFormValidity(event: React.FormEvent<HTMLFormElement>): void {
+    const form = event.currentTarget;
+    queueMicrotask(() => {
+      const nextFormValid = form.checkValidity();
+      setFormValid((currentFormValid) => currentFormValid === nextFormValid ? currentFormValid : nextFormValid);
+    });
+  }
 
   /** Search shared compositions in response to administrator input. */
   async function handleCompositionQuery(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
@@ -36,19 +48,38 @@ export function NewProductPage({ actionData, loaderData }: { readonly actionData
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}><h1 className={styles.title}>Product aanmaken</h1><p className={styles.intro}>Kies eerst een gedeelde samenstelling en voeg daarna de concrete verpakking toe.</p></header>
+      <header className={styles.header}><h1 className={styles.title}>Product aanmaken</h1></header>
       {actionData?.errors?.form ? <p className={styles.formError}>{actionData.errors.form}</p> : null}
-      <Form className={styles.form} method="post" preventScrollReset>
-        <ProductFormFieldset title="Gedeelde samenstelling">
-          {composition ? <CompositionSelection composition={composition} onClear={() => setComposition(null)} /> : (
-            <>
-              <label className={styles.label}>Zoek op productnaam of merk<input className={styles.input} autoComplete="off" placeholder="Bijv. Heinz tomatenpuree" onChange={(event) => void handleCompositionQuery(event)} /></label>
+      <CategoryBreadcrumb path={composition?.categoryPath ?? category.breadcrumbPath} />
+      <Form className={styles.form} method="post" preventScrollReset onChange={updateFormValidity} onClick={updateFormValidity} onInput={updateFormValidity}>
+        {composition ? (
+          <ProductFormFieldset title="Gedeelde samenstelling">
+            <CompositionSelection composition={composition} onClear={() => setComposition(null)} />
+          </ProductFormFieldset>
+        ) : (
+          <>
+            <ProductFormFieldset title="Categorie">
+              <CategoryTreePicker
+                key={defaultCategoryId}
+                busy={category.busy}
+                defaultValue={category.defaultCategoryId}
+                errors={actionData?.errors}
+                mutationErrors={category.mutationErrors}
+                mutationResult={category.mutationResult}
+                options={category.options}
+                selectedCategoryId={category.selectedCategoryId}
+                onCreateCategory={category.createCategory}
+                onDeleteCategory={category.deleteCategory}
+                onSelectedCategoryChange={category.selectCategory}
+              />
+            </ProductFormFieldset>
+            <ProductFormFieldset title="Gedeelde samenstelling">
+              <input aria-label="Zoek gedeelde samenstelling op productnaam of merk" className={styles.input} autoComplete="off" placeholder="Zoek op productnaam of merk" onChange={(event) => void handleCompositionQuery(event)} />
               {suggestions.length > 0 ? <div className={styles.suggestions}>{suggestions.map((item) => <button key={item.id} type="button" onClick={() => { setComposition(item); setSuggestions([]); }}><strong>{item.brand?.name ? `${item.brand.name} ${item.name}` : item.name}</strong><span>{item.categoryPath.map((category) => category.name).join(" › ")} · {item.productCount} producten</span></button>)}</div> : null}
-              <p className={styles.help}>Geen match? Vul hieronder een nieuwe samenstelling in. Er wordt nooit automatisch gekoppeld.</p>
-            </>
-          )}
-        </ProductFormFieldset>
-        {composition ? null : <NewCompositionFields actionData={actionData} loaderData={loaderData} values={values} />}
+            </ProductFormFieldset>
+            <NewCompositionFields actionData={actionData} loaderData={loaderData} values={values} />
+          </>
+        )}
 
         <ProductFormFieldset title="Dit concrete product">
           <input name="productCompositionId" type="hidden" value={composition?.id ?? ""} />
@@ -61,7 +92,7 @@ export function NewProductPage({ actionData, loaderData }: { readonly actionData
           <Field label="Afbeeldings-URL (optioneel)"><input name="imageUrl" defaultValue={values.imageUrl ?? ""} type="url" /></Field>
           <PortionFields errors={actionData?.errors} unitTypes={loaderData.unitTypes} values={values} />
         </ProductFormFieldset>
-        <ProductFormActions busy={busy} />
+        <ProductFormActions busy={busy} disabled={!formValid} />
       </Form>
     </main>
   );
@@ -69,42 +100,25 @@ export function NewProductPage({ actionData, loaderData }: { readonly actionData
 
 /** Render the selected shared composition as immutable create context. */
 function CompositionSelection({ composition, onClear }: { readonly composition: ProductComposition; readonly onClear: () => void }): React.ReactNode {
-  return <div className={styles.selection}><div><strong>{composition.brand?.name ? `${composition.brand.name} ${composition.name}` : composition.name}</strong><span>{composition.categoryPath.map((category) => category.name).join(" › ")}</span><span>Voedingswaarden en gedeelde gegevens worden hergebruikt.</span></div><button type="button" onClick={onClear}>Andere kiezen</button></div>;
+  return <div className={styles.selection}><div><strong>{composition.brand?.name ? `${composition.brand.name} ${composition.name}` : composition.name}</strong><span>{composition.categoryPath.map((category) => category.name).join(" › ")}</span></div><button type="button" onClick={onClear}>Andere kiezen</button></div>;
 }
 
 /** Render shared fields with the established category picker and brand combobox. */
 function NewCompositionFields({ actionData, loaderData, values }: { readonly actionData?: NewProductActionResult; readonly loaderData: NewProductLoaderData; readonly values: Record<string, string> }): React.ReactNode {
-  const defaultCategoryId = values.categoryId ?? loaderData.categoryId ?? "";
+  const [consumable, setConsumable] = useState(Object.keys(values).length === 0 || values.consumableEnabled === "on");
   const defaultBrandId = values.brandId ?? loaderData.brandId;
   const defaultBrandName = values.brandName;
   const defaultBrandQuery = values.brandQuery ?? loaderData.selectedBrand?.name ?? loaderData.brandQuery;
   const brandDefaultsKey = JSON.stringify([defaultBrandId, defaultBrandName, defaultBrandQuery]);
-  const category = useNewProductCategory({ categories: loaderData.categories, defaultCategoryId });
 
   return (
     <>
-      <CategoryBreadcrumb path={category.breadcrumbPath} />
-      <ProductFormFieldset title="Categorie">
-        <CategoryTreePicker
-          key={defaultCategoryId}
-          busy={category.busy}
-          defaultValue={category.defaultCategoryId}
-          errors={actionData?.errors}
-          mutationErrors={category.mutationErrors}
-          mutationResult={category.mutationResult}
-          options={category.options}
-          selectedCategoryId={category.selectedCategoryId}
-          onCreateCategory={category.createCategory}
-          onDeleteCategory={category.deleteCategory}
-          onSelectedCategoryChange={category.selectCategory}
-        />
-      </ProductFormFieldset>
       <ProductNameSection error={actionData?.errors?.productName} value={values.productName} />
       <ProductFormFieldset title="Merk (optioneel)">
         <BrandCombobox key={brandDefaultsKey} defaultBrandId={defaultBrandId} defaultBrandName={defaultBrandName} defaultQuery={defaultBrandQuery} error={actionData?.errors?.brandName} initialBrands={loaderData.brands} />
       </ProductFormFieldset>
-      <ConsumptionTypeSection error={actionData?.errors?.consumptionType} value={values.consumptionType} />
-      <MacroProfileSection errors={actionData?.errors} profile={null} values={values} />
+      <ConsumptionTypeSection error={actionData?.errors?.consumptionType} initiallyEnabled={consumable} onEnabledChange={setConsumable} value={values.consumptionType} />
+      <MacroProfileSection available={consumable} errors={actionData?.errors} profile={null} values={values} />
     </>
   );
 }
