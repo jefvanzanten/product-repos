@@ -1,15 +1,19 @@
+import { z } from "zod";
+
+const authenticatedSessionSchema = z.object({
+  user: z.object({
+    id: z.string(),
+    email: z.string(),
+    name: z.string(),
+    role: z.string(),
+  }),
+});
+
 /** Authenticated application user returned by the backend session endpoint. */
-export type AuthenticatedUser = {
-  readonly id: string;
-  readonly email: string;
-  readonly name: string;
-  readonly role: string;
-};
+export type AuthenticatedUser = z.infer<typeof authenticatedSessionSchema>["user"];
 
 /** Parsed backend session needed by React Router loaders. */
-export type AuthenticatedSession = {
-  readonly user: AuthenticatedUser;
-};
+export type AuthenticatedSession = z.infer<typeof authenticatedSessionSchema>;
 
 /** Explicit outcomes produced while resolving an incoming request's session. */
 export type SessionLookupResult =
@@ -21,29 +25,17 @@ export type SessionLookupResult =
 export type SessionLookupOptions = {
   /** Absolute backend API URL. */
   readonly apiBaseUrl?: string;
+  /** HTTP transport, injectable for deterministic boundary tests. */
+  readonly fetch?: typeof fetch;
 };
 
-/** Determine whether an unknown value is a non-null object record. */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-/** Parse the minimum authenticated session projection required by host applications. */
-function parseSession(value: unknown): AuthenticatedSession | null {
-  if (!isRecord(value) || !isRecord(value.user)) return null;
-  const { id, email, name, role } = value.user;
-  if (
-    typeof id !== "string" ||
-    typeof email !== "string" ||
-    typeof name !== "string" ||
-    typeof role !== "string"
-  ) {
-    return null;
-  }
-  return { user: { id, email, name, role } };
-}
-
-/** Look up the Better Auth session represented by an incoming SSR request cookie. */
+/**
+ * Look up the Better Auth session represented by an incoming SSR request cookie.
+ *
+ * @param request - Incoming application request.
+ * @param options - Backend origin and optional HTTP transport.
+ * @returns The classified session lookup result.
+ */
 export async function lookupSession(
   request: Request,
   options: SessionLookupOptions = {},
@@ -59,7 +51,7 @@ export async function lookupSession(
 
   let response: Response;
   try {
-    response = await fetch(`${apiBaseUrl}/api/auth/get-session`, {
+    response = await (options.fetch ?? fetch)(`${apiBaseUrl}/api/auth/get-session`, {
       headers,
       signal: request.signal,
     });
@@ -70,10 +62,10 @@ export async function lookupSession(
   if (response.status === 401) return { tag: "Unauthenticated" };
   if (!response.ok) return { tag: "Unavailable", status: response.status };
 
-  const body: unknown = await response.json().catch(() => null);
+  const body = await response.json().catch(() => null);
   if (body === null) return { tag: "Unauthenticated" };
-  const session = parseSession(body);
-  return session
-    ? { tag: "Authenticated", session }
+  const session = authenticatedSessionSchema.safeParse(body);
+  return session.success
+    ? { tag: "Authenticated", session: session.data }
     : { tag: "Unavailable", status: 502 };
 }

@@ -1,14 +1,13 @@
+import type { ZodType } from "zod";
+
 /**
- * Read an untrusted JSON response without asserting its protocol shape.
+ * Read and validate an untrusted JSON response at the HTTP boundary.
  *
  * @param response - Backend response.
- * @returns Parsed JSON or null for an invalid response body.
+ * @param schema - Contract that owns the response shape.
+ * @returns The validated response value.
  */
-export async function readUnknownJson(response: Response): Promise<unknown> {
-  try {
-    const value: unknown = await response.json();
-    return value;
-  } catch {
-    return null;
-  }
+export async function readJson<Output>(response: Response, schema: ZodType<Output>): Promise<Output> {
+  const value = await response.json();
+  return schema.parse(value);
 }

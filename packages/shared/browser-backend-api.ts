@@ -53,5 +53,5 @@ export async function sendBrowserBackendRequest(
  * @returns The resolved browser timezone or UTC.
  */
 function resolveBrowserTimezone(): string {
-  return typeof Intl === "undefined" ? "UTC" : Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }

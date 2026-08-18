@@ -36,7 +36,7 @@ export function buildSessionExpiredLoginPath(
 
 /** Replace the current document with login once after the backend rejects its session. */
 export function redirectToSessionLogin(navigation: SessionExpiryNavigation): void {
-  if (typeof window === "undefined" || redirectStarted) return;
+  if (redirectStarted) return;
   redirectStarted = true;
   window.location.replace(buildSessionExpiredLoginPath(window.location.href, navigation));
 }
