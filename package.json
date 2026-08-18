@@ -7,7 +7,7 @@
     "build": "corepack pnpm -r --if-present run build",
     "dev": "corepack pnpm --filter \"./apps/*\" --parallel run dev",
     "dev:docker": "corepack pnpm backend:docker:start && corepack pnpm --filter \"./apps/*\" --filter '!@product-repos/backend' --parallel run dev",
-    "lint": "corepack pnpm -r --if-present run lint",
+    "lint": "oxlint . && corepack pnpm -r --if-present run lint",
     "typecheck": "corepack pnpm -r --if-present run typecheck",
     "test": "corepack pnpm -r --if-present run test",
     "test:e2e": "corepack pnpm --filter calorie_tracker exec playwright test",
@@ -53,6 +53,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@oxlint/plugins": "1.78.0",
+    "oxlint": "1.78.0",
     "typescript": "^5.7.2"
   }
 }
