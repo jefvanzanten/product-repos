@@ -5,6 +5,7 @@ import { recipeDetailPath, toRecipePublicPath } from "./recipe-routes";
 describe("Recipe routes", () => {
   test("encodes identifiers and prefixes public paths", () => {
     expect(recipeDetailPath("user/name", "recipe name")).toBe("/gebruiker/user%2Fname/recipe%20name");
+    expect(toRecipePublicPath("/")).toBe("/recepten");
     expect(toRecipePublicPath("/nieuw")).toBe("/recepten/nieuw");
   });
 

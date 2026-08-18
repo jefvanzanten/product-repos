@@ -10,14 +10,14 @@ export function loader(args: LoaderFunctionArgs) {
 
 /** Render the shared light Recipe login experience. */
 export default function LoginRoute(): React.ReactNode {
-  const { returnTo } = useLoaderData<typeof loader>();
+  const { successPath } = useLoaderData<typeof loader>();
   return (
     <LoginPage
       appearance="light"
       appName="Recepten"
       authClient={authClient}
       intro="Log in om je eigen recepten te maken en beheren."
-      successPath={returnTo}
+      successPath={successPath}
     />
   );
 }
