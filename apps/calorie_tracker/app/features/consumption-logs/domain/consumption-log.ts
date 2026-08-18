@@ -71,7 +71,10 @@ type ConsumptionLogBase = {
 /** Existing product consumption log. */
 export type ProductConsumptionLog = ConsumptionLogBase & {
   readonly type: "PRODUCT";
-  readonly product: ProductSearchResult & { readonly archived: boolean };
+  readonly product: Omit<ProductSearchResult, "consumptionType"> & {
+    readonly consumptionType: ConsumptionType | null;
+    readonly archived: boolean;
+  };
   readonly inputMode: ConsumptionInputMode;
   readonly inputUnitType: UnitType | null;
 };
@@ -101,20 +104,24 @@ export type ConsumptionLogList = {
   readonly items: ReadonlyArray<ConsumptionLog>;
 };
 
-/** Search result used by the combined consumable picker. */
-export type UnifiedSearchResult =
-  | ({ readonly kind: "PRODUCT" } & ProductSearchResult)
-  | {
-      readonly kind: "DISH";
-      readonly id: string;
-      readonly userId: string;
-      readonly name: string;
-      readonly makerDisplayName: string | null;
-      readonly isOwnedByViewer: boolean;
-      readonly imageUrl: string | null;
-      readonly servings: string;
-      readonly caloriesPerServing: string | null;
-    };
+/** Dish returned by a consumable search. */
+export type DishSearchResult = {
+  readonly kind: "DISH";
+  readonly id: string;
+  readonly userId: string;
+  readonly name: string;
+  readonly makerDisplayName: string | null;
+  readonly isOwnedByViewer: boolean;
+  readonly imageUrl: string | null;
+  readonly servings: string;
+  readonly caloriesPerServing: string | null;
+};
+
+/** Product or dish returned by a consumable search. */
+export type ConsumableSearchResult = ({ readonly kind: "PRODUCT" } & ProductSearchResult) | DishSearchResult;
+
+/** Option shown by the consumable picker, including the product from an existing log. */
+export type ConsumableOption = ConsumableSearchResult | ({ readonly kind: "PRODUCT" } & ProductConsumptionLog["product"]);
 
 /** Add/edit form mode with current data when editing. */
 export type LogFormMode =

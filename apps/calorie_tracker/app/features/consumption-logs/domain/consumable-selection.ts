@@ -1,8 +1,8 @@
-import type { ProductSearchResult } from "./consumption-log";
+import type { ProductConsumptionLog, ProductSearchResult } from "./consumption-log";
 
 /** Consumable selected while creating or editing a consumption log. */
 export type ConsumableSelection =
-  | { readonly kind: "PRODUCT"; readonly value: ProductSearchResult }
+  | { readonly kind: "PRODUCT"; readonly value: ProductSearchResult | ProductConsumptionLog["product"] }
   | {
       readonly kind: "DISH";
       readonly value: {

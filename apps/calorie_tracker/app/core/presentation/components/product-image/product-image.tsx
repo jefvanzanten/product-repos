@@ -8,15 +8,15 @@ export function ProductImage({
   imageUrl,
   size = "regular",
 }: {
-  readonly type: ConsumptionType;
+  readonly type: ConsumptionType | null;
   readonly imageUrl: string | null;
   readonly size?: "regular" | "large";
 }): ReactNode {
-  const fallback = type === "FOOD"
-    ? "product-placeholder-food.svg"
-    : type === "DRINK"
-      ? "product-placeholder-drink.svg"
-      : "product-placeholder-supplement.svg";
+  const fallback = type === "DRINK"
+    ? "product-placeholder-drink.svg"
+    : type === "SUPPLEMENT"
+      ? "product-placeholder-supplement.svg"
+      : "product-placeholder-food.svg";
   const pixelSize = size === "large" ? 80 : 62;
   return (
     <img

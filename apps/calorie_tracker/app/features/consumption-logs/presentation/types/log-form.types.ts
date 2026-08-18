@@ -1,4 +1,4 @@
-import type { ConsumptionLog, LogFormMode, UnifiedSearchResult } from "../../domain/consumption-log";
+import type { ConsumableSearchResult, ConsumptionLog, LogFormMode } from "../../domain/consumption-log";
 import type { TrackerUrlState } from "../../../../core/presentation/routing/tracker-url-state";
 
 export type { LogFormMode };
@@ -8,7 +8,7 @@ export type LogFormLoaderData = {
   readonly timezone: string | null;
   readonly routeState: TrackerUrlState | null;
   readonly mode: LogFormMode | null;
-  readonly initialResults: ReadonlyArray<UnifiedSearchResult>;
+  readonly initialResults: ReadonlyArray<ConsumableSearchResult>;
   readonly notFound: boolean;
   readonly loadFailed: boolean;
 };

@@ -6,7 +6,7 @@ export type LogPresentation = {
   readonly subtitle: string | null;
   readonly summary: string;
   readonly imageUrl: string | null;
-  readonly consumptionType: "FOOD" | "DRINK" | "SUPPLEMENT";
+  readonly consumptionType: "FOOD" | "DRINK" | "SUPPLEMENT" | null;
   readonly archived: boolean;
 };
 

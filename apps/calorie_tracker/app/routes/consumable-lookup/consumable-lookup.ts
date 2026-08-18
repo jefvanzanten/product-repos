@@ -1,5 +1,5 @@
 import { data, type LoaderFunctionArgs } from "react-router";
-import { getUnifiedSearch } from "../../features/consumption-logs/data/consumption-log-api.server";
+import { getConsumableSearchResults } from "../../features/consumption-logs/data/consumption-log-api.server";
 import { requireUser } from "../../core/presentation/auth/auth.server";
 import { getProductSearchMode } from "../../features/consumption-logs/presentation/components/log-form/product-search";
 import { readBrowserTimezone } from "../../core/data/timezone.server";
@@ -23,7 +23,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return {
       ok: true as const,
       query,
-      results: await getUnifiedSearch(query, createBackendRequestContext(request, timezone)),
+      results: await getConsumableSearchResults(query, createBackendRequestContext(request, timezone)),
     };
   } catch {
     return data({ ok: false as const, query, error: "Zoeken lukt niet." }, { status: 502 });

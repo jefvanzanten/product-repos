@@ -1,11 +1,27 @@
-import { parseCreateConsumptionLog, parseUpdateConsumptionLog } from "../../features/consumption-logs/data/consumption-log-command-parser";
+import {
+  parseCreateConsumptionLog,
+  parseUpdateConsumptionLog,
+} from "../../features/consumption-logs/data/consumption-log-command-parser";
 import { z } from "zod";
-import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { CalorieTrackerApiError, createConsumptionLog, getConsumptionLog, getUnifiedSearch, updateConsumptionLog } from "../../features/consumption-logs/data/consumption-log-api.server";
+import {
+  redirect,
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+} from "react-router";
+import {
+  CalorieTrackerApiError,
+  createConsumptionLog,
+  getConsumableSearchResults,
+  getConsumptionLog,
+  updateConsumptionLog,
+} from "../../features/consumption-logs/data/consumption-log-api.server";
 import { requireUser } from "../../core/presentation/auth/auth.server";
 import { canonicalizeTrackerUrl } from "../../core/presentation/routing/tracker-url-state";
 import { getTodayDate } from "../../core/domain/dates-and-timezones";
-import type { LogFormActionResult, LogFormLoaderData } from "../../features/consumption-logs/presentation/types/log-form.types";
+import type {
+  LogFormActionResult,
+  LogFormLoaderData,
+} from "../../features/consumption-logs/presentation/types/log-form.types";
 import { toCalorieTrackerInternalPath } from "../../core/presentation/routing/calorie-tracker-routes";
 import { readBrowserTimezone } from "../../core/data/timezone.server";
 import { createBackendRequestContext } from "../../core/presentation/backend-request-context.server";
@@ -14,11 +30,17 @@ type LogFormRouteDependencies = {
   readonly requireUser: typeof requireUser;
   readonly createConsumptionLog: typeof createConsumptionLog;
   readonly getConsumptionLog: typeof getConsumptionLog;
-  readonly getUnifiedSearch: typeof getUnifiedSearch;
+  readonly getConsumableSearchResults: typeof getConsumableSearchResults;
   readonly updateConsumptionLog: typeof updateConsumptionLog;
 };
 
-const defaultDependencies: LogFormRouteDependencies = { requireUser, createConsumptionLog, getConsumptionLog, getUnifiedSearch, updateConsumptionLog };
+const defaultDependencies: LogFormRouteDependencies = {
+  requireUser,
+  createConsumptionLog,
+  getConsumableSearchResults,
+  getConsumptionLog,
+  updateConsumptionLog,
+};
 
 /**
  * Load canonical create-log form data after timezone registration.
@@ -26,7 +48,10 @@ const defaultDependencies: LogFormRouteDependencies = { requireUser, createConsu
  * @param args - The args value.
  * @returns The function result.
  */
-export async function loadNewLogRoute(args: LoaderFunctionArgs, dependencies: LogFormRouteDependencies = defaultDependencies): Promise<LogFormLoaderData | Response> {
+export async function loadNewLogRoute(
+  args: LoaderFunctionArgs,
+  dependencies: LogFormRouteDependencies = defaultDependencies,
+): Promise<LogFormLoaderData | Response> {
   return loadLogFormRoute(args, "Create", dependencies);
 }
 
@@ -36,7 +61,10 @@ export async function loadNewLogRoute(args: LoaderFunctionArgs, dependencies: Lo
  * @param args - The args value.
  * @returns The function result.
  */
-export async function loadEditLogRoute(args: LoaderFunctionArgs, dependencies: LogFormRouteDependencies = defaultDependencies): Promise<LogFormLoaderData | Response> {
+export async function loadEditLogRoute(
+  args: LoaderFunctionArgs,
+  dependencies: LogFormRouteDependencies = defaultDependencies,
+): Promise<LogFormLoaderData | Response> {
   return loadLogFormRoute(args, "Edit", dependencies);
 }
 
@@ -46,7 +74,10 @@ export async function loadEditLogRoute(args: LoaderFunctionArgs, dependencies: L
  * @param args - The args value.
  * @returns The function result.
  */
-export async function handleNewLogRouteAction(args: ActionFunctionArgs, dependencies: LogFormRouteDependencies = defaultDependencies): Promise<LogFormActionResult> {
+export async function handleNewLogRouteAction(
+  args: ActionFunctionArgs,
+  dependencies: LogFormRouteDependencies = defaultDependencies,
+): Promise<LogFormActionResult> {
   return handleLogFormRouteAction(args, "Create", dependencies);
 }
 
@@ -56,7 +87,10 @@ export async function handleNewLogRouteAction(args: ActionFunctionArgs, dependen
  * @param args - The args value.
  * @returns The function result.
  */
-export async function handleEditLogRouteAction(args: ActionFunctionArgs, dependencies: LogFormRouteDependencies = defaultDependencies): Promise<LogFormActionResult> {
+export async function handleEditLogRouteAction(
+  args: ActionFunctionArgs,
+  dependencies: LogFormRouteDependencies = defaultDependencies,
+): Promise<LogFormActionResult> {
   return handleLogFormRouteAction(args, "Edit", dependencies);
 }
 
@@ -76,14 +110,23 @@ async function loadLogFormRoute(
   const timezone = readBrowserTimezone(request);
   if (timezone === null) return pendingFormData();
   const url = new URL(request.url);
-  const canonical = canonicalizeTrackerUrl(url.searchParams.get("date"), url.searchParams.get("type"), getTodayDate(timezone));
+  const canonical = canonicalizeTrackerUrl(
+    url.searchParams.get("date"),
+    url.searchParams.get("type"),
+    getTodayDate(timezone),
+  );
   if (canonical.requiresReplace) {
-    throw redirect(`${toCalorieTrackerInternalPath(url.pathname)}?${new URLSearchParams(canonical.state)}`);
+    throw redirect(
+      `${toCalorieTrackerInternalPath(url.pathname)}?${new URLSearchParams(canonical.state)}`,
+    );
   }
 
   try {
     const context = createBackendRequestContext(request, timezone);
-    const initialResultsPromise = dependencies.getUnifiedSearch(null, context);
+    const initialResultsPromise = dependencies.getConsumableSearchResults(
+      null,
+      context,
+    );
     if (mode === "Create") {
       return {
         timezone,
@@ -95,15 +138,31 @@ async function loadLogFormRoute(
       };
     }
     const logId = params.logId;
-    if (logId === undefined) throw new Response("Log niet gevonden.", { status: 404 });
+    if (logId === undefined)
+      throw new Response("Log niet gevonden.", { status: 404 });
     const [initialResults, log] = await Promise.all([
       initialResultsPromise,
       dependencies.getConsumptionLog(logId, context),
     ]);
-    return { timezone, routeState: canonical.state, mode: { tag: "Edit", log }, initialResults, notFound: false, loadFailed: false };
+    return {
+      timezone,
+      routeState: canonical.state,
+      mode: { tag: "Edit", log },
+      initialResults,
+      notFound: false,
+      loadFailed: false,
+    };
   } catch (error: unknown) {
-    const notFound = error instanceof CalorieTrackerApiError && error.status === 404;
-    return { timezone, routeState: canonical.state, mode: null, initialResults: [], notFound, loadFailed: !notFound };
+    const notFound =
+      error instanceof CalorieTrackerApiError && error.status === 404;
+    return {
+      timezone,
+      routeState: canonical.state,
+      mode: null,
+      initialResults: [],
+      notFound,
+      loadFailed: !notFound,
+    };
   }
 }
 
@@ -121,10 +180,12 @@ async function handleLogFormRouteAction(
 ): Promise<LogFormActionResult> {
   await dependencies.requireUser(request);
   const timezone = readBrowserTimezone(request);
-  if (timezone === null) return { ok: false, error: "De browsertijdzone is nog niet beschikbaar." };
+  if (timezone === null)
+    return { ok: false, error: "De browsertijdzone is nog niet beschikbaar." };
   const formData = await request.formData();
   const rawPayload = z.string().safeParse(formData.get("payload"));
-  if (!rawPayload.success) return { ok: false, error: "Controleer de ingevulde gegevens." };
+  if (!rawPayload.success)
+    return { ok: false, error: "Controleer de ingevulde gegevens." };
   let payload: Parameters<typeof parseCreateConsumptionLog>[0];
   try {
     payload = JSON.parse(rawPayload.data);
@@ -136,23 +197,40 @@ async function handleLogFormRouteAction(
     const context = createBackendRequestContext(request, timezone);
     if (mode === "Create") {
       const parsed = parseCreateConsumptionLog(payload);
-      if (parsed === null) return { ok: false, error: "Controleer de ingevulde gegevens." };
-      return { ok: true, log: await dependencies.createConsumptionLog(parsed, context) };
+      if (parsed === null)
+        return { ok: false, error: "Controleer de ingevulde gegevens." };
+      return {
+        ok: true,
+        log: await dependencies.createConsumptionLog(parsed, context),
+      };
     }
     const logId = params.logId;
     const parsed = parseUpdateConsumptionLog(payload);
-    if (logId === undefined || parsed === null) return { ok: false, error: "Controleer de ingevulde gegevens." };
-    return { ok: true, log: await dependencies.updateConsumptionLog(logId, parsed, context) };
+    if (logId === undefined || parsed === null)
+      return { ok: false, error: "Controleer de ingevulde gegevens." };
+    return {
+      ok: true,
+      log: await dependencies.updateConsumptionLog(logId, parsed, context),
+    };
   } catch (error: unknown) {
-    if (error instanceof CalorieTrackerApiError && error.response?.code === "LOG_UPDATE_CONFLICT") {
-      return { ok: false, error: "Dit log is intussen gewijzigd. Herlaad de actuele gegevens voordat je opnieuw opslaat." };
+    if (
+      error instanceof CalorieTrackerApiError &&
+      error.response?.code === "LOG_UPDATE_CONFLICT"
+    ) {
+      return {
+        ok: false,
+        error:
+          "Dit log is intussen gewijzigd. Herlaad de actuele gegevens voordat je opnieuw opslaat.",
+      };
     }
-    const fallbackMessage = "Opslaan lukt niet. Je invoer is bewaard; probeer opnieuw.";
+    const fallbackMessage =
+      "Opslaan lukt niet. Je invoer is bewaard; probeer opnieuw.";
     return {
       ok: false,
-      error: error instanceof CalorieTrackerApiError
-        ? error.response?.message ?? fallbackMessage
-        : fallbackMessage,
+      error:
+        error instanceof CalorieTrackerApiError
+          ? (error.response?.message ?? fallbackMessage)
+          : fallbackMessage,
     };
   }
 }
@@ -163,5 +241,12 @@ async function handleLogFormRouteAction(
  * @returns The function result.
  */
 function pendingFormData(): LogFormLoaderData {
-  return { timezone: null, routeState: null, mode: null, initialResults: [], notFound: false, loadFailed: false };
+  return {
+    timezone: null,
+    routeState: null,
+    mode: null,
+    initialResults: [],
+    notFound: false,
+    loadFailed: false,
+  };
 }

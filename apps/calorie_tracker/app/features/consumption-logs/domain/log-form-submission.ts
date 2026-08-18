@@ -1,6 +1,7 @@
 import type {
   AvailableInputUnit,
   CreateConsumptionLog,
+  ProductConsumptionLog,
   ProductSearchResult,
   UpdateConsumptionLog,
   LogFormMode,
@@ -27,7 +28,7 @@ type SharedFormFields = {
 type LogFormSubmissionInput =
   | (SharedFormFields & {
       readonly kind: "PRODUCT";
-      readonly selectedProduct: ProductSearchResult | null;
+      readonly selectedProduct: ProductSearchResult | ProductConsumptionLog["product"] | null;
       readonly availableUnits: ReadonlyArray<AvailableInputUnit>;
       readonly unitKey: string | null;
     })

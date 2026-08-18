@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { requireUser } from "../../core/presentation/auth/auth.server";
-import { createConsumptionLog, getConsumptionLog, getUnifiedSearch, updateConsumptionLog } from "../../features/consumption-logs/data/consumption-log-api.server";
+import { createConsumptionLog, getConsumableSearchResults, getConsumptionLog, updateConsumptionLog } from "../../features/consumption-logs/data/consumption-log-api.server";
 import { handleNewLogRouteAction } from "./log-form-route.server";
 
 /** Build action arguments consumed by the route. */
@@ -16,7 +16,7 @@ function dependencies(createLog: typeof createConsumptionLog) {
     requireUser: vi.fn<typeof requireUser>().mockResolvedValue({ id: "user", email: "user@example.test", name: "User", role: "user" }),
     createConsumptionLog: createLog,
     getConsumptionLog: vi.fn<typeof getConsumptionLog>(),
-    getUnifiedSearch: vi.fn<typeof getUnifiedSearch>(),
+    getConsumableSearchResults: vi.fn<typeof getConsumableSearchResults>(),
     updateConsumptionLog: vi.fn<typeof updateConsumptionLog>(),
   };
 }

@@ -3,14 +3,14 @@ import type {
   ConsumptionLog as ConsumptionLogDto,
   DeleteLogResult as DeleteLogResultDto,
   ProductSearchResult as ProductSearchResultDto,
-  UnifiedSearchResult as UnifiedSearchResultDto,
+  UnifiedSearchResult as ConsumableSearchResultDto,
 } from "@product-repos/contracts/calorie-tracker";
 import type {
   AvailableInputUnit,
   ConsumptionLog,
   DeleteLogResult,
   ProductSearchResult,
-  UnifiedSearchResult,
+  ConsumableSearchResult,
 } from "../domain/consumption-log";
 
 /** Map a validated consumption-log DTO into the domain model. */
@@ -23,8 +23,8 @@ export function mapProductSearchResult(dto: ProductSearchResultDto): ProductSear
   return dto;
 }
 
-/** Map a validated combined-search DTO into the domain model. */
-export function mapUnifiedSearchResult(dto: UnifiedSearchResultDto): UnifiedSearchResult {
+/** Map a validated consumable-search DTO into the domain model. */
+export function mapConsumableSearchResult(dto: ConsumableSearchResultDto): ConsumableSearchResult {
   return dto;
 }
 

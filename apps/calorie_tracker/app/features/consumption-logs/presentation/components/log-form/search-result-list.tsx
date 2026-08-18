@@ -1,23 +1,24 @@
 import type { ConsumptionType } from "../../../../../core/domain/consumption-types";
-import type { ProductConsumptionLog, UnifiedSearchResult } from "../../../domain/consumption-log";
+import type {
+  ConsumableOption,
+  ConsumableSearchResult,
+  ProductConsumptionLog,
+} from "../../../domain/consumption-log";
 import type { ReactNode } from "react";
 import { Icon } from "../../../../../core/presentation/components/icon/icon";
 import { ProductImage } from "../../../../../core/presentation/components/product-image/product-image";
 import type { ProductSearchMode } from "./product-search";
 import styles from "./search-result-list.module.css";
 
-/** Combined-search row supplied to the list, tagged by kind. */
-export type SearchResultItem = UnifiedSearchResult;
-
 interface SearchResultListProps {
   readonly searchMode: ProductSearchMode;
   readonly isPending: boolean;
   readonly failed: boolean;
-  readonly results: ReadonlyArray<UnifiedSearchResult>;
+  readonly results: ReadonlyArray<ConsumableSearchResult>;
   readonly selectedKey: string | null;
   readonly editLog: ProductConsumptionLog | null;
   readonly onRetry: () => void;
-  readonly onSelect: (result: UnifiedSearchResult) => void;
+  readonly onSelect: (result: ConsumableOption) => void;
 }
 
 /**
@@ -36,15 +37,39 @@ export function SearchResultList({
   onRetry,
   onSelect,
 }: SearchResultListProps): ReactNode {
-  const includesEditedProduct = editLog === null
-    || results.some((result) => result.kind === "PRODUCT" && result.productId === editLog.product.productId);
+  const includesEditedProduct =
+    editLog === null ||
+    results.some(
+      (result) =>
+        result.kind === "PRODUCT" &&
+        result.productId === editLog.product.productId,
+    );
   return (
-    <section className={styles.results} aria-live="polite" data-has-selection={selectedKey !== null}>
-      <h2>{searchMode.tag === "Recent" ? "Recent gebruikt" : "Zoekresultaten"}</h2>
-      {searchMode.tag === "TooShort" && <p>Typ minimaal twee tekens om te zoeken.</p>}
+    <section
+      className={styles.results}
+      aria-live="polite"
+      data-has-selection={selectedKey !== null}
+    >
+      <h2>
+        {searchMode.tag === "Recent" ? "Recent gebruikt" : "Zoekresultaten"}
+      </h2>
+      {searchMode.tag === "TooShort" && (
+        <p>Typ minimaal twee tekens om te zoeken.</p>
+      )}
       {isPending && searchMode.tag !== "TooShort" && <p>Resultaten laden…</p>}
-      {failed && <p>Zoeken lukt niet. <button type="button" onClick={onRetry}>Opnieuw proberen</button></p>}
-      {searchMode.tag !== "TooShort" && !isPending && !failed && results.length === 0 && editLog === null && <p>Niets gevonden</p>}
+      {failed && (
+        <p>
+          Zoeken lukt niet.{" "}
+          <button type="button" onClick={onRetry}>
+            Opnieuw proberen
+          </button>
+        </p>
+      )}
+      {searchMode.tag !== "TooShort" &&
+        !isPending &&
+        !failed &&
+        results.length === 0 &&
+        editLog === null && <p>Niets gevonden</p>}
       {editLog !== null && !includesEditedProduct && (
         <ProductRow
           result={{ kind: "PRODUCT", ...editLog.product }}
@@ -52,25 +77,23 @@ export function SearchResultList({
           onSelect={() => onSelect({ kind: "PRODUCT", ...editLog.product })}
         />
       )}
-      {results.map((result) => (
-        result.kind === "PRODUCT"
-          ? (
-            <ProductRow
-              key={consumableKey(result)}
-              result={result}
-              selected={selectedKey === consumableKey(result)}
-              onSelect={() => onSelect(result)}
-            />
-          )
-          : (
-            <DishRow
-              key={consumableKey(result)}
-              result={result}
-              selected={selectedKey === consumableKey(result)}
-              onSelect={() => onSelect(result)}
-            />
-          )
-      ))}
+      {results.map((result) =>
+        result.kind === "PRODUCT" ? (
+          <ProductRow
+            key={consumableKey(result)}
+            result={result}
+            selected={selectedKey === consumableKey(result)}
+            onSelect={() => onSelect(result)}
+          />
+        ) : (
+          <DishRow
+            key={consumableKey(result)}
+            result={result}
+            selected={selectedKey === consumableKey(result)}
+            onSelect={() => onSelect(result)}
+          />
+        ),
+      )}
       {editLog?.product.archived && (
         <p>Het huidige gearchiveerde product blijft beperkt bewerkbaar.</p>
       )}
@@ -79,7 +102,7 @@ export function SearchResultList({
 }
 
 interface ResultRowProps {
-  readonly imageType: ConsumptionType;
+  readonly imageType: ConsumptionType | null;
   readonly imageUrl: string | null;
   readonly title: ReactNode;
   readonly subtitle: ReactNode;
@@ -110,13 +133,17 @@ function ResultRow({
           <small>{subtitle}</small>
         </span>
       </button>
-      {selected && <span className={styles.selectionIndicator}><Icon name="check" /></span>}
+      {selected && (
+        <span className={styles.selectionIndicator}>
+          <Icon name="check" />
+        </span>
+      )}
     </div>
   );
 }
 
 interface ProductRowProps {
-  readonly result: Extract<UnifiedSearchResult, { readonly kind: "PRODUCT" }>;
+  readonly result: Extract<ConsumableOption, { readonly kind: "PRODUCT" }>;
   readonly selected: boolean;
   readonly onSelect: () => void;
 }
@@ -127,7 +154,11 @@ interface ProductRowProps {
  * @param properties - Function arguments.
  * @returns The function result.
  */
-function ProductRow({ result, selected, onSelect }: ProductRowProps): ReactNode {
+function ProductRow({
+  result,
+  selected,
+  onSelect,
+}: ProductRowProps): ReactNode {
   return (
     <ResultRow
       imageType={result.consumptionType}
@@ -141,7 +172,7 @@ function ProductRow({ result, selected, onSelect }: ProductRowProps): ReactNode 
 }
 
 interface DishRowProps {
-  readonly result: Extract<UnifiedSearchResult, { readonly kind: "DISH" }>;
+  readonly result: Extract<ConsumableSearchResult, { readonly kind: "DISH" }>;
   readonly selected: boolean;
   readonly onSelect: () => void;
 }
@@ -166,6 +197,8 @@ function DishRow({ result, selected, onSelect }: DishRowProps): ReactNode {
 }
 
 /** Stable selection key for one combined search row. */
-function consumableKey(result: UnifiedSearchResult): string {
-  return result.kind === "PRODUCT" ? `product:${result.productId}` : `dish:${result.id}`;
+function consumableKey(result: ConsumableSearchResult): string {
+  return result.kind === "PRODUCT"
+    ? `product:${result.productId}`
+    : `dish:${result.id}`;
 }

@@ -28,7 +28,7 @@ export function LogItem({ item, routeState }: { readonly item: ConsumptionLog; r
       <span className={styles.itemProduct}><strong>{presentation.title}{subtitle}</strong></span>
       <span className={styles.itemDetails}>
         <span className={styles.itemMeta}>
-          <ConsumptionTypeBadge type={presentation.consumptionType} />
+          {presentation.consumptionType !== null && <ConsumptionTypeBadge type={presentation.consumptionType} />}
           {presentation.archived && <em>Gearchiveerd</em>}
         </span>
         <b className={styles.itemQuantity}>{formatLogbookQuantity(item)}</b>
