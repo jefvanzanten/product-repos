@@ -123,6 +123,18 @@
   grid-column: 1 / -1;
 }
 
+.quantityFields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-column: 1 / -1;
+  gap: 12px 10px;
+  min-width: 0;
+
+  @media (min-width: 760px) {
+    gap: 12px 24px;
+  }
+}
+
 .inputWithIcon {
   position: relative;
   display: flex;

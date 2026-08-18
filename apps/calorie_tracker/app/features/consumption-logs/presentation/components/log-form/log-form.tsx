@@ -52,6 +52,7 @@ export function LogForm({
   const unitsFetcher = useFetcher<ProductUnitsData>();
   const mutationFetcher = useFetcher<LogFormActionResult>();
   const requestedUnitsProductId = useRef<string | null>(null);
+  const quantityFieldsRef = useRef<HTMLDivElement>(null);
   const editDish = mode.tag === "Edit" && mode.log.type === "DISH" ? mode.log : null;
   const initialSelection: ConsumableSelection | null = mode.tag === "Edit"
     ? mode.log.type === "DISH"
@@ -74,6 +75,11 @@ export function LogForm({
   const loadSearchResults = searchFetcher.load;
   const loadUnits = unitsFetcher.load;
   const selectedProduct = selection !== null && selection.kind === "PRODUCT" ? selection.value : null;
+
+  useEffect(() => {
+    if (selection === null) return;
+    quantityFieldsRef.current?.scrollIntoView({ block: "nearest" });
+  }, [selection]);
 
   useEffect(() => {
     if (editDish !== null || normalizedQuery === null) return;
@@ -191,13 +197,15 @@ export function LogForm({
   }
 
   /**
-   * Update search input and reload recents immediately when cleared.
+   * Update search input, clear the previous selection, and reload recents when cleared.
    *
    * @param value - The value value.
    * @returns Nothing.
    */
   function changeSearchInput(value: string): void {
     setSearchInput(value);
+    setSelection(null);
+    setSelectedUnitKey(null);
     if (value.trim().length === 0) void loadSearchResults("/consumable-lookup");
   }
 
@@ -242,23 +250,26 @@ export function LogForm({
           )}
           {editDish !== null && <p className={styles.fullField}>Geselecteerd gerecht: <strong>{editDish.dish.name}</strong></p>}
 
-          {selection !== null && selection.kind === "PRODUCT" && (
-            <QuantityFields
-              quantity={quantity}
-              unitKey={unitKey}
-              availableUnits={availableUnits}
-              unitsDisabled={!selectedOriginalArchived && (!unitsLoaded || unitsFailed)}
-              unitsFailed={!selectedOriginalArchived && unitsFailed}
-              onQuantityChange={setQuantity}
-              onUnitChange={setSelectedUnitKey}
-              onRetryUnits={() => void loadUnits(`/product-input-units/${selection.value.productId}`)}
-            />
-          )}
-          {selection !== null && selection.kind === "DISH" && (
-            <label className={styles.fullField}>
-              <span>Hoeveel? (porties)</span>
-              <input inputMode="decimal" value={quantity} onChange={(event) => setQuantity(event.currentTarget.value)} placeholder="bijv. 1,5" />
-            </label>
+          {selection !== null && (
+            <div ref={quantityFieldsRef} className={styles.quantityFields}>
+              {selection.kind === "PRODUCT" ? (
+                <QuantityFields
+                  quantity={quantity}
+                  unitKey={unitKey}
+                  availableUnits={availableUnits}
+                  unitsDisabled={!selectedOriginalArchived && (!unitsLoaded || unitsFailed)}
+                  unitsFailed={!selectedOriginalArchived && unitsFailed}
+                  onQuantityChange={setQuantity}
+                  onUnitChange={setSelectedUnitKey}
+                  onRetryUnits={() => void loadUnits(`/product-input-units/${selection.value.productId}`)}
+                />
+              ) : (
+                <label className={styles.fullField}>
+                  <span>Hoeveel? (porties)</span>
+                  <input inputMode="decimal" value={quantity} onChange={(event) => setQuantity(event.currentTarget.value)} placeholder="bijv. 1,5" />
+                </label>
+              )}
+            </div>
           )}
           {formError !== null && <div className={styles.error} role="alert">{formError}{mode.tag === "Edit" && formError.includes("intussen") && <button type="button" onClick={() => window.location.reload()}>Actuele data herladen</button>}</div>}
         </div>

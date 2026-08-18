@@ -39,7 +39,7 @@ export function SearchResultList({
   const includesEditedProduct = editLog === null
     || results.some((result) => result.kind === "PRODUCT" && result.productId === editLog.product.productId);
   return (
-    <section className={styles.results} aria-live="polite">
+    <section className={styles.results} aria-live="polite" data-has-selection={selectedKey !== null}>
       <h2>{searchMode.tag === "Recent" ? "Recent gebruikt" : "Zoekresultaten"}</h2>
       {searchMode.tag === "TooShort" && <p>Typ minimaal twee tekens om te zoeken.</p>}
       {isPending && searchMode.tag !== "TooShort" && <p>Resultaten laden…</p>}
