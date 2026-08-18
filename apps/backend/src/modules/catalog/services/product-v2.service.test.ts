@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import type { ProductCompositionInput } from "@product-repos/contracts";
+import type { CreateProductComposition } from "@product-repos/contracts";
 import type { ProductV2Repository } from "../repositories/product-v2.repository.ts";
 import { createProductV2Service } from "./product-v2.service.ts";
 
-const compositionInput: ProductCompositionInput = {
+const compositionInput: CreateProductComposition = {
   name: "  Havermout  ",
   categoryId: 1,
   brandId: null,
@@ -29,7 +29,7 @@ function createRepositoryFake(onCreate: ProductV2Repository["createComposition"]
 
 describe("product v2 service", () => {
   it("normalizes composition names before persistence", () => {
-    let received: ProductCompositionInput | undefined;
+    let received: CreateProductComposition | undefined;
     const repository = createRepositoryFake((input) => {
       received = input;
       // SAFETY: this focused fake verifies pre-persistence normalization; the returned row is never projected.

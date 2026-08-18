@@ -1,4 +1,4 @@
-import type { ConcreteProductDetail, ConcreteProductInput, ConcreteProductPage, ConcreteProductSummary, MacroProfile, ProductCompositionDto, ProductCompositionInput } from "@product-repos/contracts";
+import type { ConcreteProductDetail, ConcreteProductPage, ConcreteProductSummary, CreateConcreteProduct, CreateProductComposition, MacroProfile, ProductCompositionDto, UpdateConcreteProduct, UpdateProductComposition } from "@product-repos/contracts";
 import { and, eq, like, or, sql } from "drizzle-orm";
 import type { BackendDatabase } from "../../../db/index.ts";
 import { brand, category, concreteProduct, packageType, productComposition, productCompositionMacroProfile, productPortion, unitContent, unitType } from "../../../db/schema.ts";
@@ -9,13 +9,13 @@ import { formatConcreteProductName, formatPackageSummary } from "../domain/produ
 /** Catalog v2 persistence capabilities. */
 export type ProductV2Repository = {
   readonly searchCompositions: (query: string, limit: number) => ProductCompositionDto[];
-  readonly createComposition: (input: ProductCompositionInput) => Result<ProductCompositionDto>;
-  readonly updateComposition: (compositionId: string, input: ProductCompositionInput) => Result<ProductCompositionDto>;
+  readonly createComposition: (input: CreateProductComposition) => Result<ProductCompositionDto>;
+  readonly updateComposition: (compositionId: string, input: UpdateProductComposition) => Result<ProductCompositionDto>;
   readonly updateMacroProfile: (compositionId: string, profile: MacroProfile | null) => Result<ProductCompositionDto>;
   readonly listProducts: (input: { readonly query?: string; readonly categoryId?: number; readonly brandId?: string; readonly archived?: boolean; readonly cursor?: string; readonly limit: number }) => ConcreteProductPage;
   readonly getProduct: (productId: string) => Result<ConcreteProductDetail>;
-  readonly createProduct: (input: ConcreteProductInput) => Result<ConcreteProductDetail>;
-  readonly updateProduct: (productId: string, input: ConcreteProductInput) => Result<ConcreteProductDetail>;
+  readonly createProduct: (input: CreateConcreteProduct) => Result<ConcreteProductDetail>;
+  readonly updateProduct: (productId: string, input: UpdateConcreteProduct) => Result<ConcreteProductDetail>;
   readonly setArchived: (productId: string, archived: boolean) => Result<ConcreteProductDetail>;
 };
 
@@ -38,7 +38,7 @@ export function createProductV2Repository(database: BackendDatabase): ProductV2R
   }
 
   /** Create one composition and its optional macro profile atomically. */
-  function createComposition(input: ProductCompositionInput): Result<ProductCompositionDto> {
+  function createComposition(input: CreateProductComposition): Result<ProductCompositionDto> {
     const references = validateCompositionReferences(input);
     if (!references.ok) return references;
     if (findCompositionDuplicate(input)) return err({ code: "PRODUCT_COMPOSITION_ALREADY_EXISTS", message: "Product composition already exists" });
@@ -51,7 +51,7 @@ export function createProductV2Repository(database: BackendDatabase): ProductV2R
   }
 
   /** Update shared composition fields and optional macro values. */
-  function updateComposition(compositionId: string, input: ProductCompositionInput): Result<ProductCompositionDto> {
+  function updateComposition(compositionId: string, input: UpdateProductComposition): Result<ProductCompositionDto> {
     if (!findComposition(compositionId)) return err({ code: "PRODUCT_COMPOSITION_NOT_FOUND", message: "Product composition not found" });
     const references = validateCompositionReferences(input);
     if (!references.ok) return references;
@@ -114,7 +114,7 @@ export function createProductV2Repository(database: BackendDatabase): ProductV2R
   }
 
   /** Create one concrete product and optional portion atomically. */
-  function createProduct(input: ConcreteProductInput): Result<ConcreteProductDetail> {
+  function createProduct(input: CreateConcreteProduct): Result<ConcreteProductDetail> {
     const references = resolveProductReferences(input);
     if (!references.ok) return references;
     if (findProductDuplicate(input)) return err({ code: "PRODUCT_ALREADY_EXISTS", message: "Concrete product already exists" });
@@ -129,17 +129,19 @@ export function createProductV2Repository(database: BackendDatabase): ProductV2R
   }
 
   /** Update product-specific fields and optional portion atomically. */
-  function updateProduct(productId: string, input: ConcreteProductInput): Result<ConcreteProductDetail> {
-    if (!findConcreteProduct(productId)) return err({ code: "PRODUCT_NOT_FOUND", message: "Product not found" });
-    const references = resolveProductReferences(input);
+  function updateProduct(productId: string, input: UpdateConcreteProduct): Result<ConcreteProductDetail> {
+    const current = findConcreteProduct(productId);
+    if (!current) return err({ code: "PRODUCT_NOT_FOUND", message: "Product not found" });
+    const completeInput: CreateConcreteProduct = { ...input, productCompositionId: current.productCompositionId };
+    const references = resolveProductReferences(completeInput);
     if (!references.ok) return references;
-    if (findProductDuplicate(input, productId)) return err({ code: "PRODUCT_ALREADY_EXISTS", message: "Concrete product already exists" });
-    if (input.barcode && findBarcode(input.barcode, productId)) return err({ code: "BARCODE_ALREADY_EXISTS", message: "Barcode already exists" });
+    if (findProductDuplicate(completeInput, productId)) return err({ code: "PRODUCT_ALREADY_EXISTS", message: "Concrete product already exists" });
+    if (completeInput.barcode && findBarcode(completeInput.barcode, productId)) return err({ code: "BARCODE_ALREADY_EXISTS", message: "Barcode already exists" });
     database.transaction((tx) => {
-      const contentId = input.content ? findOrCreateContent(tx, input.content.unitTypeId, input.content.amount) : null;
-      tx.update(concreteProduct).set({ productCompositionId: input.productCompositionId, packageTypeId: input.packageTypeId ?? null, unitContentId: contentId, imageUrl: input.imageUrl ?? null, barcode: normalizeBarcode(input.barcode), updatedAt: new Date().toISOString() }).where(eq(concreteProduct.id, productId)).run();
+      const contentId = completeInput.content ? findOrCreateContent(tx, completeInput.content.unitTypeId, completeInput.content.amount) : null;
+      tx.update(concreteProduct).set({ packageTypeId: completeInput.packageTypeId ?? null, unitContentId: contentId, imageUrl: completeInput.imageUrl ?? null, barcode: normalizeBarcode(completeInput.barcode), updatedAt: new Date().toISOString() }).where(eq(concreteProduct.id, productId)).run();
       tx.delete(productPortion).where(eq(productPortion.productId, productId)).run();
-      persistPortion(tx, productId, input);
+      persistPortion(tx, productId, completeInput);
     });
     return getProduct(productId);
   }
@@ -179,14 +181,14 @@ export function createProductV2Repository(database: BackendDatabase): ProductV2R
   }
 
   /** Validate composition references. */
-  function validateCompositionReferences(input: ProductCompositionInput): Result<true> {
+  function validateCompositionReferences(input: CreateProductComposition | UpdateProductComposition): Result<true> {
     if (!database.select({ id: category.id }).from(category).where(eq(category.id, input.categoryId)).get()) return err({ code: "REFERENCE_NOT_FOUND", message: "Category not found" });
     if (input.brandId && !database.select({ id: brand.id }).from(brand).where(eq(brand.id, input.brandId)).get()) return err({ code: "REFERENCE_NOT_FOUND", message: "Brand not found" });
     return ok(true);
   }
 
   /** Resolve and validate all concrete-product references and dimensions. */
-  function resolveProductReferences(input: ConcreteProductInput): Result<true> {
+  function resolveProductReferences(input: CreateConcreteProduct): Result<true> {
     const composition = findComposition(input.productCompositionId);
     if (!composition) return err({ code: "REFERENCE_NOT_FOUND", message: "Product composition not found" });
     if (input.packageTypeId && !database.select({ id: packageType.id }).from(packageType).where(eq(packageType.id, input.packageTypeId)).get()) return err({ code: "REFERENCE_NOT_FOUND", message: "Package type not found" });
@@ -211,7 +213,7 @@ export function createProductV2Repository(database: BackendDatabase): ProductV2R
   }
 
   /** Persist an optional portion and canonical unit content. */
-  function persistPortion(executor: Pick<BackendDatabase, "insert" | "select">, productId: string, input: ConcreteProductInput): void {
+  function persistPortion(executor: Pick<BackendDatabase, "insert" | "select">, productId: string, input: CreateConcreteProduct): void {
     if (!input.portion) return;
     const unitContentId = findOrCreateContent(executor, input.portion.unitTypeId, input.portion.amount);
     executor.insert(productPortion).values({ productId, singularName: input.portion.singularName.trim(), pluralName: input.portion.pluralName.trim(), unitContentId, portionsPerProduct: input.portion.portionsPerProduct ?? null }).run();
@@ -226,7 +228,7 @@ export function createProductV2Repository(database: BackendDatabase): ProductV2R
   }
 
   /** Find one normalized composition duplicate. */
-  function findCompositionDuplicate(input: ProductCompositionInput, excludedId?: string): CompositionRow | undefined {
+  function findCompositionDuplicate(input: CreateProductComposition | UpdateProductComposition, excludedId?: string): CompositionRow | undefined {
     const name = input.name.trim().toLowerCase();
     return database.select().from(productComposition).all().find((row) => row.id !== excludedId && row.categoryId === input.categoryId && row.brandId === (input.brandId ?? null) && row.name.trim().toLowerCase() === name);
   }
@@ -242,7 +244,7 @@ export function createProductV2Repository(database: BackendDatabase): ProductV2R
   }
 
   /** Find a product with the same concrete identity. */
-  function findProductDuplicate(input: ConcreteProductInput, excludedId?: string): typeof concreteProduct.$inferSelect | undefined {
+  function findProductDuplicate(input: CreateConcreteProduct, excludedId?: string): typeof concreteProduct.$inferSelect | undefined {
     if (!input.packageTypeId || !input.content) return undefined;
     const canonical = String(Number(input.content.amount));
     const content = database.select().from(unitContent).where(and(eq(unitContent.unitTypeId, input.content.unitTypeId), eq(unitContent.amount, canonical))).get();

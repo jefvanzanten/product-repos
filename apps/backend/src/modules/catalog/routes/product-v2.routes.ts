@@ -1,7 +1,9 @@
 import {
-  concreteProductInputSchema,
+  createConcreteProductSchema,
+  createProductCompositionSchema,
   macroProfileSchema,
-  productCompositionInputSchema,
+  updateConcreteProductSchema,
+  updateProductCompositionSchema,
 } from "@product-repos/contracts";
 import { Hono, type Context } from "hono";
 import type { ProductV2Service } from "../services/product-v2.service.ts";
@@ -39,7 +41,7 @@ export function productV2Routes(service: ProductV2Service): Hono {
   });
 
   router.post("/product-compositions", async (context) => {
-    const input = productCompositionInputSchema.safeParse(
+    const input = createProductCompositionSchema.safeParse(
       await context.req.json().catch(() => null),
     );
     if (!input.success)
@@ -54,7 +56,7 @@ export function productV2Routes(service: ProductV2Service): Hono {
   });
 
   router.put("/product-compositions/:compositionId", async (context) => {
-    const input = productCompositionInputSchema.safeParse(
+    const input = updateProductCompositionSchema.safeParse(
       await context.req.json().catch(() => null),
     );
     if (!input.success)
@@ -113,7 +115,7 @@ export function productV2Routes(service: ProductV2Service): Hono {
   });
 
   router.post("/products", async (context) => {
-    const input = concreteProductInputSchema.safeParse(
+    const input = createConcreteProductSchema.safeParse(
       await context.req.json().catch(() => null),
     );
     if (!input.success)
@@ -135,7 +137,7 @@ export function productV2Routes(service: ProductV2Service): Hono {
   });
 
   router.put("/products/:productId", async (context) => {
-    const input = concreteProductInputSchema.safeParse(
+    const input = updateConcreteProductSchema.safeParse(
       await context.req.json().catch(() => null),
     );
     if (!input.success)

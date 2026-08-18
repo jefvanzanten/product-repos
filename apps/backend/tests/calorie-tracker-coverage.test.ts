@@ -262,7 +262,6 @@ describe("Calorie Tracker backend coverage", () => {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        productCompositionId: created.id,
         packageTypeId: testCatalog.packageTypeId,
         content: { amount: "250", unitTypeId: testCatalog.massUnitTypeId },
         portion: null,

@@ -39,6 +39,26 @@ describe("product model v2", () => {
     expect(product.displayName).toContain(name);
     expect(product.portion?.pluralName).toBe("glazen");
 
+    const detailResponse = await requestAsAdmin(`/products/${product.productId}`);
+    expect(detailResponse.status).toBe(200);
+    const detail = concreteProductDetailSchema.parse(await detailResponse.json());
+    expect(detail.composition.id).toBe(composition.id);
+
+    const compositionSearchResponse = await requestAsAdmin(`/product-compositions/search?query=${encodeURIComponent(name)}`);
+    expect(compositionSearchResponse.status).toBe(200);
+    expect(productCompositionDtoSchema.array().parse(await compositionSearchResponse.json()).some((item) => item.id === composition.id)).toBe(true);
+
+    const updateResponse = await requestJson(`/products/${product.productId}`, "PUT", {
+      packageTypeId: testCatalog.packageTypeId,
+      content: { amount: "2", unitTypeId: testCatalog.unitTypeId },
+      barcode: product.barcode,
+      portion: null,
+    });
+    expect(updateResponse.status).toBe(200);
+    const updated = concreteProductDetailSchema.parse(await updateResponse.json());
+    expect(updated.productCompositionId).toBe(composition.id);
+    expect(updated.content?.amount).toBe("2");
+
     const pageResponse = await requestAsAdmin(`/products?query=${encodeURIComponent(name)}`);
     expect(pageResponse.status).toBe(200);
     const page = concreteProductPageSchema.parse(await pageResponse.json());

@@ -1,4 +1,4 @@
-import type { ConcreteProductInput, MacroProfile, ProductCompositionInput } from "@product-repos/contracts";
+import type { CreateConcreteProduct, CreateProductComposition, MacroProfile, UpdateConcreteProduct, UpdateProductComposition } from "@product-repos/contracts";
 import { canonicalDecimal, trimRequired, type Result } from "../domain/catalog-domain.ts";
 import { parseProductMacroProfile } from "../domain/product-macro-profile.ts";
 import type { ProductV2Repository } from "../repositories/product-v2.repository.ts";
@@ -14,13 +14,13 @@ export type ProductV2Service = ReturnType<typeof createProductV2Service>;
  */
 export function createProductV2Service(repository: ProductV2Repository) {
   /** Normalize and create one product composition. */
-  function createComposition(input: ProductCompositionInput) {
+  function createComposition(input: CreateProductComposition) {
     const normalized = normalizeCompositionInput(input);
     return normalized.ok ? repository.createComposition(normalized.value) : normalized;
   }
 
   /** Normalize and update one product composition. */
-  function updateComposition(compositionId: string, input: ProductCompositionInput) {
+  function updateComposition(compositionId: string, input: UpdateProductComposition) {
     const normalized = normalizeCompositionInput(input);
     return normalized.ok ? repository.updateComposition(compositionId, normalized.value) : normalized;
   }
@@ -32,13 +32,13 @@ export function createProductV2Service(repository: ProductV2Repository) {
   }
 
   /** Normalize and create one concrete product. */
-  function createProduct(input: ConcreteProductInput) {
+  function createProduct(input: CreateConcreteProduct) {
     const normalized = normalizeConcreteProductInput(input);
     return normalized.ok ? repository.createProduct(normalized.value) : normalized;
   }
 
   /** Normalize and update one concrete product. */
-  function updateProduct(productId: string, input: ConcreteProductInput) {
+  function updateProduct(productId: string, input: UpdateConcreteProduct) {
     const normalized = normalizeConcreteProductInput(input);
     return normalized.ok ? repository.updateProduct(productId, normalized.value) : normalized;
   }
@@ -57,7 +57,7 @@ export function createProductV2Service(repository: ProductV2Repository) {
 }
 
 /** Normalize one composition input at the application boundary. */
-function normalizeCompositionInput(input: ProductCompositionInput): Result<ProductCompositionInput> {
+function normalizeCompositionInput(input: CreateProductComposition | UpdateProductComposition): Result<CreateProductComposition> {
   const name = trimRequired(input.name, "name");
   if (!name.ok) return name;
   const macro = parseProductMacroProfile(input.macroProfile);
@@ -66,7 +66,9 @@ function normalizeCompositionInput(input: ProductCompositionInput): Result<Produ
 }
 
 /** Normalize one concrete-product input at the application boundary. */
-function normalizeConcreteProductInput(input: ConcreteProductInput): Result<ConcreteProductInput> {
+function normalizeConcreteProductInput(input: CreateConcreteProduct): Result<CreateConcreteProduct>;
+function normalizeConcreteProductInput(input: UpdateConcreteProduct): Result<UpdateConcreteProduct>;
+function normalizeConcreteProductInput(input: CreateConcreteProduct | UpdateConcreteProduct): Result<CreateConcreteProduct | UpdateConcreteProduct> {
   const content = input.content ? canonicalDecimal(input.content.amount, "content.amount") : null;
   if (content && !content.ok) return content;
   const singularName = input.portion ? trimRequired(input.portion.singularName, "portion.singularName") : null;
