@@ -1,7 +1,7 @@
 import {
   createConcreteProductSchema,
   createProductCompositionSchema,
-  macroProfileSchema,
+  macroProfileMutationSchema,
   updateConcreteProductSchema,
   updateProductCompositionSchema,
 } from "@product-repos/contracts";
@@ -76,9 +76,9 @@ export function productV2Routes(service: ProductV2Service): Hono {
   router.put(
     "/product-compositions/:compositionId/macro-profile",
     async (context) => {
-      const parsed = macroProfileSchema
-        .nullable()
-        .safeParse(await context.req.json().catch(() => undefined));
+      const parsed = macroProfileMutationSchema.safeParse(
+        await context.req.json().catch(() => undefined),
+      );
       if (!parsed.success)
         return context.json(
           { code: "VALIDATION_ERROR", message: "Request is invalid" },

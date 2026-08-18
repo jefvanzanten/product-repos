@@ -17,8 +17,26 @@ export function runBackendMigrations(
   migrationsFolder: string,
 ): void {
   prepareLocationNormalizationBackfill(sqlite);
-  migrate(database, { migrationsFolder });
+  const foreignKeysWereEnabled = sqlite.query<{ readonly foreign_keys: number }, []>("PRAGMA foreign_keys").get()?.foreign_keys === 1;
+  sqlite.exec("PRAGMA foreign_keys = OFF");
+  try {
+    migrate(database, { migrationsFolder });
+  } finally {
+    if (foreignKeysWereEnabled) sqlite.exec("PRAGMA foreign_keys = ON");
+  }
+  assertForeignKeyIntegrity(sqlite);
   finalizeLocationConstraints(sqlite);
+}
+
+/**
+ * Reject a migration result containing broken foreign-key references.
+ *
+ * @param sqlite - Migrated SQLite connection to validate.
+ * @returns Nothing.
+ */
+function assertForeignKeyIntegrity(sqlite: Database): void {
+  const violationCount = sqlite.query<{ readonly count: number }, []>("SELECT count(*) AS count FROM pragma_foreign_key_check").get()?.count ?? 0;
+  if (violationCount > 0) throw new Error(`Database migration left ${violationCount} invalid foreign-key reference(s)`);
 }
 
 /**

@@ -35,5 +35,5 @@ export function createPackageSelectionService(catalogReader: ConsumptionCatalogR
 
 /** Determine whether one concrete product is actively selectable. */
 function isActiveProduct(row: CatalogProductRecord): boolean {
-  return row.productArchivedAt === null;
+  return row.productArchivedAt === null && row.consumptionType !== null;
 }

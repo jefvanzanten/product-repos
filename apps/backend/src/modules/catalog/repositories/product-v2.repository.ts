@@ -1,4 +1,4 @@
-import type { ConcreteProductDetail, ConcreteProductPage, ConcreteProductSummary, CreateConcreteProduct, CreateProductComposition, MacroProfile, ProductCompositionDto, UpdateConcreteProduct, UpdateProductComposition } from "@product-repos/contracts";
+import type { ConcreteProductDetail, ConcreteProductPage, ConcreteProductSummary, CreateConcreteProduct, CreateProductComposition, MacroProfile, MacroProfileMutation, ProductCompositionDto, StoredMacroProfile, UpdateConcreteProduct, UpdateProductComposition } from "@product-repos/contracts";
 import { and, eq, like, or, sql } from "drizzle-orm";
 import type { BackendDatabase } from "../../../db/index.ts";
 import { brand, category, concreteProduct, packageType, productComposition, productCompositionMacroProfile, productPortion, unitContent, unitType } from "../../../db/schema.ts";
@@ -11,7 +11,7 @@ export type ProductV2Repository = {
   readonly searchCompositions: (query: string, limit: number) => ProductCompositionDto[];
   readonly createComposition: (input: CreateProductComposition) => Result<ProductCompositionDto>;
   readonly updateComposition: (compositionId: string, input: UpdateProductComposition) => Result<ProductCompositionDto>;
-  readonly updateMacroProfile: (compositionId: string, profile: MacroProfile | null) => Result<ProductCompositionDto>;
+  readonly updateMacroProfile: (compositionId: string, mutation: MacroProfileMutation) => Result<ProductCompositionDto>;
   readonly listProducts: (input: { readonly query?: string; readonly categoryId?: number; readonly brandId?: string; readonly archived?: boolean; readonly cursor?: string; readonly limit: number }) => ConcreteProductPage;
   readonly getProduct: (productId: string) => Result<ConcreteProductDetail>;
   readonly createProduct: (input: CreateConcreteProduct) => Result<ConcreteProductDetail>;
@@ -50,7 +50,7 @@ export function createProductV2Repository(database: BackendDatabase): ProductV2R
     return getComposition(id);
   }
 
-  /** Update shared composition fields and optional macro values. */
+  /** Update shared composition fields without rewriting stored macro values. */
   function updateComposition(compositionId: string, input: UpdateProductComposition): Result<ProductCompositionDto> {
     if (!findComposition(compositionId)) return err({ code: "PRODUCT_COMPOSITION_NOT_FOUND", message: "Product composition not found" });
     const references = validateCompositionReferences(input);
@@ -58,19 +58,30 @@ export function createProductV2Repository(database: BackendDatabase): ProductV2R
     if (findCompositionDuplicate(input, compositionId)) return err({ code: "PRODUCT_COMPOSITION_ALREADY_EXISTS", message: "Product composition already exists" });
     database.transaction((tx) => {
       tx.update(productComposition).set({ name: input.name.trim(), categoryId: input.categoryId, brandId: input.brandId ?? null, consumptionType: input.consumptionType, updatedAt: new Date().toISOString() }).where(eq(productComposition.id, compositionId)).run();
-      persistMacro(tx, compositionId, input.macroProfile ?? null);
+      if (input.consumptionType === null) {
+        tx.update(productCompositionMacroProfile).set({ isActive: false, updatedAt: new Date().toISOString() }).where(eq(productCompositionMacroProfile.productCompositionId, compositionId)).run();
+      }
     });
     return getComposition(compositionId);
   }
 
-  /** Replace composition macros while blocking an in-use basis change. */
-  function updateMacroProfile(compositionId: string, profile: MacroProfile | null): Result<ProductCompositionDto> {
-    if (!findComposition(compositionId)) return err({ code: "PRODUCT_COMPOSITION_NOT_FOUND", message: "Product composition not found" });
+  /** Activate validated macro values or preserve and deactivate the stored row. */
+  function updateMacroProfile(compositionId: string, mutation: MacroProfileMutation): Result<ProductCompositionDto> {
+    const composition = findComposition(compositionId);
+    if (!composition) return err({ code: "PRODUCT_COMPOSITION_NOT_FOUND", message: "Product composition not found" });
+    if (!mutation.enabled) {
+      database.update(productCompositionMacroProfile).set({ isActive: false, updatedAt: new Date().toISOString() }).where(eq(productCompositionMacroProfile.productCompositionId, compositionId)).run();
+      return getComposition(compositionId);
+    }
+    if (composition.consumptionType === null) return err({ code: "PRODUCT_MACRO_PROFILE_INVALID", message: "Nutrition requires a consumable composition" });
     const current = database.select().from(productCompositionMacroProfile).where(eq(productCompositionMacroProfile.productCompositionId, compositionId)).get();
-    if (current && profile && current.referenceBasis !== profile.referenceBasis && compositionIsUsedByDish(compositionId)) {
+    if (current && current.referenceBasis !== mutation.profile.referenceBasis && compositionIsUsedByDish(compositionId)) {
       return err({ code: "REFERENCE_BASIS_IN_USE", message: "Nutrition reference basis is used by recipe ingredients" });
     }
-    persistMacro(database, compositionId, profile);
+    const dimensions = compositionProductDimensions(compositionId);
+    const expected = mutation.profile.referenceBasis === "PER_100_G" ? "MASS" : mutation.profile.referenceBasis === "PER_100_ML" ? "VOLUME" : "COUNT";
+    if (dimensions.some((dimension) => dimension !== expected)) return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Content dimension is incompatible with nutrition basis" });
+    persistMacro(database, compositionId, mutation.profile);
     return getComposition(compositionId);
   }
 
@@ -197,18 +208,15 @@ export function createProductV2Repository(database: BackendDatabase): ProductV2R
     if ((input.content && !contentUnit) || (input.portion && !portionUnit)) return err({ code: "REFERENCE_NOT_FOUND", message: "Unit type not found" });
     if (contentUnit && portionUnit && contentUnit.dimension !== portionUnit.dimension) return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Portion and content dimensions differ" });
     const macro = database.select().from(productCompositionMacroProfile).where(eq(productCompositionMacroProfile.productCompositionId, composition.id)).get();
-    const expected = macro?.referenceBasis === "PER_100_G" ? "MASS" : macro?.referenceBasis === "PER_100_ML" ? "VOLUME" : macro?.referenceBasis === "PER_UNIT" ? "COUNT" : null;
+    const expected = macro?.isActive === true && macro.referenceBasis === "PER_100_G" ? "MASS" : macro?.isActive === true && macro.referenceBasis === "PER_100_ML" ? "VOLUME" : macro?.isActive === true && macro.referenceBasis === "PER_UNIT" ? "COUNT" : null;
     if (expected && contentUnit && contentUnit.dimension !== expected) return err({ code: "UNIT_DIMENSION_INCOMPATIBLE", message: "Content dimension is incompatible with nutrition basis" });
     return ok(true);
   }
 
-  /** Persist one optional macro profile through a transaction-compatible executor. */
-  function persistMacro(executor: Pick<BackendDatabase, "insert" | "delete">, compositionId: string, profile: MacroProfile | null): void {
-    if (!profile) {
-      executor.delete(productCompositionMacroProfile).where(eq(productCompositionMacroProfile.productCompositionId, compositionId)).run();
-      return;
-    }
-    const values = { productCompositionId: compositionId, ...profile };
+  /** Persist and activate one macro profile through a transaction-compatible executor. */
+  function persistMacro(executor: Pick<BackendDatabase, "insert">, compositionId: string, profile: MacroProfile | null): void {
+    if (!profile) return;
+    const values = { productCompositionId: compositionId, ...profile, isActive: true };
     executor.insert(productCompositionMacroProfile).values(values).onConflictDoUpdate({ target: productCompositionMacroProfile.productCompositionId, set: { ...values, updatedAt: new Date().toISOString() } }).run();
   }
 
@@ -258,6 +266,14 @@ export function createProductV2Repository(database: BackendDatabase): ProductV2R
     return database.select().from(concreteProduct).all().some((row) => row.id !== excludedId && row.barcode === normalized);
   }
 
+  /** Read every concrete product content dimension for one composition. */
+  function compositionProductDimensions(compositionId: string): ReadonlyArray<"MASS" | "VOLUME" | "COUNT"> {
+    return database.select({ dimension: unitType.dimension }).from(concreteProduct)
+      .innerJoin(unitContent, eq(concreteProduct.unitContentId, unitContent.id))
+      .innerJoin(unitType, eq(unitContent.unitTypeId, unitType.id))
+      .where(eq(concreteProduct.productCompositionId, compositionId)).all().map((row) => row.dimension);
+  }
+
   /** Return whether any retained recipe ingredient uses this composition. */
   function compositionIsUsedByDish(compositionId: string): boolean {
     const row = database.get<{ count: number }>(sql`SELECT COUNT(*) AS count FROM dish_ingredient di JOIN product cp ON cp.id = di.product_id WHERE cp.product_composition_id = ${compositionId}`);
@@ -276,9 +292,9 @@ export function createProductV2Repository(database: BackendDatabase): ProductV2R
   }
 
   /** Project an optional macro persistence row. */
-  function toMacroProfile(row: MacroRow | undefined): MacroProfile | null {
+  function toMacroProfile(row: MacroRow | undefined): StoredMacroProfile | null {
     if (!row) return null;
-    return { referenceBasis: row.referenceBasis, caloriesKcal: row.caloriesKcal, proteinG: row.proteinG, carbohydratesG: row.carbohydratesG, fatG: row.fatG, caloriesSource: row.caloriesSource };
+    return { enabled: row.isActive, referenceBasis: row.referenceBasis, caloriesKcal: row.caloriesKcal, proteinG: row.proteinG, carbohydratesG: row.carbohydratesG, fatG: row.fatG, caloriesSource: row.caloriesSource };
   }
 
   /** Query all denormalized concrete product rows for bounded catalog projection. */

@@ -2,6 +2,7 @@ import type {
   CalorieTrackerPortion,
   CalorieTrackerUnitType,
   ConsumptionLog,
+  ConsumptionLogProduct,
   Dish,
   DishIngredient,
   DishSearchResult,
@@ -105,10 +106,7 @@ export function createConsumptionLogProjector(catalogReader: ConsumptionCatalogR
         value: {
           id: row.id,
           type: "PRODUCT",
-          product: {
-            ...toProductSearchResult(packageRecord),
-            archived: packageRecord.productArchivedAt !== null,
-          },
+          product: toConsumptionLogProduct(packageRecord),
           quantity: canonicalDecimal(row.quantity),
           inputMode: row.inputMode,
           inputUnitType: inputUnit == null ? null : toUnitType(inputUnit),
@@ -308,8 +306,19 @@ export function toUnitType(row: UnitTypeRecord): CalorieTrackerUnitType {
   };
 }
 
-/** Project joined package rows into the shared strict search contract. */
+/** Project joined package rows into the strict new-selection contract. */
 export function toProductSearchResult(row: CatalogProductRecord): ProductSearchResult {
+  if (row.consumptionType === null) throw new Error("Non-consumable product reached a selection projection");
+  return { ...toProductProjection(row), consumptionType: row.consumptionType };
+}
+
+/** Project current package data for a historical log, including nullable reclassification. */
+function toConsumptionLogProduct(row: CatalogProductRecord): ConsumptionLogProduct {
+  return { ...toProductProjection(row), consumptionType: row.consumptionType, archived: row.productArchivedAt !== null };
+}
+
+/** Project package fields shared by selection and historical-log contracts. */
+function toProductProjection(row: CatalogProductRecord): Omit<ProductSearchResult, "consumptionType"> {
   return {
     productId: row.productId,
     productName: row.productName,
@@ -321,7 +330,6 @@ export function toProductSearchResult(row: CatalogProductRecord): ProductSearchR
       contentUnitSymbol: row.contentUnitSymbol,
     }),
     brand: row.brandId === null || row.brandName === null ? null : { id: row.brandId, name: row.brandName },
-    consumptionType: row.consumptionType,
     packageType: { id: row.packageTypeId, name: row.packageTypeName },
     contentAmount: canonicalDecimal(row.contentAmount),
     contentUnit: {

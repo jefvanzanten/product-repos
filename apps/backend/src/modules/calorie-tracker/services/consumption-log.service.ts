@@ -14,7 +14,7 @@ import {
   localDateForInstant,
   parsePositiveDecimal,
 } from "../domain/calorie-tracker-domain.ts";
-import type { CatalogProductRecord, ConsumptionCatalogReader } from "../../catalog/repositories/consumption-catalog.repository.ts";
+import type { ConsumptionCatalogReader } from "../../catalog/repositories/consumption-catalog.repository.ts";
 import type {
   ConsumptionLogRecord,
   ConsumptionLogRepository,
@@ -199,12 +199,15 @@ export function createConsumptionLogService(dependencies: {
   ): CalorieTrackerResult<ProductContent> {
     const packageRecord = catalogReader.findCatalogProduct(input.productId);
     if (packageRecord === undefined) return failure("PRODUCT_NOT_FOUND", "Product not found");
-    if (!isActivePackage(packageRecord)) {
-      const keepsArchivedInput = currentLog !== undefined
-        && packageRecord.productId === currentLog.productId
-        && input.inputMode === currentLog.inputMode
-        && input.inputUnitTypeId === currentLog.inputUnitTypeId;
-      if (!keepsArchivedInput) return failure("PRODUCT_ARCHIVED", "Archived product input cannot be replaced");
+    const keepsHistoricalInput = currentLog !== undefined
+      && packageRecord.productId === currentLog.productId
+      && input.inputMode === currentLog.inputMode
+      && input.inputUnitTypeId === currentLog.inputUnitTypeId;
+    if (packageRecord.consumptionType === null && !keepsHistoricalInput) {
+      return failure("PRODUCT_NOT_CONSUMABLE", "Non-consumable product input cannot be selected");
+    }
+    if (packageRecord.productArchivedAt !== null && !keepsHistoricalInput) {
+      return failure("PRODUCT_ARCHIVED", "Archived product input cannot be replaced");
     }
     const quantity = parsePositiveDecimal(input.quantity);
     if (!quantity.ok) return { ok: false, error: quantity.error };
@@ -300,12 +303,7 @@ type CreateContent =
 /** Determine whether one projected log satisfies the requested type filter. */
 function logMatchesFilter(log: ConsumptionLog, filter: ConsumptionTypeFilter): boolean {
   if (log.type === "DISH") return filter === "food";
-  return log.product.consumptionType.toLowerCase() === filter;
-}
-
-/** Determine whether one concrete product is actively selectable. */
-function isActivePackage(row: CatalogProductRecord): boolean {
-  return row.productArchivedAt === null;
+  return log.product.consumptionType !== null && log.product.consumptionType.toLowerCase() === filter;
 }
 
 /** Canonicalize only immutable create-request fields without consulting mutable catalog data. */

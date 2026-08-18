@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, max, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, max, or, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import type { BackendDatabase } from "../../../db/index.ts";
 import { brand, concreteProduct, consumptionLog, packageType, productComposition, productCompositionMacroProfile, productConsumption, productPortion, unitContent, unitType } from "../../../db/schema.ts";
@@ -11,7 +11,7 @@ export type CatalogProductRecord = {
   readonly productName: string;
   readonly brandId: string | null;
   readonly brandName: string | null;
-  readonly consumptionType: "FOOD" | "DRINK" | "SUPPLEMENT";
+  readonly consumptionType: "FOOD" | "DRINK" | "SUPPLEMENT" | null;
   readonly productArchivedAt: string | null;
   readonly packageTypeId: number;
   readonly packageTypeName: string;
@@ -74,7 +74,7 @@ export function createConsumptionCatalogRepository(db: BackendDatabase): Consump
   /** Search active and complete concrete products. */
   function searchActiveCatalogProducts(query: string, limit: number): ReadonlyArray<CatalogProductRecord> {
     const matches = or(sql<number>`instr(lower(${productComposition.name}), lower(${query})) > 0`, sql<number>`instr(lower(coalesce(${brand.name}, '')), lower(${query})) > 0`);
-    return readCatalogProducts(and(isNull(concreteProduct.archivedAt), matches), limit, true);
+    return readCatalogProducts(and(isNull(concreteProduct.archivedAt), isNotNull(productComposition.consumptionType), matches), limit, true);
   }
 
   /** Read recently consumed active concrete products. */
@@ -86,7 +86,8 @@ export function createConsumptionCatalogRepository(db: BackendDatabase): Consump
     }).from(consumptionLog)
       .innerJoin(productConsumption, eq(productConsumption.consumptionLogId, consumptionLog.id))
       .innerJoin(concreteProduct, eq(productConsumption.productId, concreteProduct.id))
-      .where(and(eq(consumptionLog.userId, userId), isNull(consumptionLog.deletedAt), isNull(concreteProduct.archivedAt)))
+      .innerJoin(productComposition, eq(concreteProduct.productCompositionId, productComposition.id))
+      .where(and(eq(consumptionLog.userId, userId), isNull(consumptionLog.deletedAt), isNull(concreteProduct.archivedAt), isNotNull(productComposition.consumptionType)))
       .groupBy(productConsumption.productId)
       .orderBy(desc(max(consumptionLog.consumedAt)), desc(max(consumptionLog.createdAt)), desc(productConsumption.productId))
       .limit(limit).all();
@@ -158,6 +159,7 @@ export function createConsumptionCatalogRepository(db: BackendDatabase): Consump
       portionContentUnitDimension: portionUnit.dimension,
       portionContentUnitConversionToBase: portionUnit.conversionToBase,
       portionsPerProduct: productPortion.portionsPerProduct,
+      macroIsActive: productCompositionMacroProfile.isActive,
       macroReferenceBasis: productCompositionMacroProfile.referenceBasis,
       macroCaloriesKcal: productCompositionMacroProfile.caloriesKcal,
       macroProteinG: productCompositionMacroProfile.proteinG,
@@ -203,7 +205,7 @@ export function createConsumptionCatalogRepository(db: BackendDatabase): Consump
       portionContentUnitDimension: row.portionContentUnitDimension,
       portionContentUnitConversionToBase: row.portionContentUnitConversionToBase,
       portionsPerProduct: row.portionsPerProduct,
-      macroProfile: row.macroReferenceBasis ? { referenceBasis: row.macroReferenceBasis, caloriesKcal: row.macroCaloriesKcal, proteinG: row.macroProteinG, carbohydratesG: row.macroCarbohydratesG, fatG: row.macroFatG } : null,
+      macroProfile: row.macroIsActive === true && row.macroReferenceBasis ? { referenceBasis: row.macroReferenceBasis, caloriesKcal: row.macroCaloriesKcal, proteinG: row.macroProteinG, carbohydratesG: row.macroCarbohydratesG, fatG: row.macroFatG } : null,
     }));
   }
 

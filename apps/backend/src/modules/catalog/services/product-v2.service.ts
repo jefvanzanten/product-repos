@@ -1,4 +1,4 @@
-import type { CreateConcreteProduct, CreateProductComposition, MacroProfile, UpdateConcreteProduct, UpdateProductComposition } from "@product-repos/contracts";
+import type { CreateConcreteProduct, CreateProductComposition, MacroProfileMutation, UpdateConcreteProduct, UpdateProductComposition } from "@product-repos/contracts";
 import { canonicalDecimal, trimRequired, type Result } from "../domain/catalog-domain.ts";
 import { parseProductMacroProfile } from "../domain/product-macro-profile.ts";
 import type { ProductV2Repository } from "../repositories/product-v2.repository.ts";
@@ -25,10 +25,13 @@ export function createProductV2Service(repository: ProductV2Repository) {
     return normalized.ok ? repository.updateComposition(compositionId, normalized.value) : normalized;
   }
 
-  /** Validate and replace one composition macro profile. */
-  function updateMacroProfile(compositionId: string, profile: MacroProfile | null) {
-    const parsed = parseProductMacroProfile(profile);
-    return parsed.ok ? repository.updateMacroProfile(compositionId, parsed.value) : parsed;
+  /** Validate and explicitly activate or deactivate one composition macro profile. */
+  function updateMacroProfile(compositionId: string, mutation: MacroProfileMutation) {
+    if (!mutation.enabled) return repository.updateMacroProfile(compositionId, mutation);
+    const parsed = parseProductMacroProfile(mutation.profile);
+    if (!parsed.ok) return parsed;
+    if (parsed.value === null) throw new Error("Enabled macro mutation parsed without a profile");
+    return repository.updateMacroProfile(compositionId, { enabled: true, profile: parsed.value });
   }
 
   /** Normalize and create one concrete product. */
@@ -57,11 +60,17 @@ export function createProductV2Service(repository: ProductV2Repository) {
 }
 
 /** Normalize one composition input at the application boundary. */
-function normalizeCompositionInput(input: CreateProductComposition | UpdateProductComposition): Result<CreateProductComposition> {
+function normalizeCompositionInput(input: CreateProductComposition): Result<CreateProductComposition>;
+function normalizeCompositionInput(input: UpdateProductComposition): Result<UpdateProductComposition>;
+function normalizeCompositionInput(input: CreateProductComposition | UpdateProductComposition): Result<CreateProductComposition | UpdateProductComposition> {
   const name = trimRequired(input.name, "name");
   if (!name.ok) return name;
+  if (!("macroProfile" in input)) return { ok: true, value: { ...input, name: name.value, brandId: input.brandId ?? null } };
   const macro = parseProductMacroProfile(input.macroProfile);
   if (!macro.ok) return macro;
+  if (input.consumptionType === null && macro.value !== null) {
+    return { ok: false, error: { code: "PRODUCT_MACRO_PROFILE_INVALID", message: "Voedingswaarden vereisen een consumptieproduct.", fields: { macroProfile: "Schakel Consumptieproduct in om voedingswaarden te activeren." } } };
+  }
   return { ok: true, value: { ...input, name: name.value, brandId: input.brandId ?? null, macroProfile: macro.value } };
 }
 

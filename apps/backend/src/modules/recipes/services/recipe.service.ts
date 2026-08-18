@@ -4,6 +4,7 @@ import type {
   RecipeDetail,
   RecipeIngredientInput,
   RecipeIngredientInputOptions,
+  RecipeErrorCode,
   RecipePage,
   RecipeProductSearchResult,
   RecipeSort,
@@ -14,11 +15,12 @@ import { ingredientsEqual, normalizeInstructions } from "../domain/recipe-domain
 import type { DishIngredientRecord, DishRecord, DishRepository } from "../repositories/dish.repository.ts";
 import { nextTimestamp, type Clock } from "../../calorie-tracker/services/calorie-tracker-service-support.ts";
 import { toProductSearchResult, toQuantityPackage, toUnitType } from "../../calorie-tracker/services/calorie-tracker-projections.ts";
+import { formatConcreteProductDisplayName } from "@product-repos/shared/product-presentation";
 import type { ConsumptionCatalogReader, UnitTypeRecord } from "../../catalog/repositories/consumption-catalog.repository.ts";
 
 /** Expected recipe API failure. */
 export type RecipeError = {
-  readonly code: "VALIDATION_ERROR" | "REFERENCE_NOT_FOUND" | "DISH_NOT_FOUND" | "DISH_ALREADY_EXISTS" | "PRODUCT_ARCHIVED" | "DISH_UPDATE_CONFLICT" | "UNAUTHENTICATED" | "AUTH_UNAVAILABLE" | "INTERNAL_ERROR";
+  readonly code: RecipeErrorCode;
   readonly message: string;
   readonly fields?: Readonly<Record<string, string>>;
 };
@@ -54,6 +56,7 @@ export function createRecipeService(dependencies: {
       const product = catalogReader.findCatalogProduct(input.productId);
       if (product === undefined) return failure("REFERENCE_NOT_FOUND", "Product not found");
       if (product.productArchivedAt !== null) return failure("PRODUCT_ARCHIVED", "Archived products must be replaced");
+      if (product.consumptionType === null) return failure("PRODUCT_NOT_CONSUMABLE", "Non-consumable products must be replaced");
       const quantity = parsePositiveDecimal(input.quantity);
       if (!quantity.ok) return failure("VALIDATION_ERROR", "Ingredient quantity is invalid");
       const inputUnit = input.inputUnitTypeId == null ? null : catalogReader.findUnitType(input.inputUnitTypeId) ?? null;
@@ -148,14 +151,15 @@ export function createRecipeService(dependencies: {
     if (stem.updatedAt !== input.expectedUpdatedAt) return conflict();
     if (input.name.trim().toLocaleLowerCase() !== stem.name.trim().toLocaleLowerCase()
       && dishRepository.existsActiveDishWithName(userId, input.name)) return duplicateName();
-    const parsed = parseIngredients(input.ingredients);
-    if (!parsed.ok) return parsed;
     const currentVersion = dishRepository.findNewestVersion(dishId);
     if (currentVersion === undefined) return internalFailure();
+    const currentIngredients = dishRepository.findIngredientsByVersionId(currentVersion.id);
     const instructions = normalizeInstructions(input.instructions);
     const contentChanged = canonicalDecimal(currentVersion.servings) !== canonicalDecimal(input.servings)
       || currentVersion.instructions !== instructions
-      || !ingredientsEqual(dishRepository.findIngredientsByVersionId(currentVersion.id), parsed.value);
+      || !ingredientsEqual(currentIngredients, input.ingredients);
+    const parsed = contentChanged ? parseIngredients(input.ingredients) : success(input.ingredients);
+    if (!parsed.ok) return parsed;
     const updatedAt = nextTimestamp(clock.now(), stem.updatedAt);
     const updatedStem = dishRepository.updateDishStem(userId, dishId, input.expectedUpdatedAt, {
       name: input.name.trim(),
@@ -216,6 +220,7 @@ export function createRecipeService(dependencies: {
   function getInputOptions(productId: string): RecipeResult<RecipeIngredientInputOptions> {
     const product = catalogReader.findCatalogProduct(productId);
     if (product === undefined || product.productArchivedAt !== null) return failure("REFERENCE_NOT_FOUND", "Product not found");
+    if (product.consumptionType === null) return failure("PRODUCT_NOT_CONSUMABLE", "Product is not consumable");
     const units = product.macroProfile === null
       ? catalogReader.findAllUnitTypes()
       : catalogReader.findCompatibleUnitTypes(dimensionForBasis(product.macroProfile.referenceBasis));
@@ -277,7 +282,7 @@ export function createRecipeService(dependencies: {
       versionCreatedAt: version.createdAt,
       ingredients: rows.map((row) => ({
         productId: row.productId,
-        displayName: toProductSearchResult(products.get(row.productId)!).displayName,
+        displayName: productDisplayName(products.get(row.productId)!),
         quantity: canonicalDecimal(row.quantity),
         inputMode: row.inputMode,
         inputUnitType: row.inputUnitTypeId === null ? null : toUnitType(units.get(row.inputUnitTypeId)!),
@@ -292,6 +297,17 @@ export function createRecipeService(dependencies: {
   }
 
   return { listPublic, listForUser, getRecipe, createRecipe, updateRecipe, archiveRecipe, restoreRecipe, searchProducts, getInputOptions };
+}
+
+/** Format a current catalog product without requiring current consumability. */
+function productDisplayName(product: NonNullable<ReturnType<ConsumptionCatalogReader["findCatalogProduct"]>>): string {
+  return formatConcreteProductDisplayName({
+    brandName: product.brandName,
+    compositionName: product.productName,
+    packageTypeName: product.packageTypeName,
+    contentAmount: canonicalDecimal(product.contentAmount),
+    contentUnitSymbol: product.contentUnitSymbol,
+  });
 }
 
 /** Convert validated ingredient values into immutable persistence rows. */

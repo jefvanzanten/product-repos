@@ -60,11 +60,11 @@ export const productComposition = sqliteTable("product_composition", {
   name: text("name").notNull(),
   categoryId: integer("category_id").notNull().references(() => category.id),
   brandId: text("brand_id").references(() => brand.id),
-  consumptionType: text("consumption_type", { enum: ["FOOD", "DRINK", "SUPPLEMENT"] }).notNull(),
+  consumptionType: text("consumption_type", { enum: ["FOOD", "DRINK", "SUPPLEMENT"] }),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [
-  check("product_composition_consumption_type_valid", sql`${table.consumptionType} IN ('FOOD', 'DRINK', 'SUPPLEMENT')`),
+  check("product_composition_consumption_type_valid", sql`${table.consumptionType} IS NULL OR ${table.consumptionType} IN ('FOOD', 'DRINK', 'SUPPLEMENT')`),
   uniqueIndex("product_composition_brand_name_unique").on(table.brandId, table.categoryId, sql`lower(trim(${table.name}))`).where(sql`${table.brandId} IS NOT NULL`),
   uniqueIndex("product_composition_no_brand_name_unique").on(table.categoryId, sql`lower(trim(${table.name}))`).where(sql`${table.brandId} IS NULL`),
 ]);
@@ -73,6 +73,7 @@ export const productComposition = sqliteTable("product_composition", {
 export const productCompositionMacroProfile = sqliteTable("product_macro_profile", {
   productCompositionId: text("product_composition_id").primaryKey().references(() => productComposition.id, { onDelete: "cascade" }),
   referenceBasis: text("reference_basis", { enum: ["PER_100_G", "PER_100_ML", "PER_UNIT"] }).notNull(),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
   caloriesKcal: text("calories_kcal"),
   proteinG: text("protein_g"),
   carbohydratesG: text("carbohydrates_g"),
@@ -81,6 +82,7 @@ export const productCompositionMacroProfile = sqliteTable("product_macro_profile
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [
+  check("product_macro_profile_is_active_valid", sql`${table.isActive} IN (0, 1)`),
   check("product_macro_profile_reference_basis_valid", sql`${table.referenceBasis} IN ('PER_100_G', 'PER_100_ML', 'PER_UNIT')`),
   check("product_macro_profile_calories_non_negative", sql`${table.caloriesKcal} IS NULL OR CAST(${table.caloriesKcal} AS REAL) >= 0`),
   check("product_macro_profile_protein_non_negative", sql`${table.proteinG} IS NULL OR CAST(${table.proteinG} AS REAL) >= 0`),
