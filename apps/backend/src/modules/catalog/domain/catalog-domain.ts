@@ -17,23 +17,22 @@ export type Result<T> = GenericResult<T, ApiError>;
 export { err, ok };
 
 /** Parse required text after trimming it. */
-export function trimRequired(value: unknown, field: string): Result<string> {
-  if (typeof value !== "string") return err({ code: "VALIDATION_ERROR", message: "Request is invalid", fields: { [field]: "Required text is invalid" } });
+export function trimRequired(value: string, field: string): Result<string> {
   const trimmed = value.trim();
   if (trimmed.length === 0) return err({ code: "VALIDATION_ERROR", message: "Request is invalid", fields: { [field]: "Required text is invalid" } });
   return ok(trimmed);
 }
 
 /** Parse a positive canonical decimal string for one named request field. */
-export function canonicalDecimal(value: unknown, field = "amount"): Result<string> {
-  if (typeof value !== "string" || !/^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(value)) return err({ code: "VALIDATION_ERROR", message: "Request is invalid", fields: { [field]: "Amount must be a positive decimal string" } });
+export function canonicalDecimal(value: string, field = "amount"): Result<string> {
+  if (!/^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(value)) return err({ code: "VALIDATION_ERROR", message: "Request is invalid", fields: { [field]: "Amount must be a positive decimal string" } });
   const number = Number(value);
   if (!Number.isFinite(number) || number <= 0) return err({ code: "VALIDATION_ERROR", message: "Request is invalid", fields: { [field]: "Amount must be positive" } });
   return ok(String(number));
 }
 
 /** Parse a positive integer field. */
-export function positiveInt(value: unknown, field: string): Result<number> {
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 1) return err({ code: "VALIDATION_ERROR", message: "Request is invalid", fields: { [field]: "Must be an integer >= 1" } });
+export function positiveInt(value: number, field: string): Result<number> {
+  if (!Number.isInteger(value) || value < 1) return err({ code: "VALIDATION_ERROR", message: "Request is invalid", fields: { [field]: "Must be an integer >= 1" } });
   return ok(value);
 }

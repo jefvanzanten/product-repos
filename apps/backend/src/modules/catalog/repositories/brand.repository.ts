@@ -5,12 +5,17 @@ import { brand } from "../../../db/schema.ts";
 /** Raw brand persistence row. */
 export type BrandRow = typeof brand.$inferSelect;
 
+/** Outcome of finding or creating a normalized brand. */
+type FindOrCreateBrandResult =
+  | { readonly brand: BrandRow; readonly created: false }
+  | { readonly brand: BrandRow; readonly created: true };
+
 /** Brand persistence operations used by current catalog use cases. */
 export type BrandRepository = {
   readonly findAllBrands: () => BrandRow[];
   readonly searchBrands: (query: string) => BrandRow[];
   readonly findBrandById: (id: string) => BrandRow | undefined;
-  readonly findOrCreateBrand: (name: string) => { readonly brand: BrandRow; readonly created: boolean };
+  readonly findOrCreateBrand: (name: string) => FindOrCreateBrandResult;
 };
 
 /** Create brand persistence operations for one injected database. */
@@ -38,7 +43,7 @@ export function createBrandRepository(database: BackendDatabase): BrandRepositor
   }
 
   /** Reuse a normalized brand or create it. */
-  function findOrCreateBrand(name: string): { readonly brand: BrandRow; readonly created: boolean } {
+  function findOrCreateBrand(name: string): FindOrCreateBrandResult {
     const existing = findBrandByNormalizedName(name);
     if (existing) return { brand: existing, created: false };
     return { brand: database.insert(brand).values({ name }).returning().get(), created: true };

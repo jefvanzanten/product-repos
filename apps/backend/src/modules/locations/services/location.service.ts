@@ -90,7 +90,7 @@ export function createLocationService(store: LocationRepository, now: () => stri
         const current = rows.find((row) => row.id === id);
         if (current === undefined) return err("LOCATION_NOT_FOUND");
         const moves = input.parentId !== undefined;
-        const targetParentId = moves ? input.parentId! : current.parentId;
+        const targetParentId = input.parentId !== undefined ? input.parentId : current.parentId;
         if (moves) {
           if (isEffectivelyArchived(id, rows)) return err("LOCATION_ARCHIVED");
           if (targetParentId === current.parentId || targetParentId === id || isDescendant(targetParentId, id, rows)) {
@@ -105,8 +105,9 @@ export function createLocationService(store: LocationRepository, now: () => stri
         const targetNormalizedName = normalized?.ok === true ? normalized.value.normalizedName : current.normalizedName;
         if (hasSiblingName(rows, targetParentId, targetNormalizedName, id)) return err("LOCATION_ALREADY_EXISTS");
         const updated = transaction.update(id, {
-          ...(moves ? { parentId: targetParentId } : {}),
-          ...(normalized?.ok === true ? { name: normalized.value.name, normalizedName: normalized.value.normalizedName } : {}),
+          parentId: targetParentId,
+          name: normalized?.ok === true ? normalized.value.name : current.name,
+          normalizedName: normalized?.ok === true ? normalized.value.normalizedName : current.normalizedName,
           updatedAt: now(),
         });
         const updatedRows = rows.map((row) => row.id === id ? updated : row);

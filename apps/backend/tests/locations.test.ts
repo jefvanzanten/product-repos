@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { locationTreeNodeSchema } from "@product-repos/contracts/locations";
+import { locationErrorResponseSchema, locationTreeNodeSchema } from "@product-repos/contracts/locations";
 import { app, requestAsAdmin, requestAsUser } from "./test-app.ts";
 
 /**
@@ -10,7 +10,7 @@ import { app, requestAsAdmin, requestAsUser } from "./test-app.ts";
  * @param body - Optional request object.
  * @returns Backend response.
  */
-function adminJson(path: string, method: "POST" | "PATCH", body?: unknown): Promise<Response> {
+function adminJson<Body>(path: string, method: "POST" | "PATCH", body?: Body): Promise<Response> {
   return requestAsAdmin(path, {
     method,
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
@@ -35,7 +35,7 @@ describe("Location route integration", () => {
   test("enforces active-read and administrator boundaries", async () => {
     const publicRead = await app.request("/locations");
     expect(publicRead.status).toBe(401);
-    expect((await publicRead.json() as { code: string }).code).toBe("UNAUTHENTICATED");
+    expect(locationErrorResponseSchema.parse(await publicRead.json()).code).toBe("UNAUTHENTICATED");
 
     const userRead = await requestAsUser("/locations");
     expect(userRead.status).toBe(200);
@@ -65,7 +65,7 @@ describe("Location route integration", () => {
 
     const duplicate = await adminJson("/locations", "POST", { name: "  LADE   1 ", parentId: kitchen.id });
     expect(duplicate.status).toBe(409);
-    expect((await duplicate.json() as { code: string }).code).toBe("LOCATION_ALREADY_EXISTS");
+    expect(locationErrorResponseSchema.parse(await duplicate.json()).code).toBe("LOCATION_ALREADY_EXISTS");
   });
 
   test("moves, archives, projects inherited status, and restores without changing child flags", async () => {
@@ -93,7 +93,7 @@ describe("Location route integration", () => {
 
     const blockedRestore = await adminJson(`/locations/${ownArchivedChild.id}/restore`, "POST");
     expect(blockedRestore.status).toBe(409);
-    expect((await blockedRestore.json() as { code: string }).code).toBe("LOCATION_ARCHIVED_BY_ANCESTOR");
+    expect(locationErrorResponseSchema.parse(await blockedRestore.json()).code).toBe("LOCATION_ARCHIVED_BY_ANCESTOR");
 
     expect((await adminJson(`/locations/${otherRoot.id}/restore`, "POST")).status).toBe(200);
     const restoredActive = locationTreeNodeSchema.array().parse(await (await requestAsAdmin("/locations")).json());

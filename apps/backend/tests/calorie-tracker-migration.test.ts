@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Database } from "bun:sqlite";
+import { z } from "zod/v4";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -13,12 +14,12 @@ function applyMigration(database: Database, migrationName: string): void {
   database.exec(sql.replaceAll("--> statement-breakpoint", ""));
 }
 
+const countRowSchema = z.object({ count: z.number() });
+const tableColumnSchema = z.object({ name: z.string() });
+
 /** Read a numeric SQLite count result without weakening the test boundary type. */
-function readCount(row: unknown): number {
-  if (typeof row !== "object" || row === null || !("count" in row)) throw new Error("SQLite count row is missing");
-  const count = Reflect.get(row, "count");
-  if (typeof count !== "number") throw new Error("SQLite count is not numeric");
-  return count;
+function readCount(row: Parameters<typeof countRowSchema.parse>[0]): number {
+  return countRowSchema.parse(row).count;
 }
 
 /** Exercise the production 0005-to-0007 migrations over representative legacy package rows. */
@@ -165,8 +166,8 @@ function verifyDishSplitMigration(): void {
     applyMigration(database, "0014_product_model_v2_cleanup");
     expect(readCount(database.query("SELECT count(*) AS count FROM product").get())).toBe(1);
     expect(database.query("SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('product_package', 'legacy_product_package_map', 'inventory_item', 'concrete_product')").all()).toEqual([]);
-    expect(database.query("PRAGMA table_info(product_consumption)").all().some((column) => (column as { name?: string }).name === "product_package_id")).toBe(false);
-    expect(database.query("PRAGMA table_info(package_type)").all().some((column) => (column as { name?: string }).name === "name")).toBe(false);
+    expect(database.query("PRAGMA table_info(product_consumption)").all().map((column) => tableColumnSchema.parse(column)).some((column) => column.name === "product_package_id")).toBe(false);
+    expect(database.query("PRAGMA table_info(package_type)").all().map((column) => tableColumnSchema.parse(column)).some((column) => column.name === "name")).toBe(false);
     expect(database.query("PRAGMA foreign_key_check").all()).toEqual([]);
   } finally {
     database.close();

@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import type { RecipeDetail, RecipePage } from "@product-repos/contracts/recipes";
+import { recipeDetailSchema, recipePageSchema, recipeProductSearchResultSchema, type RecipeDetail } from "@product-repos/contracts/recipes";
+import { z } from "zod/v4";
+
+const errorCodeSchema = z.object({ code: z.string() });
 import { app, createTestProduct, requestAsOtherUser, requestAsUser, testCatalog } from "./test-app.ts";
 
 const jsonHeaders = { "Content-Type": "application/json" };
@@ -12,14 +15,14 @@ function createBody(productId: string, name: string, visibility: "PRIVATE" | "PU
     servings: "2",
     instructions: "Rustig mengen.",
     ingredients: [{ productId, quantity: "1", inputMode: "FULL_PRODUCT", inputUnitTypeId: null }],
-  } as const;
+  };
 }
 
 /** Create one authenticated recipe and return its strict response projection. */
 async function createRecipe(productId: string, name: string, visibility: "PRIVATE" | "PUBLIC" = "PRIVATE"): Promise<RecipeDetail> {
   const response = await requestAsUser("/recipes", { method: "POST", headers: jsonHeaders, body: JSON.stringify(createBody(productId, name, visibility)) });
   expect(response.status).toBe(201);
-  return response.json() as Promise<RecipeDetail>;
+  return recipeDetailSchema.parse(await response.json());
 }
 
 describe("recipe endpoints", () => {
@@ -33,13 +36,13 @@ describe("recipe endpoints", () => {
 
     const ownerList = await requestAsUser(`/recipes/users/${privateRecipe.userId}`);
     expect(ownerList.status).toBe(200);
-    expect((await ownerList.json() as RecipePage).items.some((item) => item.id === privateRecipe.id)).toBe(true);
+    expect(recipePageSchema.parse(await ownerList.json()).items.some((item) => item.id === privateRecipe.id)).toBe(true);
 
     const publicRecipe = await createRecipe(product.productId, `Publiek recept ${crypto.randomUUID()}`, "PUBLIC");
     const publicList = await app.request(`/recipes?query=${encodeURIComponent(publicRecipe.name)}`);
     expect(publicList.status).toBe(200);
     expect(publicList.headers.get("cache-control")).toContain("public");
-    expect((await publicList.json() as RecipePage).items.map((item) => item.id)).toEqual([publicRecipe.id]);
+    expect(recipePageSchema.parse(await publicList.json()).items.map((item) => item.id)).toEqual([publicRecipe.id]);
   });
 
   test("content versions are immutable while name-only updates retain the version", async () => {
@@ -51,7 +54,7 @@ describe("recipe endpoints", () => {
       body: JSON.stringify({ ...createBody(product.productId, `${created.name} gewijzigd`), expectedUpdatedAt: created.updatedAt }),
     });
     expect(renamedResponse.status).toBe(200);
-    const renamed = await renamedResponse.json() as RecipeDetail;
+    const renamed = recipeDetailSchema.parse(await renamedResponse.json());
     expect(renamed.versionId).toBe(created.versionId);
 
     const contentResponse = await requestAsUser(`/recipes/${created.id}`, {
@@ -60,7 +63,7 @@ describe("recipe endpoints", () => {
       body: JSON.stringify({ ...createBody(product.productId, renamed.name), servings: "3", expectedUpdatedAt: renamed.updatedAt }),
     });
     expect(contentResponse.status).toBe(200);
-    const changed = await contentResponse.json() as RecipeDetail;
+    const changed = recipeDetailSchema.parse(await contentResponse.json());
     expect(changed.versionId).not.toBe(created.versionId);
     expect(changed.servings).toBe("3");
 
@@ -70,7 +73,7 @@ describe("recipe endpoints", () => {
       body: JSON.stringify({ ...createBody(product.productId, changed.name), expectedUpdatedAt: renamed.updatedAt }),
     });
     expect(stale.status).toBe(409);
-    expect((await stale.json() as { readonly code: string }).code).toBe("DISH_UPDATE_CONFLICT");
+    expect(errorCodeSchema.parse(await stale.json()).code).toBe("DISH_UPDATE_CONFLICT");
   });
 
   test("archive and restore preserve visibility and owner authorization", async () => {
@@ -86,7 +89,7 @@ describe("recipe endpoints", () => {
 
     const restored = await requestAsUser(`/recipes/${recipe.id}/restore`, { method: "POST" });
     expect(restored.status).toBe(200);
-    expect((await restored.json() as RecipeDetail).visibility).toBe("PUBLIC");
+    expect(recipeDetailSchema.parse(await restored.json()).visibility).toBe("PUBLIC");
     expect((await app.request(`/recipes/users/${recipe.userId}/${recipe.id}`)).status).toBe(200);
   });
 
@@ -98,6 +101,6 @@ describe("recipe endpoints", () => {
 
     const search = await requestAsUser("/recipes/products/search?query=Recept%20product%20auth");
     expect(search.status).toBe(200);
-    expect((await search.json() as ReadonlyArray<{ readonly productId: string }>).some((item) => item.productId === product.productId)).toBe(true);
+    expect(recipeProductSearchResultSchema.array().parse(await search.json()).some((item) => item.productId === product.productId)).toBe(true);
   });
 });

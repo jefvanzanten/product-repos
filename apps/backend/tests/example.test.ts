@@ -1,11 +1,12 @@
 import { describe, it, expect } from "bun:test";
+import { z } from "zod/v4";
 import { app } from "./test-app";
 
 describe("API Health Checks", () => {
   it("should return OK on root endpoint", async () => {
     const res = await app.request("/");
     expect(res.status).toBe(200);
-    const json = await res.json() as { message: string; version: string };
+    const json = z.object({ message: z.string(), version: z.string() }).parse(await res.json());
     expect(json.message).toBe("Backend API is running");
     expect(json.version).toBeDefined();
   });
@@ -13,14 +14,14 @@ describe("API Health Checks", () => {
   it("should return OK on /health endpoint", async () => {
     const res = await app.request("/health");
     expect(res.status).toBe(200);
-    const json = await res.json() as { status: string };
+    const json = z.object({ status: z.string() }).parse(await res.json());
     expect(json.status).toBe("ok");
   });
 
   it("should return OK on /health/db endpoint", async () => {
     const res = await app.request("/health/db");
     expect(res.status).toBe(200);
-    const json = await res.json() as { status: string; database: string };
+    const json = z.object({ status: z.string(), database: z.string() }).parse(await res.json());
     expect(json.status).toBe("ok");
     expect(json.database).toBe("connected");
   });
@@ -28,7 +29,7 @@ describe("API Health Checks", () => {
   it("should return 404 for non-existent routes", async () => {
     const res = await app.request("/this-does-not-exist");
     expect(res.status).toBe(404);
-    const json = await res.json() as { error: { message: string } };
+    const json = z.object({ error: z.object({ message: z.string() }) }).parse(await res.json());
     expect(json.error.message).toBe("Route not found");
   });
 });

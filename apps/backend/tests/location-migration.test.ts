@@ -6,10 +6,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runBackendMigrations } from "../src/db/run-migrations.ts";
+import { z } from "zod/v4";
 
 const fullMigrationsFolder = fileURLToPath(new URL("../drizzle/migrations", import.meta.url));
 
-type Journal = { readonly version: string; readonly dialect: string; readonly entries: ReadonlyArray<{ readonly idx: number }> };
+const journalSchema = z.object({
+  version: z.string(),
+  dialect: z.string(),
+  entries: z.array(z.object({ idx: z.number(), tag: z.string() }).passthrough()),
+}).passthrough();
 
 /**
  * Build an isolated migration folder ending immediately before migration 0010.
@@ -25,7 +30,7 @@ function createPreLocationMigrations(root: string): string {
     const source = readMigrationFile(prefix);
     cpSync(join(fullMigrationsFolder, source), join(folder, source));
   }
-  const journal = JSON.parse(readFileSync(join(fullMigrationsFolder, "meta", "_journal.json"), "utf8")) as Journal;
+  const journal = journalSchema.parse(JSON.parse(readFileSync(join(fullMigrationsFolder, "meta", "_journal.json"), "utf8")));
   writeFileSync(join(folder, "meta", "_journal.json"), JSON.stringify({ ...journal, entries: journal.entries.filter((entry) => entry.idx <= 9) }));
   return folder;
 }
@@ -37,7 +42,7 @@ function createPreLocationMigrations(root: string): string {
  * @returns Matching SQL filename.
  */
 function readMigrationFile(prefix: string): string {
-  const journal = JSON.parse(readFileSync(join(fullMigrationsFolder, "meta", "_journal.json"), "utf8")) as { readonly entries: ReadonlyArray<{ readonly tag: string }> };
+  const journal = journalSchema.parse(JSON.parse(readFileSync(join(fullMigrationsFolder, "meta", "_journal.json"), "utf8")));
   const tag = journal.entries.find((entry) => entry.tag.startsWith(prefix))?.tag;
   if (tag === undefined) throw new Error(`Migration ${prefix} was not found`);
   return `${tag}.sql`;

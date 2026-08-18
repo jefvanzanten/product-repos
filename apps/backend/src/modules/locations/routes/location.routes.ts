@@ -1,11 +1,27 @@
-import { createLocationRequestSchema, locationErrorResponseSchema, locationTreeNodeSchema, updateLocationRequestSchema, type LocationErrorCode } from "@product-repos/contracts/locations";
+import {
+  createLocationRequestSchema,
+  locationErrorResponseSchema,
+  locationTreeNodeSchema,
+  updateLocationRequestSchema,
+  type LocationErrorCode,
+} from "@product-repos/contracts/locations";
 import { Hono, type Context, type Next } from "hono";
 import { z } from "zod/v4";
 import { hasAdminRole } from "../../auth/domain/role.ts";
-import { reportAuthenticationStoreUnavailable, type SessionResolver } from "../../auth/services/session-resolution.service.ts";
-import type { LocationService, LocationServiceError } from "../services/location.service.ts";
+import {
+  reportAuthenticationStoreUnavailable,
+  type SessionResolver,
+} from "../../auth/services/session-resolution.service.ts";
+import type {
+  LocationService,
+  LocationServiceError,
+} from "../services/location.service.ts";
 
-const locationIdParameterSchema = z.string().regex(/^[1-9]\d*$/).transform(Number).pipe(z.number().int().positive());
+const locationIdParameterSchema = z
+  .string()
+  .regex(/^[1-9]\d*$/)
+  .transform(Number)
+  .pipe(z.number().int().positive());
 
 type LocationVariables = { readonly locationIsAdmin: boolean };
 export type LocationEnvironment = { Variables: LocationVariables };
@@ -21,18 +37,28 @@ export function locationRoutes(dependencies: {
   readonly sessionResolver: SessionResolver;
 }): Hono<LocationEnvironment> {
   const router = new Hono<LocationEnvironment>();
-  router.use("/locations", (context, next) => requireLocationAccess(dependencies.sessionResolver, context, next));
-  router.use("/locations/*", (context, next) => requireLocationAccess(dependencies.sessionResolver, context, next));
+  router.use("/locations", (context, next) =>
+    requireLocationAccess(dependencies.sessionResolver, context, next),
+  );
+  router.use("/locations/*", (context, next) =>
+    requireLocationAccess(dependencies.sessionResolver, context, next),
+  );
 
   router.get("/locations", (context) => {
     const url = new URL(context.req.url);
     const keys = [...url.searchParams.keys()];
-    if (keys.some((key) => key !== "status") || url.searchParams.getAll("status").length > 1) {
+    if (
+      keys.some((key) => key !== "status") ||
+      url.searchParams.getAll("status").length > 1
+    ) {
       return errorResponse(context, "VALIDATION_ERROR");
     }
-    if (!url.searchParams.has("status")) return context.json(dependencies.locations.listActiveLocations());
-    if (url.searchParams.get("status") !== "archived") return errorResponse(context, "VALIDATION_ERROR");
-    if (!context.get("locationIsAdmin")) return errorResponse(context, "ADMIN_ROLE_REQUIRED");
+    if (!url.searchParams.has("status"))
+      return context.json(dependencies.locations.listActiveLocations());
+    if (url.searchParams.get("status") !== "archived")
+      return errorResponse(context, "VALIDATION_ERROR");
+    if (!context.get("locationIsAdmin"))
+      return errorResponse(context, "ADMIN_ROLE_REQUIRED");
     return context.json(dependencies.locations.listArchivedLocations());
   });
 
@@ -56,7 +82,8 @@ export function locationRoutes(dependencies: {
 
   router.post("/locations/:locationId/archive", async (context) => {
     const id = parseLocationId(context.req.param("locationId"));
-    if (id === null || !(await hasEmptyBody(context))) return errorResponse(context, "VALIDATION_ERROR");
+    if (id === null || !(await hasEmptyBody(context)))
+      return errorResponse(context, "VALIDATION_ERROR");
     const result = dependencies.locations.archiveLocation(id);
     if (!result.ok) return serviceErrorResponse(context, result.error);
     return context.json(locationTreeNodeSchema.parse(result.value));
@@ -64,7 +91,8 @@ export function locationRoutes(dependencies: {
 
   router.post("/locations/:locationId/restore", async (context) => {
     const id = parseLocationId(context.req.param("locationId"));
-    if (id === null || !(await hasEmptyBody(context))) return errorResponse(context, "VALIDATION_ERROR");
+    if (id === null || !(await hasEmptyBody(context)))
+      return errorResponse(context, "VALIDATION_ERROR");
     const result = dependencies.locations.restoreLocation(id);
     if (!result.ok) return serviceErrorResponse(context, result.error);
     return context.json(locationTreeNodeSchema.parse(result.value));
@@ -88,17 +116,33 @@ async function requireLocationAccess(
 ): Promise<Response | void> {
   const session = await sessionResolver.resolveSession(context.req.raw.headers);
   if (session.tag === "Unavailable") {
-    const correlationId = reportAuthenticationStoreUnavailable(session.error, "locations");
-    return context.json({ code: "AUTH_UNAVAILABLE", message: "Authentication is temporarily unavailable", fields: { correlationId } }, 503);
+    const correlationId = reportAuthenticationStoreUnavailable(
+      session.error,
+      "locations",
+    );
+    return context.json(
+      {
+        code: "AUTH_UNAVAILABLE",
+        message: "Authentication is temporarily unavailable",
+        fields: { correlationId },
+      },
+      503,
+    );
   }
   if (session.tag === "Unauthenticated") {
-    return context.json({ code: "UNAUTHENTICATED", message: "Authentication is required" }, 401);
+    return context.json(
+      { code: "UNAUTHENTICATED", message: "Authentication is required" },
+      401,
+    );
   }
   const isAdmin = hasAdminRole(session.principal.role);
   context.set("locationIsAdmin", isAdmin);
   const url = new URL(context.req.url);
-  const requiresAdmin = context.req.method !== "GET" || url.searchParams.get("status") === "archived";
-  if (requiresAdmin && !isAdmin) return errorResponse(context, "ADMIN_ROLE_REQUIRED");
+  const requiresAdmin =
+    context.req.method !== "GET" ||
+    url.searchParams.get("status") === "archived";
+  if (requiresAdmin && !isAdmin)
+    return errorResponse(context, "ADMIN_ROLE_REQUIRED");
   await next();
 }
 
@@ -120,7 +164,10 @@ function parseLocationId(value: string): number | null {
  * @param schema - Contract schema owning the boundary parse.
  * @returns Parsed data or a validation marker.
  */
-async function parseJsonBody<T>(context: Context<LocationEnvironment>, schema: z.ZodType<T>): Promise<{ readonly ok: true; readonly value: T } | { readonly ok: false }> {
+async function parseJsonBody<T>(
+  context: Context<LocationEnvironment>,
+  schema: z.ZodType<T>,
+): Promise<{ readonly ok: true; readonly value: T } | { readonly ok: false }> {
   try {
     const parsed = schema.safeParse(await context.req.json());
     return parsed.success ? { ok: true, value: parsed.data } : { ok: false };
@@ -135,7 +182,9 @@ async function parseJsonBody<T>(context: Context<LocationEnvironment>, schema: z
  * @param context - Current request context.
  * @returns Whether the body is empty.
  */
-async function hasEmptyBody(context: Context<LocationEnvironment>): Promise<boolean> {
+async function hasEmptyBody(
+  context: Context<LocationEnvironment>,
+): Promise<boolean> {
   return (await context.req.text()).length === 0;
 }
 
@@ -146,7 +195,10 @@ async function hasEmptyBody(context: Context<LocationEnvironment>): Promise<bool
  * @param error - Typed service error.
  * @returns Standard Location error response.
  */
-function serviceErrorResponse(context: Context<LocationEnvironment>, error: LocationServiceError): Response {
+function serviceErrorResponse(
+  context: Context<LocationEnvironment>,
+  error: LocationServiceError,
+): Response {
   return errorResponse(context, error);
 }
 
@@ -157,22 +209,58 @@ function serviceErrorResponse(context: Context<LocationEnvironment>, error: Loca
  * @param code - Stable Location API error code.
  * @returns Strict validated JSON response.
  */
-function errorResponse(context: Context<LocationEnvironment>, code: LocationErrorCode): Response {
+function errorResponse(
+  context: Context<LocationEnvironment>,
+  code: LocationErrorCode,
+): Response {
   const details = locationErrorDetails[code];
-  return context.json(locationErrorResponseSchema.parse({ code, message: details.message }), details.status as 400);
+  return context.json(
+    locationErrorResponseSchema.parse({ code, message: details.message }),
+    details.status,
+  );
 }
 
-const locationErrorDetails: Readonly<Record<LocationErrorCode, { readonly status: number; readonly message: string }>> = {
+const locationErrorDetails = {
   VALIDATION_ERROR: { status: 400, message: "Request is invalid" },
-  ADMIN_ROLE_REQUIRED: { status: 403, message: "Administrator access is required" },
+  ADMIN_ROLE_REQUIRED: {
+    status: 403,
+    message: "Administrator access is required",
+  },
   LOCATION_NOT_FOUND: { status: 404, message: "Location was not found" },
-  PARENT_LOCATION_NOT_FOUND: { status: 404, message: "Parent location was not found" },
-  LOCATION_ALREADY_EXISTS: { status: 409, message: "A location with this name already exists at this level" },
-  LOCATION_ARCHIVED: { status: 409, message: "Archived locations cannot be moved" },
-  PARENT_LOCATION_ARCHIVED: { status: 409, message: "Parent location is archived" },
-  LOCATION_CYCLE: { status: 409, message: "Location move would create an invalid hierarchy" },
-  LOCATION_ARCHIVED_BY_ANCESTOR: { status: 409, message: "Location is archived by an ancestor" },
+  PARENT_LOCATION_NOT_FOUND: {
+    status: 404,
+    message: "Parent location was not found",
+  },
+  LOCATION_ALREADY_EXISTS: {
+    status: 409,
+    message: "A location with this name already exists at this level",
+  },
+  LOCATION_ARCHIVED: {
+    status: 409,
+    message: "Archived locations cannot be moved",
+  },
+  PARENT_LOCATION_ARCHIVED: {
+    status: 409,
+    message: "Parent location is archived",
+  },
+  LOCATION_CYCLE: {
+    status: 409,
+    message: "Location move would create an invalid hierarchy",
+  },
+  LOCATION_ARCHIVED_BY_ANCESTOR: {
+    status: 409,
+    message: "Location is archived by an ancestor",
+  },
   UNAUTHENTICATED: { status: 401, message: "Authentication is required" },
-  AUTH_UNAVAILABLE: { status: 503, message: "Authentication is temporarily unavailable" },
+  AUTH_UNAVAILABLE: {
+    status: 503,
+    message: "Authentication is temporarily unavailable",
+  },
   INTERNAL_ERROR: { status: 500, message: "Internal server error" },
-};
+} satisfies Record<
+  LocationErrorCode,
+  {
+    readonly status: 400 | 401 | 403 | 404 | 409 | 500 | 503;
+    readonly message: string;
+  }
+>;

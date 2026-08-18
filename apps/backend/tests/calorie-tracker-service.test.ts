@@ -21,13 +21,16 @@ const missingReferenceLog: ConsumptionLogRecord = {
   deletedAt: null,
 };
 
-/** Create a minimal persistence fake with one log whose package reference is missing. */
-function createBrokenProjectionStore(): {
+/** Minimal persistence dependencies for projection-failure tests. */
+type BrokenProjectionStore = {
   readonly catalogReader: ConsumptionCatalogReader;
   readonly logRepository: ConsumptionLogRepository;
   readonly dishRepository: DishRepository;
   readonly goalRepository: NutritionGoalRepository;
-} {
+};
+
+/** Create a minimal persistence fake with one log whose package reference is missing. */
+function createBrokenProjectionStore(): BrokenProjectionStore {
   const catalogReader: ConsumptionCatalogReader = {
     searchActiveCatalogProducts: () => [],
     findRecentActiveCatalogProducts: () => [],

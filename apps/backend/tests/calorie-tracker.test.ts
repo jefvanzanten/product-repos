@@ -11,7 +11,7 @@ import {
 import { app, createTestProduct, executeTestSql, requestAsOtherUser, requestAsUser, testCatalog } from "./test-app.ts";
 
 /** Send JSON through the authenticated regular-user HTTP boundary. */
-function requestJson(path: string, method: "POST" | "PATCH" | "PUT", body: unknown): Promise<Response> {
+function requestJson<Body>(path: string, method: "POST" | "PATCH" | "PUT", body: Body): Promise<Response> {
   return requestAsUser(path, {
     method,
     headers: { "Content-Type": "application/json", "X-Browser-Timezone": "UTC" },

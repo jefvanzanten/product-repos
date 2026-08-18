@@ -32,6 +32,7 @@ describe("product v2 service", () => {
     let received: ProductCompositionInput | undefined;
     const repository = createRepositoryFake((input) => {
       received = input;
+      // SAFETY: this focused fake verifies pre-persistence normalization; the returned row is never projected.
       return { ok: true, value: { id: "composition-1" } as never };
     });
 

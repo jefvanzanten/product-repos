@@ -5,7 +5,7 @@ import { dish, dishIngredient, dishVersion, user } from "../src/db/schema.ts";
 import { createTestProduct, requestAsOtherUser, requestAsUser, testCatalog, testDatabase } from "./test-app.ts";
 
 /** Send an authenticated JSON request as the primary Calorie Tracker user. */
-function requestJson(path: string, method: "POST" | "PUT", body: unknown): Promise<Response> {
+function requestJson<Body>(path: string, method: "POST" | "PUT", body: Body): Promise<Response> {
   return requestAsUser(path, {
     method,
     headers: { "Content-Type": "application/json", "X-Browser-Timezone": "UTC" },

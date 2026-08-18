@@ -2,6 +2,10 @@ import { createCategoryRequestSchema } from "@product-repos/contracts";
 import { Hono } from "hono";
 import type { CatalogReferenceService } from "../services/catalog-reference.service.ts";
 
+const updateCategoryRequestSchema = createCategoryRequestSchema.pick({
+  name: true,
+});
+
 const status = {
   VALIDATION_ERROR: 400,
   REFERENCE_NOT_FOUND: 400,
@@ -20,8 +24,21 @@ const status = {
 } as const;
 
 /** Create category routes with injected catalog use cases. */
-export function categoryRoutes(service: Pick<CatalogReferenceService, "createCategory" | "deleteCategory" | "findAllCategories" | "updateCategoryName">): Hono {
-  const { createCategory, deleteCategory, findAllCategories, updateCategoryName } = service;
+export function categoryRoutes(
+  service: Pick<
+    CatalogReferenceService,
+    | "createCategory"
+    | "deleteCategory"
+    | "findAllCategories"
+    | "updateCategoryName"
+  >,
+): Hono {
+  const {
+    createCategory,
+    deleteCategory,
+    findAllCategories,
+    updateCategoryName,
+  } = service;
   const router = new Hono();
 
   router.get("/categories", (c) =>
@@ -37,15 +54,28 @@ export function categoryRoutes(service: Pick<CatalogReferenceService, "createCat
   router.patch("/categories/:id", async (c) => {
     const id = Number(c.req.param("id"));
     if (!Number.isInteger(id) || id < 1) {
-      return c.json({ code: "VALIDATION_ERROR", message: "Category id is invalid" }, 400);
+      return c.json(
+        { code: "VALIDATION_ERROR", message: "Category id is invalid" },
+        400,
+      );
     }
 
-    const body = await c.req.json().catch(() => null) as { name?: unknown } | null;
-    if (typeof body?.name !== "string") return c.json({ code: "VALIDATION_ERROR", message: "Request is invalid" }, 400);
+    const body = updateCategoryRequestSchema.safeParse(
+      await c.req.json().catch(() => null),
+    );
+    if (!body.success)
+      return c.json(
+        { code: "VALIDATION_ERROR", message: "Request is invalid" },
+        400,
+      );
 
-    const result = updateCategoryName(id, body.name);
+    const result = updateCategoryName(id, body.data.name);
     if (!result.ok) return c.json(result.error, status[result.error.code]);
-    return c.json({ id: result.value.id, name: result.value.name, parentId: result.value.parentId });
+    return c.json({
+      id: result.value.id,
+      name: result.value.name,
+      parentId: result.value.parentId,
+    });
   });
 
   router.delete("/categories/:id", (c) => {

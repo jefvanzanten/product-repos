@@ -2,11 +2,14 @@ import { describe, expect, test } from "bun:test";
 import type { InsertPhysicalInventoryMutation, InventoryMutationRepository, PhysicalInventoryRecord } from "../repositories/inventory-mutation.repository.ts";
 import { createInventoryMutationService } from "./inventory-mutation.service.ts";
 
+/** State captured by the in-memory inventory mutation store. */
+type FakeStore = { readonly store: InventoryMutationRepository; readonly items: PhysicalInventoryRecord[]; readonly mutations: InsertPhysicalInventoryMutation[] };
+
 /** Build an in-memory mutation store with captured state. */
-function createFakeStore(): { readonly store: InventoryMutationRepository; readonly items: PhysicalInventoryRecord[]; readonly mutations: InsertPhysicalInventoryMutation[] } {
+function createFakeStore(): FakeStore {
   const items: PhysicalInventoryRecord[] = [];
   const mutations: InsertPhysicalInventoryMutation[] = [];
-  const store: InventoryMutationRepository = { transaction: (operation) => operation({
+  const store = { transaction: (operation) => operation({
     findProductStatus: () => ({ id: "00000000-0000-4000-8000-000000000001", archivedAt: null, contentAmount: "1.5", conversionToBase: "1000", dimension: "VOLUME" }),
     findAllLocations: () => [{ id: 1, parentId: null, name: "Koelkast", archivedAt: null }, { id: 2, parentId: null, name: "Berging", archivedAt: null }],
     findItem: (id) => items.find((item) => item.id === id),
@@ -16,7 +19,7 @@ function createFakeStore(): { readonly store: InventoryMutationRepository; reado
     updateExpiry: (id, version, expiryDate, updatedAt) => updateItem(items, id, version, { expiryDate, updatedAt }),
     insertMutation: (values) => { mutations.push(values); },
     upsertThreshold: () => undefined,
-  }) };
+  }) } satisfies InventoryMutationRepository;
   return { store, items, mutations };
 }
 

@@ -3,7 +3,7 @@ import { concreteProductDetailSchema, concreteProductPageSchema, productComposit
 import { requestAsAdmin, testCatalog } from "./test-app.ts";
 
 /** Send an authenticated JSON request. */
-function requestJson(path: string, method: "POST" | "PUT", body: unknown): Promise<Response> {
+function requestJson<Body>(path: string, method: "POST" | "PUT", body: Body): Promise<Response> {
   return requestAsAdmin(path, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 }
 

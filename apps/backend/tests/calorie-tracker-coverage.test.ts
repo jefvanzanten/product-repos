@@ -33,11 +33,11 @@ type CreateCatalogPackageInput = {
 };
 
 /** Send JSON through one authenticated HTTP boundary. */
-function requestJson(
+function requestJson<Body>(
   requester: AuthenticatedRequester,
   path: string,
   method: "POST" | "PATCH" | "PUT",
-  body: unknown,
+  body: Body,
   timezone = "UTC",
 ): Promise<Response> {
   return requester(path, {

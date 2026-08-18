@@ -161,7 +161,7 @@ export function parseTimezone(value: string): DomainResult<string, ConsumptionIn
 
 /** Derive the local calendar date of an instant in an IANA timezone. */
 export function localDateForInstant(instant: string | Date, timezone: string): string {
-  const date = typeof instant === "string" ? new Date(instant) : instant;
+  const date = new Date(instant);
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
     year: "numeric",

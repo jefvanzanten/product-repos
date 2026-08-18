@@ -1,4 +1,5 @@
 import { Database } from "bun:sqlite";
+import { z } from "zod/v4";
 import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -31,7 +32,8 @@ describe("physical inventory migration", () => {
       INSERT INTO inventory_item (id, product_package_id, location_id, expiry_date, quantity, version) VALUES ('00000000-0000-4000-8000-000000000002', 1, 1, '2026-08-10', 3, 0);
     `);
     executeMigration(database, "0013_product_model_v2_backfill");
-    const rows = database.query("SELECT remaining_amount_base, location_id, expiry_date FROM physical_inventory_item ORDER BY id").all() as Array<{ remaining_amount_base: string; location_id: number; expiry_date: string }>;
+    const rows = z.array(z.object({ remaining_amount_base: z.string(), location_id: z.number(), expiry_date: z.string() }))
+      .parse(database.query("SELECT remaining_amount_base, location_id, expiry_date FROM physical_inventory_item ORDER BY id").all());
     expect(rows).toHaveLength(3);
     expect(rows.map((row) => row.remaining_amount_base)).toEqual(["500.0", "500.0", "500.0"]);
     expect(rows.every((row) => row.location_id === 1 && row.expiry_date === "2026-08-10")).toBeTrue();

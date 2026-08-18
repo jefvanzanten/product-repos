@@ -19,12 +19,12 @@ export function createUnifiedSearchService(dependencies: {
   function search(userId: string, query: string | undefined, limit: number): CalorieTrackerResult<ReadonlyArray<UnifiedSearchResult>> {
     if (query === undefined) {
       const recentPackages = catalogReader.findRecentActiveCatalogProducts(userId, limit)
-        .map((row) => ({ recency: row.lastConsumedAt, result: { kind: "PRODUCT", ...toProductSearchResult(row.record) } as UnifiedSearchResult }));
+        .map((row) => ({ recency: row.lastConsumedAt, result: { kind: "PRODUCT", ...toProductSearchResult(row.record) } satisfies UnifiedSearchResult }));
       const recentDishRows = dishRepository.findRecentConsumedDishes(userId, limit);
       const projectedDishes = dishProjector.projectDishSearchResults(recentDishRows.map((row) => row.dish), userId);
       const recencyByDishId = new Map(recentDishRows.map((row) => [row.dish.id, row.lastConsumedAt]));
       const recentDishes = projectedDishes
-        .map((result) => ({ recency: recencyByDishId.get(result.id) ?? "", result: { kind: "DISH", ...result } as UnifiedSearchResult }));
+        .map((result) => ({ recency: recencyByDishId.get(result.id) ?? "", result: { kind: "DISH", ...result } satisfies UnifiedSearchResult }));
       return success([...recentPackages, ...recentDishes]
         .sort((left, right) => right.recency.localeCompare(left.recency))
         .map((entry) => entry.result)

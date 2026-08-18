@@ -1,3 +1,6 @@
+import { concreteProductDetailSchema, productCompositionDtoSchema } from "@product-repos/contracts";
+import type { macroProfileSchema } from "@product-repos/contracts";
+import { z } from "zod/v4";
 import { Database } from "bun:sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -16,12 +19,11 @@ const testDb = drizzle(sqlite);
 const migrationsFolder = fileURLToPath(new URL("../drizzle/migrations", import.meta.url));
 runBackendMigrations(sqlite, testDb, migrationsFolder);
 
+const insertedIdSchema = z.object({ id: z.number().int().positive() });
+
 /** Parse an inserted SQLite row identifier at the test persistence boundary. */
-function readInsertedId(row: unknown): number {
-  if (typeof row !== "object" || row === null || !("id" in row)) throw new Error("SQLite insert did not return an id");
-  const id = Reflect.get(row, "id");
-  if (typeof id !== "number" || !Number.isInteger(id) || id < 1) throw new Error("SQLite insert returned an invalid id");
-  return id;
+function readInsertedId(row: Parameters<typeof insertedIdSchema.parse>[0]): number {
+  return insertedIdSchema.parse(row).id;
 }
 
 const categoryId = readInsertedId(sqlite.query("INSERT INTO category (name) VALUES (?) RETURNING id").get("Frisdrank"));
@@ -114,7 +116,7 @@ export function requestAsAdmin(path: string, init: RequestInit = {}): Promise<Re
 export async function createTestProduct(input: {
   readonly name: string;
   readonly consumptionType?: "FOOD" | "DRINK" | "SUPPLEMENT";
-  readonly macroProfile?: unknown;
+  readonly macroProfile?: z.input<typeof macroProfileSchema> | null;
   readonly amount: string;
   readonly unitTypeId: number;
   readonly portion?: { readonly singularName: string; readonly pluralName: string; readonly amount: string; readonly unitTypeId: number; readonly portionsPerProduct: number | null } | null;
@@ -122,10 +124,10 @@ export async function createTestProduct(input: {
   const headers = { "Content-Type": "application/json" };
   const compositionResponse = await requestAsAdmin("/product-compositions", { method: "POST", headers, body: JSON.stringify({ name: `${input.name} ${crypto.randomUUID()}`, categoryId, brandId: null, consumptionType: input.consumptionType ?? "FOOD", macroProfile: input.macroProfile ?? null }) });
   if (compositionResponse.status !== 201) throw new Error(`Unable to create test composition: ${compositionResponse.status}`);
-  const composition = await compositionResponse.json() as { readonly id: string };
+  const composition = productCompositionDtoSchema.parse(await compositionResponse.json());
   const productResponse = await requestAsAdmin("/products", { method: "POST", headers, body: JSON.stringify({ productCompositionId: composition.id, packageTypeId, content: { amount: input.amount, unitTypeId: input.unitTypeId }, imageUrl: null, barcode: null, portion: input.portion ?? null }) });
   if (productResponse.status !== 201) throw new Error(`Unable to create test product: ${productResponse.status}`);
-  const product = await productResponse.json() as { readonly productId: string };
+  const product = concreteProductDetailSchema.parse(await productResponse.json());
   return { compositionId: composition.id, productId: product.productId };
 }
 

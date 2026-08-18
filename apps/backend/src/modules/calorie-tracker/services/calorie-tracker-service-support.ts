@@ -25,7 +25,7 @@ export function success<T>(value: T): CalorieTrackerResult<T> {
 export function failure(
   code: CalorieTrackerErrorResponse["code"],
   message: string,
-  fields?: Record<string, string>,
+  fields?: CalorieTrackerErrorResponse["fields"],
 ): CalorieTrackerResult<never> {
   return fields === undefined ? err({ code, message }) : err({ code, message, fields });
 }
@@ -35,8 +35,11 @@ export function projectionFailure(): CalorieTrackerResult<never> {
   return failure("INTERNAL_ERROR", "A stored consumption log could not be projected");
 }
 
+/** Bounded UTC window covering every real-world local offset for one date. */
+export type UtcSearchWindow = { readonly startInclusive: string; readonly endExclusive: string };
+
 /** Build a bounded UTC window that covers every real-world local offset for one date. */
-export function utcSearchWindow(date: string): { readonly startInclusive: string; readonly endExclusive: string } {
+export function utcSearchWindow(date: string): UtcSearchWindow {
   const dateStart = Date.parse(`${date}T00:00:00.000Z`);
   return {
     startInclusive: new Date(dateStart - 24 * 60 * 60 * 1_000).toISOString(),
