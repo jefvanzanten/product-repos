@@ -1,4 +1,5 @@
 import { Database } from "bun:sqlite";
+import { z } from "zod";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -13,6 +14,10 @@ import {
   USER_B,
   currentAmsterdamDate,
 } from "./calorie-tracker.fixture-data";
+
+const userIdRowSchema = z.object({ id: z.string() });
+const resetRequestSchema = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) });
+const touchLogRequestSchema = z.object({ id: z.string() });
 
 const sourceDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(sourceDirectory, "../../../..");
@@ -138,11 +143,7 @@ function seedCatalog(sqlite: Database): void {
 
 /** Read a test user's generated Better Auth identifier by deterministic email. */
 function findUserId(sqlite: Database, email: string): string {
-  const row = sqlite.query("SELECT id FROM user WHERE email = ?").get(email);
-  if (typeof row !== "object" || row === null || !("id" in row)) throw new Error(`Missing E2E user ${email}`);
-  const id = Reflect.get(row, "id");
-  if (typeof id !== "string") throw new Error(`Invalid E2E user id for ${email}`);
-  return id;
+  return userIdRowSchema.parse(sqlite.query("SELECT id FROM user WHERE email = ?").get(email)).id;
 }
 
 /** Build a stable UTC instant that remains on the supplied date in Europe/Amsterdam. */
@@ -180,16 +181,6 @@ function resetScenario(sqlite: Database, date: string): void {
   }
 }
 
-/** Parse a JSON object from a fixture-control request. */
-async function readObject(request: Request): Promise<Record<string, unknown> | null> {
-  try {
-    const value: unknown = await request.json();
-    return typeof value === "object" && value !== null ? Object.fromEntries(Object.entries(value)) : null;
-  } catch {
-    return null;
-  }
-}
-
 /** Serve deterministic database setup operations without changing production routes. */
 function startControlServer(sqlite: Database): ReturnType<typeof Bun.serve> {
   return Bun.serve({
@@ -199,18 +190,18 @@ function startControlServer(sqlite: Database): ReturnType<typeof Bun.serve> {
     async fetch(request): Promise<Response> {
       const url = new URL(request.url);
       if (request.method === "GET" && url.pathname === "/health") return Response.json({ ready: true });
-      const body = await readObject(request);
+      const body = await request.json().catch(() => null);
       if (request.method === "POST" && url.pathname === "/reset") {
-        const date = body?.date;
-        if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return new Response("Invalid date", { status: 400 });
-        resetScenario(sqlite, date);
+        const reset = resetRequestSchema.safeParse(body);
+        if (!reset.success) return new Response("Invalid date", { status: 400 });
+        resetScenario(sqlite, reset.data.date);
         return Response.json({ reset: true });
       }
       if (request.method === "POST" && url.pathname === "/touch-log") {
-        const id = body?.id;
-        if (typeof id !== "string") return new Response("Invalid id", { status: 400 });
-        sqlite.query("UPDATE product_consumption SET quantity = '3' WHERE consumption_log_id = ?").run(id);
-        sqlite.query("UPDATE consumption_log SET updated_at = ? WHERE id = ?").run(new Date().toISOString(), id);
+        const touchLog = touchLogRequestSchema.safeParse(body);
+        if (!touchLog.success) return new Response("Invalid id", { status: 400 });
+        sqlite.query("UPDATE product_consumption SET quantity = '3' WHERE consumption_log_id = ?").run(touchLog.data.id);
+        sqlite.query("UPDATE consumption_log SET updated_at = ? WHERE id = ?").run(new Date().toISOString(), touchLog.data.id);
         return Response.json({ touched: true });
       }
       return new Response("Not found", { status: 404 });

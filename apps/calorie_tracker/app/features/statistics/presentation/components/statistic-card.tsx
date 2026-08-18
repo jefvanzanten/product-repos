@@ -48,9 +48,7 @@ function StatisticCard({
   const formattedCurrent = formatDecimal(currentRaw, definition.fractions);
   const formattedGoal = goalRaw === null
     ? null
-    : typeof goalRaw === "number"
-      ? new Intl.NumberFormat("nl-NL").format(goalRaw)
-      : formatDecimal(goalRaw, definition.fractions);
+    : formatDecimal(String(goalRaw), definition.fractions);
 
   if (progress.tag === "NoGoal") {
     return (

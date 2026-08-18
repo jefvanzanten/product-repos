@@ -1,14 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getDailyStatistics } from "../../features/statistics/data/statistics-api.server";
+import type { LoaderFunctionArgs } from "react-router";
+import { describe, expect, it, vi } from "vitest";
 import { getTodayDate } from "../../core/domain/dates-and-timezones";
+import { requireUser } from "../../core/presentation/auth/auth.server";
+import { getDailyStatistics, putNutritionGoals } from "../../features/statistics/data/statistics-api.server";
 import { loadStatisticsRoute } from "./statistics-route.server";
-
-vi.mock("../../core/presentation/auth/auth.server", () => ({ requireUser: vi.fn().mockResolvedValue({ id: "user" }) }));
-vi.mock("../../features/statistics/data/statistics-api.server", () => ({
-  CalorieTrackerApiError: class extends Error {},
-  getDailyStatistics: vi.fn(),
-  putNutritionGoals: vi.fn(),
-}));
 
 const statistics = {
   date: "2024-02-29",
@@ -17,19 +12,25 @@ const statistics = {
   goals: null,
 } as const;
 
-beforeEach(() => {
-  vi.clearAllMocks();
-});
+/** Build loader arguments consumed by the route. */
+function loaderArgs(request: Request): LoaderFunctionArgs {
+  // SAFETY: the route under test consumes only request from React Router's loader argument contract.
+  return { request, params: {}, context: {} } as LoaderFunctionArgs;
+}
 
-/**
- * Capture a redirect thrown by the statistics loader.
- *
- * @param request - The loader request.
- * @returns The redirect response.
- */
+/** Create deterministic route dependencies around a statistics reader fake. */
+function dependencies(getStatistics = vi.fn<typeof getDailyStatistics>()) {
+  return {
+    requireUser: vi.fn<typeof requireUser>().mockResolvedValue({ id: "user", email: "user@example.test", name: "User", role: "user" }),
+    getDailyStatistics: getStatistics,
+    putNutritionGoals: vi.fn<typeof putNutritionGoals>(),
+  };
+}
+
+/** Capture a redirect thrown by the statistics loader. */
 async function captureRedirect(request: Request): Promise<Response> {
   try {
-    await loadStatisticsRoute({ request } as never);
+    await loadStatisticsRoute(loaderArgs(request), dependencies());
   } catch (error: unknown) {
     if (error instanceof Response) return error;
     throw error;
@@ -39,62 +40,31 @@ async function captureRedirect(request: Request): Promise<Response> {
 
 describe("statistics route server boundary", () => {
   it("waits for timezone registration without calling the backend", async () => {
+    const getStatistics = vi.fn<typeof getDailyStatistics>();
     const request = new Request("https://example.test/calorie-tracker/?date=2024-02-29");
-    await expect(loadStatisticsRoute({ request } as never)).resolves.toEqual({
-      timezone: null,
-      routeState: null,
-      statistics: null,
-      loadFailed: false,
-    });
-    expect(getDailyStatistics).not.toHaveBeenCalled();
+    await expect(loadStatisticsRoute(loaderArgs(request), dependencies(getStatistics))).resolves.toEqual({ timezone: null, routeState: null, statistics: null, loadFailed: false });
+    expect(getStatistics).not.toHaveBeenCalled();
   });
 
   it("loads the current date without adding it to the URL", async () => {
-    vi.mocked(getDailyStatistics).mockResolvedValue(statistics);
-    const request = new Request("https://example.test/calorie-tracker/", {
-      headers: { cookie: "calorie_tracker_timezone=UTC" },
-    });
+    const getStatistics = vi.fn<typeof getDailyStatistics>().mockResolvedValue(statistics);
+    const request = new Request("https://example.test/calorie-tracker/", { headers: { cookie: "calorie_tracker_timezone=UTC" } });
     const today = getTodayDate("UTC");
-
-    await expect(loadStatisticsRoute({ request } as never)).resolves.toMatchObject({
-      timezone: "UTC",
-      routeState: { date: today, type: "all" },
-      statistics,
-      loadFailed: false,
-    });
-    expect(getDailyStatistics).toHaveBeenCalledWith(today, expect.objectContaining({
-      cookie: "calorie_tracker_timezone=UTC",
-      timezone: "UTC",
-      signal: request.signal,
-    }));
+    await expect(loadStatisticsRoute(loaderArgs(request), dependencies(getStatistics))).resolves.toMatchObject({ timezone: "UTC", routeState: { date: today, type: "all" }, statistics, loadFailed: false });
+    expect(getStatistics).toHaveBeenCalledWith(today, expect.objectContaining({ cookie: "calorie_tracker_timezone=UTC", timezone: "UTC", signal: request.signal }));
   });
 
-  it("uses an app-internal path and omits the fallback date when canonicalizing an invalid date", async () => {
-    const request = new Request("https://example.test/calorie-tracker/?date=invalid", {
-      headers: { cookie: "calorie_tracker_timezone=UTC" },
-    });
-
+  it("uses an app-internal path when canonicalizing an invalid date", async () => {
+    const request = new Request("https://example.test/calorie-tracker/?date=invalid", { headers: { cookie: "calorie_tracker_timezone=UTC" } });
     const response = await captureRedirect(request);
-
     expect(response.status).toBe(302);
     expect(response.headers.get("Location")).toBe("/");
   });
 
   it("loads parsed statistics with the registered timezone", async () => {
-    vi.mocked(getDailyStatistics).mockResolvedValue(statistics);
-    const request = new Request("https://example.test/calorie-tracker/?date=2024-02-29", {
-      headers: { cookie: "calorie_tracker_timezone=Europe%2FAmsterdam" },
-    });
-    await expect(loadStatisticsRoute({ request } as never)).resolves.toMatchObject({
-      timezone: "Europe/Amsterdam",
-      routeState: { date: "2024-02-29", type: "all" },
-      statistics,
-      loadFailed: false,
-    });
-    expect(getDailyStatistics).toHaveBeenCalledWith("2024-02-29", expect.objectContaining({
-      cookie: "calorie_tracker_timezone=Europe%2FAmsterdam",
-      timezone: "Europe/Amsterdam",
-      signal: request.signal,
-    }));
+    const getStatistics = vi.fn<typeof getDailyStatistics>().mockResolvedValue(statistics);
+    const request = new Request("https://example.test/calorie-tracker/?date=2024-02-29", { headers: { cookie: "calorie_tracker_timezone=Europe%2FAmsterdam" } });
+    await expect(loadStatisticsRoute(loaderArgs(request), dependencies(getStatistics))).resolves.toMatchObject({ timezone: "Europe/Amsterdam", routeState: { date: "2024-02-29", type: "all" }, statistics, loadFailed: false });
+    expect(getStatistics).toHaveBeenCalledWith("2024-02-29", expect.objectContaining({ cookie: "calorie_tracker_timezone=Europe%2FAmsterdam", timezone: "Europe/Amsterdam", signal: request.signal }));
   });
 });

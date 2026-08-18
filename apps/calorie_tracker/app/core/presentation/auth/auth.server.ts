@@ -7,8 +7,8 @@ import { loginPath } from "../routing/calorie-tracker-routes";
 import { returnPathFromRequest, toCalorieTrackerRedirectPath } from "../routing/public-paths";
 
 /** Require an authenticated user for a Calorie Tracker server request. */
-export async function requireUser(request: Request): Promise<AuthenticatedUser> {
-  const result = await lookupSession(request);
+export async function requireUser(request: Request, lookup: typeof lookupSession = lookupSession): Promise<AuthenticatedUser> {
+  const result = await lookup(request);
   if (result.tag === "Unauthenticated") {
     const returnTo = returnPathFromRequest(request);
     throw redirect(toCalorieTrackerRedirectPath(loginPath(returnTo)));

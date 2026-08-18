@@ -42,6 +42,7 @@ export default function BottomTabsLayout(): ReactNode {
   const submittedTimezone = useRef<string | null>(null);
   const matches = useMatches();
   const isAdmin = isAdministrator(user.role);
+  // SAFETY: React Router returns the statically declared handle from this application's route module.
   const leafHandle = matches.at(-1)?.handle as CalorieTrackerRouteHandle | undefined;
   const showsTrackerNavbar = leafHandle?.showsTrackerNavbar ?? false;
 

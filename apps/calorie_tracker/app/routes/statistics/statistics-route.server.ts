@@ -1,4 +1,5 @@
 import { parseUpsertNutritionGoal } from "../../features/statistics/data/nutrition-goal-command-parser";
+import { z } from "zod";
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 import { CalorieTrackerApiError, getDailyStatistics, putNutritionGoals } from "../../features/statistics/data/statistics-api.server";
 import { requireUser } from "../../core/presentation/auth/auth.server";
@@ -9,14 +10,22 @@ import { toCalorieTrackerInternalPath } from "../../core/presentation/routing/ca
 import { readBrowserTimezone } from "../../core/data/timezone.server";
 import { createBackendRequestContext } from "../../core/presentation/backend-request-context.server";
 
+type StatisticsRouteDependencies = {
+  readonly requireUser: typeof requireUser;
+  readonly getDailyStatistics: typeof getDailyStatistics;
+  readonly putNutritionGoals: typeof putNutritionGoals;
+};
+
+const defaultDependencies: StatisticsRouteDependencies = { requireUser, getDailyStatistics, putNutritionGoals };
+
 /**
  * Load canonical daily statistics after authentication and timezone registration.
  *
  * @param properties - Function arguments.
  * @returns The function result.
  */
-export async function loadStatisticsRoute({ request }: LoaderFunctionArgs): Promise<StatisticsLoaderData | Response> {
-  await requireUser(request);
+export async function loadStatisticsRoute({ request }: LoaderFunctionArgs, dependencies: StatisticsRouteDependencies = defaultDependencies): Promise<StatisticsLoaderData | Response> {
+  await dependencies.requireUser(request);
   const timezone = readBrowserTimezone(request);
   if (timezone === null) {
     return { timezone: null, routeState: null, statistics: null, loadFailed: false };
@@ -42,7 +51,7 @@ export async function loadStatisticsRoute({ request }: LoaderFunctionArgs): Prom
     return {
       timezone,
       routeState: canonical.state,
-      statistics: await getDailyStatistics(canonical.state.date, createBackendRequestContext(request, timezone)),
+      statistics: await dependencies.getDailyStatistics(canonical.state.date, createBackendRequestContext(request, timezone)),
       loadFailed: false,
     };
   } catch {
@@ -56,17 +65,17 @@ export async function loadStatisticsRoute({ request }: LoaderFunctionArgs): Prom
  * @param properties - Function arguments.
  * @returns The function result.
  */
-export async function handleStatisticsRouteAction({ request }: ActionFunctionArgs): Promise<StatisticsActionResult> {
-  await requireUser(request);
+export async function handleStatisticsRouteAction({ request }: ActionFunctionArgs, dependencies: StatisticsRouteDependencies = defaultDependencies): Promise<StatisticsActionResult> {
+  await dependencies.requireUser(request);
   const timezone = readBrowserTimezone(request);
   if (timezone === null) return { ok: false, error: "De browsertijdzone is nog niet beschikbaar." };
   const formData = await request.formData();
-  const rawPayload = formData.get("goals");
-  if (typeof rawPayload !== "string") return { ok: false, error: "Controleer de ingevulde doelen." };
+  const rawPayload = z.string().safeParse(formData.get("goals"));
+  if (!rawPayload.success) return { ok: false, error: "Controleer de ingevulde doelen." };
 
-  let input: unknown;
+  let input: Parameters<typeof parseUpsertNutritionGoal>[0];
   try {
-    input = JSON.parse(rawPayload);
+    input = JSON.parse(rawPayload.data);
   } catch {
     return { ok: false, error: "Controleer de ingevulde doelen." };
   }
@@ -74,7 +83,7 @@ export async function handleStatisticsRouteAction({ request }: ActionFunctionArg
   if (parsed === null) return { ok: false, error: "Controleer de ingevulde doelen." };
 
   try {
-    await putNutritionGoals(parsed, createBackendRequestContext(request, timezone));
+    await dependencies.putNutritionGoals(parsed, createBackendRequestContext(request, timezone));
     return { ok: true };
   } catch (error: unknown) {
     const fallbackMessage = "Doelen opslaan lukt niet. Probeer opnieuw.";

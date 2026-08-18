@@ -1,9 +1,9 @@
 import { chromium, type FullConfig } from "@playwright/test";
+import { z } from "zod";
 
 /** Warm the Vite dependency graph before browser diagnostics become part of an acceptance scenario. */
 export default async function warmCalorieTracker(config: FullConfig): Promise<void> {
-  const projectBaseUrl = config.projects[0]?.use.baseURL;
-  if (typeof projectBaseUrl !== "string") throw new Error("Calorie Tracker E2E base URL is missing");
+  const projectBaseUrl = z.string().parse(config.projects[0]?.use.baseURL);
 
   const browser = await chromium.launch();
   try {

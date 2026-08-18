@@ -1,4 +1,5 @@
 import type { ConsumptionTypeFilter } from "../../../../../core/domain/consumption-types";
+import { z } from "zod";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useFetcher, useLocation, useRevalidator, useSearchParams } from "react-router";
 import { Icon } from "../../../../../core/presentation/components/icon/icon";
@@ -12,6 +13,15 @@ import styles from "./logbook-page.module.css";
 
 type UndoNotice = { readonly id: string; readonly expiresAt: number };
 type MutationNotice = { readonly id: string; readonly message: string; readonly scrollToCreatedLog: boolean };
+
+const undoNoticeSchema = z.object({ id: z.string(), expiresAt: z.number() });
+const mutationNoticeSchema = z.object({
+  calorieTrackerMutation: z.object({
+    id: z.string(),
+    message: z.string(),
+    scrollToCreatedLog: z.boolean(),
+  }),
+});
 
 const FILTERS: ReadonlyArray<{ readonly value: ConsumptionTypeFilter; readonly label: string }> = [
   { value: "all", label: "Alles" },
@@ -138,14 +148,11 @@ export function LogbookPage({ loaderData }: { readonly loaderData: LogbookLoader
  * @returns The function result.
  */
 function readUndoNotice(): UndoNotice | null {
-  if (typeof window === "undefined") return null;
   const raw = window.sessionStorage.getItem("calorie-tracker-undo");
   if (raw === null) return null;
   try {
-    const value: unknown = JSON.parse(raw);
-    if (!isUnknownRecord(value)) return null;
-    const { id, expiresAt } = value;
-    return typeof id === "string" && typeof expiresAt === "number" && expiresAt > Date.now() ? { id, expiresAt } : null;
+    const notice = undoNoticeSchema.safeParse(JSON.parse(raw));
+    return notice.success && notice.data.expiresAt > Date.now() ? notice.data : null;
   } catch {
     return null;
   }
@@ -166,20 +173,7 @@ function clearUndoNotice(): void {
  * @param input - The input value.
  * @returns The function result.
  */
-function readMutationNotice(input: unknown): MutationNotice | null {
-  if (!isUnknownRecord(input) || !isUnknownRecord(input.calorieTrackerMutation)) return null;
-  const { id, message, scrollToCreatedLog } = input.calorieTrackerMutation;
-  return typeof id === "string" && typeof message === "string" && typeof scrollToCreatedLog === "boolean"
-    ? { id, message, scrollToCreatedLog }
-    : null;
-}
-
-/**
- * Narrow an untrusted value to unknown named properties.
- *
- * @param input - The input value.
- * @returns The function result.
- */
-function isUnknownRecord(input: unknown): input is Record<string, unknown> {
-  return typeof input === "object" && input !== null;
+function readMutationNotice(input: Parameters<typeof mutationNoticeSchema.safeParse>[0]): MutationNotice | null {
+  const parsed = mutationNoticeSchema.safeParse(input);
+  return parsed.success ? parsed.data.calorieTrackerMutation : null;
 }

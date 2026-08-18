@@ -40,6 +40,7 @@ export async function action(args: ActionFunctionArgs): Promise<LogbookActionRes
 export default function LogsLayout(): ReactNode {
   const loaderData = useLoaderData<LogbookLoaderData>();
   const matches = useMatches();
+  // SAFETY: React Router returns statically declared handles from this application's route modules.
   const presentation = [...matches]
     .reverse()
     .map((match) => match.handle as CalorieTrackerRouteHandle | undefined)

@@ -1,17 +1,16 @@
-import { lookupSession } from "@product-repos/auth-client/session.server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { SessionLookupResult } from "@product-repos/auth-client/session.server";
+import { describe, expect, it } from "vitest";
 import { requireUser } from "./auth.server";
 
-vi.mock("@product-repos/auth-client/session.server", () => ({
-  lookupSession: vi.fn(),
-}));
-
-const mockedLookupSession = vi.mocked(lookupSession);
+/** Resolve every test request as unauthenticated. */
+function lookupUnauthenticated(): Promise<SessionLookupResult> {
+  return Promise.resolve({ tag: "Unauthenticated" });
+}
 
 /** Read the redirect response thrown by the protected server loader helper. */
 async function readRedirect(requestUrl: string): Promise<Response> {
   try {
-    await requireUser(new Request(requestUrl));
+    await requireUser(new Request(requestUrl), lookupUnauthenticated);
   } catch (error: unknown) {
     if (error instanceof Response) return error;
     throw error;
@@ -20,10 +19,6 @@ async function readRedirect(requestUrl: string): Promise<Response> {
 }
 
 describe("Calorie Tracker server-side login return path", () => {
-  beforeEach(() => {
-    mockedLookupSession.mockResolvedValue({ tag: "Unauthenticated" });
-  });
-
   it("retains a protected deep link and canonical query parameters", async () => {
     const response = await readRedirect("https://apps.example.test/calorie-tracker/logs/10000000-0000-4000-8000-000000000001/edit?date=2026-07-29&type=food");
     expect(response.status).toBe(302);

@@ -25,6 +25,7 @@ export function CalorieTrackerNavbar(): ReactNode {
   const today = getTodayDate(timezone);
   const canonical = canonicalizeTrackerUrl(parameters.get("date"), parameters.get("type"), today);
   const { date, type } = canonical.state;
+  // SAFETY: React Router returns the statically declared handle from this application's route module.
   const leafHandle = matches.at(-1)?.handle as CalorieTrackerRouteHandle | undefined;
   const showsDateHeader = leafHandle?.showsDateHeader ?? false;
   const className = showsDateHeader ? `${styles.navbar} ${styles.dateNavbar}` : styles.navbar;

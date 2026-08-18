@@ -1,7 +1,7 @@
 import { expect, test, type APIRequestContext, type ConsoleMessage, type Page, type Request, type Response, type TestInfo } from "@playwright/test";
+import { logListSchema, productSearchResultSchema, type ConsumptionLog, type CreateConsumptionLog } from "@product-repos/contracts/calorie-tracker";
 import {
   BACKEND_ORIGIN,
-  CATALOG,
   FIXTURE_ORIGIN,
   LOGS,
   USER_A,
@@ -98,13 +98,8 @@ async function captureScenario(page: Page, testInfo: TestInfo, name: string): Pr
 }
 
 /** Return all object entries from a JSON array whose id equals the requested value. */
-function countItemsWithId(value: unknown, id: string): number {
-  if (!Array.isArray(value)) return 0;
-  let count = 0;
-  for (const item of value) {
-    if (typeof item === "object" && item !== null && Reflect.get(item, "id") === id) count += 1;
-  }
-  return count;
+function countItemsWithId(value: ReadonlyArray<ConsumptionLog>, id: string): number {
+  return value.filter((item) => item.id === id).length;
 }
 
 /** Prepare deterministic persistence and browser diagnostics before every test. */
@@ -222,7 +217,7 @@ test.describe("Calorie Tracker acceptance slice", function calorieTrackerAccepta
 
     const headers = { "X-Browser-Timezone": "Europe/Amsterdam" };
     const searchResponse = await page.request.get(`${BACKEND_ORIGIN}/calorie-tracker/products/search?query=Volkoren`, { headers });
-    const searchResults = await searchResponse.json() as ReadonlyArray<{ readonly productId: string }>;
+    const searchResults = productSearchResultSchema.array().parse(await searchResponse.json());
     const productId = searchResults[0]?.productId;
     expect(productId).toBeDefined();
     if (productId === undefined) throw new Error("Expected a loggable concrete product");
@@ -234,15 +229,15 @@ test.describe("Calorie Tracker acceptance slice", function calorieTrackerAccepta
       inputMode: "FULL_PRODUCT",
       inputUnitTypeId: null,
       consumedAt: `${previousDate}T06:00:00.000Z`,
-    } as const;
+    } satisfies CreateConsumptionLog;
     const first = await page.request.post(`${BACKEND_ORIGIN}/calorie-tracker/logs`, { data: createBody, headers });
     const retry = await page.request.post(`${BACKEND_ORIGIN}/calorie-tracker/logs`, { data: createBody, headers });
     expect(first.status()).toBe(201);
     expect(retry.status()).toBe(200);
     expect(await retry.json()).toMatchObject({ id: LOGS.idempotent });
     const list = await page.request.get(`${BACKEND_ORIGIN}/calorie-tracker/logs?date=${previousDate}&type=all`, { headers });
-    const listBody: unknown = await list.json();
-    expect(countItemsWithId(typeof listBody === "object" && listBody !== null ? Reflect.get(listBody, "items") : null, LOGS.idempotent)).toBe(1);
+    const listBody = logListSchema.parse(await list.json());
+    expect(countItemsWithId(listBody.items, LOGS.idempotent)).toBe(1);
   });
 
   /** Verify current detail data, archived search rules, and optimistic-conflict recovery. */

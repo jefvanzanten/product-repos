@@ -5,13 +5,13 @@ import {
 import type { CreateConsumptionLog, UpdateConsumptionLog } from "../domain/consumption-log";
 
 /** Parse an untrusted create-log transport payload. */
-export function parseCreateConsumptionLog(input: unknown): CreateConsumptionLog | null {
+export function parseCreateConsumptionLog(input: Parameters<typeof createConsumptionLogSchema.safeParse>[0]): CreateConsumptionLog | null {
   const result = createConsumptionLogSchema.safeParse(input);
   return result.success ? result.data : null;
 }
 
 /** Parse an untrusted update-log transport payload. */
-export function parseUpdateConsumptionLog(input: unknown): UpdateConsumptionLog | null {
+export function parseUpdateConsumptionLog(input: Parameters<typeof updateConsumptionLogSchema.safeParse>[0]): UpdateConsumptionLog | null {
   const result = updateConsumptionLogSchema.safeParse(input);
   return result.success ? result.data : null;
 }

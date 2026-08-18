@@ -17,6 +17,9 @@ export function formatTimeInTimezone(isoValue: string, timezone: string): string
   return `${hour}:${minute}`;
 }
 
+/** Date and time values rendered into consumption form controls. */
+export type FormMoment = { readonly date: string; readonly time: string };
+
 /**
  * Convert an ISO instant to date and time form fields in an explicit IANA timezone.
  *
@@ -24,7 +27,7 @@ export function formatTimeInTimezone(isoValue: string, timezone: string): string
  * @param timezone - The timezone value.
  * @returns The function result.
  */
-export function toFormMomentInTimezone(isoValue: string, timezone: string): { readonly date: string; readonly time: string } {
+export function toFormMomentInTimezone(isoValue: string, timezone: string): FormMoment {
   const parts = new Intl.DateTimeFormat("en-CA", {
     year: "numeric",
     month: "2-digit",

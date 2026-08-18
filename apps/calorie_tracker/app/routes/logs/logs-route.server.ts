@@ -1,4 +1,5 @@
 import { redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
+import { z } from "zod";
 import { CalorieTrackerApiError, getConsumptionLogs, restoreConsumptionLog } from "../../features/consumption-logs/data/consumption-log-api.server";
 import { requireUser } from "../../core/presentation/auth/auth.server";
 import { canonicalizeTrackerUrl } from "../../core/presentation/routing/tracker-url-state";
@@ -8,14 +9,22 @@ import { toCalorieTrackerInternalPath } from "../../core/presentation/routing/ca
 import { readBrowserTimezone } from "../../core/data/timezone.server";
 import { createBackendRequestContext } from "../../core/presentation/backend-request-context.server";
 
+type LogsRouteDependencies = {
+  readonly requireUser: typeof requireUser;
+  readonly getConsumptionLogs: typeof getConsumptionLogs;
+  readonly restoreConsumptionLog: typeof restoreConsumptionLog;
+};
+
+const defaultDependencies: LogsRouteDependencies = { requireUser, getConsumptionLogs, restoreConsumptionLog };
+
 /**
  * Load one canonical date- and filter-scoped logbook projection.
  *
  * @param properties - Function arguments.
  * @returns The function result.
  */
-export async function loadLogsRoute({ request }: LoaderFunctionArgs): Promise<LogbookLoaderData | Response> {
-  await requireUser(request);
+export async function loadLogsRoute({ request }: LoaderFunctionArgs, dependencies: LogsRouteDependencies = defaultDependencies): Promise<LogbookLoaderData | Response> {
+  await dependencies.requireUser(request);
   const timezone = readBrowserTimezone(request);
   if (timezone === null) {
     return { timezone: null, routeState: null, content: null, loadFailed: false };
@@ -33,7 +42,7 @@ export async function loadLogsRoute({ request }: LoaderFunctionArgs): Promise<Lo
 
   try {
     const context = createBackendRequestContext(request, timezone);
-    const logs = await getConsumptionLogs(canonical.state.date, canonical.state.type, context);
+    const logs = await dependencies.getConsumptionLogs(canonical.state.date, canonical.state.type, context);
     if (logs.items.length > 0) {
       return {
         timezone,
@@ -45,7 +54,7 @@ export async function loadLogsRoute({ request }: LoaderFunctionArgs): Promise<Lo
     if (canonical.state.type === "all") {
       return { timezone, routeState: canonical.state, content: { tag: "EmptyDate" }, loadFailed: false };
     }
-    const unfiltered = await getConsumptionLogs(canonical.state.date, "all", context);
+    const unfiltered = await dependencies.getConsumptionLogs(canonical.state.date, "all", context);
     return {
       timezone,
       routeState: canonical.state,
@@ -63,17 +72,17 @@ export async function loadLogsRoute({ request }: LoaderFunctionArgs): Promise<Lo
  * @param properties - Function arguments.
  * @returns The function result.
  */
-export async function handleLogsRouteAction({ request }: ActionFunctionArgs): Promise<LogbookActionResult> {
-  await requireUser(request);
+export async function handleLogsRouteAction({ request }: ActionFunctionArgs, dependencies: LogsRouteDependencies = defaultDependencies): Promise<LogbookActionResult> {
+  await dependencies.requireUser(request);
   const timezone = readBrowserTimezone(request);
   if (timezone === null) return { ok: false, error: "De browsertijdzone is nog niet beschikbaar." };
   const formData = await request.formData();
-  const logId = formData.get("logId");
-  if (formData.get("_action") !== "restore" || typeof logId !== "string" || !isUuid(logId)) {
+  const logId = z.string().refine(isUuid).safeParse(formData.get("logId"));
+  if (formData.get("_action") !== "restore" || !logId.success) {
     return { ok: false, error: "De log kan niet worden hersteld." };
   }
   try {
-    return { ok: true, log: await restoreConsumptionLog(logId, createBackendRequestContext(request, timezone)) };
+    return { ok: true, log: await dependencies.restoreConsumptionLog(logId.data, createBackendRequestContext(request, timezone)) };
   } catch (error: unknown) {
     const fallbackMessage = "Herstellen lukt niet meer.";
     return {

@@ -3,7 +3,7 @@ import styles from "./icon.module.css";
 
 type IconName = "add" | "back" | "check" | "chevron-right" | "close" | "delete" | "edit" | "search" | "settings" | "time";
 
-const ICON_LEAVES: Record<IconName, { readonly width: number; readonly height: number }> = {
+const ICON_LEAVES = {
   add: { width: 13.17, height: 13.17 },
   back: { width: 7.8, height: 13.8 },
   check: { width: 14.48, height: 10.82 },
@@ -14,7 +14,7 @@ const ICON_LEAVES: Record<IconName, { readonly width: number; readonly height: n
   search: { width: 14.83, height: 14.83 },
   settings: { width: 20, height: 20 },
   time: { width: 16.5, height: 16.5 },
-};
+} satisfies Record<IconName, { readonly width: number; readonly height: number }>;
 
 /** Compact icon with separate explicit Figma outer-box and intrinsic leaf dimensions. */
 export function Icon({

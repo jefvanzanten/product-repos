@@ -13,6 +13,13 @@ export type GoalDraftParseResult =
   | { readonly tag: "Success"; readonly value: UpsertNutritionGoal }
   | { readonly tag: "Failure"; readonly error: string };
 
+type ParsedGoalValues = {
+  caloriesKcal: string | null;
+  proteinG: string | null;
+  carbohydratesG: string | null;
+  fatG: string | null;
+};
+
 /**
  * Create an editable goals concept while retaining values from the last successful save.
  *
@@ -44,7 +51,7 @@ export function createGoalDraft(goals: NutritionGoal | null, lastSavedDraft: Goa
  * @returns The function result.
  */
 export function parseGoalDraft(draft: GoalDraft): GoalDraftParseResult {
-  const parsedValues: Record<StatisticDefinition["key"], string | null> = {
+  const parsedValues: ParsedGoalValues = {
     caloriesKcal: null,
     proteinG: null,
     carbohydratesG: null,

@@ -14,6 +14,8 @@ type BackendRequestOptions = {
   readonly body?: unknown;
 };
 
+type BackendHeaders = { "X-Browser-Timezone": string; cookie?: string };
+
 /**
  * Send an authenticated, timezone-aware request to the backend.
  *
@@ -27,12 +29,11 @@ export async function sendBackendRequest(
   context: BackendRequestContext,
   options: BackendRequestOptions = {},
 ): Promise<Response> {
+  const headers: BackendHeaders = { "X-Browser-Timezone": context.timezone };
+  if (context.cookie !== null) headers.cookie = context.cookie;
   return sendSharedBackendRequest(apiUrl, path, {
     method: options.method,
-    headers: {
-      "X-Browser-Timezone": context.timezone,
-      ...(context.cookie === null ? {} : { cookie: context.cookie }),
-    },
+    headers,
     body: options.body,
     signal: context.signal,
   });

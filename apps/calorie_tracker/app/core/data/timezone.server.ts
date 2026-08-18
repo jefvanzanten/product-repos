@@ -31,7 +31,7 @@ export function readBrowserTimezone(request: Request): string | null {
  * @param input - The input value.
  * @returns The function result.
  */
-export function parseBrowserTimezone(input: unknown): string | null {
+export function parseBrowserTimezone(input: Parameters<typeof browserTimezoneSchema.safeParse>[0]): string | null {
   const parsed = browserTimezoneSchema.safeParse(input);
   if (!parsed.success) return null;
   try {
