@@ -1,19 +1,19 @@
-import { z } from "zod/v4";
 import {
   brandDtoSchema,
+  categoryDtoSchema,
   concreteProductDetailSchema,
   concreteProductPageSchema,
   concreteProductSummarySchema,
   macroProfileSchema,
-  categoryDtoSchema,
   packageTypeDtoSchema,
   productCompositionDetailSchema,
   productCompositionDtoSchema,
   unitTypeDtoSchema,
 } from "@product-repos/contracts";
+import { z, type ZodType } from "zod/v4";
+import { sendBackendRequest, type BackendMethod, type BackendRequestContext } from "../../../core/data/backend-api.server";
 import { buildCategoryPath } from "../domain/category-tree";
 import type { Brand, Category, ConcreteProductDetail, ConcreteProductPage, CreateConcreteProduct, CreateProductComposition, MacroProfile, PackageType, ProductComposition, UnitType, UpdateConcreteProduct, UpdateProductComposition } from "../domain/product-catalog";
-import { sendBackendRequest, type BackendRequestContext } from "../../../core/data/backend-api.server";
 import { mapBrand, mapCategory, mapConcreteProductDetail, mapConcreteProductPage, mapPackageType, mapProductComposition, mapUnitType } from "./product-catalog-mappers";
 
 const brandListSchema = brandDtoSchema.array();
@@ -26,37 +26,37 @@ const backendConcreteProductDetailSchema = concreteProductSummarySchema.extend({
   portion: z.object({ singularName: z.string(), pluralName: z.string(), amount: z.string(), unitTypeId: z.number().int().positive(), portionsPerProduct: z.number().int().positive().nullable() }).strict().nullable(),
 }).strict();
 const unitTypeListSchema = unitTypeDtoSchema.array();
-
-type ApiError = {
-  code?: string;
-  message?: string;
-  fields?: Record<string, string>;
-};
+const apiErrorSchema = z.object({
+  code: z.string().optional(),
+  message: z.string().optional(),
+  fields: z.record(z.string(), z.string()).optional(),
+});
+type ApiError = z.infer<typeof apiErrorSchema>;
+type CatalogRequestBody = CreateConcreteProduct | CreateProductComposition | UpdateConcreteProduct | MacroProfile | { readonly name: string; readonly parentId?: number | null };
 
 /** Fetch catalog categories with the incoming session. */
 async function getCategories(context: BackendRequestContext): Promise<Category[]> {
-  return categoryListSchema.parse(await getJson("/categories", context)).map(mapCategory);
+  return (await requestJson("/categories", context, categoryListSchema)).map(mapCategory);
 }
 
 /** Fetch brand suggestions with the incoming session. */
 async function getBrands(query: string, context: BackendRequestContext): Promise<Brand[]> {
-  const params = new URLSearchParams({ query });
-  return brandListSchema.parse(await getJson(`/brands?${params.toString()}`, context)).map(mapBrand);
+  return (await requestJson(`/brands?${new URLSearchParams({ query })}`, context, brandListSchema)).map(mapBrand);
 }
 
 /** Fetch one brand with the incoming session. */
 async function getBrand(brandId: string, context: BackendRequestContext): Promise<Brand> {
-  return mapBrand(brandDtoSchema.parse(await getJson(`/brands/${brandId}`, context)));
+  return mapBrand(await requestJson(`/brands/${brandId}`, context, brandDtoSchema));
 }
 
 /** Fetch unit types with the incoming session. */
 async function getUnitTypes(context: BackendRequestContext): Promise<UnitType[]> {
-  return unitTypeListSchema.parse(await getJson("/unit-types", context)).map(mapUnitType);
+  return (await requestJson("/unit-types", context, unitTypeListSchema)).map(mapUnitType);
 }
 
 /** Fetch package types with the incoming session. */
 async function getPackageTypes(context: BackendRequestContext): Promise<PackageType[]> {
-  return packageTypeListSchema.parse(await getJson("/package-types", context)).map(mapPackageType);
+  return (await requestJson("/package-types", context, packageTypeListSchema)).map(mapPackageType);
 }
 
 /** Fetch a filtered page of concrete products with the incoming session. */
@@ -69,14 +69,14 @@ async function getConcreteProducts(input: { readonly query?: string; readonly ca
   if (input.cursor) params.set("cursor", input.cursor);
   if (input.limit) params.set("limit", String(input.limit));
   const query = params.toString();
-  return mapConcreteProductPage(concreteProductPageSchema.parse(await getJson(`/products${query ? `?${query}` : ""}`, context)));
+  return mapConcreteProductPage(await requestJson(`/products${query ? `?${query}` : ""}`, context, concreteProductPageSchema));
 }
 
 /** Search compositions by shared name and brand and enrich them for the admin UI. */
 async function searchProductCompositions(query: string, context: BackendRequestContext): Promise<ProductComposition[]> {
   const params = new URLSearchParams({ query });
   const [compositions, categories, products] = await Promise.all([
-    getJson(`/product-compositions/search?${params.toString()}`, context).then((value) => backendCompositionListSchema.parse(value)),
+    requestJson(`/product-compositions/search?${params}`, context, backendCompositionListSchema),
     getCategories(context),
     getConcreteProducts({ query, limit: 200 }, context),
   ]);
@@ -91,7 +91,7 @@ async function searchProductCompositions(query: string, context: BackendRequestC
 
 /** Fetch concrete product detail and join its shared composition projection. */
 async function getConcreteProduct(productId: string, context: BackendRequestContext): Promise<ConcreteProductDetail> {
-  const raw = backendConcreteProductDetailSchema.parse(await getJson(`/products/${productId}`, context));
+  const raw = await requestJson(`/products/${productId}`, context, backendConcreteProductDetailSchema);
   const compositions = await searchProductCompositions(raw.compositionName, context);
   const composition = compositions.find((item) => item.id === raw.productCompositionId);
   if (!composition) throw new Error("Concrete product response contains no matching composition");
@@ -100,27 +100,27 @@ async function getConcreteProduct(productId: string, context: BackendRequestCont
 
 /** Create a category with the incoming session. */
 async function createCategory(input: { name: string; parentId: number | null }, context: BackendRequestContext): Promise<Category> {
-  return mapCategory(categoryDtoSchema.parse(await postJson("/categories", input, context)));
+  return mapCategory(await requestJson("/categories", context, categoryDtoSchema, "POST", input));
 }
 
 /** Update a category with the incoming session. */
 async function updateCategory(input: { id: number; name: string }, context: BackendRequestContext): Promise<Category> {
-  return mapCategory(categoryDtoSchema.parse(await patchJson(`/categories/${input.id}`, { name: input.name }, context)));
+  return mapCategory(await requestJson(`/categories/${input.id}`, context, categoryDtoSchema, "PATCH", { name: input.name }));
 }
 
 /** Delete a category with the incoming session. */
 async function deleteCategory(id: number, context: BackendRequestContext): Promise<void> {
-  await deleteJson(`/categories/${id}`, context);
+  await requestWithoutBody(`/categories/${id}`, context, "DELETE");
 }
 
 /** Create or resolve a brand with the incoming session. */
 async function createBrand(input: { name: string }, context: BackendRequestContext): Promise<Brand> {
-  return mapBrand(brandDtoSchema.parse(await postJson("/brands", input, context)));
+  return mapBrand(await requestJson("/brands", context, brandDtoSchema, "POST", input));
 }
 
 /** Create a product composition with the incoming session. */
 async function createProductComposition(input: CreateProductComposition, context: BackendRequestContext): Promise<ProductComposition> {
-  const created = productCompositionDetailSchema.parse(await postJson("/product-compositions", input, context));
+  const created = await requestJson("/product-compositions", context, productCompositionDetailSchema, "POST", input);
   const matches = await searchProductCompositions(created.name, context);
   const composition = matches.find((item) => item.id === created.id);
   if (!composition) throw new Error("Created product composition could not be read back");
@@ -129,13 +129,13 @@ async function createProductComposition(input: CreateProductComposition, context
 
 /** Create one concrete product with the incoming session. */
 async function createConcreteProduct(input: CreateConcreteProduct, context: BackendRequestContext): Promise<ConcreteProductDetail> {
-  const created = backendConcreteProductDetailSchema.parse(await postJson("/products", input, context));
+  const created = await requestJson("/products", context, backendConcreteProductDetailSchema, "POST", input);
   return getConcreteProduct(created.productId, context);
 }
 
 /** Update shared composition identity fields. */
 async function updateProductComposition(compositionId: string, input: UpdateProductComposition, context: BackendRequestContext): Promise<ProductComposition> {
-  const updated = productCompositionDetailSchema.parse(await putJson(`/product-compositions/${compositionId}`, input, context));
+  const updated = await requestJson(`/product-compositions/${compositionId}`, context, productCompositionDetailSchema, "PUT", input);
   const matches = await searchProductCompositions(updated.name, context);
   const composition = matches.find((item) => item.id === updated.id);
   if (!composition) throw new Error("Updated product composition could not be read back");
@@ -144,133 +144,63 @@ async function updateProductComposition(compositionId: string, input: UpdateProd
 
 /** Update a shared composition macro profile. */
 async function updateProductCompositionMacroProfile(compositionId: string, input: MacroProfile, context: BackendRequestContext): Promise<MacroProfile> {
-  return macroProfileSchema.parse(await putJson(`/product-compositions/${compositionId}/macro-profile`, input, context));
+  return requestJson(`/product-compositions/${compositionId}/macro-profile`, context, macroProfileSchema, "PUT", input);
 }
 
 /** Update fields owned by one concrete product. */
 async function updateConcreteProduct(productId: string, input: UpdateConcreteProduct, context: BackendRequestContext): Promise<ConcreteProductDetail> {
-  await putJson(`/products/${productId}`, { ...input, productCompositionId: await getCompositionId(productId, context) }, context);
+  await requestJson(`/products/${productId}`, context, backendConcreteProductDetailSchema, "PUT", { ...input, productCompositionId: await getCompositionId(productId, context) });
   return getConcreteProduct(productId, context);
 }
 
 /** Archive one concrete product. */
 async function archiveConcreteProduct(productId: string, context: BackendRequestContext): Promise<ConcreteProductDetail> {
-  await postJson(`/products/${productId}/archive`, {}, context);
+  await requestJson(`/products/${productId}/archive`, context, backendConcreteProductDetailSchema, "POST");
   return getConcreteProduct(productId, context);
 }
 
 /** Restore one concrete product. */
 async function restoreConcreteProduct(productId: string, context: BackendRequestContext): Promise<ConcreteProductDetail> {
-  await postJson(`/products/${productId}/restore`, {}, context);
+  await requestJson(`/products/${productId}/restore`, context, backendConcreteProductDetailSchema, "POST");
   return getConcreteProduct(productId, context);
 }
 
 /** Resolve the composition identifier required by the backend's full product PUT contract. */
 async function getCompositionId(productId: string, context: BackendRequestContext): Promise<string> {
-  const raw = backendConcreteProductDetailSchema.parse(await getJson(`/products/${productId}`, context));
-  return raw.productCompositionId;
+  return (await requestJson(`/products/${productId}`, context, backendConcreteProductDetailSchema)).productCompositionId;
 }
 
 /** Determine whether an API failure is a not-found response. */
-function isNotFound(error: unknown): boolean {
+function isNotFound(error: Error): boolean {
   return error instanceof BackendApiError && error.status === 404;
 }
 
-/** Perform an authenticated backend GET context. */
-async function getJson(path: string, context: BackendRequestContext): Promise<unknown> {
-  return readJsonResponse(await sendBackendRequest(path, context));
+/** Perform one authenticated backend request and parse its endpoint contract. */
+async function requestJson<T>(path: string, context: BackendRequestContext, schema: ZodType<T>, method: BackendMethod = "GET", body?: CatalogRequestBody): Promise<T> {
+  const response = await sendBackendRequest(path, context, { method, body });
+  if (!response.ok) throw new BackendApiError(response.status, await readApiError(response));
+  return schema.parse(await response.json());
 }
 
-/** Perform an authenticated backend POST context. */
-async function postJson(path: string, body: unknown, context: BackendRequestContext): Promise<unknown> {
-  return readJsonResponse(await sendBackendRequest(path, context, { method: "POST", body }));
-}
-
-/** Perform an authenticated backend PATCH context. */
-async function patchJson(path: string, body: unknown, context: BackendRequestContext): Promise<unknown> {
-  return readJsonResponse(await sendBackendRequest(path, context, { method: "PATCH", body }));
-}
-
-/** Perform an authenticated backend PUT context. */
-async function putJson(path: string, body: unknown, context: BackendRequestContext): Promise<unknown> {
-  return readJsonResponse(await sendBackendRequest(path, context, { method: "PUT", body }));
-}
-
-/**
- * Perform an authenticated backend DELETE context.
- *
- * @param path - Backend API path.
- * @param context - Incoming context carrying session headers.
- * @param body - Optional JSON context body.
- * @returns A promise that resolves after a successful response.
- */
-async function deleteJson(path: string, context: BackendRequestContext, body?: unknown): Promise<void> {
-  const response = await sendBackendRequest(path, context, { method: "DELETE", body });
+/** Perform one authenticated request without a response body. */
+async function requestWithoutBody(path: string, context: BackendRequestContext, method: BackendMethod): Promise<void> {
+  const response = await sendBackendRequest(path, context, { method });
   if (!response.ok) throw new BackendApiError(response.status, await readApiError(response));
 }
 
-/**
- * Check a backend response and return its untrusted JSON body.
- *
- * @param response - Raw backend response.
- * @returns Untrusted JSON data for endpoint-specific contract parsing.
- */
-async function readJsonResponse(response: Response): Promise<unknown> {
-  if (!response.ok) throw new BackendApiError(response.status, await readApiError(response));
-  const value: unknown = await response.json();
-  return value;
-}
-
-/**
- * Parse a backend error response into its safe protocol projection.
- *
- * @param response - Failed backend response.
- * @returns Sanitized error fields safe for application error mapping.
- */
+/** Parse a backend error response into its safe protocol projection. */
 async function readApiError(response: Response): Promise<ApiError> {
-  const value: unknown = await response.json().catch(() => null);
-  if (typeof value !== "object" || value === null) return { message: response.statusText };
-
-  const code = readOptionalString(value, "code");
-  const message = readOptionalString(value, "message");
-  const fields = readStringRecord(Reflect.get(value, "fields"));
-  return {
-    ...(code === undefined ? {} : { code }),
-    ...(message === undefined ? {} : { message }),
-    ...(fields === undefined ? {} : { fields }),
-  };
+  const parsed = apiErrorSchema.safeParse(await response.json().catch(() => null));
+  return parsed.success ? parsed.data : { message: response.statusText };
 }
 
-/**
- * Read an optional string field from an untrusted protocol object.
- *
- * @param input - Untrusted protocol object.
- * @param field - Field to inspect.
- * @returns String value or undefined.
- */
-function readOptionalString(input: object, field: string): string | undefined {
-  const value: unknown = Reflect.get(input, field);
-  return typeof value === "string" ? value : undefined;
-}
-
-/**
- * Parse an untrusted string record.
- *
- * @param input - Potential record value.
- * @returns String-only record or undefined when malformed.
- */
-function readStringRecord(input: unknown): Record<string, string> | undefined {
-  if (typeof input !== "object" || input === null || Array.isArray(input)) return undefined;
-  const entries = Object.entries(input);
-  if (!entries.every((entry) => typeof entry[1] === "string")) return undefined;
-  return Object.fromEntries(entries) as Record<string, string>;
-}
-
+/** Classified product-catalog backend error. */
 export class BackendApiError extends Error {
   readonly kind = "ProductApiFailure";
   readonly code: string | undefined;
-  readonly fields: Record<string, string> | undefined;
+  readonly fields: Readonly<Record<string, string>> | undefined;
 
+  /** Create one parsed backend error. */
   constructor(readonly status: number, readonly body: ApiError) {
     super(body.message ?? `Backend request failed with status ${status}`);
     this.code = body.code;

@@ -4,10 +4,10 @@ import type { LocationActionErrors } from "./types/location-management.types";
 /**
  * Translate backend conflicts to contextual Dutch dialog errors.
  *
- * @param error - Unknown action failure.
+ * @param error - Action failure.
  * @returns Name or form error safe for presentation.
  */
-export function mapLocationApiError(error: unknown): LocationActionErrors {
+export function mapLocationApiError(error: Error): LocationActionErrors {
   if (!isLocationApiFailure(error)) return { form: "De wijziging kon niet worden opgeslagen. Probeer opnieuw." };
   switch (error.code) {
     case "LOCATION_ALREADY_EXISTS": return { name: "Op dit niveau bestaat al een opbergplaats met deze naam." };

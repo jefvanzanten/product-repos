@@ -32,7 +32,7 @@ export default function StorageManagementPage({ loaderData }: { readonly loaderD
 
   /** Open a dialog without showing a stale fetcher result. */
   function openDialog(next: LocationDialogState): void {
-    returnFocusRef.current = typeof document === "undefined" ? null : document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setSubmitted(false);
     setDialog(next);
   }

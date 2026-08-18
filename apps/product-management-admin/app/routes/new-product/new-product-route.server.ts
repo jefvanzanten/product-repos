@@ -37,6 +37,7 @@ export async function handleNewProductRouteAction({ request }: ActionFunctionArg
     const source = parseAdminSourceFromSearch(new URL(request.url).searchParams);
     return redirect(toAdminRedirectPath(`/product-catalogus/${product.productId}`, source));
   } catch (error) {
+    if (!(error instanceof Error)) throw error;
     return { errors: mapProductApiError(error), values };
   }
 }

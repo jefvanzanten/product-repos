@@ -21,6 +21,7 @@ afterEach(() => vi.unstubAllGlobals());
  * @returns Loader argument object.
  */
 function loaderArgs(request: Request): LoaderFunctionArgs {
+  // SAFETY: these are the complete React Router loader fields consumed by the unit under test.
   return { request, params: {}, context: {} } as LoaderFunctionArgs;
 }
 
@@ -31,6 +32,7 @@ function loaderArgs(request: Request): LoaderFunctionArgs {
  * @returns Action argument object.
  */
 function actionArgs(request: Request): ActionFunctionArgs {
+  // SAFETY: these are the complete React Router action fields consumed by the unit under test.
   return { request, params: {}, context: {} } as ActionFunctionArgs;
 }
 
@@ -61,7 +63,11 @@ describe("locations route server contract", () => {
     expect((await loadLocationsRoute(loaderArgs(archivedRequest))).status).toBe("archived");
     expect(fetchMock.mock.calls[0]?.[0]).toBe("http://localhost:3000/locations");
     expect(fetchMock.mock.calls[1]?.[0]).toBe("http://localhost:3000/locations?status=archived");
-    expect((fetchMock.mock.calls[0]?.[1] as RequestInit).headers).toSatisfy((headers: Headers) => headers.get("cookie") === "session=test");
+    const firstCall = fetchMock.mock.calls[0];
+    expect(firstCall).toBeDefined();
+    // SAFETY: the defined fetch mock call's second tuple member is the RequestInit supplied by the adapter.
+    const firstInit = firstCall?.[1] as RequestInit;
+    expect(firstInit.headers).toSatisfy((headers: Headers) => headers.get("cookie") === "session=test");
   });
 
   test.each([
@@ -70,6 +76,7 @@ describe("locations route server contract", () => {
     [{ _action: "move", locationId: "12", parentId: "7" }, "PATCH", "/locations/12", { parentId: 7 }],
     [{ _action: "archive", locationId: "12" }, "POST", "/locations/12/archive", undefined],
     [{ _action: "restore", locationId: "12" }, "POST", "/locations/12/restore", undefined],
+  // SAFETY: literal tuple preservation is required by Vitest's parameterized-test inference.
   ] as const)("dispatches $0 through the exact backend method and path", async (fields, method, path, body) => {
     const responseNode = path.endsWith("archive") ? { ...node, archivedAt: "2026-08-04T10:00:00.000Z", isEffectivelyArchived: true } : node;
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(responseNode), { status: 200 }));
@@ -77,6 +84,7 @@ describe("locations route server contract", () => {
     const result = await handleLocationsRouteAction(actionArgs(actionRequest(fields)));
     expect(result.ok).toBe(true);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(`http://localhost:3000${path}`);
+    // SAFETY: the preceding URL expectation establishes the fetch mock call and its RequestInit argument.
     const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
     expect(init.method).toBe(method);
     expect(init.body).toBe(body === undefined ? undefined : JSON.stringify(body));

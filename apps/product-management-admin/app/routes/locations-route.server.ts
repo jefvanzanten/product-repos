@@ -1,9 +1,14 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { z } from "zod/v4";
 import { createBackendRequestContext } from "../core/presentation/backend-request-context.server";
 import { parseCreateLocation, parseUpdateLocation } from "../features/storage-management/data/location-command-parser";
 import { archiveLocation, createLocation, getLocationTree, restoreLocation, updateLocation } from "../features/storage-management/data/location-management-api.server";
 import type { LocationActionName, LocationActionResult, LocationLoaderData } from "../features/storage-management/presentation/types/location-management.types";
 import { mapLocationApiError } from "../features/storage-management/presentation/location-error-messages";
+
+const locationActionNameSchema = z.enum(["create", "rename", "move", "archive", "restore"]);
+const formTextSchema = z.string().catch("");
+const positiveIdSchema = z.string().regex(/^[1-9]\d*$/).transform(Number).pipe(z.number().int().safe().positive());
 
 /**
  * Load the active tree or explicit archived forest.
@@ -67,7 +72,7 @@ export async function handleLocationsRouteAction({ request }: ActionFunctionArgs
       }
     }
   } catch (error: unknown) {
-    return { ok: false, action, errors: mapLocationApiError(error) };
+    return { ok: false, action, errors: mapLocationApiError(error instanceof Error ? error : new Error("Unknown location failure")) };
   }
 }
 
@@ -78,9 +83,8 @@ export async function handleLocationsRouteAction({ request }: ActionFunctionArgs
  * @returns Supported action or null.
  */
 function parseActionName(value: FormDataEntryValue | null): LocationActionName | null {
-  return value === "create" || value === "rename" || value === "move" || value === "archive" || value === "restore"
-    ? value
-    : null;
+  const parsed = locationActionNameSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
 }
 
 /**
@@ -91,8 +95,7 @@ function parseActionName(value: FormDataEntryValue | null): LocationActionName |
  * @returns Text value or an empty validation sentinel.
  */
 function readText(formData: FormData, key: string): string {
-  const value = formData.get(key);
-  return typeof value === "string" ? value : "";
+  return formTextSchema.parse(formData.get(key));
 }
 
 /**
@@ -113,9 +116,8 @@ function parseNullableId(value: FormDataEntryValue | null): number | null {
  * @returns Positive integer or null.
  */
 function parseRequiredId(value: FormDataEntryValue | null): number | null {
-  if (typeof value !== "string" || !/^[1-9]\d*$/.test(value)) return null;
-  const parsed = Number(value);
-  return Number.isSafeInteger(parsed) ? parsed : null;
+  const parsed = positiveIdSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
 }
 
 /**

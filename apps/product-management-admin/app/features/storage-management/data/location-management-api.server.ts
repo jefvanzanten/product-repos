@@ -4,83 +4,49 @@ import {
   type LocationErrorResponse,
   type LocationTreeNode as LocationTreeNodeTransport,
 } from "@product-repos/contracts/locations";
+import type { ZodType } from "zod/v4";
 import { sendBackendRequest, type BackendMethod, type BackendRequestContext } from "../../../core/data/backend-api.server";
 import type { CreateLocation, LocationTreeNode, UpdateLocation } from "../domain/location";
 
 const locationTreeSchema = locationTreeNodeSchema.array();
+type LocationRequestBody = CreateLocation | UpdateLocation;
 
 /** Classified backend Location protocol failure. */
 export class LocationApiError extends Error {
   readonly kind = "LocationApiFailure";
   readonly code: LocationErrorResponse["code"];
 
-  /**
-   * Create a safe backend API error.
-   *
-   * @param status - Backend HTTP status.
-   * @param body - Strict parsed Location error response.
-   */
+  /** Create a safe backend API error. */
   constructor(readonly status: number, readonly body: LocationErrorResponse) {
     super(body.message);
     this.code = body.code;
   }
 }
 
-/**
- * Fetch the active or archived location forest with the incoming session.
- *
- * @param status - Requested route state.
- * @param context - Incoming React Router context.
- * @returns Strictly parsed location roots.
- */
+/** Fetch the active or archived location forest with the incoming session. */
 export async function getLocationTree(status: "active" | "archived", context: BackendRequestContext): Promise<LocationTreeNode[]> {
   const path = status === "archived" ? "/locations?status=archived" : "/locations";
-  return locationTreeSchema.parse(await requestBackend(path, context)).map(mapLocationTreeNode);
+  return (await requestBackend(path, context, locationTreeSchema)).map(mapLocationTreeNode);
 }
 
-/**
- * Create one root or child location.
- *
- * @param input - Strict create context.
- * @param context - Incoming authenticated context.
- * @returns Created location node.
- */
+/** Create one root or child location. */
 export async function createLocation(input: CreateLocation, context: BackendRequestContext): Promise<LocationTreeNode> {
-  return mapLocationTreeNode(locationTreeNodeSchema.parse(await requestBackend("/locations", context, "POST", input)));
+  return mapLocationTreeNode(await requestBackend("/locations", context, locationTreeNodeSchema, "POST", input));
 }
 
-/**
- * Rename and/or move one location.
- *
- * @param id - Stable location identifier.
- * @param input - Strict update context.
- * @param context - Incoming authenticated context.
- * @returns Updated location node.
- */
+/** Rename and/or move one location. */
 export async function updateLocation(id: number, input: UpdateLocation, context: BackendRequestContext): Promise<LocationTreeNode> {
-  return mapLocationTreeNode(locationTreeNodeSchema.parse(await requestBackend(`/locations/${id}`, context, "PATCH", input)));
+  return mapLocationTreeNode(await requestBackend(`/locations/${id}`, context, locationTreeNodeSchema, "PATCH", input));
 }
 
-/**
- * Archive one active location.
- *
- * @param id - Stable location identifier.
- * @param context - Incoming authenticated context.
- * @returns Archived location node.
- */
+/** Archive one active location. */
 export async function archiveLocation(id: number, context: BackendRequestContext): Promise<LocationTreeNode> {
-  return mapLocationTreeNode(locationTreeNodeSchema.parse(await requestBackend(`/locations/${id}/archive`, context, "POST")));
+  return mapLocationTreeNode(await requestBackend(`/locations/${id}/archive`, context, locationTreeNodeSchema, "POST"));
 }
 
-/**
- * Restore one directly archived location.
- *
- * @param id - Stable location identifier.
- * @param context - Incoming authenticated context.
- * @returns Restored location node.
- */
+/** Restore one directly archived location. */
 export async function restoreLocation(id: number, context: BackendRequestContext): Promise<LocationTreeNode> {
-  return mapLocationTreeNode(locationTreeNodeSchema.parse(await requestBackend(`/locations/${id}/restore`, context, "POST")));
+  return mapLocationTreeNode(await requestBackend(`/locations/${id}/restore`, context, locationTreeNodeSchema, "POST"));
 }
 
 /** Map a validated recursive location DTO into the frontend model. */
@@ -88,31 +54,17 @@ function mapLocationTreeNode(dto: LocationTreeNodeTransport): LocationTreeNode {
   return { ...dto, children: dto.children.map(mapLocationTreeNode) };
 }
 
-/**
- * Perform one session-forwarding backend context and parse unknown JSON.
- *
- * @param path - Backend API path.
- * @param context - Incoming context owning cookie and abort signal.
- * @param method - HTTP method.
- * @param body - Optional JSON body.
- * @returns Unknown JSON for contract parsing by the caller.
- */
-async function requestBackend(path: string, context: BackendRequestContext, method: BackendMethod = "GET", body?: unknown): Promise<unknown> {
+/** Perform one session-forwarding request and parse its endpoint contract. */
+async function requestBackend<T>(path: string, context: BackendRequestContext, schema: ZodType<T>, method: BackendMethod = "GET", body?: LocationRequestBody): Promise<T> {
   const response = await sendBackendRequest(path, context, { method, body });
   if (!response.ok) throw new LocationApiError(response.status, await parseErrorResponse(response));
-  return response.json();
+  return schema.parse(await response.json());
 }
 
-/**
- * Parse a backend error without trusting malformed transport data.
- *
- * @param response - Failed backend response.
- * @returns Strict Location error response or a generic internal fallback.
- */
+/** Parse a backend error without trusting malformed transport data. */
 async function parseErrorResponse(response: Response): Promise<LocationErrorResponse> {
-  const value: unknown = await response.json().catch(() => null);
-  const parsed = locationErrorResponseSchema.safeParse(value);
+  const parsed = locationErrorResponseSchema.safeParse(await response.json().catch(() => null));
   return parsed.success
     ? parsed.data
-    : { code: "INTERNAL_ERROR", message: response.statusText || "Backend context failed" };
+    : { code: "INTERNAL_ERROR", message: response.statusText || "Backend request failed" };
 }

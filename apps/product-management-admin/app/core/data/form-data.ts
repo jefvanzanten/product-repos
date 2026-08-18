@@ -1,21 +1,13 @@
-/**
- * Read a text form field without accepting uploaded files.
- *
- * @param form - Submitted form data.
- * @param key - Field name.
- * @returns Submitted text or an empty validation sentinel.
- */
+import { z } from "zod/v4";
+
+const formTextSchema = z.string().catch("");
+
+/** Read a text form field without accepting uploaded files. */
 export function readFormText(form: FormData, key: string): string {
-  const value = form.get(key);
-  return typeof value === "string" ? value : "";
+  return formTextSchema.parse(form.get(key));
 }
 
-/**
- * Normalize an individual form entry to text without object stringification.
- *
- * @param value - Untrusted form entry.
- * @returns Submitted text or an empty validation sentinel.
- */
+/** Normalize an individual form entry to text without object stringification. */
 export function readFormEntryText(value: FormDataEntryValue | null): string {
-  return typeof value === "string" ? value : "";
+  return formTextSchema.parse(value);
 }

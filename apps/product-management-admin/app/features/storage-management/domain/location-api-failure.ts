@@ -8,7 +8,7 @@ export type LocationApiFailure = Error & {
   readonly code: LocationFailureCode;
 };
 
-/** Determine whether an unknown failure is a classified location API failure. */
-export function isLocationApiFailure(error: unknown): error is LocationApiFailure {
-  return error instanceof Error && Reflect.get(error, "kind") === "LocationApiFailure";
+/** Determine whether a failure is a classified location API failure. */
+export function isLocationApiFailure(error: Error): error is LocationApiFailure {
+  return "kind" in error && error.kind === "LocationApiFailure";
 }

@@ -1,3 +1,4 @@
+import { productCompositionDtoSchema } from "@product-repos/contracts";
 import { useRef, useState } from "react";
 import { useNavigation } from "react-router";
 import type { ProductComposition } from "../../../domain/product-catalog";
@@ -25,7 +26,7 @@ export function NewProductPage({ actionData, loaderData }: { readonly actionData
       return;
     }
     const response = await fetch(`/composition-lookup?q=${encodeURIComponent(query)}`);
-    const nextSuggestions = response.ok ? await response.json() as ProductComposition[] : [];
+    const nextSuggestions = response.ok ? productCompositionDtoSchema.array().parse(await response.json()) : [];
     if (sequence === requestSequence.current) setSuggestions(nextSuggestions);
   }
 

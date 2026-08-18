@@ -131,6 +131,7 @@ export async function handleProductCatalogAction(request: Request): Promise<Acti
     }
     return { errors: { form: "Onbekende actie." } };
   } catch (error) {
+    if (!(error instanceof Error)) throw error;
     return { errors: mapProductApiError(error) };
   }
 }

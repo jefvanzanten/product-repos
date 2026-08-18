@@ -15,7 +15,7 @@ export type AdminSourceDetails = {
   readonly publicPath: "/inventory" | "/calorie-tracker";
 };
 
-const sourceDetails: Readonly<Record<AdminSource, AdminSourceDetails>> = {
+const sourceDetails = {
   inventory: {
     label: "Inventarisatie",
     publicPath: "/inventory",
@@ -24,7 +24,7 @@ const sourceDetails: Readonly<Record<AdminSource, AdminSourceDetails>> = {
     label: "Calorie Tracker",
     publicPath: "/calorie-tracker",
   },
-};
+} satisfies Record<AdminSource, AdminSourceDetails>;
 
 const safeReturnPathPatterns: ReadonlyArray<RegExp> = [
   /^\/$/,

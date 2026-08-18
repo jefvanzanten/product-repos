@@ -4,11 +4,11 @@ import styles from "./catalog-actions.module.css";
 
 type CatalogActionGroupVariant = "card" | "inline" | "modal";
 
-const groupClassNames: Readonly<Record<CatalogActionGroupVariant, string | undefined>> = {
+const groupClassNames = {
   card: styles.cardActions,
   inline: styles.inlineActions,
   modal: styles.modalActions,
-};
+} satisfies Record<CatalogActionGroupVariant, string | undefined>;
 
 /**
  * Group related catalog actions using the layout for their context.

@@ -1,15 +1,17 @@
 import { isProductApiFailure } from "../domain/product-api-failure";
 
 /** Field and form errors displayed by product-catalog forms. */
-export type ProductFormErrors = Record<string, string>;
+export interface ProductFormErrors {
+  readonly [field: string]: string;
+}
 
 /**
  * Translate a classified product-catalog API failure into localized form errors.
  *
- * @param error - Unknown route action failure.
+ * @param error - Route action failure.
  * @returns Errors safe for presentation.
  */
-export function mapProductApiError(error: unknown): ProductFormErrors {
+export function mapProductApiError(error: Error): ProductFormErrors {
   if (!isProductApiFailure(error)) return { form: "Opslaan mislukt. Probeer opnieuw." };
   if (error.fields) return error.fields;
   if (error.code === "CATEGORY_ALREADY_EXISTS") return { categoryName: "Deze categorie bestaat al op dit niveau." };

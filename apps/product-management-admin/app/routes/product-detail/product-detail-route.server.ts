@@ -19,6 +19,7 @@ export async function loadProductDetailRoute({ params, request }: LoaderFunction
     ]);
     return { found: true, product, categories, brands, packageTypes, unitTypes, backUrl };
   } catch (error) {
+    if (!(error instanceof Error)) throw error;
     if (isNotFound(error)) return { found: false, backUrl };
     throw error;
   }
@@ -56,6 +57,7 @@ export async function handleProductDetailRouteAction({ params, request }: Action
     }
     return { intent, ok: true, product: await getConcreteProduct(productId, context) };
   } catch (error) {
+    if (!(error instanceof Error)) throw error;
     return { intent, errors: mapProductApiError(error), values };
   }
 }
