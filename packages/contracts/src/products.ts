@@ -1,7 +1,10 @@
 import { z } from "zod/v4";
 import { brandDtoSchema } from "./brands.ts";
+import { categoryDtoSchema } from "./categories.ts";
+import { unitContentDtoSchema, unitDimensionSchema } from "./unit-types.ts";
 
-const nullableDecimalSchema = z.string().regex(/^(?:0|[1-9]\d*)(?:\.\d+)?$/).nullable();
+const decimalSchema = z.string().regex(/^(?:0|[1-9]\d*)(?:\.\d+)?$/);
+const nullableDecimalSchema = decimalSchema.nullable();
 
 /** Product consumption types supported by the catalog. */
 export const consumptionTypeSchema = z.enum(["FOOD", "DRINK", "SUPPLEMENT"]);
@@ -20,54 +23,49 @@ export const macroProfileSchema = z.object({
   caloriesSource: caloriesSourceSchema.nullable(),
 }).strict();
 
-/** Shared product-composition mutation input. */
-export const productCompositionInputSchema = z.object({
+/** A composition returned by autocomplete and composition mutations. */
+export const productCompositionDtoSchema = z.object({
+  id: z.string().uuid(),
   name: z.string(),
-  categoryId: z.number().int().positive(),
+  brand: brandDtoSchema.nullable(),
+  category: categoryDtoSchema,
+  categoryPath: z.array(categoryDtoSchema),
+  consumptionType: consumptionTypeSchema,
+  macroProfile: macroProfileSchema.nullable(),
+  productCount: z.number().int().nonnegative(),
+  activeProductCount: z.number().int().nonnegative().optional(),
+}).strict();
+
+/** Input for creating a shared product composition. */
+export const createProductCompositionSchema = z.object({
+  name: z.string(),
   brandId: z.string().uuid().nullable().optional(),
+  categoryId: z.number().int().positive(),
   consumptionType: consumptionTypeSchema,
   macroProfile: macroProfileSchema.nullable().optional(),
 }).strict();
 
-/** Optional concrete-product content input. */
-export const concreteProductContentInputSchema = z.object({
-  amount: z.string(),
-  unitTypeId: z.number().int().positive(),
-}).strict();
+/** Input for updating shared product-composition fields. */
+export const updateProductCompositionSchema = createProductCompositionSchema.strict();
 
-/** Optional portion input belonging to one concrete product. */
-export const productPortionInputSchema = z.object({
+/** A product-specific portion. */
+export const concreteProductPortionDtoSchema = z.object({
   singularName: z.string(),
   pluralName: z.string(),
-  amount: z.string(),
+  unitContent: unitContentDtoSchema,
+  portionsPerProduct: z.number().int().positive().nullable(),
+}).strict();
+
+/** Product-specific portion mutation input. */
+export const concreteProductPortionInputSchema = z.object({
+  singularName: z.string(),
+  pluralName: z.string(),
+  amount: decimalSchema,
   unitTypeId: z.number().int().positive(),
   portionsPerProduct: z.number().int().positive().nullable().optional(),
 }).strict();
 
-/** Concrete-product mutation input. */
-export const concreteProductInputSchema = z.object({
-  productCompositionId: z.string().uuid(),
-  packageTypeId: z.number().int().positive().nullable().optional(),
-  content: concreteProductContentInputSchema.nullable().optional(),
-  imageUrl: z.string().url().nullable().optional(),
-  barcode: z.string().trim().min(1).nullable().optional(),
-  portion: productPortionInputSchema.nullable().optional(),
-}).strict();
-
-/** Product-composition detail returned by catalog operations. */
-export const productCompositionDetailSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-  categoryId: z.number().int().positive(),
-  categoryPath: z.string(),
-  brand: brandDtoSchema.nullable(),
-  consumptionType: consumptionTypeSchema,
-  macroProfile: macroProfileSchema.nullable(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-}).strict();
-
-/** Concrete-product list and detail summary. */
+/** Concrete-product list summary. */
 export const concreteProductSummarySchema = z.object({
   productId: z.string().uuid(),
   productCompositionId: z.string().uuid(),
@@ -89,13 +87,41 @@ export const concreteProductPageSchema = z.object({
   hasMore: z.boolean(),
 }).strict();
 
+/** Full concrete-product detail. */
+export const concreteProductDetailSchema = concreteProductSummarySchema.extend({
+  composition: productCompositionDtoSchema,
+  packageTypeId: z.number().int().positive().nullable(),
+  content: z.object({ amount: decimalSchema, unitTypeId: z.number().int().positive(), symbol: z.string(), dimension: unitDimensionSchema }).strict().nullable(),
+  imageUrl: z.string().url().nullable(),
+  barcode: z.string().nullable(),
+  portion: z.object({ singularName: z.string(), pluralName: z.string(), amount: decimalSchema, unitTypeId: z.number().int().positive(), portionsPerProduct: z.number().int().positive().nullable() }).strict().nullable(),
+  archivedAt: z.string().nullable(),
+}).strict();
+
+/** Input for creating one concrete product. */
+export const createConcreteProductSchema = z.object({
+  productCompositionId: z.string().uuid(),
+  packageTypeId: z.number().int().positive().nullable().optional(),
+  content: z.object({ amount: decimalSchema, unitTypeId: z.number().int().positive() }).strict().nullable().optional(),
+  imageUrl: z.string().url().nullable().optional(),
+  barcode: z.string().nullable().optional(),
+  portion: concreteProductPortionInputSchema.nullable().optional(),
+}).strict();
+
+/** Input for updating fields owned by one concrete product. */
+export const updateConcreteProductSchema = createConcreteProductSchema.omit({ productCompositionId: true }).strict();
+
 export type ConsumptionType = z.infer<typeof consumptionTypeSchema>;
 export type MacroReferenceBasis = z.infer<typeof macroReferenceBasisSchema>;
 export type CaloriesSource = z.infer<typeof caloriesSourceSchema>;
 export type MacroProfile = z.infer<typeof macroProfileSchema>;
-export type ProductCompositionDetail = z.infer<typeof productCompositionDetailSchema>;
-export type ProductCompositionInput = z.infer<typeof productCompositionInputSchema>;
-export type ConcreteProductInput = z.infer<typeof concreteProductInputSchema>;
+export type ProductCompositionDto = z.infer<typeof productCompositionDtoSchema>;
+export type CreateProductComposition = z.infer<typeof createProductCompositionSchema>;
+export type UpdateProductComposition = z.infer<typeof updateProductCompositionSchema>;
+export type ConcreteProductPortionDto = z.infer<typeof concreteProductPortionDtoSchema>;
+export type ConcreteProductPortionInput = z.infer<typeof concreteProductPortionInputSchema>;
 export type ConcreteProductSummary = z.infer<typeof concreteProductSummarySchema>;
 export type ConcreteProductPage = z.infer<typeof concreteProductPageSchema>;
-export type ProductPortionInput = z.infer<typeof productPortionInputSchema>;
+export type ConcreteProductDetail = z.infer<typeof concreteProductDetailSchema>;
+export type CreateConcreteProduct = z.infer<typeof createConcreteProductSchema>;
+export type UpdateConcreteProduct = z.infer<typeof updateConcreteProductSchema>;

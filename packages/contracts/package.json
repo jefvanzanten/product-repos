@@ -36,11 +36,6 @@
       "import": "./src/products.ts",
       "default": "./src/products.ts"
     },
-    "./concrete-products": {
-      "types": "./src/concrete-products.ts",
-      "import": "./src/concrete-products.ts",
-      "default": "./src/concrete-products.ts"
-    },
     "./recipes": {
       "types": "./src/recipes.ts",
       "import": "./src/recipes.ts",
