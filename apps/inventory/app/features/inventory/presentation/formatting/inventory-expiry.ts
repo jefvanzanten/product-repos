@@ -36,14 +36,14 @@ export function presentExpiryDate(expiryDate: string | null, now: Date = new Dat
  * @returns Dutch expiry label and tone.
  */
 export function presentGroupExpiry(code: PhysicalInventoryProductGroup["earliestExpiryStatus"]): ExpiryStatus {
-  const values: Record<typeof code, ExpiryStatus> = {
+  const values = {
     EXPIRED: { tone: "expired", label: "Verlopen" },
     TODAY: { tone: "today", label: "Verloopt vandaag" },
     URGENT: { tone: "soon", label: "Urgent" },
     SOON: { tone: "soon", label: "Binnenkort" },
     LATER: { tone: "ok", label: "Later" },
     NONE: { tone: "none", label: "Geen datum" },
-  };
+  } satisfies Record<typeof code, ExpiryStatus>;
   return values[code];
 }
 

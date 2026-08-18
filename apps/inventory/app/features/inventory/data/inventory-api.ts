@@ -8,7 +8,10 @@ import {
   type InventoryErrorCode,
 } from "@product-repos/contracts/inventory";
 import { locationTreeNodeSchema } from "@product-repos/contracts/locations";
-import { readUnknownJson } from "@product-repos/shared/backend-response";
+import { readJson } from "@product-repos/shared/backend-response";
+import { z, type ZodType } from "zod";
+
+const nullSchema = z.null();
 import { sendBackendRequest, type BackendRequest, type BackendTransportFailure } from "../../../core/data/backend-api";
 import { redirectExpiredInventorySession } from "../../../core/data/auth/session-expiry";
 import { deriveInventoryItemChanges } from "../domain/inventory-item-edit";
@@ -43,12 +46,6 @@ export type InventoryApiFailure =
   | { readonly tag: "SessionExpired" }
   | { readonly tag: "HttpFailure"; readonly status: number; readonly code: InventoryErrorCode; readonly message: string }
   | { readonly tag: "InvalidResponse"; readonly issues: ReadonlyArray<string> };
-
-type ProtocolSchema<T> = {
-  readonly safeParse: (input: unknown) =>
-    | { readonly success: true; readonly data: T }
-    | { readonly success: false; readonly error: { readonly issues: ReadonlyArray<{ readonly message: string }> } };
-};
 
 type InventoryListRequest = {
   readonly query: string | null;
@@ -139,46 +136,46 @@ async function updatePhysicalInventoryExpiry(itemId: string, expiryDate: string 
 }
 
 /** Perform a request and map its validated response into the domain model. */
-async function requestJson<Dto, Model>(path: string, schema: ProtocolSchema<Dto>, map: (dto: Dto) => Model, request: BackendRequest): Promise<InventoryApiOutcome<Model>> {
+async function requestJson<Dto, Model>(path: string, schema: ZodType<Dto>, map: (dto: Dto) => Model, request: BackendRequest): Promise<InventoryApiOutcome<Model>> {
   const response = await performRequest(path, request);
   if (response.tag === "Failure") return response;
-  const parsed = schema.safeParse(response.value.body);
-  return parsed.success
-    ? { tag: "Success", value: map(parsed.data) }
-    : { tag: "Failure", error: { tag: "InvalidResponse", issues: parsed.error.issues.map((issue) => issue.message) } };
+  try {
+    return { tag: "Success", value: map(await readJson(response.value, schema)) };
+  } catch {
+    return invalidResponse();
+  }
 }
 
 /** Perform a request that may intentionally return an empty 204 body. */
-async function requestOptionalJson<Dto, Model>(path: string, schema: ProtocolSchema<Dto>, map: (dto: Dto) => Model, request: BackendRequest): Promise<InventoryApiOutcome<Model | null>> {
+async function requestOptionalJson<Dto, Model>(path: string, schema: ZodType<Dto>, map: (dto: Dto) => Model, request: BackendRequest): Promise<InventoryApiOutcome<Model | null>> {
   const response = await performRequest(path, request);
   if (response.tag === "Failure") return response;
   if (response.value.status === 204) return { tag: "Success", value: null };
-  const parsed = schema.safeParse(response.value.body);
-  return parsed.success
-    ? { tag: "Success", value: map(parsed.data) }
-    : { tag: "Failure", error: { tag: "InvalidResponse", issues: parsed.error.issues.map((issue) => issue.message) } };
+  try {
+    return { tag: "Success", value: map(await readJson(response.value, schema)) };
+  } catch {
+    return invalidResponse();
+  }
 }
 
-type DecodedResponse = { readonly status: number; readonly body: unknown };
-
-/** Perform transport, decode JSON and classify HTTP errors. */
-async function performRequest(path: string, request: BackendRequest): Promise<InventoryApiOutcome<DecodedResponse>> {
+/** Perform transport and classify HTTP errors before success-body parsing. */
+async function performRequest(path: string, request: BackendRequest): Promise<InventoryApiOutcome<Response>> {
   const transport = await sendBackendRequest(path, request);
   if (transport.tag === "Failure") return transport;
-  const raw = await readUnknownJson(transport.response);
-  if (transport.response.ok) return { tag: "Success", value: { status: transport.response.status, body: raw } };
-  const parsed = inventoryErrorResponseSchema.safeParse(raw);
-  if (!parsed.success) return { tag: "Failure", error: { tag: "InvalidResponse", issues: parsed.error.issues.map((issue) => issue.message) } };
-  if (transport.response.status === 401 && parsed.data.code === "UNAUTHENTICATED") {
-    redirectExpiredInventorySession();
-    return { tag: "Failure", error: { tag: "SessionExpired" } };
+  if (transport.response.ok) return { tag: "Success", value: transport.response };
+  try {
+    const error = await readJson(transport.response, inventoryErrorResponseSchema);
+    if (transport.response.status === 401 && error.code === "UNAUTHENTICATED") {
+      redirectExpiredInventorySession();
+      return { tag: "Failure", error: { tag: "SessionExpired" } };
+    }
+    return { tag: "Failure", error: { tag: "HttpFailure", status: transport.response.status, code: error.code, message: error.message } };
+  } catch {
+    return invalidResponse();
   }
-  return { tag: "Failure", error: { tag: "HttpFailure", status: transport.response.status, code: parsed.data.code, message: parsed.data.message } };
 }
 
-const nullSchema: ProtocolSchema<null> = {
-  /** Parse only an intentional JSON null body. */
-  safeParse: (value: unknown) => value === null
-    ? { success: true, data: null }
-    : { success: false, error: { issues: [{ message: "Expected no response body" }] } },
-};
+/** Create a stable malformed-response failure. */
+function invalidResponse<T>(): InventoryApiOutcome<T> {
+  return { tag: "Failure", error: { tag: "InvalidResponse", issues: ["Malformed backend response"] } };
+}

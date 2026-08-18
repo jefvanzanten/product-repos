@@ -44,6 +44,7 @@ export function useInventoryGroups(): InventoryGroupsState {
 
   const inventoryQuery = useInfiniteQuery({
     queryKey: inventoryQueryKeys.items(requestQuery, filter),
+    // SAFETY: TanStack Query requires the initial cursor's wider nullable type for later string cursors.
     initialPageParam: null as string | null,
     retry: false,
     queryFn: ({ pageParam, signal }) =>

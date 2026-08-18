@@ -5,8 +5,7 @@ import {
   type BackendTransportFailure,
 } from "@product-repos/shared/browser-backend-api";
 
-const configuredApiUrl: unknown = import.meta.env.VITE_API_URL;
-const apiBaseUrl = typeof configuredApiUrl === "string" ? configuredApiUrl : "http://localhost:3000";
+const apiBaseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
 export type { BackendRequest, BackendResponse, BackendTransportFailure };
 
