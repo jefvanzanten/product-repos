@@ -84,7 +84,7 @@ export function RecipeForm({ recipe, initialOptions = {}, error, fieldErrors }: 
           </label>
           <label className="field">
             <span>Zichtbaarheid</span>
-            <select value={visibility} onChange={(event) => setVisibility(event.target.value as RecipeVisibility)}>
+            <select value={visibility} onChange={(event) => setVisibility(event.target.value === "PUBLIC" ? "PUBLIC" : "PRIVATE")}>
               <option value="PRIVATE">Privé</option>
               <option value="PUBLIC">Publiek</option>
             </select>

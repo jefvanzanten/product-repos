@@ -9,6 +9,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/recipe/package.json apps/recipe/package.json
 COPY packages/auth-client/package.json packages/auth-client/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
+COPY packages/shared/package.json packages/shared/package.json
 RUN corepack pnpm install --filter recipe... --frozen-lockfile
 
 FROM base AS production-dependencies
@@ -17,6 +18,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/recipe/package.json apps/recipe/package.json
 COPY packages/auth-client/package.json packages/auth-client/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
+COPY packages/shared/package.json packages/shared/package.json
 RUN corepack pnpm install --filter recipe... --prod --frozen-lockfile
 
 FROM development-dependencies AS build
@@ -25,6 +27,8 @@ ENV VITE_API_URL="$VITE_API_URL"
 COPY apps/recipe apps/recipe
 COPY packages/auth-client packages/auth-client
 COPY packages/contracts packages/contracts
+COPY packages/shared/package.json packages/shared/package.json
+
 RUN corepack pnpm --filter recipe build
 
 FROM base AS runtime

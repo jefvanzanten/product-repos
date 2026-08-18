@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { requestRecipeJson } from "./recipe-backend-api.server";
 
@@ -6,13 +7,7 @@ const context = {
   signal: new AbortController().signal,
 };
 
-const stringSchema = {
-  /** Parse a string fixture response. */
-  parse(value: unknown): string {
-    if (typeof value !== "string") throw new Error("Expected string");
-    return value;
-  },
-};
+const stringSchema = z.string();
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -23,11 +18,17 @@ describe("Recipe backend API", () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify("ok"), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(requestRecipeJson("/recipes", "POST", { name: "Pasta" }, stringSchema, context)).resolves.toBe("ok");
+    const body = {
+      name: "Pasta",
+      servings: "1",
+      ingredients: [{ productId: "product-1", quantity: "1", inputMode: "FULL_PRODUCT" }],
+    };
+    await expect(requestRecipeJson("/recipes", "POST", body, stringSchema, context)).resolves.toBe("ok");
     expect(fetchMock).toHaveBeenCalledWith("http://localhost:3000/recipes", expect.objectContaining({
       method: "POST",
-      body: JSON.stringify({ name: "Pasta" }),
+      body: JSON.stringify(body),
     }));
+    // SAFETY: the assertion follows the fetch call expectation above, whose second argument is RequestInit.
     const options = fetchMock.mock.calls[0]?.[1] as RequestInit;
     expect(new Headers(options.headers).get("cookie")).toBe("session=abc");
   });

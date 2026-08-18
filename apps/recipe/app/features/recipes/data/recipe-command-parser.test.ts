@@ -1,3 +1,5 @@
+import { createRecipeSchema } from "@product-repos/contracts/recipes";
+import type { z } from "zod";
 import { describe, expect, test } from "vitest";
 import { parseCreateRecipe } from "./recipe-command-parser";
 
@@ -12,7 +14,7 @@ const validInput = {
     inputMode: "FULL_PRODUCT",
     inputUnitTypeId: null,
   }],
-};
+} satisfies z.input<typeof createRecipeSchema>;
 
 describe("recipe command parser", () => {
   test("validates and normalizes a create command", () => {

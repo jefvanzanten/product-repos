@@ -1,5 +1,11 @@
 import { parseCreateRecipe } from "../../features/recipes/data/recipe-command-parser";
+import { z } from "zod";
 import type { RecipeFormSubmission } from "../../features/recipes/presentation/types/recipe-form.types";
+
+const recipeFormDataSchema = z.object({
+  payload: z.string(),
+  expectedUpdatedAt: z.string().nullable(),
+});
 
 /**
  * Parse the serialized recipe editor payload at the route boundary.
@@ -9,17 +15,17 @@ import type { RecipeFormSubmission } from "../../features/recipes/presentation/t
  */
 export async function parseRecipeFormSubmission(request: Request): Promise<RecipeFormSubmission | null> {
   const formData = await request.formData();
-  const serialized = formData.get("payload");
-  if (typeof serialized !== "string") return null;
+  const submission = recipeFormDataSchema.safeParse({
+    payload: formData.get("payload"),
+    expectedUpdatedAt: formData.get("expectedUpdatedAt"),
+  });
+  if (!submission.success) return null;
 
   try {
-    const input = parseCreateRecipe(JSON.parse(serialized) as unknown);
-    if (input === null) return null;
-    const expectedUpdatedAt = formData.get("expectedUpdatedAt");
-    return {
-      input,
-      expectedUpdatedAt: typeof expectedUpdatedAt === "string" ? expectedUpdatedAt : null,
-    };
+    const input = parseCreateRecipe(JSON.parse(submission.data.payload));
+    return input === null
+      ? null
+      : { input, expectedUpdatedAt: submission.data.expectedUpdatedAt };
   } catch {
     return null;
   }
