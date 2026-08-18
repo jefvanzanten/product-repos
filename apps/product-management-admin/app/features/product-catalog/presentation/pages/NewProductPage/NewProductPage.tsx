@@ -3,6 +3,10 @@ import { useRef, useState } from "react";
 import { useNavigation } from "react-router";
 import type { ProductComposition } from "../../../domain/product-catalog";
 import { AdminForm as Form } from "../../../../../core/presentation/routing/admin-source-context";
+import { BrandCombobox } from "../../brands/components/brand-combobox/brand-combobox";
+import { CategoryBreadcrumb } from "../../categories/components/category-breadcrumb/category-breadcrumb";
+import { CategoryTreePicker } from "../../categories/components/category-tree-picker/category-tree-picker";
+import { useNewProductCategory } from "../../new-product/hooks/use-new-product-category";
 import { ProductFormFieldset } from "../../products/components/product-form-fieldset/product-form-fieldset";
 import { ConsumptionTypeSection, MacroProfileSection, ProductFormActions, ProductNameSection } from "../../products/components/product-form-sections/product-form-sections";
 import type { NewProductActionResult, NewProductLoaderData } from "../../types/new-product.types";
@@ -34,17 +38,17 @@ export function NewProductPage({ actionData, loaderData }: { readonly actionData
     <main className={styles.page}>
       <header className={styles.header}><h1 className={styles.title}>Product aanmaken</h1><p className={styles.intro}>Kies eerst een gedeelde samenstelling en voeg daarna de concrete verpakking toe.</p></header>
       {actionData?.errors?.form ? <p className={styles.formError}>{actionData.errors.form}</p> : null}
-      <Form className={styles.form} method="post">
+      <Form className={styles.form} method="post" preventScrollReset>
         <ProductFormFieldset title="Gedeelde samenstelling">
           {composition ? <CompositionSelection composition={composition} onClear={() => setComposition(null)} /> : (
             <>
               <label className={styles.label}>Zoek op productnaam of merk<input className={styles.input} autoComplete="off" placeholder="Bijv. Heinz tomatenpuree" onChange={(event) => void handleCompositionQuery(event)} /></label>
               {suggestions.length > 0 ? <div className={styles.suggestions}>{suggestions.map((item) => <button key={item.id} type="button" onClick={() => { setComposition(item); setSuggestions([]); }}><strong>{item.brand?.name ? `${item.brand.name} ${item.name}` : item.name}</strong><span>{item.categoryPath.map((category) => category.name).join(" › ")} · {item.productCount} producten</span></button>)}</div> : null}
               <p className={styles.help}>Geen match? Vul hieronder een nieuwe samenstelling in. Er wordt nooit automatisch gekoppeld.</p>
-              <NewCompositionFields actionData={actionData} loaderData={loaderData} values={values} />
             </>
           )}
         </ProductFormFieldset>
+        {composition ? null : <NewCompositionFields actionData={actionData} loaderData={loaderData} values={values} />}
 
         <ProductFormFieldset title="Dit concrete product">
           <input name="productCompositionId" type="hidden" value={composition?.id ?? ""} />
@@ -68,9 +72,41 @@ function CompositionSelection({ composition, onClear }: { readonly composition: 
   return <div className={styles.selection}><div><strong>{composition.brand?.name ? `${composition.brand.name} ${composition.name}` : composition.name}</strong><span>{composition.categoryPath.map((category) => category.name).join(" › ")}</span><span>Voedingswaarden en gedeelde gegevens worden hergebruikt.</span></div><button type="button" onClick={onClear}>Andere kiezen</button></div>;
 }
 
-/** Render shared fields only when no existing composition was selected. */
+/** Render shared fields with the established category picker and brand combobox. */
 function NewCompositionFields({ actionData, loaderData, values }: { readonly actionData?: NewProductActionResult; readonly loaderData: NewProductLoaderData; readonly values: Record<string, string> }): React.ReactNode {
-  return <div className={styles.newComposition}><h3>Nieuwe samenstelling</h3><ProductNameSection error={actionData?.errors?.productName} value={values.productName} /><Field label="Categorie" error={actionData?.errors?.categoryId}><select name="categoryId" defaultValue={values.categoryId ?? ""} required><option value="">Kies categorie</option>{loaderData.categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></Field><Field label="Bestaand merk (optioneel)"><select name="brandId" defaultValue={values.brandId ?? ""}><option value="">Geen merk</option>{loaderData.brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></Field><Field label="Of nieuw merk"><input name="brandName" defaultValue={values.brandName ?? ""} /></Field><ConsumptionTypeSection error={actionData?.errors?.consumptionType} value={values.consumptionType} /><MacroProfileSection errors={actionData?.errors} profile={null} values={values} /></div>;
+  const defaultCategoryId = values.categoryId ?? loaderData.categoryId ?? "";
+  const defaultBrandId = values.brandId ?? loaderData.brandId;
+  const defaultBrandName = values.brandName;
+  const defaultBrandQuery = values.brandQuery ?? loaderData.selectedBrand?.name ?? loaderData.brandQuery;
+  const brandDefaultsKey = JSON.stringify([defaultBrandId, defaultBrandName, defaultBrandQuery]);
+  const category = useNewProductCategory({ categories: loaderData.categories, defaultCategoryId });
+
+  return (
+    <>
+      <CategoryBreadcrumb path={category.breadcrumbPath} />
+      <ProductFormFieldset title="Categorie">
+        <CategoryTreePicker
+          key={defaultCategoryId}
+          busy={category.busy}
+          defaultValue={category.defaultCategoryId}
+          errors={actionData?.errors}
+          mutationErrors={category.mutationErrors}
+          mutationResult={category.mutationResult}
+          options={category.options}
+          selectedCategoryId={category.selectedCategoryId}
+          onCreateCategory={category.createCategory}
+          onDeleteCategory={category.deleteCategory}
+          onSelectedCategoryChange={category.selectCategory}
+        />
+      </ProductFormFieldset>
+      <ProductNameSection error={actionData?.errors?.productName} value={values.productName} />
+      <ProductFormFieldset title="Merk (optioneel)">
+        <BrandCombobox key={brandDefaultsKey} defaultBrandId={defaultBrandId} defaultBrandName={defaultBrandName} defaultQuery={defaultBrandQuery} error={actionData?.errors?.brandName} initialBrands={loaderData.brands} />
+      </ProductFormFieldset>
+      <ConsumptionTypeSection error={actionData?.errors?.consumptionType} value={values.consumptionType} />
+      <MacroProfileSection errors={actionData?.errors} profile={null} values={values} />
+    </>
+  );
 }
 
 /** Render optional product-specific portion controls. */

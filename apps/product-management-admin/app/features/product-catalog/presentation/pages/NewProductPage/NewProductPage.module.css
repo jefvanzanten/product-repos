@@ -143,20 +143,10 @@
   cursor: pointer;
 }
 
-.newComposition,
 .portion {
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-.newComposition {
-  margin-top: 12px;
-}
-
-.newComposition h3 {
-  margin: 0;
-  font-size: 15px;
 }
 
 .twoColumns {

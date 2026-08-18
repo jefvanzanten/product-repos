@@ -5,22 +5,37 @@ import { createBackendRequestContext } from "../../core/presentation/backend-req
 import { parseAdminSourceFromSearch, toAdminRedirectPath } from "../../core/presentation/routing/admin-navigation";
 import { parseConcreteProduct } from "../../features/product-catalog/data/concrete-product-command-parser";
 import { preserveProductFormValues, projectProductFormData } from "../../features/product-catalog/data/product-form-command-parser";
-import { createBrand, createConcreteProduct, createProductComposition, getBrands, getCategories, getConcreteProduct, getPackageTypes, getUnitTypes } from "../../features/product-catalog/data/product-catalog-api.server";
+import { createBrand, createCategory, createConcreteProduct, createProductComposition, deleteCategory, getBrand, getBrands, getCategories, getConcreteProduct, getPackageTypes, getUnitTypes } from "../../features/product-catalog/data/product-catalog-api.server";
 import type { NewProductActionResult, NewProductLoaderData } from "../../features/product-catalog/presentation/types/new-product.types";
 import { mapProductApiError } from "../../features/product-catalog/presentation/product-error-messages";
 
-/** Load references and an optional composition copied from an existing product. */
+/** Load references, browse defaults, and an optional composition copied from an existing product. */
 export async function loadNewProductRoute({ request }: LoaderFunctionArgs): Promise<NewProductLoaderData> {
-  const sameAs = new URL(request.url).searchParams.get("sameAs");
+  const searchParams = new URL(request.url).searchParams;
+  const sameAs = searchParams.get("sameAs");
+  const brandId = searchParams.get("brandId")?.trim() || undefined;
+  const categoryId = searchParams.get("categoryId")?.trim() || undefined;
+  const brandQuery = "";
   const context = createBackendRequestContext(request);
-  const [categories, brands, packageTypes, unitTypes, copiedProduct] = await Promise.all([
+  const [categories, brands, packageTypes, unitTypes, copiedProduct, selectedBrand] = await Promise.all([
     getCategories(context),
-    getBrands("", context),
+    getBrands(brandQuery, context),
     getPackageTypes(context),
     getUnitTypes(context),
     sameAs ? getConcreteProduct(sameAs, context).catch(() => null) : Promise.resolve(null),
+    brandId ? getBrand(brandId, context).catch(() => null) : Promise.resolve(null),
   ]);
-  return { categories, brands, packageTypes, unitTypes, selectedComposition: copiedProduct?.composition ?? null };
+  return {
+    brandId,
+    brandQuery,
+    categories,
+    categoryId,
+    brands: selectedBrand && !brands.some((brand) => brand.id === selectedBrand.id) ? [selectedBrand, ...brands] : brands,
+    packageTypes,
+    selectedBrand,
+    unitTypes,
+    selectedComposition: copiedProduct?.composition ?? null,
+  };
 }
 
 /** Create or reuse a composition and then create one concrete product. */
@@ -29,6 +44,21 @@ export async function handleNewProductRouteAction({ request }: ActionFunctionArg
   const context = createBackendRequestContext(request);
   const values = preserveProductFormValues(form);
   try {
+    const intent = readFormText(form, "_action") || "createProduct";
+    if (intent === "createCategory") {
+      const categoryName = readFormText(form, "categoryName").trim();
+      if (!categoryName) return { errors: { categoryName: "Vul een categorienaam in." }, values };
+      const parentRaw = readFormText(form, "categoryParentId");
+      const createdCategory = await createCategory({ name: categoryName, parentId: parentRaw ? Number(parentRaw) : null }, context);
+      return { createdCategory, values: { ...values, categoryId: String(createdCategory.id), categoryParentId: parentRaw } };
+    }
+    if (intent === "deleteCategory") {
+      const categoryId = Number(form.get("categoryId"));
+      if (!Number.isInteger(categoryId) || categoryId < 1) return { errors: { form: "Categorie is ongeldig." }, values };
+      await deleteCategory(categoryId, context);
+      return { deletedCategoryId: categoryId, values };
+    }
+
     const composition = await resolveComposition(form, context);
     if ("errors" in composition) return { errors: composition.errors, values };
     const concreteInput = parseConcreteProduct(form, composition.value);
