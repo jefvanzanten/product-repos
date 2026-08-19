@@ -1,5 +1,5 @@
 import type { InventoryProductSearchResult, PhysicalInventoryItemDetail, PhysicalInventoryPage, PhysicalInventoryProductGroup } from "@product-repos/contracts/inventory";
-import { formatConcreteProductDisplayName, formatPackageSummary } from "@product-repos/shared/product-presentation";
+import { formatConcreteProductDisplayName } from "@product-repos/shared/product-presentation";
 import { projectLocationMetadata } from "../../locations/domain/location-domain.ts";
 import { addInventoryDecimals, compareInventoryDecimals, deriveExpiryStatus, inventoryRatio, multiplyInventoryDecimals, packageEquivalent } from "../domain/inventory-domain.ts";
 import type { InventoryProductRow, InventoryReader, PhysicalInventoryStockRow } from "../repositories/inventory.repository.ts";
@@ -123,13 +123,16 @@ function projectItem(row: PhysicalInventoryStockRow, locations: ReturnType<typeo
 
 /** Project shared concrete-product presentation fields. */
 function projectProduct(row: InventoryProductRow, categoryPaths: ReadonlyMap<number, string>): InventoryProductSearchResult {
-  const packageSummary = formatPackageSummary({ packageTypeName: row.packageTypeName, contentAmount: row.contentAmount, contentUnitSymbol: row.contentUnitSymbol }) ?? "Onbekende inhoud";
   return {
     productId: row.productId,
     displayName: formatConcreteProductDisplayName({ brandName: row.brandName, compositionName: row.compositionName, packageTypeName: row.packageTypeName, contentAmount: row.contentAmount, contentUnitSymbol: row.contentUnitSymbol }),
     compositionName: row.compositionName,
     brandName: row.brandName,
-    packageSummary,
+    package: {
+      typeName: row.packageTypeName,
+      contentAmount: row.contentAmount,
+      contentUnitSymbol: row.contentUnitSymbol,
+    },
     categoryPath: categoryPaths.get(row.categoryId) ?? "",
     imageUrl: row.imageUrl,
     maximumAmountBase: maximumAmount(row),

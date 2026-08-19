@@ -54,8 +54,15 @@ describe("physical inventory query service", () => {
     expect(service.listInventory({ ...query, filter: "low-stock" }).groups).toHaveLength(1);
   });
 
-  test("uses the shared concrete-product display name for search results", () => {
+  test("uses the shared concrete-product display name and exposes structured package data", () => {
     const service = createInventoryQueryService(fakeReader([stockRow()]));
-    expect(service.searchProducts("zuivel", 20)[0]?.displayName).toBe("Zuivelmeester Kaasplakken — pak 120 g");
+    expect(service.searchProducts("zuivel", 20)[0]).toMatchObject({
+      displayName: "Zuivelmeester Kaasplakken — pak 120 g",
+      package: {
+        typeName: "pak",
+        contentAmount: "120",
+        contentUnitSymbol: "g",
+      },
+    });
   });
 });
