@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useEscapeKey } from "@product-repos/shared/use-escape-key";
-import { useOutsideInteraction } from "@product-repos/shared/use-outside-interaction";
+import { useEffect, useMemo, useRef } from "react";
+import { TreeActionMenu } from "@product-repos/shared/tree";
 import { AdminForm as Form, AdminLink as Link } from "../../../../../../core/presentation/routing/admin-source-context";
 import type { Category } from "../../../../domain/product-catalog";
 import type { CatalogBrowseResponse } from "../../../types/product-catalog.types";
@@ -132,8 +131,6 @@ function ActiveCategoryContent({ browse, depth, onCreateCategory }: { readonly b
 
 /** Render a category row with a menu for rename and delete actions. */
 function CategoryRow({ activeCategoryId, category, depth, hasChildren, open }: { readonly activeCategoryId: number | null; readonly category: Category; readonly depth: number; readonly hasChildren: boolean; readonly open: boolean }): React.ReactNode {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
   const formAction = activeCategoryId === null ? "/product-catalogus" : `/product-catalogus?categoryId=${activeCategoryId}`;
   const target = open
     ? category.parentId
@@ -141,47 +138,30 @@ function CategoryRow({ activeCategoryId, category, depth, hasChildren, open }: {
       : "/product-catalogus"
     : `/product-catalogus?categoryId=${category.id}`;
 
-  useOutsideInteraction(menuOpen, menuRef, () => setMenuOpen(false));
-  useEscapeKey(menuOpen, () => setMenuOpen(false));
-
   return (
-    <div className={`${styles.categoryRow} ${menuOpen ? styles.categoryRowMenuOpen : ""}`} style={{ marginLeft: `${depth}rem` }}>
+    <div className={styles.categoryRow} style={{ marginLeft: `${depth}rem` }}>
       <Link className={styles.categoryLink} to={target}>
         <span className={`${styles.chevron} ${open ? styles.chevronOpen : ""}`} aria-hidden="true">▸</span>
         <span>{category.name}</span>
         {hasChildren ? <span className={styles.visuallyHidden}>heeft subcategorieën</span> : null}
       </Link>
-      <div className={styles.categoryMenuContainer} ref={menuRef}>
-        <button
-          aria-expanded={menuOpen}
-          aria-haspopup="menu"
-          aria-label={`Categorie ${category.name} beheren`}
-          className={styles.editButton}
-          type="button"
-          onClick={() => setMenuOpen((current) => !current)}
-        >
-          <PencilIcon />
-        </button>
-        {menuOpen ? (
-          <div className={styles.categoryMenu} role="menu">
-            <Link className={styles.categoryMenuItem} role="menuitem" to={`/product-catalogus/categorieen/${category.id}/bewerken`}>Naam wijzigen</Link>
+      <TreeActionMenu triggerLabel={`Categorie ${category.name} beheren`}>
+        {(closeMenu) => (
+          <>
+            <Link role="menuitem" to={`/product-catalogus/categorieen/${category.id}/bewerken`} onClick={closeMenu}>Naam wijzigen</Link>
             <Form action={formAction} method="post">
               <input name="_action" type="hidden" value="deleteCategory" />
               <input name="categoryId" type="hidden" value={category.id} />
               <input name="parentId" type="hidden" value={category.parentId ?? ""} />
-              <button className={`${styles.categoryMenuItem} ${styles.deleteMenuItem}`} role="menuitem" type="submit">Verwijderen</button>
+              <button className={styles.deleteMenuItem} role="menuitem" type="submit">Verwijderen</button>
             </Form>
-          </div>
-        ) : null}
-      </div>
+          </>
+        )}
+      </TreeActionMenu>
     </div>
   );
 }
 
-/** Render the exact 18 by 18 Figma edit asset. */
-function PencilIcon(): React.ReactNode {
-  return <img alt="" className={styles.pencilIcon} height="18" src="/product-management-admin/assets/product-forms/edit.svg" width="18" />;
-}
 
 type CategoryTreeNodeData = {
   readonly category: Category;

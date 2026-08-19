@@ -1,7 +1,6 @@
 import type { LocationTreeNode } from "../../../domain/location";
-import { useRef, useState, type ReactNode } from "react";
-import { useEscapeKey } from "@product-repos/shared/use-escape-key";
-import { useOutsideInteraction } from "@product-repos/shared/use-outside-interaction";
+import type { ReactNode } from "react";
+import { TreeActionMenu, useTreeExpansion } from "@product-repos/shared/tree";
 import styles from "./LocationTree.module.css";
 
 /** User actions exposed by location tree rows. */
@@ -24,17 +23,7 @@ export function LocationTree({ roots, status, actions }: {
   readonly status: "active" | "archived";
   readonly actions: LocationTreeActions;
 }): ReactNode {
-  const [expanded, setExpanded] = useState<ReadonlySet<number>>(() => new Set(roots.map((root) => root.id)));
-
-  /** Toggle one branch without changing any other branch. */
-  function toggle(id: number): void {
-    setExpanded((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
+  const expansion = useTreeExpansion(roots.map((root) => root.id));
 
   return (
     <div className={styles.tree} role="tree" aria-label={status === "active" ? "Actieve opbergplaatsen" : "Gearchiveerde opbergplaatsen"}>
@@ -45,8 +34,8 @@ export function LocationTree({ roots, status, actions }: {
           depth={0}
           archivedByAncestor={false}
           status={status}
-          expanded={expanded}
-          onToggle={toggle}
+          expanded={expansion.expandedIds}
+          onToggle={expansion.toggleExpanded}
           actions={actions}
         />
       ))}
@@ -74,28 +63,6 @@ function LocationRow({ node, depth, archivedByAncestor, status, expanded, onTogg
   const childrenId = `location-children-${node.id}`;
   const visualDepth = Math.min(depth, 7);
   const label = status === "archived" && depth === 0 ? node.path : node.name;
-  const [menuOpen, setMenuOpen] = useState(false);
-  const detailsRef = useRef<HTMLDetailsElement>(null);
-
-  /** Close the action menu with focus restored to its summary trigger. */
-  function closeMenuOnEscape(): void {
-    detailsRef.current?.removeAttribute("open");
-    setMenuOpen(false);
-    detailsRef.current?.querySelector("summary")?.focus();
-  }
-
-  useEscapeKey(menuOpen, closeMenuOnEscape);
-  useOutsideInteraction(menuOpen, detailsRef, () => {
-    detailsRef.current?.removeAttribute("open");
-    setMenuOpen(false);
-  });
-
-  /** Close the action menu before running the selected location action. */
-  function selectAction(action: () => void): void {
-    detailsRef.current?.removeAttribute("open");
-    setMenuOpen(false);
-    action();
-  }
 
   return (
     <div role="treeitem" aria-level={depth + 1} aria-expanded={hasChildren ? isExpanded : undefined}>
@@ -120,32 +87,23 @@ function LocationRow({ node, depth, archivedByAncestor, status, expanded, onTogg
             </span>
           )}
         </span>
-        <details
-          ref={detailsRef}
-          className={styles.actions}
-          onToggle={(event) => setMenuOpen(event.currentTarget.open)}
-        >
-          <summary aria-label={`Opbergplaats ${node.name} beheren`}>
-            <PencilIcon />
-          </summary>
-          <div className={styles.actionMenu}>
-            {status === "active" ? (
-              <>
-                <button type="button" onClick={() => selectAction(() => actions.onCreateChild(node))}>Sublocatie toevoegen</button>
-                <button type="button" onClick={() => selectAction(() => actions.onRename(node))}>Hernoemen</button>
-                <button type="button" onClick={() => selectAction(() => actions.onMove(node))}>Verplaatsen</button>
-                <button type="button" onClick={() => selectAction(() => actions.onArchive(node))}>Archiveren</button>
-              </>
-            ) : (
-              <>
-                <button type="button" onClick={() => selectAction(() => actions.onRename(node))}>Hernoemen</button>
-                {node.archivedAt !== null && !archivedByAncestor && (
-                  <button type="button" onClick={() => selectAction(() => actions.onRestore(node))}>Herstellen</button>
-                )}
-              </>
-            )}
-          </div>
-        </details>
+        <TreeActionMenu triggerLabel={`Opbergplaats ${node.name} beheren`}>
+          {(closeMenu) => status === "active" ? (
+            <>
+              <button type="button" onClick={() => { closeMenu(); actions.onCreateChild(node); }}>Sublocatie toevoegen</button>
+              <button type="button" onClick={() => { closeMenu(); actions.onRename(node); }}>Hernoemen</button>
+              <button type="button" onClick={() => { closeMenu(); actions.onMove(node); }}>Verplaatsen</button>
+              <button type="button" onClick={() => { closeMenu(); actions.onArchive(node); }}>Archiveren</button>
+            </>
+          ) : (
+            <>
+              <button type="button" onClick={() => { closeMenu(); actions.onRename(node); }}>Hernoemen</button>
+              {node.archivedAt !== null && !archivedByAncestor && (
+                <button type="button" onClick={() => { closeMenu(); actions.onRestore(node); }}>Herstellen</button>
+              )}
+            </>
+          )}
+        </TreeActionMenu>
       </div>
       {hasChildren && isExpanded && (
         <div id={childrenId} role="group">
@@ -166,9 +124,3 @@ function LocationRow({ node, depth, archivedByAncestor, status, expanded, onTogg
     </div>
   );
 }
-
-/** Render the same edit asset used by the product-category tree. */
-function PencilIcon(): ReactNode {
-  return <img alt="" className={styles.pencilIcon} height="18" src="/product-management-admin/assets/product-forms/edit.svg" width="18" />;
-}
-

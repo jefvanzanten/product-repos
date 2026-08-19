@@ -1,8 +1,8 @@
 import { useLayoutEffect, useRef } from "react";
+import { TreePickerRow } from "@product-repos/shared/tree";
 import { useCategoryTreePicker } from "../../hooks/use-category-tree-picker";
 import type { CategoryMutationResult, CategoryPickerErrors } from "../../types/category-tree-picker.types";
 import type { CategoryTreeOption } from "../../../../domain/category-tree";
-import { CategoryTreeRow } from "./category-tree-row";
 import styles from "./category-tree-picker.module.css";
 
 type CategoryTreePickerProps = {
@@ -58,15 +58,21 @@ export function CategoryTreePicker({ defaultValue, errors, mutationResult, onCre
             const categoryId = String(option.category.id);
             return (
               <div key={option.category.id} className={styles.categoryGroup}>
-                <CategoryTreeRow
-                  hasChildren={(picker.childCountByParentId.get(option.category.id) ?? 0) > 0}
-                  isExpanded={picker.expandedCategoryIds.has(categoryId)}
-                  isSelected={selectedCategoryId === categoryId}
-                  option={option}
-                  rowRef={defaultValue === categoryId ? picker.categoryToRevealRef : undefined}
-                  onSelect={() => onSelectedCategoryChange(categoryId)}
-                  onToggleExpanded={() => picker.toggleExpanded(option.category.id)}
-                />
+                <div ref={defaultValue === categoryId ? picker.categoryToRevealRef : undefined}>
+                  <TreePickerRow
+                    depth={option.depth}
+                    hasChildren={(picker.childCountByParentId.get(option.category.id) ?? 0) > 0}
+                    inputName="categoryId"
+                    isExpanded={picker.expandedCategoryIds.has(categoryId)}
+                    isSelected={selectedCategoryId === categoryId}
+                    label={option.category.name}
+                    path={option.path}
+                    toggleNoun="Categorie"
+                    value={option.category.id}
+                    onSelect={() => onSelectedCategoryChange(categoryId)}
+                    onToggleExpanded={() => picker.toggleExpanded(option.category.id)}
+                  />
+                </div>
               </div>
             );
           })}
