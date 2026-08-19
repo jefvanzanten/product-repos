@@ -57,6 +57,7 @@ De catalogusroot toont geen platte productlijst en geen product-aanmaakactie. Ee
 - Wanneer de beheerder een al geopende categorie opnieuw kiest, klapt die categorie dicht en opent de catalogus de parentcategorie of, zonder parent, de rootcatalogus.
 - De breadcrumb begint met `Alle categorieën`. Dit segment opent `/product-catalogus` zonder catalogusqueryparameters; iedere ancestor opent `/product-catalogus?categoryId=<categoryId>`. Een geldige `source` blijft behouden.
 - Directe producten staan bij de geopende categorie. Producten uit een onderliggende subcategorie verschijnen pas wanneer die subcategorie wordt geopend.
+- Bij het openen van een categorie met directe producten scrolt de categorieboom automatisch zodat de volledige productsectie zichtbaar wordt wanneer die binnen het beschikbare scrollgebied past.
 - Iedere productrij opent `/product-catalogus/:productId` en behoudt de browsecontext voor terugnavigatie.
 - Ook lege directe subcategorieën blijven zichtbaar, zodat de beheerder na aanmaken verder door de catalogus kan navigeren.
 
@@ -255,6 +256,7 @@ En ziet de beheerder de geopende categorie als rij in de categorieboom
 En ziet de beheerder directe subcategorieën als ingesprongen categorierijen onder de geopende categorie  
 En tonen subcategorieën alleen hun directe naam  
 En ziet de beheerder directe producten in de sectie `Producten` onder de geopende categorie wanneer die bestaan  
+En scrolt de categorieboom automatisch zodat de volledige productsectie zichtbaar wordt wanneer die binnen het beschikbare scrollgebied past
 En volgen subcategorieën, productsectie, productkaarten en actieknoppen dezelfde visuele boom-as  
 En ziet de beheerder een lege categorietoestand met tekst `Deze categorie is nu nog leeg.` wanneer er geen directe subcategorieën en geen directe producten bestaan  
 En staan in die lege categorietoestand de secundaire actie `+ Subcategorie` en de primaire actie `+ Product` samen binnen het lege-state-kaartje, onder de uitlegtekst  

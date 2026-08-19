@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useEscapeKey } from "@product-repos/shared/use-escape-key";
+import { useOutsideInteraction } from "@product-repos/shared/use-outside-interaction";
 import { AdminForm as Form, AdminLink as Link } from "../../../../../../core/presentation/routing/admin-source-context";
 import type { Category } from "../../../../domain/product-catalog";
 import type { CatalogBrowseResponse } from "../../../types/product-catalog.types";
@@ -93,11 +95,20 @@ function CategoryTreeNode({ activeCategoryId, activePathIds, browse, node, onCre
 }
 
 function ActiveCategoryContent({ browse, depth, onCreateCategory }: { readonly browse: Extract<CatalogBrowseResponse, { state: "category" }>; readonly depth: number; readonly onCreateCategory: (modal: CategoryCreateModalState) => void }): React.ReactNode {
+  const productsRef = useRef<HTMLElement>(null);
   const emptyCategory = browse.subcategories.length === 0 && browse.products.items.length === 0;
+
+  useEffect(() => {
+    productsRef.current?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "nearest",
+    });
+  }, [browse.category.id]);
+
   return (
     <div className={styles.categoryContent} style={{ marginLeft: `${depth}rem` }}>
       {browse.products.items.length > 0 ? (
-        <section className={styles.productsSection}>
+        <section className={styles.productsSection} ref={productsRef}>
           <h3 className={styles.productsTitle}>Producten</h3>
           {browse.products.items.map((product) => <ProductCard key={product.id} product={product} context={{ categoryId: browse.category.id }} showCategory={false} />)}
         </section>
@@ -130,25 +141,8 @@ function CategoryRow({ activeCategoryId, category, depth, hasChildren, open }: {
       : "/product-catalogus"
     : `/product-catalogus?categoryId=${category.id}`;
 
-  useEffect(() => {
-    if (!menuOpen) return;
-
-    /** Close the menu when focus moves to another part of the page. */
-    const closeOnOutsideInteraction = (event: MouseEvent): void => {
-      if (event.target instanceof Node && !menuRef.current?.contains(event.target)) setMenuOpen(false);
-    };
-    /** Close the menu when the user presses Escape. */
-    const closeOnEscape = (event: KeyboardEvent): void => {
-      if (event.key === "Escape") setMenuOpen(false);
-    };
-
-    document.addEventListener("mousedown", closeOnOutsideInteraction);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("mousedown", closeOnOutsideInteraction);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [menuOpen]);
+  useOutsideInteraction(menuOpen, menuRef, () => setMenuOpen(false));
+  useEscapeKey(menuOpen, () => setMenuOpen(false));
 
   return (
     <div className={`${styles.categoryRow} ${menuOpen ? styles.categoryRowMenuOpen : ""}`} style={{ marginLeft: `${depth}rem` }}>

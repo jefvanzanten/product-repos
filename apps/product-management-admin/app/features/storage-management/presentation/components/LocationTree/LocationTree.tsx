@@ -1,5 +1,7 @@
 import type { LocationTreeNode } from "../../../domain/location";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
+import { useEscapeKey } from "@product-repos/shared/use-escape-key";
+import { useOutsideInteraction } from "@product-repos/shared/use-outside-interaction";
 import styles from "./LocationTree.module.css";
 
 /** User actions exposed by location tree rows. */
@@ -75,33 +77,18 @@ function LocationRow({ node, depth, archivedByAncestor, status, expanded, onTogg
   const [menuOpen, setMenuOpen] = useState(false);
   const detailsRef = useRef<HTMLDetailsElement>(null);
 
-  useEffect(() => {
-    if (!menuOpen) return;
+  /** Close the action menu with focus restored to its summary trigger. */
+  function closeMenuOnEscape(): void {
+    detailsRef.current?.removeAttribute("open");
+    setMenuOpen(false);
+    detailsRef.current?.querySelector("summary")?.focus();
+  }
 
-    /** Close the menu when the user clicks outside its details element. */
-    function closeOnOutsideInteraction(event: MouseEvent): void {
-      if (event.target instanceof Node && !detailsRef.current?.contains(event.target)) {
-        detailsRef.current?.removeAttribute("open");
-        setMenuOpen(false);
-      }
-    }
-
-    /** Close the menu with Escape and return focus to its trigger. */
-    function closeOnEscape(event: globalThis.KeyboardEvent): void {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      detailsRef.current?.removeAttribute("open");
-      setMenuOpen(false);
-      detailsRef.current?.querySelector("summary")?.focus();
-    }
-
-    document.addEventListener("mousedown", closeOnOutsideInteraction);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("mousedown", closeOnOutsideInteraction);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [menuOpen]);
+  useEscapeKey(menuOpen, closeMenuOnEscape);
+  useOutsideInteraction(menuOpen, detailsRef, () => {
+    detailsRef.current?.removeAttribute("open");
+    setMenuOpen(false);
+  });
 
   /** Close the action menu before running the selected location action. */
   function selectAction(action: () => void): void {

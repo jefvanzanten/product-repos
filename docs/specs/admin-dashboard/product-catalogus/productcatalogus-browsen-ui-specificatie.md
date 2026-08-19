@@ -72,6 +72,8 @@ Alle categorieën > Voeding > Tussendoortjes > Rijstwafels met smaak
 
 - Iedere categoriekaart of -rij toont rechts binnen hetzelfde item een beheerknop met potloodicoon, zonder eigen kaart, outline of scheidingslijn.
 - Directe subcategorieën tonen alleen hun eigen naam.
+- Wanneer een categorie met directe producten wordt geopend, scrolt de categorieboom automatisch zo ver als nodig om de volledige productsectie in beeld te brengen wanneer die binnen het beschikbare scrollgebied past. Bij een productsectie die hoger is dan het beschikbare scrollgebied blijft de sectie zelf normaal doorscrollbaar.
+- De automatische scroll is vloeiend, behalve wanneer de beheerder een voorkeur voor verminderde beweging heeft ingesteld.
 - Subcategorieën, productsectie, productkaarten en actieknoppen volgen dezelfde boom-as en blijven binnen dezelfde breedte als de geopende categoriecontext.
 - Er is één primaire knop `+ Product`; daarnaast staat maximaal één secundaire knop `+ Subcategorie`.
 - Beide acties staan samen onder de inhoud van de geopende categorie.
