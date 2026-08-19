@@ -8,6 +8,8 @@
     "./backend-response": "./backend-response.ts",
     "./browser-backend-api": "./browser-backend-api.ts",
     "./bottom-tab-bar": "./components/bottom-tab-bar/bottom-tab-bar.tsx",
+    "./icons": "./components/icons/index.ts",
+    "./tree": "./components/tree/index.ts",
     "./use-escape-key": "./hooks/use-escape-key.ts",
     "./use-outside-interaction": "./hooks/use-outside-interaction.ts",
     "./public-app-path": "./routing/public-app-path.ts",
