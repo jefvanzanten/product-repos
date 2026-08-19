@@ -12,5 +12,5 @@
     "noUncheckedIndexedAccess": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["components/**/*", "routing/**/*", "*.ts", "css-modules.d.ts"]
+  "include": ["components/**/*", "hooks/**/*", "routing/**/*", "*.ts", "css-modules.d.ts"]
 }

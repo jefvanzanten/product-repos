@@ -40,6 +40,7 @@ export const inventoryProductSearchResultSchema = z.object({
   displayName: z.string().min(1),
   compositionName: z.string(),
   brandName: z.string().nullable(),
+  packageTypeName: z.string().min(1),
   packageSummary: z.string().min(1),
   categoryPath: z.string(),
   imageUrl: z.string().url().nullable(),
