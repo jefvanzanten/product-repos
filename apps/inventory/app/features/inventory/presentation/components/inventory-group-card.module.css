@@ -16,6 +16,22 @@
   border: 1px solid #e0e5eb;
   border-radius: 14px;
   box-shadow: 0 1px 4px rgb(20 30 40 / 5%);
+  @media (max-width: 560px) {
+    gap: 9px;
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  > :not(.groupHeaderToggle) {
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  &:has(.groupHeaderToggle:focus-visible) {
+    outline: 3px solid rgb(59 125 216 / 30%);
+    outline-offset: 2px;
+  }
 }
 
 .groupHeaderToggle {
@@ -29,17 +45,6 @@
   cursor: pointer;
 }
 
-.groupHeader > :not(.groupHeaderToggle) {
-  position: relative;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.groupHeader:has(.groupHeaderToggle:focus-visible) {
-  outline: 3px solid rgb(59 125 216 / 30%);
-  outline-offset: 2px;
-}
-
 .groupExpanded .groupHeader {
   border-radius: 14px 14px 0 0;
 }
@@ -50,6 +55,11 @@
   width: 46px;
   height: 46px;
   border-radius: 10px;
+  @media (max-width: 560px) {
+    flex-basis: 42px;
+    width: 42px;
+    height: 42px;
+  }
 }
 
 .productImage {
@@ -63,14 +73,14 @@
   color: #9ca5b1;
   background: #eef1f5;
   border: 1px solid #e0e5eb;
-}
 
-.imagePlaceholder svg {
-  width: 23px;
-  height: 23px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
+  svg {
+    width: 23px;
+    height: 23px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+  }
 }
 
 .groupInfo {
@@ -159,10 +169,16 @@
   min-height: 61px;
   padding: 10px 16px 10px 70px;
   border-top: 1px solid #edf0f4;
-}
+  @media (max-width: 560px) {
+    padding-left: 61px;
+  }
+  @media (max-width: 390px) {
+    padding-left: 14px;
+  }
 
-.batchRow:first-child {
-  border-top: 0;
+  &:first-child {
+    border-top: 0;
+  }
 }
 
 .detailRow {
@@ -171,15 +187,18 @@
   gap: 8px;
   padding-right: 16px;
   padding-left: 16px;
+  @media (max-width: 560px) {
+    padding-left: 16px;
+  }
 }
 
 .locationGroup {
   position: relative;
   border-top: 1px solid #e2e7ee;
-}
 
-.locationGroup:first-child {
-  border-top: 0;
+  &:first-child {
+    border-top: 0;
+  }
 }
 
 .locationHeader {
@@ -200,14 +219,14 @@
   align-items: center;
   gap: 7px;
   width: 100%;
-}
 
-.detailStock > strong {
-  flex: 0 0 auto;
-  color: #263143;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  text-align: left;
+  > strong {
+    flex: 0 0 auto;
+    color: #263143;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    text-align: left;
+  }
 }
 
 .detailProgressInput {
@@ -220,49 +239,49 @@
   appearance: none;
   background: transparent;
   cursor: ew-resize;
-}
 
-.detailProgressInput::-webkit-slider-runnable-track {
-  height: 7px;
-  background: linear-gradient(to right, #3b7dd8 0 var(--detail-progress), #dfe4eb var(--detail-progress) 100%);
-  border-radius: 999px;
-}
+  &::-webkit-slider-runnable-track {
+    height: 7px;
+    background: linear-gradient(to right, #3b7dd8 0 var(--detail-progress), #dfe4eb var(--detail-progress) 100%);
+    border-radius: 999px;
+  }
 
-.detailProgressInput::-moz-range-track {
-  height: 7px;
-  background: linear-gradient(to right, #3b7dd8 0 var(--detail-progress), #dfe4eb var(--detail-progress) 100%);
-  border-radius: 999px;
-}
+  &::-moz-range-track {
+    height: 7px;
+    background: linear-gradient(to right, #3b7dd8 0 var(--detail-progress), #dfe4eb var(--detail-progress) 100%);
+    border-radius: 999px;
+  }
 
-.detailProgressInput::-webkit-slider-thumb {
-  width: 15px;
-  height: 15px;
-  margin-top: -4px;
-  appearance: none;
-  background: #fff;
-  border: 2px solid #2e67b7;
-  border-radius: 50%;
-  box-shadow: 0 1px 3px rgb(20 30 40 / 25%);
-}
+  &::-webkit-slider-thumb {
+    width: 15px;
+    height: 15px;
+    margin-top: -4px;
+    appearance: none;
+    background: #fff;
+    border: 2px solid #2e67b7;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgb(20 30 40 / 25%);
+  }
 
-.detailProgressInput::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
-  background: #fff;
-  border: 2px solid #2e67b7;
-  border-radius: 50%;
-  box-shadow: 0 1px 3px rgb(20 30 40 / 25%);
-}
+  &::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border: 2px solid #2e67b7;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgb(20 30 40 / 25%);
+  }
 
-.detailProgressInput:focus-visible {
-  outline: 3px solid rgb(59 125 216 / 28%);
-  outline-offset: 2px;
-  border-radius: 999px;
-}
+  &:focus-visible {
+    outline: 3px solid rgb(59 125 216 / 28%);
+    outline-offset: 2px;
+    border-radius: 999px;
+  }
 
-.detailProgressInput:disabled {
-  cursor: wait;
-  opacity: 0.65;
+  &:disabled {
+    cursor: wait;
+    opacity: 0.65;
+  }
 }
 
 .detailUpdateError {
@@ -288,35 +307,35 @@
   border: 1px solid #cdd8e8;
   border-radius: 8px;
   pointer-events: auto;
-}
 
-.quantityControls strong {
-  color: #263143;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
+  strong {
+    color: #263143;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+  }
 
-.quantityControls button {
-  min-height: 30px;
-  padding: 0;
-  color: #2e67b7;
-  font-size: 19px;
-  font-weight: 700;
-  line-height: 1;
-  background: #f7faff;
-  border: 0;
-  cursor: pointer;
-}
+  button {
+    min-height: 30px;
+    padding: 0;
+    color: #2e67b7;
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1;
+    background: #f7faff;
+    border: 0;
+    cursor: pointer;
 
-.quantityControls button:hover,
-.quantityControls button:focus-visible {
-  background: #e7f0fc;
-}
+    &:hover,
+    &:focus-visible {
+      background: #e7f0fc;
+    }
 
-.quantityControls button:disabled {
-  cursor: wait;
-  opacity: 0.5;
+    &:disabled {
+      cursor: wait;
+      opacity: 0.5;
+    }
+  }
 }
 
 .quantityError {
@@ -354,19 +373,6 @@
 }
 
 @media (max-width: 560px) {
-  .groupHeader {
-    gap: 9px;
-    padding-right: 10px;
-    padding-left: 10px;
-  }
-
-  .productImage,
-  .imagePlaceholder {
-    flex-basis: 42px;
-    width: 42px;
-    height: 42px;
-  }
-
   .desktopProductName {
     display: none;
   }
@@ -399,19 +405,5 @@
     max-width: 94px;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  .batchRow {
-    padding-left: 61px;
-  }
-
-  .detailRow {
-    padding-left: 16px;
-  }
-}
-
-@media (max-width: 390px) {
-  .batchRow {
-    padding-left: 14px;
   }
 }

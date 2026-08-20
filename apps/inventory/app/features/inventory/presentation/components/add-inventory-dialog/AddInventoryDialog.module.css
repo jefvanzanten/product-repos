@@ -10,11 +10,18 @@
   inset: 0;
   margin: auto;
   overflow: visible;
-}
+  @media (max-width: 699px) {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 24px);
+    margin: auto 0 0;
+    border-radius: 18px 18px 0 0;
+  }
 
-.dialog::backdrop {
-  background: rgb(14 22 35 / 52%);
-  backdrop-filter: blur(2px);
+  &::backdrop {
+    background: rgb(14 22 35 / 52%);
+    backdrop-filter: blur(2px);
+  }
 }
 
 .sheet {
@@ -25,6 +32,10 @@
   border-radius: 16px;
   box-shadow: 0 20px 60px rgb(9 17 30 / 30%);
   overflow: hidden;
+  @media (max-width: 699px) {
+    max-height: calc(100dvh - 24px);
+    border-radius: 18px 18px 0 0;
+  }
 }
 
 .header {
@@ -33,11 +44,11 @@
   justify-content: space-between;
   padding: 18px 18px 12px;
   border-bottom: 1px solid #e1e5eb;
-}
 
-.header h2 {
-  margin: 0;
-  font-size: 20px;
+  h2 {
+    margin: 0;
+    font-size: 20px;
+  }
 }
 
 .closeButton {
@@ -88,11 +99,11 @@
   border: 1px solid #cbd2dc;
   border-radius: 10px;
   outline: none;
-}
 
-.field input:focus {
-  border-color: #678bc2;
-  box-shadow: 0 0 0 3px rgb(59 125 216 / 14%);
+  &:focus {
+    border-color: #678bc2;
+    box-shadow: 0 0 0 3px rgb(59 125 216 / 14%);
+  }
 }
 
 .results {
@@ -103,34 +114,34 @@
   border: 1px solid #d4dae3;
   border-radius: 10px;
   overflow-y: auto;
-}
 
-.results > p {
-  margin: 0;
-  padding: 14px;
-  color: #657083;
-  font-size: 14px;
-}
+  > p {
+    margin: 0;
+    padding: 14px;
+    color: #657083;
+    font-size: 14px;
+  }
 
-.results > button {
-  display: grid;
-  gap: 3px;
-  padding: 11px 13px;
-  color: #253044;
-  text-align: left;
-  background: #fff;
-  border: 0;
-  border-bottom: 1px solid #e7eaf0;
-  cursor: pointer;
-}
+  > button {
+    display: grid;
+    gap: 3px;
+    padding: 11px 13px;
+    color: #253044;
+    text-align: left;
+    background: #fff;
+    border: 0;
+    border-bottom: 1px solid #e7eaf0;
+    cursor: pointer;
 
-.results > button:last-child {
-  border-bottom: 0;
-}
+    &:last-child {
+      border-bottom: 0;
+    }
 
-.results > button:hover,
-.results > button:focus-visible {
-  background: #eef4fc;
+    &:hover,
+    &:focus-visible {
+      background: #eef4fc;
+    }
+  }
 }
 
 .results span,
@@ -172,10 +183,10 @@
   margin: 0 0 16px;
   padding: 0;
   border: 0;
-}
 
-.locationField legend {
-  margin-bottom: 7px;
+  legend {
+    margin-bottom: 7px;
+  }
 }
 
 .locationTree {
@@ -223,30 +234,15 @@
   color: #fff;
   background: #3b7dd8;
   border: 0;
-}
 
-.submitButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
 }
 
 .cancelButton {
   color: #354256;
   background: #fff;
   border: 1px solid #cbd2dc;
-}
-
-@media (max-width: 699px) {
-  .dialog {
-    width: 100%;
-    max-width: none;
-    max-height: calc(100dvh - 24px);
-    margin: auto 0 0;
-    border-radius: 18px 18px 0 0;
-  }
-
-  .sheet {
-    max-height: calc(100dvh - 24px);
-    border-radius: 18px 18px 0 0;
-  }
 }

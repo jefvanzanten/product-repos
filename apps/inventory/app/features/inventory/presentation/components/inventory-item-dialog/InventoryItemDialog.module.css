@@ -1,16 +1,91 @@
-.dialog { position: fixed; inset: 0; width: min(560px, calc(100% - 24px)); max-height: calc(100dvh - 24px); margin: auto; padding: 0; border: 0; border-radius: 16px; box-shadow: 0 20px 60px rgb(0 0 0 / 25%); }
-.dialog::backdrop { background: rgb(20 28 40 / 48%); }
-.sheet { padding: 20px; color: #172033; }
-.sheet header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-.sheet h2 { margin: 0; font-size: 20px; }
-.sheet header button { font-size: 26px; background: transparent; border: 0; cursor: pointer; }
-.content { display: grid; gap: 16px; }
-.content label { display: grid; gap: 7px; color: #4b5665; font-size: 13px; font-weight: 650; }
-.content input, .content select { min-height: 42px; padding: 0 10px; border: 1px solid #cdd3dd; border-radius: 9px; }
-.content input[type="range"] { padding: 0; }
-.content output { color: #172033; font-size: 18px; font-weight: 750; font-variant-numeric: tabular-nums; }
-.content > button { min-height: 44px; color: #fff; font-weight: 750; background: #3b7dd8; border: 0; border-radius: 10px; cursor: pointer; }
-.content > button.danger { color: #a62d38; background: #fde7e8; }
-.progress { height: 12px; overflow: hidden; background: #dfe4eb; border-radius: 999px; }
-.progress span { display: block; height: 100%; background: #3b7dd8; }
-@media (max-width: 600px) { .dialog { width: 100%; max-width: none; margin: auto 0 0; border-radius: 18px 18px 0 0; } }
+.dialog {
+  position: fixed;
+  inset: 0;
+  width: min(560px, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 25%);
+  @media (max-width: 600px) {
+    width: 100%;
+    max-width: none;
+    margin: auto 0 0;
+    border-radius: 18px 18px 0 0;
+  }
+  &::backdrop {
+    background: rgb(20 28 40 / 48%);
+  }
+}
+.sheet {
+  padding: 20px;
+  color: #172033;
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    button {
+      font-size: 26px;
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+    }
+  }
+  h2 {
+    margin: 0;
+    font-size: 20px;
+  }
+}
+.content {
+  display: grid;
+  gap: 16px;
+  label {
+    display: grid;
+    gap: 7px;
+    color: #4b5665;
+    font-size: 13px;
+    font-weight: 650;
+  }
+  input,
+  select {
+    min-height: 42px;
+    padding: 0 10px;
+    border: 1px solid #cdd3dd;
+    border-radius: 9px;
+  }
+  input[type="range"] {
+    padding: 0;
+  }
+  output {
+    color: #172033;
+    font-size: 18px;
+    font-weight: 750;
+    font-variant-numeric: tabular-nums;
+  }
+  > button {
+    min-height: 44px;
+    color: #fff;
+    font-weight: 750;
+    background: #3b7dd8;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    &.danger {
+      color: #a62d38;
+      background: #fde7e8;
+    }
+  }
+}
+.progress {
+  height: 12px;
+  overflow: hidden;
+  background: #dfe4eb;
+  border-radius: 999px;
+  span {
+    display: block;
+    height: 100%;
+    background: #3b7dd8;
+  }
+}

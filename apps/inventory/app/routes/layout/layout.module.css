@@ -5,10 +5,7 @@
   overflow: hidden;
   color: #172033;
   background: #11151c;
-}
-
-@media (min-width: 520px) {
-  .layout {
+  @media (min-width: 520px) {
     padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
   }
 }
