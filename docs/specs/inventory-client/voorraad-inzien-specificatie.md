@@ -2,28 +2,33 @@
 
 ## Doel
 
-De gebruiker ziet concrete producten gegroepeerd met daaronder de werkelijke verdeling over fysieke verpakkingen, locaties, THT-data en resterende inhoud.
+De gebruiker ziet concrete producten gegroepeerd met daaronder per voorraadregel het locatiepad, de resterende inhoud, een progressbar en het aantal fysieke verpakkingen.
 
 ## Productgerichte lijst
 
 - Hoofdgroepen zijn concrete producten, niet locations of productsamenstellingen.
-- De hoofdregel gebruikt de gedeelde productweergavenaam.
-- Totaal is de som van `remaining_amount / actuele productinhoud`, getoond als verpakkingsequivalent met maximaal één decimaal.
-- De onderliggende regels blijven exact en maken afronding controleerbaar.
+- De hoofdregel gebruikt op desktop de gedeelde productweergavenaam. Op mobiel staat eerst de productsamenstellingsnaam, met het merk daaronder in een kleiner lettertype.
+- De compacte hoofdregel toont geen resterende hoeveelheid en geen progressbar.
+- De compacte hoofdregel toont per fysieke verpakking een pictogram van het verpakkingstype, gevuld naar de resterende verhouding. Een aparte totaalteller is niet nodig omdat het aantal pictogrammen het aantal verpakkingen toont.
+- Detailregels worden per locatie onder één locatieheader gegroepeerd, zodat hetzelfde locatiepad niet wordt herhaald. Per fysiek item staan daaronder hoeveelheid, interactieve progressbar, `− 1 +`-teller, optionele THT-datum en een instellingenknop.
 
 Voorbeeld:
 
 ```text
-Jong belegen kaasplakken — Zuivelmeester · 3,7 verpakkingen
-├── 1× volledig · 16-08-2026 · Berging › Koelkast
-├── 2× volledig · 22-08-2026 · Berging › Koelkast
-├── 80 / 120 g · 24-08-2026 · Huiskamer › Koelkast
-└── 40 / 120 g · 24-08-2026 · Berging › Koelkast
+Jong belegen kaasplakken — Zuivelmeester · [4 verpakkingspictogrammen] · 4
+├── Berging › Koelkast
+│   120 g · [100% slider] · − 1 +
+├── Berging › Koelkast
+│   120 g · [100% slider] · − 1 +
+├── Huiskamer › Koelkast
+│   80 g · [67% slider] · − 1 +
+└── Berging › Koelkast
+    40 g · [33% slider] · − 1 +
 ```
 
 ## Presentatiegroepering
 
-Volledige items mogen als `N× volledig` worden samengevoegd wanneer product, locatie en THT gelijk zijn. Aangebroken verpakkingen blijven afzonderlijk, ook bij gelijke resterende inhoud. Groepering verandert geen persistente IDs.
+Iedere fysieke verpakking krijgt een eigen detailregel, ook wanneer volledige items dezelfde locatie en THT hebben. Gelijke locatiepaden worden één keer als sectieheader getoond. De onderste detailzone gebruikt de volledige breedte voor een zo groot mogelijke slider, met daarna de teller, optionele THT-datum en helemaal rechts een tandwiel. Het tandwiel opent locatie- en THT-instellingen; `Escape`, annuleren en buiten de popover klikken sluiten zonder op te slaan. De compacte hoofdregel toont alleen de verpakkingspictogrammen, zonder totaalteller of `−`- en `+`-knoppen. De lage-voorraaddrempel wordt niet in de kaartdetails getoond.
 
 ## Sortering
 
@@ -34,7 +39,7 @@ Volledige items mogen als `N× volledig` worden samengevoegd wanneer product, lo
 ## Resterende inhoud
 
 - Maximale inhoud komt van het concrete product.
-- Resterende inhoud wordt in dezelfde dimensie berekend en mag binnen MASS (`g`/`kg`) of VOLUME (`ml`/`cl`/`l`) worden gepresenteerd.
+- Resterende inhoud wordt in dezelfde dimensie berekend. De presentatie kiest de grootste praktische eenheid met maximaal twee decimalen: MASS gebruikt `kg` of `g`; VOLUME gebruikt `l`, `cl` of `ml`.
 - COUNT gebruikt uitsluitend gehele stuks.
 - Een progressbar visualiseert hoeveel van de fysieke verpakking resteert; een volle balk betekent volledig.
 - De precieze keuze tussen percentage en `resterend / totaal`, plus sliderstappen voor massa/volume, blijft een open UI-tweak. De exacte hoeveelheid blijft beschikbaar.
@@ -50,7 +55,7 @@ Status wordt bepaald tegen vandaag in de applicatietijdzone:
 | THT over 1–3 dagen | Urgent |
 | THT over 4–7 dagen | Binnenkort |
 | THT later dan 7 dagen | Later |
-| Geen THT | Geen datum |
+| Geen THT | Geen statuslabel |
 
 `Bijna verlopen` toont verlopen, vandaag, urgent en binnenkort, in die urgentievolgorde. Grenzen zijn configureerbaar.
 
@@ -76,17 +81,29 @@ Filters mogen gecombineerd worden met vrije product-, merk-, categorie- en locat
 ### AC-01 — Exacte fysieke verdeling
 
 Gegeven meerdere volledige en aangebroken verpakkingen
-Dan toont de hoofdregel één afgerond totaal
-En tonen onderliggende regels de exacte locatie, THT en resterende inhoud.
+Dan toont de hoofdregel verpakkingspictogrammen en het totale aantal
+En tonen onderliggende regels per fysiek item het exacte locatiepad, de resterende inhoud, de interactieve progressbar en de teller.
 
 ### AC-02 — Veilige groepering
 
 Gegeven twee volledige items met dezelfde locatie en THT
-Dan mogen zij als `2× volledig` verschijnen
-Maar blijven zij afzonderlijke inventory-itemrecords.
+Dan verschijnen zij als twee afzonderlijke detailregels
+En blijven zij afzonderlijke inventory-itemrecords.
 
 ### AC-03 — THT-dag
 
 Gegeven dat THT vandaag is
 Dan toont de UI `Verloopt vandaag`
 En niet `Verlopen`.
+
+### AC-04 — Voorraadvisualisatie
+
+Gegeven één fysieke verpakking met 40% resterende inhoud
+Dan toont de hoofdregel één voor 40% gevuld verpakkingspictogram
+En toont de detailregel een slider op 40%
+En kan de gebruiker de resterende inhoud via deze slider aanpassen
+En wordt de wijziging na het loslaten opgeslagen.
+
+Gegeven twee volledige pakken en één pak met 40% resterende inhoud
+Dan toont de hoofdregel drie verpakkingspictogrammen
+En bevat de hoofdregel geen resterende hoeveelheid of progressbar.

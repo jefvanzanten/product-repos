@@ -1,3 +1,4 @@
+import { formatPackageSummary } from "@product-repos/shared/product-presentation";
 import type { ReactNode } from "react";
 import type { InventoryProduct } from "../../../domain/inventory";
 import type { InventoryProductSearchState } from "../../hooks/use-inventory-product-search";
@@ -46,10 +47,15 @@ export function ProductSelector({ search }: { readonly search: InventoryProductS
 
 /** Render one selectable product-search result. */
 function ProductResult({ product, onSelect }: { readonly product: InventoryProduct; readonly onSelect: (product: InventoryProduct) => void }): ReactNode {
+  const packageSummary = formatPackageSummary({
+    packageTypeName: product.package.typeName,
+    contentAmount: product.package.contentAmount,
+    contentUnitSymbol: product.package.contentUnitSymbol,
+  });
   return (
     <button type="button" onClick={() => onSelect(product)}>
       <strong>{product.displayName}</strong>
-      <span>{[product.brandName, product.packageSummary].filter(Boolean).join(" · ")}</span>
+      <span>{[product.brandName, packageSummary].filter(Boolean).join(" · ")}</span>
       {product.categoryPath && <small>{product.categoryPath}</small>}
     </button>
   );

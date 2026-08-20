@@ -21,7 +21,11 @@ const item: PhysicalInventoryItemDetail = {
     displayName: "Rijst",
     compositionName: "Rijst",
     brandName: null,
-    packageSummary: "1 kg",
+    package: {
+      typeName: "pak",
+      contentAmount: "1",
+      contentUnitSymbol: "kg",
+    },
     categoryPath: "Granen",
     imageUrl: null,
     maximumAmountBase: "1000",

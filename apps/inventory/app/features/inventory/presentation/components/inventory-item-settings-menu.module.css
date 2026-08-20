@@ -1,0 +1,109 @@
+.itemSettings {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+
+  .settingsTrigger {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    color: #5d6878;
+    background: #fff;
+    border: 1px solid #cdd8e8;
+    border-radius: 8px;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible,
+    &[aria-expanded="true"] {
+      color: #2e67b7;
+      background: #eef4fc;
+    }
+
+    svg {
+      width: 17px;
+      height: 17px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.5;
+    }
+  }
+
+  .settingsPopover {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + 6px);
+    right: 0;
+    display: block;
+    width: min(290px, calc(100vw - 40px));
+    padding: 12px;
+    color: #253044;
+    background: #fff;
+    border: 1px solid #cbd2dc;
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgb(20 30 40 / 22%);
+
+    .settingsForm {
+      display: grid;
+      gap: 11px;
+
+      label {
+        display: grid;
+        gap: 6px;
+
+        > span {
+          font-size: 12px;
+          font-weight: 700;
+        }
+      }
+
+      select,
+      input {
+        width: 100%;
+        min-height: 38px;
+        padding: 0 9px;
+        color: #172033;
+        background: #fff;
+        border: 1px solid #cbd2dc;
+        border-radius: 8px;
+      }
+    }
+
+    .settingsActions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 7px;
+
+      button {
+        min-height: 36px;
+        padding: 0 11px;
+        color: #354256;
+        font-weight: 700;
+        background: #fff;
+        border: 1px solid #cbd2dc;
+        border-radius: 8px;
+        cursor: pointer;
+
+        &[type="submit"] {
+          color: #fff;
+          background: #3b7dd8;
+          border-color: #3b7dd8;
+        }
+      }
+    }
+
+    .settingsMessage,
+    .settingsError {
+      display: block;
+      font-size: 12px;
+    }
+
+    .settingsError {
+      color: #a43b49;
+    }
+  }
+}

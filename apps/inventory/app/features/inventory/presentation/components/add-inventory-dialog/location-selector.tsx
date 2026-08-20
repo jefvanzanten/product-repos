@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { TreePickerRow, flattenVisibleTree, useTreeExpansion } from "@product-repos/shared/tree";
 import type { InventoryLocation } from "../../../domain/inventory";
 import styles from "./AddInventoryDialog.module.css";
 
@@ -18,6 +19,9 @@ type LocationSelectorProps = {
  * @returns Add-form location fieldset.
  */
 export function LocationSelector({ locations, selectedId, isPending, failed, onSelect }: LocationSelectorProps): ReactNode {
+  const expansion = useTreeExpansion<number>();
+  const visibleLocations = flattenVisibleTree(locations, expansion.expandedIds, (location) => location.id, (location) => location.children);
+
   return (
     <fieldset className={styles.locationField} disabled={locations.length === 0 || isPending}>
       <legend>Opbergplaats</legend>
@@ -25,33 +29,25 @@ export function LocationSelector({ locations, selectedId, isPending, failed, onS
       {failed && <p className={styles.error}>Opbergplaatsen konden niet worden geladen.</p>}
       {!isPending && !failed && locations.length === 0 && <p>Er zijn nog geen opbergplaatsen. Voorraad kan daarom niet worden toegevoegd.</p>}
       {locations.length > 0 && (
-        <div className={styles.locationTree} role="radiogroup" aria-label="Kies een opbergplaats">
-          {locations.map((location) => <LocationChoice key={location.id} node={location} selectedId={selectedId} onSelect={onSelect} />)}
+        <div className={styles.locationTree} role="tree" aria-label="Kies een opbergplaats">
+          {visibleLocations.map(({ node: location, depth }) => (
+            <TreePickerRow
+              key={location.id}
+              depth={depth}
+              hasChildren={location.children.length > 0}
+              inputName="locationId"
+              isExpanded={expansion.isExpanded(location.id)}
+              isSelected={selectedId === location.id}
+              label={location.name}
+              path={location.path}
+              toggleNoun="Opbergplaats"
+              value={location.id}
+              onSelect={() => onSelect(location.id)}
+              onToggleExpanded={() => expansion.toggleExpanded(location.id)}
+            />
+          ))}
         </div>
       )}
     </fieldset>
-  );
-}
-
-/**
- * Render one selectable location and its recursive descendants.
- *
- * @param props - Location node and current selection.
- * @returns One recursive location-tree branch.
- */
-function LocationChoice({ node, selectedId, onSelect }: { readonly node: InventoryLocation; readonly selectedId: number | null; readonly onSelect: (id: number) => void }): ReactNode {
-  const choice = (
-    <button type="button" role="radio" aria-checked={selectedId === node.id} className={selectedId === node.id ? styles.selectedLocation : undefined} onClick={() => onSelect(node.id)}>
-      {node.name}
-    </button>
-  );
-  if (node.children.length === 0) return choice;
-  return (
-    <details open>
-      <summary>{choice}</summary>
-      <div className={styles.locationChildren}>
-        {node.children.map((child) => <LocationChoice key={child.id} node={child} selectedId={selectedId} onSelect={onSelect} />)}
-      </div>
-    </details>
   );
 }

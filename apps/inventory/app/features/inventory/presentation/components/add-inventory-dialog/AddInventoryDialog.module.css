@@ -6,6 +6,9 @@
   background: transparent;
   border: 0;
   border-radius: 16px;
+  position: fixed;
+  inset: 0;
+  margin: auto;
   overflow: visible;
 }
 
@@ -176,51 +179,15 @@
 }
 
 .locationTree {
-  max-height: 230px;
-  padding: 7px;
-  background: #fff;
-  border: 1px solid #cbd2dc;
-  border-radius: 10px;
-  overflow-y: auto;
-}
-
-.locationTree details > summary {
   display: flex;
-  align-items: center;
-  list-style-position: inside;
-}
-
-.locationTree button {
-  min-height: 34px;
-  padding: 5px 9px;
-  color: #344055;
-  text-align: left;
-  background: transparent;
-  border: 0;
-  border-radius: 7px;
-  cursor: pointer;
-}
-
-.locationTree > button,
-.locationTree summary button {
-  flex: 1;
-}
-
-.locationTree button:hover,
-.locationTree button:focus-visible {
-  background: #edf3fb;
-}
-
-.locationTree .selectedLocation {
-  color: #1e5fae;
-  font-weight: 750;
-  background: #dfeafb;
-}
-
-.locationChildren {
-  display: grid;
-  padding-left: 18px;
-  border-left: 1px solid #dbe1ea;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 288px;
+  padding: 2px 8px 2px 2px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-color: #678bc2 transparent;
+  scrollbar-width: thin;
 }
 
 .error,

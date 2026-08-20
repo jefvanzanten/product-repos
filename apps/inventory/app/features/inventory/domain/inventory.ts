@@ -10,7 +10,11 @@ export type InventoryProduct = {
   readonly displayName: string;
   readonly compositionName: string;
   readonly brandName: string | null;
-  readonly packageSummary: string;
+  readonly package: {
+    readonly typeName: string;
+    readonly contentAmount: string;
+    readonly contentUnitSymbol: string;
+  };
   readonly categoryPath: string;
   readonly imageUrl: string | null;
   readonly maximumAmountBase: string;

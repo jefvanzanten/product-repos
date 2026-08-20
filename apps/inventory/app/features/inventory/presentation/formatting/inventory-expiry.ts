@@ -47,6 +47,12 @@ export function presentGroupExpiry(code: PhysicalInventoryProductGroup["earliest
   return values[code];
 }
 
+/** Format one ISO expiry date for compact detail-row presentation. */
+export function formatInventoryExpiryDate(value: string): string {
+  const [year = "1970", month = "01", day = "01"] = value.split("-");
+  return new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short", year: "numeric" }).format(new Date(Number(year), Number(month) - 1, Number(day)));
+}
+
 /** Format one ISO local date without shifting it through UTC. */
 function formatLocalDate(value: string): string {
   const [year = "1970", month = "01", day = "01"] = value.split("-");

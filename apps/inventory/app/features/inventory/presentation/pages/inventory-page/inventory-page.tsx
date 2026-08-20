@@ -1,12 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateProductStockThreshold } from "../../../data/inventory-api";
-import { inventoryQueryKeys } from "../../../data/inventory-query-keys";
-import type { PhysicalInventoryProductGroup } from "../../../domain/inventory";
-import { isInventoryDecimal } from "../../../domain/inventory-validation";
 import { AddInventoryDialog } from "../../components/add-inventory-dialog/AddInventoryDialog";
 import { InventoryGroupCard } from "../../components/inventory-group-card";
-import { InventoryItemDialog } from "../../components/inventory-item-dialog/InventoryItemDialog";
 import { useInventoryGroups } from "../../hooks/use-inventory-groups";
 import styles from "./inventory-page.module.css";
 
@@ -22,23 +16,13 @@ type InventoryPageProps = { readonly canManageInventory: boolean };
 export default function InventoryPage({ canManageInventory }: InventoryPageProps): ReactNode {
   const [expandedProducts, setExpandedProducts] = useState<ReadonlySet<string>>(new Set());
   const [addDialogIsOpen, setAddDialogIsOpen] = useState(false);
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const inventory = useInventoryGroups();
-  const queryClient = useQueryClient();
-  const thresholdMutation = useMutation({ mutationFn: ({ productId, amount }: { productId: string; amount: string }) => updateProductStockThreshold(productId, { lowStockAmountBase: amount, movementClass: null }) });
 
   /** Expand or collapse one concrete-product group. */
   function toggleProduct(productId: string): void {
     setExpandedProducts((current) => { const next = new Set(current); if (next.has(productId)) next.delete(productId); else next.add(productId); return next; });
   }
 
-  /** Ask for and persist a manual low-stock threshold. */
-  async function setThreshold(group: PhysicalInventoryProductGroup): Promise<void> {
-    const value = window.prompt(`Lage-voorraaddrempel in ${group.product.baseUnitSymbol}`, group.lowStockAmountBase ?? "0");
-    if (value === null || !isInventoryDecimal(value)) return;
-    const result = await thresholdMutation.mutateAsync({ productId: group.product.productId, amount: value });
-    if (result.tag === "Success") await queryClient.invalidateQueries({ queryKey: inventoryQueryKeys.itemLists() });
-  }
 
   const hasInitialFailure = inventory.responseFailed && inventory.groups.length === 0;
   const showEmpty = !inventory.isPending && !hasInitialFailure && inventory.groups.length === 0;
@@ -56,13 +40,12 @@ export default function InventoryPage({ canManageInventory }: InventoryPageProps
         {(inventory.isPending || inventory.searchIsSettling) && inventory.groups.length === 0 && <StatusPanel title="Voorraad laden" message="Je voorraad wordt opgehaald…" />}
         {hasInitialFailure && <StatusPanel title="Voorraad laden lukt niet" message="Controleer je verbinding en probeer opnieuw." action={<button type="button" onClick={inventory.retry}>Opnieuw proberen</button>} />}
         {showEmpty && <StatusPanel title={inventory.requestQuery === null ? "Geen voorraad in dit filter" : "Geen resultaten"} message={inventory.requestQuery === null ? "Er zijn geen passende producten op voorraad." : `Er is geen voorraad gevonden voor “${inventory.requestQuery}”.`} />}
-        {inventory.groups.map((group) => <InventoryGroupCard key={group.product.productId} group={group} expanded={expandedProducts.has(group.product.productId)} onToggle={() => toggleProduct(group.product.productId)} onSelectItem={setSelectedItemId} onSetThreshold={canManageInventory ? () => { void setThreshold(group); } : undefined} />)}
+        {inventory.groups.map((group) => <InventoryGroupCard key={group.product.productId} group={group} expanded={expandedProducts.has(group.product.productId)} onToggle={() => toggleProduct(group.product.productId)} />)}
         {inventory.groups.length > 0 && inventory.responseFailed && <div className={styles.paginationMessage} role="status">Niet alle voorraad kon worden geladen.</div>}
         {inventory.hasNextPage && <button className={styles.loadMore} type="button" disabled={inventory.isFetchingNextPage} onClick={inventory.loadNextPage}>{inventory.isFetchingNextPage ? "Meer laden…" : "Meer voorraad laden"}</button>}
       </section>
       {canManageInventory && <footer className={styles.actionDock}><button className={styles.addButton} type="button" onClick={() => setAddDialogIsOpen(true)}><span aria-hidden="true">+</span> Voorraad toevoegen</button></footer>}
       {addDialogIsOpen && <AddInventoryDialog onClose={() => setAddDialogIsOpen(false)} />}
-      {selectedItemId !== null && <InventoryItemDialog itemId={selectedItemId} onClose={() => setSelectedItemId(null)} />}
     </main>
   );
 }
