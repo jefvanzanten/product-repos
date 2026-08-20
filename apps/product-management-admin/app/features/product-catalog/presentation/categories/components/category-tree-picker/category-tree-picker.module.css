@@ -22,10 +22,10 @@
   overflow-y: scroll;
   padding: 0.125rem 18px 0.125rem 0.125rem;
   scrollbar-width: none;
-}
 
-.categoryTree::-webkit-scrollbar {
-  display: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .categoryScrollbarTrack {

@@ -10,10 +10,10 @@
   min-height: 0;
   overflow-y: auto;
   scrollbar-gutter: stable;
-}
 
-.tree [role="group"] {
-  margin-top: 0.5rem;
+  [role="group"] {
+    margin-top: 0.5rem;
+  }
 }
 
 .row {
@@ -45,6 +45,16 @@
   background: transparent;
   border: 0;
   cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: #f1f5f9;
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgb(32 155 126 / 25%);
+    outline-offset: -3px;
+  }
 }
 
 .chevron {
@@ -58,16 +68,6 @@
   transform: rotate(90deg);
 }
 
-.expandButton:hover,
-.expandButton:focus-visible {
-  background: #f1f5f9;
-}
-
-.expandButton:focus-visible {
-  outline: 3px solid rgb(32 155 126 / 25%);
-  outline-offset: -3px;
-}
-
 .nodeInfo {
   display: flex;
   flex: 1 1 auto;
@@ -75,13 +75,13 @@
   justify-content: center;
   min-width: 0;
   padding: 0.5rem 0.5rem 0.5rem 0;
-}
 
-.nodeInfo strong {
-  overflow: hidden;
-  font-size: 0.875rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  strong {
+    overflow: hidden;
+    font-size: 0.875rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .archiveStatus {

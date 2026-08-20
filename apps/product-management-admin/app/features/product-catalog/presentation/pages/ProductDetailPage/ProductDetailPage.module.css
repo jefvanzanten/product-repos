@@ -8,10 +8,13 @@
   overflow-y: auto;
   padding: 27px 0 32px;
   scrollbar-width: none;
-}
+  @media (max-width: 639px) {
+    padding-top: 16px;
+  }
 
-.page::-webkit-scrollbar {
-  width: 0;
+  &::-webkit-scrollbar {
+    width: 0;
+  }
 }
 
 .header {
@@ -19,20 +22,20 @@
   align-items: flex-start;
   flex-direction: column;
   gap: 8px;
-}
 
-.header a {
-  color: #bfece5;
-  font-size: 13px;
-  text-decoration: none;
-}
+  a {
+    color: #bfece5;
+    font-size: 13px;
+    text-decoration: none;
+  }
 
-.header h1 {
-  margin: 0;
-  color: #ffffff;
-  font-size: 19px;
-  font-weight: 800;
-  line-height: 23px;
+  h1 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 19px;
+    font-weight: 800;
+    line-height: 23px;
+  }
 }
 
 .card,
@@ -44,14 +47,13 @@
   color: #111425;
   background: #ffffff;
   border-radius: 8px;
-}
 
-.card h2,
-.editCard h2 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 800;
-  line-height: 18px;
+  h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 18px;
+  }
 }
 
 .cardHeading {
@@ -59,12 +61,16 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-}
+  @media (max-width: 639px) {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 
-.cardHeading span {
-  color: #176b5a;
-  font-size: 12px;
-  font-weight: 700;
+  span {
+    color: #176b5a;
+    font-size: 12px;
+    font-weight: 700;
+  }
 }
 
 .definitionList {
@@ -73,22 +79,22 @@
   margin: 0;
   font-size: 13px;
   line-height: 20px;
-}
 
-.definitionList div {
-  display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
-}
+  div {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+  }
 
-.definitionList dt {
-  color: #34384a;
-  font-weight: 700;
-}
+  dt {
+    color: #34384a;
+    font-weight: 700;
+  }
 
-.definitionList dd {
-  min-width: 0;
-  margin: 0;
-  color: #111425;
+  dd {
+    min-width: 0;
+    margin: 0;
+    color: #111425;
+  }
 }
 
 .productImage {
@@ -155,12 +161,12 @@
   padding: 0;
   color: #ffffff;
   background: transparent;
-}
 
-.editCard h2 {
-  color: #ffffff;
-  font-size: 30px;
-  line-height: 36px;
+  h2 {
+    color: #ffffff;
+    font-size: 30px;
+    line-height: 36px;
+  }
 }
 
 .impact {
@@ -180,23 +186,23 @@
   color: #ffffff;
   font-size: 14px;
   font-weight: 600;
-}
 
-.label input,
-.label select {
-  width: 100%;
-  height: 44px;
-  padding: 0 16px;
-  color: #111425;
-  font-size: 14px;
-  background: #ffffff;
-  border: 1px solid #d9deea;
-  border-radius: 8px;
-}
+  input,
+  select {
+    width: 100%;
+    height: 44px;
+    padding: 0 16px;
+    color: #111425;
+    font-size: 14px;
+    background: #ffffff;
+    border: 1px solid #d9deea;
+    border-radius: 8px;
+  }
 
-.label small {
-  color: #fecaca;
-  font-size: 12px;
+  small {
+    color: #fecaca;
+    font-size: 12px;
+  }
 }
 
 .twoColumns {
@@ -211,11 +217,11 @@
   gap: 8px;
   font-size: 14px;
   font-weight: 700;
-}
 
-.check input {
-  width: 18px;
-  height: 18px;
+  input {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .formError {
@@ -228,18 +234,9 @@
 }
 
 @media (max-width: 639px) {
-  .page {
-    padding-top: 16px;
-  }
-
   .definitionList div,
   .twoColumns {
     grid-template-columns: 1fr;
     gap: 2px;
-  }
-
-  .cardHeading {
-    align-items: flex-start;
-    flex-direction: column;
   }
 }

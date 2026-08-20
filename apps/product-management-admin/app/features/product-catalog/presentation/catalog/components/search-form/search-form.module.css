@@ -15,10 +15,10 @@
   border: 1px solid #d7dde8;
   border-radius: 0.5rem;
   outline: 0;
-}
 
-.searchInput:focus {
-  box-shadow: 0 0 0 2px #6ee7b7;
+  &:focus {
+    box-shadow: 0 0 0 2px #6ee7b7;
+  }
 }
 
 .searchButton {
@@ -34,8 +34,8 @@
   border: 0;
   border-radius: 0.5rem;
   cursor: pointer;
-}
 
-.searchButton:hover {
-  background: #1b876e;
+  &:hover {
+    background: #1b876e;
+  }
 }

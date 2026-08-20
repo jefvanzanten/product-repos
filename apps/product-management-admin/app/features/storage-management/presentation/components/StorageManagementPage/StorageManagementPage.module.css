@@ -20,6 +20,9 @@
   background: #ffffff;
   border-radius: 0.5rem;
   box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+  @media (max-width: 600px) {
+    padding: 0.75rem;
+  }
 }
 
 .header {
@@ -27,6 +30,9 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+  @media (max-width: 600px) {
+    flex-direction: column;
+  }
 }
 
 .title {
@@ -55,10 +61,10 @@
   border-radius: 0.4rem;
   cursor: pointer;
   transition: background-color 150ms ease;
-}
 
-.primaryButton:hover {
-  background: #1b876e;
+  &:hover {
+    background: #1b876e;
+  }
 }
 
 .primaryButton:focus-visible,
@@ -74,23 +80,23 @@
   padding: 0.25rem;
   background: #eef2f3;
   border-radius: 0.5rem;
-}
 
-.filters a {
-  flex: 1 1 0;
-  padding: 0.55rem 0.75rem;
-  color: #55616f;
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-align: center;
-  text-decoration: none;
-  border-radius: 0.35rem;
-}
+  a {
+    flex: 1 1 0;
+    padding: 0.55rem 0.75rem;
+    color: #55616f;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 0.35rem;
+  }
 
-.filters .activeFilter {
-  color: #176e5a;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgb(20 30 40 / 8%);
+  .activeFilter {
+    color: #176e5a;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgb(20 30 40 / 8%);
+  }
 }
 
 .emptyState {
@@ -107,19 +113,19 @@
   background: #f8fafb;
   border: 1px dashed #ccd3dc;
   border-radius: 0.6rem;
-}
 
-.emptyState h2 {
-  margin: 0;
-  color: #293446;
-  font-size: 1rem;
-}
+  h2 {
+    margin: 0;
+    color: #293446;
+    font-size: 1rem;
+  }
 
-.emptyState p {
-  max-width: 28rem;
-  margin: 0.45rem 0 1rem;
-  font-size: 0.8rem;
-  line-height: 1.5;
+  p {
+    max-width: 28rem;
+    margin: 0.45rem 0 1rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
 }
 
 .treeActions {
@@ -137,16 +143,8 @@
 }
 
 @media (max-width: 600px) {
-  .header {
-    flex-direction: column;
-  }
-
   .header .primaryButton,
   .treeActions .primaryButton {
     width: 100%;
-  }
-
-  .card {
-    padding: 0.75rem;
   }
 }

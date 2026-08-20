@@ -5,9 +5,9 @@
   color: #ccfbf1;
   font-size: 1.05rem;
   line-height: 1.5rem;
-}
 
-.breadcrumb a {
-  color: inherit;
-  text-decoration: underline;
+  a {
+    color: inherit;
+    text-decoration: underline;
+  }
 }

@@ -12,11 +12,10 @@
   border: 0;
   border-radius: 0.5rem;
   cursor: pointer;
-}
 
-.primaryButton:hover,
-.primaryLink:hover {
-  background: #1b876e;
+  &:hover {
+    background: #1b876e;
+  }
 }
 
 .secondaryButton {
@@ -32,10 +31,10 @@
   border: 1px solid #cbd5e1;
   border-radius: 0.5rem;
   cursor: pointer;
-}
 
-.secondaryButton:hover {
-  background: #f8fafc;
+  &:hover {
+    background: #f8fafc;
+  }
 }
 
 .inlineActions,
@@ -50,8 +49,8 @@
 .cardActions {
   flex: 0 0 auto;
   margin-top: auto;
-}
 
-.cardActions .primaryButton {
-  width: 178px;
+  .primaryButton {
+    width: 178px;
+  }
 }

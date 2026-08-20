@@ -54,6 +54,9 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   width: 100%;
+  @media (max-width: 639px) {
+    height: auto;
+  }
 }
 
 .radioTile {
@@ -72,17 +75,22 @@
   border: 1px solid #d9deea;
   border-radius: 8px;
   cursor: pointer;
-}
 
-.radioTile:has(input:checked) {
-  color: #ffffff;
-  background: #20a489;
-  border: 2px solid #20a489;
-}
+  &:has(input:checked) {
+    color: #ffffff;
+    background: #20a489;
+    border: 2px solid #20a489;
+  }
 
-.radioTile:has(input:focus-visible) {
-  outline: 3px solid #ffffff;
-  outline-offset: 2px;
+  &:has(input:focus-visible) {
+    outline: 3px solid #ffffff;
+    outline-offset: 2px;
+  }
+
+  input:checked + .radioIcon {
+    background: transparent url("/assets/product-forms/radio-selected.svg") center / 14px 14px no-repeat;
+    border: 0;
+  }
 }
 
 .radioTile input,
@@ -102,11 +110,6 @@
   border-radius: 50%;
 }
 
-.radioTile input:checked + .radioIcon {
-  background: transparent url('/assets/product-forms/radio-selected.svg') center / 14px 14px no-repeat;
-  border: 0;
-}
-
 .toggleLabel {
   position: relative;
   flex: 0 0 44px;
@@ -114,6 +117,20 @@
   height: 24px;
   margin-right: 2px;
   cursor: pointer;
+
+  input:checked + .toggleVisual {
+    background: #20a489;
+
+    &::after {
+      transform: translateX(20px);
+    }
+  }
+
+  &:has(input:focus-visible) {
+    outline: 3px solid #ffffff;
+    outline-offset: 2px;
+    border-radius: 12px;
+  }
 }
 
 .nutritionToggleLabel {
@@ -127,31 +144,17 @@
   height: 24px;
   background: #7a7d89;
   border-radius: 12px;
-}
 
-.toggleVisual::after {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 18px;
-  height: 18px;
-  background: #ffffff;
-  border-radius: 50%;
-  content: "";
-}
-
-.toggleLabel input:checked + .toggleVisual {
-  background: #20a489;
-}
-
-.toggleLabel input:checked + .toggleVisual::after {
-  transform: translateX(20px);
-}
-
-.toggleLabel:has(input:focus-visible) {
-  outline: 3px solid #ffffff;
-  outline-offset: 2px;
-  border-radius: 12px;
+  &::after {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: #ffffff;
+    border-radius: 50%;
+    content: "";
+  }
 }
 
 .macroContent {
@@ -209,6 +212,10 @@
   color: #111425;
   background: #ffffff;
   border: 1px solid #d9deea;
+  @media (max-width: 639px) {
+    flex-basis: 48px;
+    width: 100%;
+  }
 }
 
 .saveButton {
@@ -216,13 +223,13 @@
   color: #ffffff;
   background: #20a489;
   border: 0;
-}
 
-.saveButton:disabled {
-  color: rgb(255 255 255 / 72%);
-  cursor: default;
-  background: #3f7778;
-  opacity: 1;
+  &:disabled {
+    color: rgb(255 255 255 / 72%);
+    cursor: default;
+    background: #3f7778;
+    opacity: 1;
+  }
 }
 
 .visuallyHidden {
@@ -241,16 +248,7 @@
     grid-template-columns: 1fr;
   }
 
-  .radioGrid {
-    height: auto;
-  }
-
   .actions {
     flex-direction: column-reverse;
-  }
-
-  .cancelButton {
-    flex-basis: 48px;
-    width: 100%;
   }
 }

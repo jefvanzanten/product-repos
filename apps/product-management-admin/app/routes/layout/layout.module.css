@@ -8,6 +8,14 @@
   padding: 1em 1em calc(1em + 64px + env(safe-area-inset-bottom, 0px));
   color: #ffffff;
   background: linear-gradient(90deg, #0e1022 0%, #0e1022 46%, #3e4b93 100%);
+  @media (min-width: 520px) and (max-width: 767px) {
+    padding-bottom: calc(1em + 80px + env(safe-area-inset-bottom, 0px));
+  }
+  @media (min-width: 768px) {
+    align-items: center;
+    justify-content: flex-start;
+    padding: 64px 30px calc(24px + 72px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .dashboardFrame,
@@ -40,31 +48,19 @@
 
 .activeNavItem {
   color: #ffffff;
-}
 
-.activeNavItem::after {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.95);
-  content: "";
-}
-
-@media (min-width: 520px) and (max-width: 767px) {
-  .layout {
-    padding-bottom: calc(1em + 80px + env(safe-area-inset-bottom, 0px));
+  &::after {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.95);
+    content: "";
   }
 }
 
 @media (min-width: 768px) {
-  .layout {
-    align-items: center;
-    justify-content: flex-start;
-    padding: 64px 30px calc(24px + 72px + env(safe-area-inset-bottom, 0px));
-  }
-
   .dashboardFrame {
     flex: 0 1 auto;
     width: min(100%, 42rem);
