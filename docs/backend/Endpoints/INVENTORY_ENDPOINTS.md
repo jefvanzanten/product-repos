@@ -7,18 +7,21 @@ amount: decimal string in canonical base unit of product content dimension
 version: optimistic locking
 ```
 
-## Lijst en filters
+## Lijst en ordening
 
 ```yaml
 GET /inventory-items:
   auth: user
   query:
     query?: string
-    filter?: all|low-stock|expiring; default=all
+    sort?: all|stock|expiry; default=all
     cursor?: string
     limit?: int; default=30; max=100
   behavior:
     groups by concrete product
+    all sorts alphabetically by product display name
+    stock sorts by exact package equivalent ascending
+    expiry sorts by exact earliest expiry date ascending, undated last
     full physical items with equal product/location/expiry may be presentation-grouped
     partial items remain separate
   returns: 200 InventoryPage

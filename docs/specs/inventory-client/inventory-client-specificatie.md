@@ -12,6 +12,10 @@ Inventory beheert fysieke voorraad op basis van concrete catalogusproducten. Ied
 | Voorraad toevoegen | [voorraad-toevoegen-bottom-sheet-specificatie.md](./voorraad-toevoegen-bottom-sheet-specificatie.md) | [voorraad-toevoegen-bottom-sheet-ui-specificatie.md](./voorraad-toevoegen-bottom-sheet-ui-specificatie.md) | Te migreren |
 | Voorraad aanpassen | [voorraad-aanpassen-specificatie.md](./voorraad-aanpassen-specificatie.md) | [voorraad-aanpassen-ui-specificatie.md](./voorraad-aanpassen-ui-specificatie.md) | Doelmodel |
 
+## Acceptatietests
+
+- [Inventory-acceptatietestspecificatie](./inventory-acceptatietest-specificatie.md)
+
 ## Bronnen
 
 - [Inventory domeinregels](../../domein/inventory-domeinregels.md)

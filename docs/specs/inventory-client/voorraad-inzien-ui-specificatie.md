@@ -4,7 +4,7 @@
 
 ## Opbouw
 
-Bovenaan staan zoekveld en filters `Alles`, `Lage voorraad` en `Bijna verlopen`. Daaronder staat een productgerichte lijst.
+Bovenaan staan het zoekveld en de ordeningsknoppen `Alles`, `Voorraad` en `Datum`. `Alles` is standaard actief. Daaronder staat een productgerichte lijst.
 
 Een productkaart bevat:
 

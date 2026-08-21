@@ -32,8 +32,10 @@ Iedere fysieke verpakking krijgt een eigen detailregel, ook wanneer volledige it
 
 ## Sortering
 
-- Productgroepen met verlopen of vroegst verlopende voorraad eerst; datumloze groepen daarna alfabetisch.
-- Binnen een productgroep THT oplopend; datumloos onderaan.
+- `Alles` is de standaardweergave en sorteert productgroepen alfabetisch op productweergavenaam.
+- `Voorraad` sorteert alle productgroepen op het exacte totale verpakkingsequivalent, van de minste naar de meeste resterende voorraad.
+- `Datum` sorteert alle productgroepen op hun exacte vroegste THT, van de vroegste naar de laatste datum; datumloze groepen staan onderaan alfabetisch.
+- Binnen een productgroep staat THT oplopend en datumloos onderaan.
 - Locatiepad staat op iedere onderliggende regel.
 
 ## Resterende inhoud
@@ -57,24 +59,24 @@ Status wordt bepaald tegen vandaag in de applicatietijdzone:
 | THT later dan 7 dagen | Later |
 | Geen THT | Geen statuslabel |
 
-`Bijna verlopen` toont verlopen, vandaag, urgent en binnenkort, in die urgentievolgorde. Grenzen zijn configureerbaar.
+De datumstatus blijft zichtbaar als verlopen, vandaag, urgent, binnenkort of later. De sortering `Datum` gebruikt de exacte vroegste THT en niet alleen deze statuscategorieën.
 
 ## Lage voorraad
 
 - Lage voorraad kijkt naar totale resterende inhoud en niet alleen naar aantallen verpakkingen.
 - Per concreet product bestaat een handmatig instelbare drempel.
-- Zonder drempel verschijnt een product niet in het filter `Lage voorraad`.
+- Zonder drempel krijgt een product geen status `Lage voorraad`; dit heeft geen invloed op de sortering `Voorraad`.
 - Een voorgestelde drempel op basis van slow/medium/fast-moving is Should have; beginheuristieken zoals 10%/25%/50% van één productinhoud moeten in gebruik worden getweakt.
 
-## Filters
+## Lijstordening
 
-Minimaal:
+De gebruiker kan telkens één ordening kiezen:
 
 - Alles;
-- Lage voorraad;
-- Bijna verlopen.
+- Voorraad;
+- Datum.
 
-Filters mogen gecombineerd worden met vrije product-, merk-, categorie- en locatiezoektekst.
+De actieve ordening mag gecombineerd worden met vrije product-, merk-, categorie- en locatiezoektekst.
 
 ## Acceptatiecriteria
 
